@@ -9,7 +9,4 @@
 ---
 
 ### Criterios de Aceptación
-- [ ] **Escenario 1:** [Caso exitoso]
-  - **Dado** [contexto inicial]
-  - **Cuando** [acción realizada]
-  - **Entonces** [resultado esperado]
+- [ ] **Criterio 1:** [Caso]
