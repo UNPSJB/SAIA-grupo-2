@@ -10,3 +10,7 @@
 
 ### Criterios de Aceptación
 - [ ] **Criterio 1:** [Caso]
+---
+
+### Tareas Técnicas
+- [ ] **Tarea 1:** [Caso]
