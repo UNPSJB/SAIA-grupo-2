@@ -13,4 +13,6 @@
 ---
 
 ### Tareas Técnicas
-- [ ] **Tarea 1:** [Caso]
+- [ ] **Database:** [Caso]
+- [ ] **Backend:** [Caso]
+- [ ] **Frontend:** [Caso]
