@@ -2,6 +2,9 @@ import logging
 from typing import List
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
+from src.capacidades.models import Capacidad
+from src.capacidades.constants import CAPACIDAD_POR_DEFECTO
+from src.capacidades import exceptions as CapacidadesExceptions
 from src.empleados.models import Empleado
 from src.empleados import schemas, exceptions
 
@@ -9,9 +12,32 @@ from src.empleados import schemas, exceptions
 logger=logging.getLogger(__name__)
 
 # CRUD
-
 def crear_empleado(db: Session, empleado:schemas.EmpleadoCreate) -> schemas.Empleado:
-    _empleado = Empleado(**empleado.model_dump())
+    # Constantes para lectura (No existe definicion de "empleado" fuera de la funcion asi que se definen dentro de esta)
+    CAPACIDADES_NO_ESPECIFICADAS = empleado.listaCapacidades is None
+    LISTA_CAPACIDADES_VACIA = empleado.listaCapacidades == []
+
+    if CAPACIDADES_NO_ESPECIFICADAS: # Asigna la capacidad por defecto (Constante en constants)
+        capacidades = db.scalars(
+            select(Capacidad).where(Capacidad.nombre == CAPACIDAD_POR_DEFECTO)
+        ).all()
+    elif LISTA_CAPACIDADES_VACIA: # Error si la list SI existe pero se encuentra vacia
+        raise CapacidadesExceptions.CapacidadRequerida()
+    else:
+        capacidades = db.scalars(
+            select(Capacidad).where(Capacidad.id.in_(empleado.listaCapacidades))
+        ).all()
+
+    if not capacidades or (
+        empleado.listaCapacidades is not None
+        and len(capacidades) != len(set(empleado.listaCapacidades))
+    ):
+        raise CapacidadesExceptions.CapacidadNoEncontrada()
+
+    _empleado = Empleado(
+        **empleado.model_dump(exclude={"listaCapacidades"}),
+        capacidades=capacidades,
+    )
     db.add(_empleado)
     db.commit()
     db.refresh(_empleado)
