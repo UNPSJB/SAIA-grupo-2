@@ -14,7 +14,12 @@ logger=logging.getLogger(__name__)
 # CRUD
 
 def crear_capacidad(db: Session, capacidad:schemas.CapacidadCreate) -> schemas.Capacidad:
+    CAPACIDAD_EXISTE = db.scalar(
+        select(Capacidad)
+        .where(Capacidad.nombre==capacidad.nombre))
     _capacidad = Capacidad(**capacidad.model_dump())
+    if CAPACIDAD_EXISTE is not None:
+        raise exceptions.NombreDuplicado()
     db.add(_capacidad)
     db.commit()
     db.refresh(_capacidad)
