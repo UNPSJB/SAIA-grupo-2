@@ -15,7 +15,7 @@ class EmpleadoCreate(EmpleadoBase):
     listaCapacidades: List[int] | None = None
 
 class EmpleadoUpdate(EmpleadoBase):
-    pass
+    listaCapacidades: List[int] | None = None
 
 class Empleado(EmpleadoBase):
     id: int

@@ -56,16 +56,35 @@ def leer_empleado(db: Session, empleado_id: int) -> schemas.Empleado:
 def modificar_empleado(
     db: Session, empleado_id: int, empleado: schemas.EmpleadoUpdate
 ) -> Empleado:
+    #Buscamos el empleado existente
     db_empleado = leer_empleado(db, empleado_id)
-    db.execute(
-        update(Empleado).where(Empleado.id == empleado_id).values(**empleado.model_dump())
-    )
+    
+    # Actualizamos los campos de texto normales
+    db_empleado.nombre = empleado.nombre
+    db_empleado.apellido = empleado.apellido
+
+    #Si el frontend envió una lista de capacidades, actualizamos la relación
+    if empleado.listaCapacidades is not None:
+        if empleado.listaCapacidades == []:
+            # Evita que lo dejen sin capacidades si es obligatorio
+            raise CapacidadesExceptions.CapacidadRequerida()
+            
+        nuevas_capacidades = db.scalars(
+            select(Capacidad).where(Capacidad.id.in_(empleado.listaCapacidades))
+        ).all()
+
+        if len(nuevas_capacidades) != len(set(empleado.listaCapacidades)):
+            raise CapacidadesExceptions.CapacidadNoEncontrada()
+
+        # Al reasignar la lista, SQLAlchemy limpia la tabla intermedia y pone los nuevos vínculos
+        db_empleado.capacidades = nuevas_capacidades
+
     db.commit()
     db.refresh(db_empleado)
     return db_empleado
 
 def eliminar_empleado(db: Session, empleado_id: int) -> schemas.Empleado:
     db_empleado = leer_empleado(db, empleado_id)
-    db.execute(delete(Empleado).where(Empleado.id == empleado_id))
+    db.delete(db_empleado)    
     db.commit()
     return db_empleado

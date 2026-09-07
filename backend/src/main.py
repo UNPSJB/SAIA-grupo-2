@@ -27,8 +27,9 @@ async def db_creation_lifespan(app: FastAPI):
 
 app = FastAPI(root_path=ROOT_PATH, lifespan=db_creation_lifespan)
 
+# Usamos "*" para que acepte peticiones desde cualquier puerto (5173, 5174, etc.)
 origins = [
-    "http://localhost:5173", # para recibir requests desde app React (puerto: 5173)
+    "*" 
 ]
 
 app.add_middleware(

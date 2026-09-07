@@ -1,0 +1,109 @@
+.contenedorPrincipal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 85vh;
+}
+
+.linkCrear {
+    display: inline-block;
+    margin-bottom: 15px;
+}
+
+.grupoBotones {
+    display: flex;
+    gap: 10px;
+}
+
+.filaBotones {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 15px;
+    width: 100%;
+}
+
+.bloqueDetalle {
+    margin-top: 20px;
+}
+
+.bloqueCapacidades {
+    margin-bottom: 15px;
+}
+
+.listaCheckboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.filaCheckbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox {
+    width: auto;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.labelCheckbox {
+    display: inline;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+p {
+    color: white;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #21282f;
+    padding: 15px 25px; 
+    border-radius: 10px;
+    margin-bottom: 12px;
+    width: 100%;
+    max-width: 600px; 
+    box-sizing: border-box; 
+}
+
+input, select {
+    background-color: #21282f;
+    color: white;
+    border: 1px solid #4a5568;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    width: 300px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    color: white;
+}
