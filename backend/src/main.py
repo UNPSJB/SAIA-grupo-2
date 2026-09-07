@@ -13,10 +13,11 @@ from src.config import settings
 from src.logger import setup_logging
 
 # Importamos los routers desde nuestros modulos
-from src.personas.router import router as personas_router
-from src.mascotas.router import router as mascotas_router
+
 from src.unidades_medida.router import router as unidades_medida_router
 from src.insumos.router import router as insumos_router
+from src.empleados.router import router as empleados_router
+from src.capacidades.router import router as capacidades_router
 from fastapi.middleware.cors import CORSMiddleware
 
 ENV = settings.ENV.upper()
@@ -32,8 +33,9 @@ async def db_creation_lifespan(app: FastAPI):
 
 app = FastAPI(root_path=ROOT_PATH, lifespan=db_creation_lifespan)
 
+# Usamos "*" para que acepte peticiones desde cualquier puerto (5173, 5174, etc.)
 origins = [
-    "http://localhost:5173", # para recibir requests desde app React (puerto: 5173)
+    "*" 
 ]
 
 app.add_middleware(
@@ -46,7 +48,8 @@ app.add_middleware(
 
 
 # asociamos los routers a nuestra app
-app.include_router(personas_router)
-app.include_router(mascotas_router)
+
 app.include_router(unidades_medida_router)
 app.include_router(insumos_router)
+app.include_router(empleados_router)
+app.include_router(capacidades_router)

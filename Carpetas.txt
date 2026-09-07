@@ -1,0 +1,71 @@
+======================================================================
+GUÍA DE ARQUITECTURA Y ORGANIZACIÓN DE CARPETAS - PROYECTO ARSANI
+======================================================================
+
+Este documento explica la estructura modular basada en características 
+(Feature-Based Architecture) adoptada para el desarrollo del frontend 
+en React (Vite) y su comunicación con el backend en FastAPI.
+
+El objetivo es mantener un código limpio, desacoplado y estandarizado 
+para todo el equipo de desarrollo.
+
+----------------------------------------------------------------------
+1. DISTRIBUCIÓN DE CARPETAS (src/)
+----------------------------------------------------------------------
+
+src/
+│
+├── components/          --> Componentes globales y reutilizables en todo el sistema.
+│   ├── Boton.tsx        --> Botón maestro (soporta variantes: guardar, eliminar, crear, editar).
+│   └── Boton.module.css --> Estilos aislados del botón global.
+│
+├── features/            --> Módulos de la aplicación agrupados por dominio de negocio.
+│   ├── empleados/       --> Vistas, formularios y lógica específica de empleados.
+│   └── capacidades/     --> Vistas, formularios y lógica específica de capacidades.
+│
+├── services/            --> Capa de red (API). Prohibido hacer "fetch" directo en las vistas.
+│   ├── empleadosServices.ts   --> Peticiones HTTP para el módulo de empleados.
+│   └── capacidadesServices.ts --> Peticiones HTTP para el módulo de capacidades.
+│
+├── types/               --> Interfaces y tipos estrictos de TypeScript.
+│   ├── empleados.ts     --> Modelos de Empleado y DTOs de envío (Payload).
+│   └── capacidades.ts   --> Modelo de Capacidad.
+│
+└── styles/              --> Estilos globales y compartidos de la aplicación.
+    └── shared.module.css --> Contenedores, formularios, inputs y tablas unificadas.
+
+
+----------------------------------------------------------------------
+2. REGLAS DE ORO PARA EL EQUIPO (¿Cómo programar un nuevo módulo?)
+----------------------------------------------------------------------
+
+Si vas a crear una nueva sección o entidad en el sistema, debes seguir 
+estrictamente este flujo de trabajo:
+
+1. TIPOS (src/types/):
+   Crea un archivo con la interfaz de TypeScript que represente tu entidad 
+   y los payloads necesarios para enviar datos al backend.
+
+2. SERVICIOS (src/services/):
+   Crea un archivo de servicios (ej: `tuModuloServices.ts`). Todas las 
+   llamadas `fetch` hacia FastAPI deben estar aquí dentro, manejando los 
+   errores y devolviendo promesas tipadas. NUNCA pongas un `fetch` directo 
+   dentro de un componente visual (.tsx).
+
+3. COMPONENTES GLOBALES (src/components/):
+   Si necesitas un botón, usa siempre el componente unificado:
+   Ejemplo: <Boton variant="guardar">Guardar Registro</Boton>
+   No crees clases CSS locales para botones repetitivos.
+
+4. VISTAS Y FORMULARIOS (src/features/tuModulo/):
+   Construye tus pantallas consumiendo los servicios y aplicando las 
+   clases estructurales centralizadas en `src/styles/shared.module.css`.
+
+
+----------------------------------------------------------------------
+3. COMUNICACIÓN CON EL BACKEND (FastAPI)
+----------------------------------------------------------------------
+- El backend corre localmente en http://127.0.0.1:8000.
+- Las rutas de los servicios deben apuntar a la URL base correspondiente 
+  evitando redirecciones 307 (respetar el uso de barras finales '/' en 
+  los endpoints que lo requieran según el router de Python).
