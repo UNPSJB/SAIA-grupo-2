@@ -1,7 +1,10 @@
 import logging
 from typing import List
 from sqlalchemy import delete, select, update
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
+
+from src.asociaciones.empleado_capacidad import empleado_capacidad
+
 from src.capacidades.models import Capacidad
 from src.capacidades import schemas, exceptions
 
@@ -39,7 +42,23 @@ def modificar_capacidad(
     return db_capacidad
 
 def eliminar_capacidad(db: Session, capacidad_id: int) -> schemas.Capacidad:
-    db_capacidad = leer_capacidad(db, capacidad_id)
-    db.execute(delete(Capacidad).where(Capacidad.id == capacidad_id))
+    db_capacidad = db.scalar(
+        select(Capacidad)
+        .options(selectinload(Capacidad.empleados)) # Evita que explote por "No estar vinculado a una sesion"
+        .where(Capacidad.id == capacidad_id)
+    )
+
+    if db_capacidad is None:
+        raise exceptions.CapacidadNoEncontrada()
+
+    respuesta = schemas.Capacidad.model_validate(db_capacidad)
+    db.execute(
+        delete(empleado_capacidad).where(
+            empleado_capacidad.c.capacidad_id==capacidad_id
+        )
+    )
+    db.execute(
+        delete(Capacidad)
+        .where(Capacidad.id == capacidad_id))
     db.commit()
-    return db_capacidad
+    return respuesta

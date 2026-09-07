@@ -6,10 +6,12 @@ empleado_capacidad = Table(
     ModeloBase.metadata,
     Column(
         "empleado_id", 
-        ForeignKey("empleados.id"), 
-        primary_key=True),
+        ForeignKey("empleados.id", ondelete="CASCADE"), 
+        primary_key=True
+    ),
     Column(
         "capacidad_id", 
-        ForeignKey("capacidades.id"), 
-        primary_key=True),
+        ForeignKey("capacidades.id", ondelete="CASCADE"), 
+        primary_key=True
+    )
 )

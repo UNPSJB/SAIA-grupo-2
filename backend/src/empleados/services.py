@@ -1,10 +1,14 @@
 import logging
 from typing import List
 from sqlalchemy import delete, select, update
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
+
+from src.asociaciones.empleado_capacidad import empleado_capacidad
+
 from src.capacidades.models import Capacidad
 from src.capacidades.constants import CAPACIDAD_POR_DEFECTO
 from src.capacidades import exceptions as CapacidadesExceptions
+
 from src.empleados.models import Empleado
 from src.empleados import schemas, exceptions
 
@@ -65,7 +69,22 @@ def modificar_empleado(
     return db_empleado
 
 def eliminar_empleado(db: Session, empleado_id: int) -> schemas.Empleado:
-    db_empleado = leer_empleado(db, empleado_id)
-    db.execute(delete(Empleado).where(Empleado.id == empleado_id))
+    db_empleado = db.scalar(
+        select(Empleado)
+        .options(selectinload(Empleado.capacidades)) # Evita que explote por "No estar vinculado a una sesion"
+        .where(Empleado.id == empleado_id)
+    )
+    if db_empleado is None:
+        raise exceptions.EmpleadoNoEncontrado()
+
+    respuesta = schemas.Empleado.model_validate(db_empleado)
+    db.execute(
+        delete(empleado_capacidad).where(
+            empleado_capacidad.c.empleado_id == empleado_id
+        )
+    )
+    db.execute(
+        delete(Empleado)
+        .where(Empleado.id == empleado_id))
     db.commit()
-    return db_empleado
+    return respuesta
