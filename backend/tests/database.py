@@ -6,11 +6,8 @@ from src.main import app
 from src.database import get_db
 from src.config import settings
 from src.models import ModeloBase
-from src.personas.services import crear_persona
-from src.mascotas.services import crear_mascota
-from src.personas.schemas import PersonaCreate
-from src.mascotas.schemas import MascotaCreate
-from src.mascotas.models import TipoMascota
+from src.equipos.services import crear_equipo
+from src.equipos.schemas import EquipoCreate
 
 
 # creamos una db para testing
@@ -47,21 +44,11 @@ def session() -> Generator[Session, None, None]:
 
     # aqui podemos crear instancias de objetos para hacer tests
     # haciendo uso de las funciones "create_<clase>" de services y los schemas <Clase>Create.
-    persona_1 = crear_persona(db, PersonaCreate(nombre="Juan", email="juan.perez@gmail.com"))
-    persona_2 = crear_persona(
-        db, PersonaCreate(nombre="Ana", email="ana.dominguez@gmail.com")
-    )
-    mascota_1 = crear_mascota(db, MascotaCreate(nombre="Lola", tipo=TipoMascota.GATO, tutor_id=persona_1.id))
-    mascota_2 = crear_mascota(db, MascotaCreate(nombre="Felipe", tipo=TipoMascota.PERRO, tutor_id=persona_1.id))
-    mascota_3 = crear_mascota(db, MascotaCreate(nombre="Coco", tipo=TipoMascota.COBAYO, tutor_id=persona_2.id))
-
+    equipo_1 = crear_equipo(db, EquipoCreate(nombre="EquipoPrueba",activo=True,tipo="horno",ubicacion="UbicacionPrueba"))
+    
     db.add_all(
         [
-            persona_1,
-            persona_2,
-            mascota_1,
-            mascota_2,
-            mascota_3
+            equipo_1,
         ]
     )
     db.commit()

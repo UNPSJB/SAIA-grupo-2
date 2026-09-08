@@ -1,7 +1,9 @@
 import logging
 
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 class Settings(BaseSettings):
     # Definimos las variables con sus tipos y valores por defecto (opcional)
