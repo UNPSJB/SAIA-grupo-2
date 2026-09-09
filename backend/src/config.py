@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     # Configuración para que lea automáticamente el archivo .env
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=BASE_DIR / ".env",
         env_file_encoding="utf-8",
         extra="ignore",  # Ignora otras variables que estén en el .env y no definamos en este archivo
     )
