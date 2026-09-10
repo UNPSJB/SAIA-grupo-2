@@ -25,11 +25,11 @@ export default function UnidadesMedidaList() {
         <div className={styles.contenedorPrincipal}>
             <h2>Lista de unidades de medida</h2>
             
-            <Link to="/unidadesmedida/nuevo" className={styles.linkCrear}>
+            {/* <Link to="/unidadesmedida/nuevo" className={styles.linkCrear}>
                 <Boton variant="crear">
                     + Crear Nueva unidad
                 </Boton>
-            </Link>
+            </Link> */}
 
             <ul>
                 {unidadesMedida.map((unidad) => (
@@ -37,7 +37,7 @@ export default function UnidadesMedidaList() {
                         <span>{unidad.nombre}</span>
                         
                         <div className={styles.grupoBotones}>
-                            <Link to={`/insumos/editar/${unidad.id}`}>
+                            {/* <Link to={`/insumos/editar/${unidad.id}`}>
                                 <Boton variant="editar">Editar</Boton>
                             </Link>
                             <Link to={`/insumos/${unidad.id}`}>
@@ -45,7 +45,7 @@ export default function UnidadesMedidaList() {
                             </Link>
                             <Link to={`/insumos/eliminar/${unidad.id}`}>
                                 <Boton variant="eliminar">Eliminar</Boton>
-                            </Link>
+                            </Link> */}
                         </div>
                     </li>
                 ))}
