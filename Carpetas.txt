@@ -1,5 +1,5 @@
 ======================================================================
-GUÍA DE ARQUITECTURA Y ORGANIZACIÓN DE CARPETAS - PROYECTO ARSANI
+GUÍA DE ARQUITECTURA Y ORGANIZACIÓN DE CARPETAS
 ======================================================================
 
 Este documento explica la estructura modular basada en características 

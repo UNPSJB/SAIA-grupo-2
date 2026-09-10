@@ -34,9 +34,9 @@ function App() {
           {/* Rutas principales */}
           <Route path="/empleados" element={<EmpleadosList />} />
           <Route path="/empleados/nuevo" element={<EmpleadoForm />} />
-          <Route path="/empleados/:id" element={<EmpleadoDetail />} />
           <Route path="/empleados/editar/:id" element={<EmpleadoForm />} />
           <Route path="/empleados/eliminar/:id" element={<EmpleadoDelete />} />
+          <Route path="/empleados/:id" element={<EmpleadoDetail />} />
           <Route path="/capacidades" element={<CapacidadesList />} />
           <Route path="/capacidades/nuevo" element={<CapacidadForm />} />
           
@@ -49,6 +49,7 @@ function App() {
 
           <Route path="/unidadesMedida" element={<UnidadesMedidaList />} />
 
+             
         </Routes>
       </div>
     </BrowserRouter>

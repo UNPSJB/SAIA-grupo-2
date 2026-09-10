@@ -29,18 +29,18 @@ export default function EmpleadoDetail() {
             <h2>Detalle del Empleado</h2>
             {empleado ? (
                 <div>
-                    <p>Nombre: {empleado.nombre}</p>
-                    <p>Apellido: {empleado.apellido}</p>
+                    <p><strong>Nombre:</strong> {empleado.nombre}</p>
+                    <p><strong>Apellido:</strong> {empleado.apellido}</p>
                     
                     <p>
-                        Capacidades: {empleado.capacidades && empleado.capacidades.length > 0 
+                        <strong>Capacidades:</strong> {empleado.capacidades && empleado.capacidades.length > 0 
                             ? empleado.capacidades.map(c => c.nombre).join(', ') 
                             : 'Ninguna asignada'}
                     </p>
 
-                    <div className={styles.bloqueDetalle}>
+                    <div className={styles.bloqueDetalle} style={{ marginTop: '20px' }}>
                         <Link to="/empleados">
-                            <Boton variant="editar">Volver a la lista</Boton>
+                            <Boton variant="volver">Volver a la lista</Boton>
                         </Link>
                     </div>
                 </div>

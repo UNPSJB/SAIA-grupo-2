@@ -15,7 +15,7 @@ export const getCapacidades = async (): Promise<Capacidad[]> => {
 
 export const deleteCapacidad = async (id: number): Promise<boolean> => {
     try {
-        const res = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE' });
+        const res = await fetch(`${BASE_URL}/${id}/`, { method: 'DELETE' });
         return res.ok;
     } catch (error) {
         console.error("Error de red al eliminar:", error);
