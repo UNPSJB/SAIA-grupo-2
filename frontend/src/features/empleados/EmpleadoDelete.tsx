@@ -50,8 +50,8 @@ export default function EmpleadoDelete() {
                     
                     <div className={styles.filaBotones}>
                         <Link to="/empleados">
-                            <Boton variant="editar">
-                                Cancelar
+                            <Boton variant="volver">
+                                volver
                             </Boton>
                         </Link>
                         <Boton variant="eliminar" onClick={handleDelete}>

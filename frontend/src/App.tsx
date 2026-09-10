@@ -20,15 +20,13 @@ function App() {
         <Routes>
           {/* Vista o ruta raíz */}
           <Route path="/" element={<h2>Prueba de Empleado</h2>} />
-          
-          {/* Rutas principales */}
-          <Route path="/empleados" element={<EmpleadosList />} />
-          <Route path="/empleados/nuevo" element={<EmpleadoForm />} />
-          <Route path="/empleados/:id" element={<EmpleadoDetail />} />
-          <Route path="/empleados/editar/:id" element={<EmpleadoForm />} />
-          <Route path="/empleados/eliminar/:id" element={<EmpleadoDelete />} />
-          <Route path="/capacidades" element={<CapacidadesList />} />
-          <Route path="/capacidades/nuevo" element={<CapacidadForm />} />
+              <Route path="/empleados" element={<EmpleadosList />} />
+              <Route path="/empleados/nuevo" element={<EmpleadoForm />} />
+              <Route path="/empleados/editar/:id" element={<EmpleadoForm />} />
+              <Route path="/empleados/eliminar/:id" element={<EmpleadoDelete />} />
+              <Route path="/empleados/:id" element={<EmpleadoDetail />} />
+              <Route path="/capacidades" element={<CapacidadesList />} />
+              <Route path="/capacidades/nuevo" element={<CapacidadForm />} />
         </Routes>
       </div>
     </BrowserRouter>

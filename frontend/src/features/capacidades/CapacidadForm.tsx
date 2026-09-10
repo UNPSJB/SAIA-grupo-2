@@ -43,7 +43,7 @@ export default function CapacidadForm() {
                         Guardar
                     </Boton>
                     <Link to="/capacidades">
-                        <Boton variant="eliminar">
+                        <Boton variant="volver">
                             Cancelar
                         </Boton>
                     </Link>
