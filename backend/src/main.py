@@ -18,6 +18,7 @@ from src.unidades_medida.router import router as unidades_medida_router
 from src.insumos.router import router as insumos_router
 from src.empleados.router import router as empleados_router
 from src.capacidades.router import router as capacidades_router
+from src.equipos.router import router as equipos_router
 from fastapi.middleware.cors import CORSMiddleware
 
 ENV = settings.ENV.upper()
@@ -53,3 +54,5 @@ app.include_router(unidades_medida_router)
 app.include_router(insumos_router)
 app.include_router(empleados_router)
 app.include_router(capacidades_router)
+app.include_router(equipos_router)
+
