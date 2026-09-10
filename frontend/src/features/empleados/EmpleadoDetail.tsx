@@ -39,7 +39,6 @@ export default function EmpleadoDetail() {
                     </p>
 
                     <div className={styles.bloqueDetalle} style={{ marginTop: '20px' }}>
-                        {/* CORREGIDO: Usamos variant="volver" para que aparezca la flecha gris y no el lápiz de editar */}
                         <Link to="/empleados">
                             <Boton variant="volver">Volver a la lista</Boton>
                         </Link>
