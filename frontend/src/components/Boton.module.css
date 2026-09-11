@@ -1,0 +1,62 @@
+.crear {
+    background-color: #1a6a4a;
+    color: rgb(245, 255, 255);
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+.editar {
+    background-color: #1a6a4a;
+    color: rgb(245, 255, 255);
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+.ver {
+    background-color: #1a6a4a;
+    color: rgb(245, 255, 255);
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+.guardar {
+    background-color: #1a6a4a;
+    color: rgb(245, 255, 255);
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+.volver {
+    background-color: #1a6a4a;
+    color: rgb(245, 255, 255);
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+.siguiente {
+    background-color: #1a6a4a;
+    color: rgb(245, 255, 255);
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+.eliminar {
+    background-color: #ec1313;
+    color: rgb(245, 255, 255);
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 10px;
+}
