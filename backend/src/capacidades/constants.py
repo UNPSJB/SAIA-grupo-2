@@ -4,4 +4,4 @@ class ErrorCode:
     NOMBRE_DUPLICADO="El nombre ya existe"
 
 
-CAPACIDAD_POR_DEFECTO = "Operario"
+CAPACIDAD_POR_DEFECTO = "operario"

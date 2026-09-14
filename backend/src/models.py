@@ -1,4 +1,4 @@
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base,Mapped,mapped_column,relationship
 
 Base = declarative_base()
 
@@ -20,3 +20,4 @@ class ModeloBase(Base):
         # Define un formato de representacion como cadena para el modelo base.
         params = ", ".join(f"{k}={v}" for k, v in keyvalgen(self))
         return f"{self.__class__.__name__}({params})"
+

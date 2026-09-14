@@ -14,8 +14,13 @@ logger = logging.getLogger(__name__)
 
 # CRUD
 
-def crear_capacidad(db: Session, capacidad: schemas.CapacidadCreate) -> schemas.Capacidad:
+def crear_capacidad(db: Session, capacidad:schemas.CapacidadCreate) -> schemas.Capacidad:
+    CAPACIDAD_EXISTE = db.scalar(
+        select(Capacidad)
+        .where(Capacidad.nombre==capacidad.nombre))
     _capacidad = Capacidad(**capacidad.model_dump())
+    if CAPACIDAD_EXISTE is not None:
+        raise exceptions.NombreDuplicado()
     db.add(_capacidad)
     
     try:
@@ -64,16 +69,14 @@ def eliminar_capacidad(db: Session, capacidad_id: int) -> schemas.Capacidad:
     if db_capacidad is None:
         raise exceptions.CapacidadNoEncontrada()
 
-    # BLOQUEO: Si la capacidad tiene empleados vinculados, devolvemos un Error 400
-    if len(db_capacidad.empleados) > 0:
-        raise HTTPException(status_code=400, detail="No se puede eliminar: Esta capacidad ya está asignada a uno o más empleados.")
-
     respuesta = schemas.Capacidad.model_validate(db_capacidad)
-    
-    # Como ya validamos que nadie usa la capacidad, simplemente la borramos
+    db.execute(
+        delete(empleado_capacidad).where(
+            empleado_capacidad.c.capacidad_id==capacidad_id
+        )
+    )
     db.execute(
         delete(Capacidad)
-        .where(Capacidad.id == capacidad_id)
-    )
+        .where(Capacidad.id == capacidad_id))
     db.commit()
     return respuesta
