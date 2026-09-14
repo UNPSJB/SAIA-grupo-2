@@ -34,7 +34,7 @@ function App() {
       <div>
         <Routes>
           {/* Vista o ruta raíz */}
-          <Route path="/" element={<h2>Prueba de Empleado</h2>} />
+          <Route path="/" element={<h1>SAIA - Grupo 2</h1>} />
           
           {/* Rutas principales */}
           <Route path="/empleados" element={<EmpleadosList />} />

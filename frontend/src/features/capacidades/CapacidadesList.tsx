@@ -41,7 +41,7 @@ export default function CapacidadesList() {
             
             <Link to="/capacidades/nuevo" className={styles.linkCrear}>
                 <Boton variant="crear">
-                    + Crear Nueva Capacidad
+                    Crear Nueva Capacidad
                 </Boton>
             </Link>
 

@@ -27,7 +27,7 @@ export default function EquiposList() {
             
             <Link to="/equipos/nuevo" className={styles.linkCrear}>
                 <Boton variant="crear">
-                    + Crear Nuevo Equipo
+                    Crear Nuevo Equipo
                 </Boton>
             </Link>
 

@@ -50,7 +50,7 @@ export default function InsumoDelete() {
                     
                     <div className={styles.filaBotones}>
                         <Link to="/insumos">
-                            <Boton variant="editar">
+                            <Boton variant="volver">
                                 Cancelar
                             </Boton>
                         </Link>

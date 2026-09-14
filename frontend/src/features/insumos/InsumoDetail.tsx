@@ -39,7 +39,7 @@ export default function InsumoDetail() {
 
                     <div className={styles.bloqueDetalle}>
                         <Link to="/insumos">
-                            <Boton variant="editar">Volver a la lista</Boton>
+                            <Boton variant="volver">Volver a la lista</Boton>
                         </Link>
                     </div>
                 </div>

@@ -27,7 +27,7 @@ export default function InsumosList() {
             
             <Link to="/insumos/nuevo" className={styles.linkCrear}>
                 <Boton variant="crear">
-                    + Crear Nuevo Insumo
+                    Crear Nuevo Insumo
                 </Boton>
             </Link>
 

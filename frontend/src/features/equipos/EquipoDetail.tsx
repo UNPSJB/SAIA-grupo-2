@@ -30,14 +30,14 @@ export default function EquipoDetail() {
             {equipo ? (
                 <div>
                     <p>Nombre: {equipo.nombre}</p>
-                    <p>Activo: {equipo.activo}</p>
+                    <p>Activo: {equipo.activo ? 'Sí' : 'No'}</p>
                     <p>Tipo: {equipo.tipo}</p>
                     <p>Ubicacion: {equipo.ubicacion}</p>
                     
 
                     <div className={styles.bloqueDetalle}>
                         <Link to="/equipos">
-                            <Boton variant="editar">Volver a la lista</Boton>
+                            <Boton variant="volver">Volver a la lista</Boton>
                         </Link>
                     </div>
                 </div>
