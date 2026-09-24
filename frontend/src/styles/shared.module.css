@@ -2,13 +2,14 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    padding-top: 40px;
     min-height: 85vh;
 }
 
 .linkCrear {
     display: inline-block;
-    margin-bottom: 15px;
+    margin-bottom: 25px;
 }
 
 .grupoBotones {
@@ -29,81 +30,266 @@
     margin-top: 20px;
 }
 
+.formularioTarjeta {
+    width: 100%;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch; 
+    background-color: var(--card-bg);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    max-width: 800px;
+    width: 100%;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+}
+
+label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--text-h);
+    font-weight: 500;
+    font-size: 0.95rem;
+    text-align: left;
+}
+
+input[type="text"], 
+input[type="number"], 
+select {
+    background-color: var(--bg);
+    color: var(--text-h);
+    border: 1px solid var(--border);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 0; 
+    width: 100%; 
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
 .bloqueCapacidades {
     margin-bottom: 15px;
+    width: 100%;
+    text-align: left;
 }
 
 .listaCheckboxes {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-top: 5px;
+    gap: 10px;
+    margin-top: 10px;
 }
 
 .filaCheckbox {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: 10px;
+    justify-content: flex-start;
+    gap: 12px;
+    background-color: var(--card-bg);
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
 }
 
 .checkbox {
-    width: auto;
-    margin-bottom: 0;
+    width: 18px !important;
+    height: 18px !important;
+    margin: 0;
     cursor: pointer;
+    accent-color: var(--accent);
+    flex-shrink: 0;
 }
 
 .labelCheckbox {
     display: inline;
     margin-bottom: 0;
     cursor: pointer;
+    color: var(--text-h);
+    font-size: 0.95rem;
+    user-select: none;
 }
 
 p {
-    color: white;
-    font-size: 18px;
+    color: var(--text);
+    font-size: 16px;
     margin-bottom: 10px;
+    line-height: 1.6;
 }
 
-ul {
-    list-style: none;
-    padding: 0;
+.gridTarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+    margin-top: 10px;
     width: 100%;
+}
+
+.tarjeta {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-}
-
-li {
-    display: flex;
     justify-content: space-between;
-    align-items: center;
-    background-color: #21282f;
-    padding: 15px 25px; 
-    border-radius: 10px;
-    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    text-align: left;
+}
+
+.tarjeta:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 10px 20px -5px rgba(2, 132, 199, 0.15);
+}
+
+.tarjetaHeader h3 {
+    margin: 0 0 10px 0;
+    color: var(--text-h);
+    font-size: 1.25rem;
+}
+
+.tarjetaBody p {
+    margin: 6px 0;
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.badge {
+    color: #15803d; 
+    border: none; 
+    padding: 6px 12px;
+    border-radius: 6px; 
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+.badgeAdmin {
+    color: #b91c1c; 
+}
+
+.contenedorTabla {
     width: 100%;
-    max-width: 600px; 
-    box-sizing: border-box; 
+    max-width: 1100px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-top: 15px;
 }
 
-input, select {
-    background-color: #21282f;
-    color: white;
-    border: 1px solid #4a5568;
-    padding: 10px;
-    border-radius: 10px;
-    margin-bottom: 15px;
-    width: 300px;
+.filaHeader {
+    display: grid;
+    grid-template-columns: 2fr 1fr 2.5fr 1fr 1.5fr;
+    padding: 16px 20px;
+    background-color: var(--bg);
+    border-bottom: 2px solid var(--border);
+    font-weight: 600;
+    color: var(--text-h);
+    font-size: 0.95rem;
+    align-items: center;
 }
 
-form {
+.filaItem {
+    display: grid;
+    grid-template-columns: 2fr 1fr 2.5fr 1fr 1.5fr;
+    padding: 16px 20px;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    transition: background-color 0.2s ease;
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.filaItem:last-child {
+    border-bottom: none;
+}
+
+.filaItem:hover {
+    background-color: var(--accent-bg);
+}
+
+.grupoBotonesTabla {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.tarjetaEstatica {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    justify-content: space-between;
+    box-shadow: var(--shadow);
+    text-align: left;
 }
 
-label {
-    display: block;
-    margin-bottom: 5px;
-    color: white;
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999; 
+    backdrop-filter: blur(3px); 
+}
+
+.modalContent {
+    background-color: var(--card-bg);
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    max-width: 450px;
+    width: 90%;
+    text-align: center;
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }

@@ -1,17 +1,18 @@
+import React from 'react';
 import styles from './Boton.module.css';
 
 interface BotonProps {
-    children?: React.ReactNode; // <-- El "?" lo hace opcional (ya no es obligatorio pasarle texto)
+    children?: React.ReactNode; 
     variant: 'guardar' | 'eliminar' | 'editar' | 'crear' | 'ver' | 'volver' | 'siguiente';
     onClick?: () => void;
     type?: 'button' | 'submit';
     disabled?: boolean;
+    style?: React.CSSProperties; 
 }
 
-export default function Boton({ children, variant, onClick, type = 'button', disabled = false }: BotonProps) {
+export default function Boton({ children, variant, onClick, type = 'button', disabled = false, style }: BotonProps) {
     
     const renderIcono = () => {
-        // Si hay texto, le ponemos margen. Si no hay texto (solo ícono), quitamos el margen para que quede centrado.
         const estiloIcono = { marginRight: children ? '6px' : '0' };
 
         switch (variant) {
@@ -42,7 +43,8 @@ export default function Boton({ children, variant, onClick, type = 'button', dis
             disabled={disabled}
             style={{ 
                 opacity: disabled ? 0.5 : 1, 
-                cursor: disabled ? 'not-allowed' : 'pointer' 
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                ...style 
             }}
         >
             {renderIcono()}

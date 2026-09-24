@@ -7,15 +7,20 @@ import styles from '../../styles/shared.module.css';
 
 export default function EmpleadosList() {
     const [empleados, setEmpleados] = useState<Empleado[]>([]);
-    
     const [paginaActual, setPaginaActual] = useState(1);
-    const empleadosPorPagina = 3; 
+    const empleadosPorPagina = 5; 
 
     useEffect(() => {
         const cargarDatos = async () => {
             try {
                 const data = await getEmpleados();
-                setEmpleados(data);
+                
+                const datosOrdenados = data.sort((a, b) => {
+                    if (a.activo === b.activo) return 0;
+                    return a.activo ? -1 : 1;
+                });
+                
+                setEmpleados(datosOrdenados);
             } catch (error) {
                 console.error("Error al cargar empleados:", error);
             }
@@ -24,73 +29,112 @@ export default function EmpleadosList() {
         cargarDatos();
     }, []);
 
-    // 1. Calculamos qué porción del array mostrar
-    const indiceUltimoEmpleado = paginaActual * empleadosPorPagina;
-    const indicePrimerEmpleado = indiceUltimoEmpleado - empleadosPorPagina;
-    
-    // 2. Recortamos la lista original
-    const empleadosActuales = empleados.slice(indicePrimerEmpleado, indiceUltimoEmpleado);
-    
-    // 3. Calculamos el total de páginas
+    // Paginación
+    const indiceUltimo = paginaActual * empleadosPorPagina;
+    const indicePrimer = indiceUltimo - empleadosPorPagina;
+    const empleadosActuales = empleados.slice(indicePrimer, indiceUltimo);
     const totalPaginas = Math.ceil(empleados.length / empleadosPorPagina);
-
-    // Funciones para los botones
-    const irPaginaSiguiente = () => {
-        if (paginaActual < totalPaginas) setPaginaActual(paginaActual + 1);
-    };
-
-    const irPaginaAnterior = () => {
-        if (paginaActual > 1) setPaginaActual(paginaActual - 1);
-    };
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Lista de Empleados</h2>
+            <h2>Directorio de Personal</h2>
             
             <Link to="/empleados/nuevo" className={styles.linkCrear}>
                 <Boton variant="crear">
-                    Crear Nuevo Empleado
+                    Registrar Empleado
                 </Boton>
             </Link>
 
-            <ul>
+            <div className={styles.contenedorTabla}>
+                <div className={styles.filaHeader} style={{ gridTemplateColumns: '1fr 2fr 1.5fr 2.5fr 1fr 1.5fr' }}>
+                    <div>Legajo</div>
+                    <div>Nombre Completo</div>
+                    <div>DNI</div>
+                    <div>Roles Asignados</div>
+                    <div>Estado</div>
+                    <div>Acciones</div>
+                </div>
+
                 {empleadosActuales.map((emp) => (
-                    <li key={emp.id}>
-                        <span>{emp.nombre} {emp.apellido}</span>
+                    <div key={emp.id} className={styles.filaItem} style={{ gridTemplateColumns: '1fr 2fr 1.5fr 2.5fr 1fr 1.5fr' }}>
+                        <div style={{ fontWeight: 'bold', color: 'var(--text-h)' }}>
+                            {emp.legajo}
+                        </div>
+
+                        <div style={{ fontWeight: '500', color: 'var(--text-h)' }}>
+                            {emp.nombre} {emp.apellido}
+                        </div>
                         
-                        <div className={styles.grupoBotones}>
+                        <div>{emp.dni || '-'}</div>
+                        
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                            {emp.capacidades && emp.capacidades.length > 0 ? (
+                                emp.capacidades.map(cap => (
+                                    <span 
+                                        key={cap.id} 
+                                        className={`${styles.badge} ${cap.nombre.toLowerCase() === 'administrador' ? styles.badgeAdmin : ''}`}
+                                        style={{ fontSize: '0.7rem', padding: '2px 8px' }}
+                                    >
+                                        {cap.nombre}
+                                    </span>
+                                ))
+                            ) : (
+                                <span className={styles.badge} style={{ backgroundColor: 'var(--border)', color: 'var(--text)' }}>
+                                    Sin asignar
+                                </span>
+                            )}
+                        </div>
+
+                        <div>
+                            {emp.activo ? (
+                                <span style={{ color: '#16a34a', fontWeight: '500' }}>Activo</span>
+                            ) : (
+                                <span style={{ color: '#dc2626', fontWeight: '500' }}>Inactivo</span>
+                            )}
+                        </div>
+                        
+                        <div className={styles.grupoBotonesTabla}>
                             <Link to={`/empleados/editar/${emp.id}`} title="Editar empleado">
-                                <Boton variant="editar" />
+                                <Boton variant="editar" style={{ padding: '8px 12px' }}></Boton>
                             </Link>
-                            <Link to={`/empleados/${emp.id}`}>
-                                <Boton variant="ver"></Boton>
+                            <Link to={`/empleados/${emp.id}`} title="Ver detalle">
+                                <Boton variant="ver" style={{ padding: '8px 12px' }}></Boton>
                             </Link>
-                            <Link to={`/empleados/eliminar/${emp.id}`}>
-                                <Boton variant="eliminar"></Boton>
+                            <Link to={`/empleados/eliminar/${emp.id}`} title="Eliminar registro">
+                                <Boton variant="eliminar" style={{ padding: '8px 12px' }}></Boton>
                             </Link>
                         </div>
-                    </li>
+                    </div>
                 ))}
-            </ul>
 
-            {/* Solo se muestran si hay más de 1 página en total */}
+                {empleadosActuales.length === 0 && (
+                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text)' }}>
+                        No hay empleados registrados.
+                    </div>
+                )}
+            </div>
+
             {totalPaginas > 1 && (
-                <div className={styles.filaBotones} style={{ alignItems: 'center', marginTop: '20px' }}>
+                <div className={styles.filaBotones} style={{ alignItems: 'center', marginTop: '30px', justifyContent: 'center' }}>
                     <Boton 
                         variant="volver" 
-                        onClick={irPaginaAnterior} 
+                        onClick={() => setPaginaActual(p => p - 1)} 
                         disabled={paginaActual === 1}
-                    />
+                    >
+                        Anterior
+                    </Boton>
                     
-                    <span style={{ color: 'white', fontWeight: 'bold' }}>
+                    <span style={{ color: 'var(--text-h)', fontWeight: 'bold', margin: '0 15px' }}>
                         Página {paginaActual} de {totalPaginas}
                     </span>
                     
                     <Boton 
                         variant="siguiente" 
-                        onClick={irPaginaSiguiente} 
+                        onClick={() => setPaginaActual(p => p + 1)} 
                         disabled={paginaActual === totalPaginas}
-                    />
+                    >
+                        Siguiente
+                    </Boton>
                 </div>
             )}
         </div>

@@ -21,7 +21,6 @@ export default function InsumoDelete() {
                 }
             }
         };
-        
         cargarInsumo();
     }, [id]);
 
@@ -44,11 +43,11 @@ export default function InsumoDelete() {
         <div className={styles.contenedorPrincipal}>
             <h2>¿Desea eliminar este insumo?</h2>
             {insumo ? (
-                <div>
-                    <p>Nombre: {insumo.nombre}</p>
-            
+                <div className={styles.tarjetaEstatica} style={{ maxWidth: '600px', width: '100%', textAlign: 'center' }}>
+                    <h3 style={{ color: 'var(--text-h)' }}>{insumo.nombre}</h3>
+                    <p>Unidad de Medida: {insumo.unidad_medida.nombre}</p>
                     
-                    <div className={styles.filaBotones}>
+                    <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
                         <Link to="/insumos">
                             <Boton variant="volver">
                                 Cancelar
@@ -60,7 +59,7 @@ export default function InsumoDelete() {
                     </div>
                 </div>
             ) : (
-                <p>insumo no encontrado</p>
+                <p>Insumo no encontrado</p>
             )}
         </div>
     );
