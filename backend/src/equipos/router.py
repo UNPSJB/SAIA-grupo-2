@@ -19,7 +19,7 @@ def create_equipo(equipo: schemas.EquipoCreate, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=list[schemas.Equipo])
 def read_equipos(db: Session = Depends(get_db)):
-    logger.info("Listando equipos desde router") # <- este mensaje se verá por la terminal
+    logger.info("Listando equipos desde router")
     return services.listar_equipos(db)
 
 

@@ -8,3 +8,7 @@ class TipoEquipo(str, Enum):
     HORNO = "horno"
     BALANZA = "balanza"
     TERMOMETRO = "termometro"
+
+class EstadoEquipo(str, Enum):
+    BUENO = "bueno"
+    DANADO = "danado"

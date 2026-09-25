@@ -18,7 +18,7 @@ def crear_equipo(db: Session, equipo: schemas.EquipoCreate) -> schemas.Equipo:
 
 
 def listar_equipos(db: Session) -> List[schemas.Equipo]:
-    logger.info("Listando equipos desde services")  # <- este mensaje se verá por la terminal
+    logger.info("Listando equipos desde services") 
     return db.scalars(select(Equipo)).all()
 
 
