@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import type { Capacidad } from '../../types/capacidades';
+import type { Sector } from '../../types/sectores';
 import type { EmpleadoPayload } from '../../types/empleados';
 import { getCapacidades } from '../../services/capacidadesServices';
+import { getSectores } from '../../services/sectoresServices';
 import { getEmpleadoById, saveEmpleado } from '../../services/empleadosServices';
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
@@ -14,14 +16,17 @@ interface FormValues {
     apellido: string;
     activo: boolean;
     listaCapacidades: number[];
+    listaSectores: number[];
 }
 
 export default function EmpleadoForm() {
     const [capacidadesDisponibles, setCapacidadesDisponibles] = useState<Capacidad[]>([]);
+    const [sectoresDisponibles, setSectoresDisponibles] = useState<Sector[]>([]);
     
     const navigate = useNavigate();
     const { id } = useParams();
     const editando = Boolean(id);
+    const idNum = id ? Number(id) : null;
 
     const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormValues>({
         defaultValues: {
@@ -29,18 +34,24 @@ export default function EmpleadoForm() {
             nombre: '',
             apellido: '',
             activo: true,
-            listaCapacidades: []
+            listaCapacidades: [],
+            listaSectores: []
         }
     });
 
     const capacidadesActuales = watch('listaCapacidades');
+    const sectoresActuales = watch('listaSectores');
 
     useEffect(() => {
-        const cargarCapacidades = async () => {
-            const data = await getCapacidades();
-            setCapacidadesDisponibles(data);
+        const cargarDatos = async () => {
+            const [capsData, sectsData] = await Promise.all([
+                getCapacidades(),
+                getSectores()
+            ]);
+            setCapacidadesDisponibles(capsData);
+            setSectoresDisponibles(sectsData);
         };
-        cargarCapacidades();
+        cargarDatos();
     }, []);
 
     useEffect(() => {
@@ -52,14 +63,15 @@ export default function EmpleadoForm() {
                     nombre: data.nombre,
                     apellido: data.apellido,
                     activo: data.activo,
-                    listaCapacidades: data.capacidades ? data.capacidades.map((c) => c.id) : []
+                    listaCapacidades: data.capacidades ? data.capacidades.map((c) => c.id) : [],
+                    listaSectores: data.sectores ? data.sectores.map((s) => s.id) : []
                 });
             };
             cargarEmpleado();
         }
     }, [id, editando, reset]);
 
-    const handleCheckboxChange = (capId: number) => {
+    const handleCapacidadChange = (capId: number) => {
         if (capacidadesActuales.includes(capId)) {
             setValue('listaCapacidades', capacidadesActuales.filter(c => c !== capId));
         } else {
@@ -67,13 +79,28 @@ export default function EmpleadoForm() {
         }
     };
 
+    const handleSectorChange = (secId: number) => {
+        if (sectoresActuales.includes(secId)) {
+            setValue('listaSectores', sectoresActuales.filter(s => s !== secId));
+        } else {
+            setValue('listaSectores', [...sectoresActuales, secId]);
+        }
+    };
+
     const onSubmit = async (data: FormValues) => {
+        const sectoresResponsable = sectoresDisponibles
+            .filter(s => s.responsable_id === idNum)
+            .map(s => s.id);
+
+        const sectoresFinales = Array.from(new Set([...data.listaSectores, ...sectoresResponsable]));
+
         const datosGenerados: EmpleadoPayload = { 
             dni: data.dni,
             nombre: data.nombre, 
             apellido: data.apellido, 
             activo: data.activo,
-            listaCapacidades: data.listaCapacidades.length > 0 ? data.listaCapacidades : null 
+            listaCapacidades: data.listaCapacidades.length > 0 ? data.listaCapacidades : null,
+            listaSectores: sectoresFinales.length > 0 ? sectoresFinales : null 
         };
 
         try {
@@ -154,8 +181,9 @@ export default function EmpleadoForm() {
                     )}
                 </div>
 
-                <div className={styles.bloqueCapacidades} style={{ width: '100%', marginTop: '10px' }}>
-                    <label>Roles y Capacidades:</label>
+                {/* --- SECCIÓN DE CAPACIDADES --- */}
+                <div className={styles.bloqueCapacidades} style={{ width: '100%', marginTop: '15px' }}>
+                    <label style={{ display: 'block', fontWeight: '500', marginBottom: '8px' }}>Roles y Capacidades:</label>
                     <div className={styles.formGrid}>
                         {capacidadesDisponibles.map(cap => (
                             <div key={cap.id} className={styles.filaCheckbox}>
@@ -164,7 +192,7 @@ export default function EmpleadoForm() {
                                     id={`cap-${cap.id}`} 
                                     className={styles.checkbox}
                                     checked={capacidadesActuales.includes(cap.id)} 
-                                    onChange={() => handleCheckboxChange(cap.id)} 
+                                    onChange={() => handleCapacidadChange(cap.id)} 
                                 />
                                 <label htmlFor={`cap-${cap.id}`} className={styles.labelCheckbox}>
                                     {cap.nombre}
@@ -174,7 +202,41 @@ export default function EmpleadoForm() {
                     </div>
                 </div>
 
-                <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
+                {/* --- SECCIÓN DE SECTORES --- */}
+                <div className={styles.bloqueCapacidades} style={{ width: '100%', marginTop: '15px' }}>
+                    <label style={{ display: 'block', fontWeight: '500', marginBottom: '8px' }}>Asignación de Sectores:</label>
+                    <div className={styles.formGrid}>
+                        {sectoresDisponibles.length > 0 ? sectoresDisponibles.map(sec => {
+                            const esResponsable = sec.responsable_id === idNum;
+                            const estaSeleccionado = sectoresActuales.includes(sec.id) || esResponsable;
+
+                            return (
+                                <div key={sec.id} className={styles.filaCheckbox} style={esResponsable ? { opacity: 0.8 } : {}}>
+                                    <input 
+                                        type="checkbox" 
+                                        id={`sec-${sec.id}`} 
+                                        className={styles.checkbox}
+                                        checked={estaSeleccionado} 
+                                        disabled={esResponsable} 
+                                        onChange={() => handleSectorChange(sec.id)} 
+                                    />
+                                    <label htmlFor={`sec-${sec.id}`} className={styles.labelCheckbox} style={{ display: 'flex', alignItems: 'center' }}>
+                                        {sec.nombre} 
+                                        {esResponsable && (
+                                            <span style={{ fontSize: '0.75rem', color: '#0284c7', marginLeft: '8px', fontWeight: '600' }}>
+                                                (Responsable)
+                                            </span>
+                                        )}
+                                    </label>
+                                </div>
+                            );
+                        }) : (
+                            <span style={{ color: 'var(--text-muted)' }}>No hay sectores registrados aún.</span>
+                        )}
+                    </div>
+                </div>
+
+                <div className={styles.filaBotones} style={{ marginTop: '25px' }}>
                     <Boton type="submit" variant="guardar">{editando ? 'Actualizar' : 'Guardar'}</Boton>
                     <Link to="/empleados"><Boton variant="eliminar">Cancelar</Boton></Link>
                 </div>

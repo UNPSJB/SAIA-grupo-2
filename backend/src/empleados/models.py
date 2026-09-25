@@ -3,9 +3,11 @@ from sqlalchemy import String, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.models import ModeloBase
 from src.asociaciones.empleado_capacidad import empleado_capacidad
+from src.asociaciones.empleado_sector import empleado_sector
 
 if TYPE_CHECKING:
     from src.capacidades.models import Capacidad
+    from src.sectores.models import Sector 
 
 class Empleado(ModeloBase):
     __tablename__="empleados"
@@ -20,5 +22,11 @@ class Empleado(ModeloBase):
     capacidades: Mapped[Optional[List["Capacidad"]]] = relationship(
         "Capacidad",
         secondary=empleado_capacidad,
+        back_populates="empleados"
+    )
+
+    sectores: Mapped[Optional[List["Sector"]]] = relationship(
+        "Sector",
+        secondary=empleado_sector,
         back_populates="empleados"
     )

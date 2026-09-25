@@ -26,6 +26,22 @@ def crear_sector(db: Session, sector: schemas.SectorCreate) -> Sector:
     return nuevo_sector
 
 def listar_sectores(db: Session) -> List[Sector]:
+    return db.scalars(
+        select(Sector)
+        .options(selectinload(Sector.empleados), selectinload(Sector.responsable), selectinload(Sector.equipos))
+    ).all()
+
+def leer_sector(db: Session, sector_id: int) -> Sector:
+    db_sector = db.scalar(
+        select(Sector)
+        .options(selectinload(Sector.empleados), selectinload(Sector.responsable), selectinload(Sector.equipos)) 
+        .where(Sector.id == sector_id)
+    )
+    if db_sector is None:
+        raise exceptions.SectorNoEncontrado()
+    return db_sector
+
+def listar_sectores(db: Session) -> List[Sector]:
     return db.scalars(select(Sector).options(selectinload(Sector.empleados), selectinload(Sector.responsable))).all()
 
 def leer_sector(db: Session, sector_id: int) -> Sector:
@@ -41,7 +57,7 @@ def leer_sector(db: Session, sector_id: int) -> Sector:
 def modificar_sector(db: Session, sector_id: int, sector: schemas.SectorUpdate) -> Sector:
     db_sector = db.scalar(
         select(Sector)
-        .options(selectinload(Sector.empleados))
+        .options(selectinload(Sector.empleados), selectinload(Sector.responsable)) 
         .where(Sector.id == sector_id)
     )
     if db_sector is None:
@@ -74,3 +90,5 @@ def eliminar_sector(db: Session, sector_id: int) -> Sector:
     db.delete(db_sector)
     db.commit()
     return db_sector
+
+

@@ -8,8 +8,14 @@ export const getSectores = async (): Promise<Sector[]> => {
     return res.json();
 };
 
+export const getSectorById = async (id: number): Promise<Sector> => {
+    const res = await fetch(`${BASE_URL}/${id}`);
+    if (!res.ok) throw new Error("Error al cargar el sector");
+    return res.json();
+};
+
 export const deleteSector = async (id: number): Promise<boolean> => {
-    const res = await fetch(`${BASE_URL}/${id}/`, { method: 'DELETE' });
+    const res = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE' });
     return res.ok;
 };
 

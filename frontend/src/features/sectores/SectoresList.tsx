@@ -70,14 +70,14 @@ export default function SectoresList() {
             </Link>
 
             <div className={styles.contenedorTabla} style={{ maxWidth: '900px' }}>
-                <div className={styles.filaHeader} style={{ gridTemplateColumns: '2fr 2fr 1fr' }}>
+                <div className={styles.filaHeader} style={{ gridTemplateColumns: '2fr 2fr 1.5fr' }}>
                     <div>Nombre del Sector</div>
                     <div>Responsable / Encargado</div>
                     <div>Acciones</div>
                 </div>
 
                 {sectoresActuales.map((sec) => (
-                    <div key={sec.id} className={styles.filaItem} style={{ gridTemplateColumns: '2fr 2fr 1fr' }}>
+                    <div key={sec.id} className={styles.filaItem} style={{ gridTemplateColumns: '2fr 2fr 1.5fr' }}>
                         <div style={{ fontWeight: '500', color: 'var(--text-h)', justifyContent: 'flex-start', paddingLeft: '20px' }}>
                             {sec.nombre}
                         </div>
@@ -87,14 +87,19 @@ export default function SectoresList() {
                         </div>
                         
                         <div className={styles.grupoBotonesTabla}>
-                            <Link to={`/sectores/editar/${sec.id}`}>
+                            <Link to={`/sectores/${sec.id}`} title="Ver detalle">
+                                <Boton variant="ver" style={{ padding: '8px 12px' }}></Boton>
+                            </Link>
+                            <Link to={`/sectores/editar/${sec.id}`} title="Editar sector">
                                 <Boton variant="editar" style={{ padding: '8px 12px' }}></Boton>
                             </Link>
-                            <Boton 
-                                variant="eliminar" 
-                                onClick={() => solicitarEliminacion(sec.id)}
-                                style={{ padding: '8px 12px' }}
-                            ></Boton>
+                            <span title="Eliminar sector">
+                                <Boton 
+                                    variant="eliminar" 
+                                    onClick={() => solicitarEliminacion(sec.id)}
+                                    style={{ padding: '8px 12px' }}
+                                ></Boton>
+                            </span>
                         </div>
                     </div>
                 ))}
@@ -130,7 +135,6 @@ export default function SectoresList() {
                 </div>
             )}
 
-            {/* Modales personalizados */}
             <ModalConfirmacion
                 isOpen={modalConfirmacion.isOpen}
                 titulo="Confirmar Eliminación"

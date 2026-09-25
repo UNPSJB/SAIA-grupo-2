@@ -2,18 +2,22 @@ export interface TipoEquipo {
     id: number;
     nombre: string;
 }
+export interface SectorRef {
+    id: number;
+    nombre: string;
+}
 
 export interface Equipo {
     id: number;
     nombre: string;
     activo: boolean;
     tipo: TipoEquipo;
-    ubicacion: string;
+    sector: SectorRef; 
 }
 
 export interface EquipoPayload {
     nombre: string;
     activo: boolean;
     tipo_id: number;
-    ubicacion: string;
+    sector_id: number;
 }

@@ -5,7 +5,6 @@ import { getEmpleados } from '../../services/empleadosServices';
 import { getSectores, saveSector } from '../../services/sectoresServices';
 import Boton from '../../components/Boton';
 import ModalAlerta from '../../components/alerta';
-
 import styles from '../../styles/shared.module.css';
 
 export default function SectorForm() {
@@ -15,18 +14,14 @@ export default function SectorForm() {
 
     const [nombre, setNombre] = useState('');
     const [responsableId, setResponsableId] = useState<number | null>(null);
-    const [empleadosSeleccionados, setEmpleadosSeleccionados] = useState<number[]>([]);
-    
     const [empleadosDisponibles, setEmpleadosDisponibles] = useState<Empleado[]>([]);
     const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '', exito: false });
 
     useEffect(() => {
-        // Cargar empleados 
         getEmpleados()
             .then(data => setEmpleadosDisponibles(data))
             .catch(err => console.error("Error al cargar empleados:", err));
 
-        //cargamos los datos actuales del sector cuando edita
         if (esEdicion && id) {
             getSectores()
                 .then(sectores => {
@@ -34,7 +29,6 @@ export default function SectorForm() {
                     if (sectorActual) {
                         setNombre(sectorActual.nombre);
                         setResponsableId(sectorActual.responsable_id);
-                        setEmpleadosSeleccionados(sectorActual.empleados.map(e => e.id));
                     }
                 })
                 .catch(err => console.error("Error al cargar sector:", err));
@@ -44,19 +38,14 @@ export default function SectorForm() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!nombre.trim()) {
-            setModalAlerta({
-                isOpen: true,
-                titulo: "Campo Requerido",
-                mensaje: "El nombre del sector no puede estar vacío.",
-                exito: false
-            });
+            setModalAlerta({ isOpen: true, titulo: "Campo Requerido", mensaje: "El nombre del sector no puede estar vacío.", exito: false });
             return;
         }
 
         const payload = {
             nombre,
             responsable_id: responsableId ? Number(responsableId) : null,
-            listaEmpleados: empleadosSeleccionados
+            listaEmpleados: null 
         };
 
         const exito = await saveSector(payload, esEdicion ? Number(id) : undefined);
@@ -69,36 +58,19 @@ export default function SectorForm() {
                 exito: true
             });
         } else {
-            setModalAlerta({
-                isOpen: true,
-                titulo: "Error",
-                mensaje: "Hubo un error al guardar el sector. Verifique que el nombre no esté duplicado.",
-                exito: false
-            });
+            setModalAlerta({ isOpen: true, titulo: "Error", mensaje: "Hubo un error al guardar el sector. Verifique los datos.", exito: false });
         }
     };
 
-    const handleCerrarAlerta = () => {
-        const fueExitoso = modalAlerta.exito;
-        setModalAlerta({ ...modalAlerta, isOpen: false });
-        if (fueExitoso) {
-            navigate('/sectores');
-        }
-    };
-
-    const toggleEmpleado = (empId: number) => {
-        if (empleadosSeleccionados.includes(empId)) {
-            setEmpleadosSeleccionados(empleadosSeleccionados.filter(item => item !== empId));
-        } else {
-            setEmpleadosSeleccionados([...empleadosSeleccionados, empId]);
-        }
-    };
+    const posiblesResponsables = empleadosDisponibles.filter(emp => 
+        emp.capacidades && emp.capacidades.some(cap => cap.nombre.toLowerCase().includes('administrador'))
+    );
 
     return (
         <div className={styles.contenedorPrincipal}>
             <h2>{esEdicion ? 'Editar Sector' : 'Registrar Nuevo Sector'}</h2>
 
-            <form onSubmit={handleSubmit} className={styles.formularioContainer} style={{ maxWidth: '650px', margin: '0 auto', textAlign: 'left' }}>
+            <form onSubmit={handleSubmit} className={styles.formularioContainer} style={{ maxWidth: '500px', margin: '0 auto', textAlign: 'left' }}>
                 <div style={{ marginBottom: '20px' }}>
                     <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-h)', fontWeight: '500' }}>
                         Nombre del Sector:
@@ -108,70 +80,32 @@ export default function SectorForm() {
                         value={nombre} 
                         onChange={(e) => setNombre(e.target.value)} 
                         required 
-                        style={{
-                            width: '100%',
-                            padding: '10px',
-                            borderRadius: '8px',
-                            border: '1px solid var(--border)',
-                            backgroundColor: 'var(--card-bg)',
-                            color: 'var(--text-h)'
-                        }}
-                        placeholder="Ej. Producción, Control de Calidad, Logística..."
+                        style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: 'var(--card-bg)', color: 'var(--text-h)' }}
+                        placeholder="Ej. Producción, Logística..."
                     />
                 </div>
 
-                <div style={{ marginBottom: '20px' }}>
+                <div style={{ marginBottom: '30px' }}>
                     <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-h)', fontWeight: '500' }}>
                         Responsable / Administrativo a Cargo:
                     </label>
                     <select 
                         value={responsableId ?? ''} 
                         onChange={(e) => setResponsableId(e.target.value ? Number(e.target.value) : null)}
-                        style={{
-                            width: '100%',
-                            padding: '10px',
-                            borderRadius: '8px',
-                            border: '1px solid var(--border)',
-                            backgroundColor: 'var(--card-bg)',
-                            color: 'var(--text-h)'
-                        }}
+                        style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: 'var(--card-bg)', color: 'var(--text-h)' }}
                     >
                         <option value="">-- Sin responsable asignado --</option>
-                        {empleadosDisponibles.map(emp => (
+                        {posiblesResponsables.map(emp => (
                             <option key={emp.id} value={emp.id}>
                                 {emp.nombre} {emp.apellido} ({emp.legajo})
                             </option>
                         ))}
                     </select>
-                </div>
-
-                <div style={{ marginBottom: '30px' }}>
-                    <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-h)', fontWeight: '500' }}>
-                        Asignar Empleados al Sector:
-                    </label>
-                    <div style={{ 
-                        maxHeight: '180px', 
-                        overflowY: 'auto', 
-                        border: '1px solid var(--border)', 
-                        borderRadius: '8px', 
-                        padding: '12px',
-                        backgroundColor: 'var(--card-bg)'
-                    }}>
-                        {empleadosDisponibles.map(emp => (
-                            <label key={emp.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', color: 'var(--text)', cursor: 'pointer' }}>
-                                <input 
-                                    type="checkbox" 
-                                    checked={empleadosSeleccionados.includes(emp.id)}
-                                    onChange={() => toggleEmpleado(emp.id)}
-                                    style={{ marginRight: '10px', accentColor: 'var(--primary)' }}
-                                />
-                                {emp.nombre} {emp.apellido} <span style={{ color: 'var(--text-muted)', marginLeft: '6px' }}>({emp.legajo})</span>
-                            </label>
-                        ))}
-                        {empleadosDisponibles.length === 0 && (
-                            <p style={{ color: 'var(--text)', textAlign: 'center', margin: 0 }}>No hay empleados registrados en el sistema.</p>
-                        )}
-                    </div>
+                    {posiblesResponsables.length === 0 && (
+                        <small style={{ color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                            * No hay empleados con capacidad de "Administrar" registrados.
+                        </small>
+                    )}
                 </div>
 
                 <div className={styles.filaBotones} style={{ justifyContent: 'space-between' }}>
@@ -184,12 +118,7 @@ export default function SectorForm() {
                 </div>
             </form>
 
-            <ModalAlerta
-                isOpen={modalAlerta.isOpen}
-                titulo={modalAlerta.titulo}
-                mensaje={modalAlerta.mensaje}
-                onClose={handleCerrarAlerta}
-            />
+            <ModalAlerta isOpen={modalAlerta.isOpen} titulo={modalAlerta.titulo} mensaje={modalAlerta.mensaje} onClose={() => { setModalAlerta({ ...modalAlerta, isOpen: false }); if (modalAlerta.exito) navigate('/sectores'); }} />
         </div>
     );
 }

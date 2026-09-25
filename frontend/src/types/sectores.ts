@@ -1,11 +1,23 @@
-import type { Empleado } from './empleados';
+export interface EmpleadoRef {
+    id: number;
+    nombre: string;
+    apellido: string;
+    legajo: string;
+}
+
+export interface EquipoRef {
+    id: number;
+    nombre: string;
+    activo: boolean;
+}
 
 export interface Sector {
     id: number;
     nombre: string;
     responsable_id: number | null;
-    responsable: Empleado | null;
-    empleados: Empleado[];
+    responsable: EmpleadoRef | null;
+    empleados: EmpleadoRef[];
+    equipos: EquipoRef[];
 }
 
 export interface SectorPayload {

@@ -42,7 +42,7 @@ export default function EquipoDelete() {
                 <div className={styles.tarjetaEstatica} style={{ maxWidth: '600px', width: '100%', textAlign: 'center' }}>
                     <h3 style={{ color: 'var(--text-h)' }}>{equipo.nombre}</h3>
                     <p>Categoría: {equipo.tipo.nombre}</p>
-                    <p>Ubicación: {equipo.ubicacion}</p>
+                    <p><strong>Ubicación / Sector:</strong> {equipo.sector?.nombre}</p>
                     
                     <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
                         <Link to="/equipos">

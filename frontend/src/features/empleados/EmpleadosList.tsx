@@ -49,7 +49,7 @@ export default function EmpleadosList() {
                 <div className={styles.filaHeader} style={{ gridTemplateColumns: '1fr 2fr 1.5fr 2.5fr 1fr 1.5fr' }}>
                     <div>Legajo</div>
                     <div>Nombre Completo</div>
-                    <div>DNI</div>
+                    <div>Sector/es</div> 
                     <div>Roles Asignados</div>
                     <div>Estado</div>
                     <div>Acciones</div>
@@ -65,7 +65,13 @@ export default function EmpleadosList() {
                             {emp.nombre} {emp.apellido}
                         </div>
                         
-                        <div>{emp.dni || '-'}</div>
+                        <div style={{ color: 'var(--text)', textAlign: 'center' }}>
+                            {emp.sectores && emp.sectores.length > 0 ? (
+                                emp.sectores.map(sec => sec.nombre).join(', ')
+                            ) : (
+                                <span style={{ color: 'var(--text-muted)' }}>Sin asignar</span>
+                            )}
+                        </div>
                         
                         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
                             {emp.capacidades && emp.capacidades.length > 0 ? (
@@ -79,7 +85,7 @@ export default function EmpleadosList() {
                                     </span>
                                 ))
                             ) : (
-                                <span className={styles.badge} style={{ backgroundColor: 'var(--border)', color: 'var(--text)' }}>
+                                <span className={styles.badge} style={{ color: 'var(--text)' }}>
                                     Sin asignar
                                 </span>
                             )}

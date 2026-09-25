@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import type { EquipoPayload, TipoEquipo } from '../../types/equipos';
+import type { Sector } from '../../types/sectores';
 import { getEquipoById, saveEquipo, getTiposEquipo } from '../../services/equiposServices';
+import { getSectores } from '../../services/sectoresServices'; 
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
 
@@ -10,11 +12,12 @@ interface FormValues {
     nombre: string;
     activo: boolean;
     tipo_id: number;
-    ubicacion: string;
+    sector_id: number; 
 }
 
 export default function EquipoForm() {
     const [tiposDisponibles, setTiposDisponibles] = useState<TipoEquipo[]>([]);
+    const [sectoresDisponibles, setSectoresDisponibles] = useState<Sector[]>([]); 
     
     const navigate = useNavigate();
     const { id } = useParams();
@@ -24,20 +27,23 @@ export default function EquipoForm() {
         defaultValues: {
             nombre: '',
             activo: true,
-            ubicacion: ''
         }
     });
 
     useEffect(() => {
-        const cargarTipos = async () => {
+        const cargarDatos = async () => {
             try {
-                const data = await getTiposEquipo();
-                setTiposDisponibles(data);
+                const [tiposData, sectoresData] = await Promise.all([
+                    getTiposEquipo(),
+                    getSectores()
+                ]);
+                setTiposDisponibles(tiposData);
+                setSectoresDisponibles(sectoresData);
             } catch (err) {
-                console.error("Error al cargar tipos de equipo:", err);
+                console.error("Error al cargar datos:", err);
             }
         };
-        cargarTipos();
+        cargarDatos();
     }, []);
 
     useEffect(() => {
@@ -49,7 +55,7 @@ export default function EquipoForm() {
                         nombre: data.nombre,
                         activo: data.activo,
                         tipo_id: data.tipo.id,
-                        ubicacion: data.ubicacion
+                        sector_id: data.sector.id 
                     });
                 } catch (err) {
                     console.error("Error al cargar equipo:", err);
@@ -64,7 +70,7 @@ export default function EquipoForm() {
             nombre: data.nombre, 
             activo: data.activo, 
             tipo_id: data.tipo_id,
-            ubicacion: data.ubicacion 
+            sector_id: data.sector_id 
         };
 
         try {
@@ -123,16 +129,22 @@ export default function EquipoForm() {
 
                     <div className={styles.formGroup}>
                         <label>Ubicación / Sector:</label>
-                        <input
-                            type="text" 
-                            {...register('ubicacion', { 
-                                required: "La ubicación es obligatoria",
-                                minLength: { value: 2, message: "Debe tener al menos 2 caracteres" },
-                                validate: (value) => value.trim().length > 0 || "No puede estar vacío o contener solo espacios"
+                        <select 
+                            {...register('sector_id', { 
+                                required: "Debe seleccionar un sector",
+                                valueAsNumber: true,
+                                validate: value => !isNaN(value) || "Debe seleccionar un sector"
                             })} 
-                            style={errors.ubicacion ? { borderColor: '#ef4444', outline: 'none' } : {}}
-                        />
-                        {errors.ubicacion && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.ubicacion.message}</span>}
+                            style={errors.sector_id ? { borderColor: '#ef4444', outline: 'none' } : {}}
+                        >
+                            <option value="">Seleccione un sector...</option>
+                            {sectoresDisponibles.map((s) => (
+                                <option key={s.id} value={s.id}>
+                                    {s.nombre}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.sector_id && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.sector_id.message}</span>}
                     </div>
 
                     <div className={styles.formGroup} style={{ justifyContent: 'center' }}>

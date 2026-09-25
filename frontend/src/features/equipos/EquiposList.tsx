@@ -15,7 +15,6 @@ export default function EquiposList() {
             try {
                 const data = await getEquipos();
                 
-                // Ordenamos: Operativos arriba, Fuera de Servicio abajo
                 const datosOrdenados = data.sort((a, b) => {
                     if (a.activo === b.activo) return 0;
                     return a.activo ? -1 : 1;
@@ -65,7 +64,7 @@ export default function EquiposList() {
                             </span>
                         </div>
                         
-                        <div>{eq.ubicacion}</div>
+                        <div>{eq.sector ? eq.sector.nombre : <span style={{ color: 'var(--text-muted)' }}>Sin asignar</span>}</div>
 
                         <div>
                             {eq.activo ? (

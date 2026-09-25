@@ -6,6 +6,7 @@ from src.empleados.models import Empleado
 from src.equipos.models import Equipo, TipoEquipo
 from src.insumos.models import Insumo
 from src.unidades_medida.models import UnidadMedida
+from src.sectores.models import Sector # <-- Agregamos el modelo de Sector
 
 def seed_database():
     Base.metadata.create_all(bind=engine)
@@ -131,6 +132,29 @@ def seed_database():
             db.commit()
             print("Empleados creados (14).")
 
+        # --- SECTORES (NUEVO) ---
+        if db.query(Sector).count() == 0:
+            carlos_admin = db.query(Empleado).filter_by(legajo="EMP-1000").first()
+            maria_admin = db.query(Empleado).filter_by(legajo="EMP-1001").first()
+            juan_op = db.query(Empleado).filter_by(legajo="EMP-1002").first()
+            lucia_op = db.query(Empleado).filter_by(legajo="EMP-1003").first()
+
+            sectores = [
+                Sector(nombre="Depósito Frío", responsable_id=carlos_admin.id if carlos_admin else None, empleados=[carlos_admin, juan_op] if carlos_admin and juan_op else []),
+                Sector(nombre="Sector Cocción", responsable_id=maria_admin.id if maria_admin else None, empleados=[maria_admin, lucia_op] if maria_admin and lucia_op else []),
+                Sector(nombre="Recepción de Materia Prima"),
+                Sector(nombre="Sector Preparación"),
+                Sector(nombre="Control de Calidad"),
+                Sector(nombre="Mantenimiento"),
+                Sector(nombre="Sector Empaque"),
+                Sector(nombre="Laboratorio de Calidad"),
+                Sector(nombre="Línea de Producción")
+            ]
+            
+            db.add_all(sectores)
+            db.commit()
+            print("Sectores creados (9).")
+
         # --- TIPOS DE EQUIPO ---
         if db.query(TipoEquipo).count() == 0:
             tipos = [
@@ -152,6 +176,7 @@ def seed_database():
 
         # --- EQUIPOS ---
         if db.query(Equipo).count() == 0:
+            # Tipos
             t_heladera = db.query(TipoEquipo).filter_by(nombre="Heladera").first().id
             t_horno = db.query(TipoEquipo).filter_by(nombre="Horno").first().id
             t_balanza = db.query(TipoEquipo).filter_by(nombre="Balanza").first().id
@@ -163,21 +188,32 @@ def seed_database():
             t_cinta = db.query(TipoEquipo).filter_by(nombre="Cinta Transportadora").first().id
             t_detector = db.query(TipoEquipo).filter_by(nombre="Detector de Metales").first().id
 
+            # Sectores
+            s_frio = db.query(Sector).filter_by(nombre="Depósito Frío").first().id
+            s_coccion = db.query(Sector).filter_by(nombre="Sector Cocción").first().id
+            s_recepcion = db.query(Sector).filter_by(nombre="Recepción de Materia Prima").first().id
+            s_preparacion = db.query(Sector).filter_by(nombre="Sector Preparación").first().id
+            s_calidad = db.query(Sector).filter_by(nombre="Control de Calidad").first().id
+            s_mantenimiento = db.query(Sector).filter_by(nombre="Mantenimiento").first().id
+            s_empaque = db.query(Sector).filter_by(nombre="Sector Empaque").first().id
+            s_laboratorio = db.query(Sector).filter_by(nombre="Laboratorio de Calidad").first().id
+            s_produccion = db.query(Sector).filter_by(nombre="Línea de Producción").first().id
+
             equipos = [
-                Equipo(nombre="Heladera Cámara 1", activo=True, tipo_id=t_heladera, ubicacion="Depósito Frío"),
-                Equipo(nombre="Horno Rotativo", activo=True, tipo_id=t_horno, ubicacion="Sector Cocción"),
-                Equipo(nombre="Balanza Digital 30kg", activo=True, tipo_id=t_balanza, ubicacion="Recepción de Materia Prima"),
-                Equipo(nombre="Amasadora Industrial 50kg", activo=True, tipo_id=t_amasadora, ubicacion="Sector Preparación"),
-                Equipo(nombre="Termómetro Infrarrojo", activo=True, tipo_id=t_termometro, ubicacion="Control de Calidad"),
-                Equipo(nombre="Termómetro de Pinche", activo=True, tipo_id=t_termometro, ubicacion="Sector Cocción"),
-                Equipo(nombre="Cámara de Congelados", activo=True, tipo_id=t_heladera, ubicacion="Depósito Frío"),
-                Equipo(nombre="Cortadora de Fiambre", activo=False, tipo_id=t_cortadora, ubicacion="Mantenimiento"),
-                Equipo(nombre="Envasadora al Vacío", activo=True, tipo_id=t_envasadora, ubicacion="Sector Empaque"),
-                Equipo(nombre="Mezcladora de Polvos 100L", activo=True, tipo_id=t_mezcladora, ubicacion="Sector Preparación"),
-                Equipo(nombre="Balanza de Precisión", activo=True, tipo_id=t_balanza, ubicacion="Laboratorio de Calidad"),
-                Equipo(nombre="Cinta Transportadora Ppal", activo=True, tipo_id=t_cinta, ubicacion="Línea de Producción"),
-                Equipo(nombre="Detector de Metales Fin de Línea", activo=True, tipo_id=t_detector, ubicacion="Sector Empaque"),
-                Equipo(nombre="Horno Convector Secundario", activo=False, tipo_id=t_horno, ubicacion="Mantenimiento")
+                Equipo(nombre="Heladera Cámara 1", activo=True, tipo_id=t_heladera, sector_id=s_frio),
+                Equipo(nombre="Horno Rotativo", activo=True, tipo_id=t_horno, sector_id=s_coccion),
+                Equipo(nombre="Balanza Digital 30kg", activo=True, tipo_id=t_balanza, sector_id=s_recepcion),
+                Equipo(nombre="Amasadora Industrial 50kg", activo=True, tipo_id=t_amasadora, sector_id=s_preparacion),
+                Equipo(nombre="Termómetro Infrarrojo", activo=True, tipo_id=t_termometro, sector_id=s_calidad),
+                Equipo(nombre="Termómetro de Pinche", activo=True, tipo_id=t_termometro, sector_id=s_coccion),
+                Equipo(nombre="Cámara de Congelados", activo=True, tipo_id=t_heladera, sector_id=s_frio),
+                Equipo(nombre="Cortadora de Fiambre", activo=False, tipo_id=t_cortadora, sector_id=s_mantenimiento),
+                Equipo(nombre="Envasadora al Vacío", activo=True, tipo_id=t_envasadora, sector_id=s_empaque),
+                Equipo(nombre="Mezcladora de Polvos 100L", activo=True, tipo_id=t_mezcladora, sector_id=s_preparacion),
+                Equipo(nombre="Balanza de Precisión", activo=True, tipo_id=t_balanza, sector_id=s_laboratorio),
+                Equipo(nombre="Cinta Transportadora Ppal", activo=True, tipo_id=t_cinta, sector_id=s_produccion),
+                Equipo(nombre="Detector de Metales Fin de Línea", activo=True, tipo_id=t_detector, sector_id=s_empaque),
+                Equipo(nombre="Horno Convector Secundario", activo=False, tipo_id=t_horno, sector_id=s_mantenimiento)
             ]
             db.add_all(equipos)
             db.commit()

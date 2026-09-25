@@ -8,10 +8,15 @@ class TipoEquipoBase(BaseModel):
     nombre: str
     model_config = ConfigDict(from_attributes=True)
 
+class SectorRef(BaseModel):
+    id: int
+    nombre: str
+    model_config = ConfigDict(from_attributes=True)
+
 class EquipoBase(BaseModel):
     nombre: NombreEquipo
     activo: bool
-    ubicacion: str
+    sector_id: int 
     tipo_id: int 
     
 class EquipoCreate(EquipoBase):
@@ -23,4 +28,5 @@ class EquipoUpdate(EquipoBase):
 class Equipo(EquipoBase):
     id: int
     tipo: TipoEquipoBase 
+    sector: SectorRef
     model_config = ConfigDict(from_attributes=True)
