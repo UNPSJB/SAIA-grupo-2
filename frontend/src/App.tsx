@@ -19,6 +19,9 @@ import EquipoForm from './features/equipos/EquipoForm';
 import EquipoDetail from './features/equipos/EquipoDetail';
 import EquipoDelete from './features/equipos/EquipoDelete';
 
+import SectoresList from './features/sectores/SectoresList';
+import SectorForm from './features/sectores/SectorForm';
+
 import './App.css';
 
 function App() {
@@ -32,6 +35,7 @@ function App() {
           <div className="dropdownContent">
             <Link to="/empleados">Directorio de Empleados</Link>
             <Link to="/capacidades">Gestión de Capacidades</Link>
+            <Link to="/sectores">Gestión de Sectores</Link>
           </div>
         </div>
 
@@ -79,6 +83,10 @@ function App() {
           <Route path="/equipos/:id" element={<EquipoDetail />} />
           <Route path="/equipos/editar/:id" element={<EquipoForm />} />
           <Route path="/equipos/eliminar/:id" element={<EquipoDelete />} />
+
+          <Route path="/sectores" element={<SectoresList />} />
+          <Route path="/sectores/nuevo" element={<SectorForm />} />
+          <Route path="/sectores/editar/:id" element={<SectorForm />} />
         </Routes>
       </div>
     </BrowserRouter>
