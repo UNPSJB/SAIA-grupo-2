@@ -2,15 +2,18 @@ import logging
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from src.database import get_db
+from sqlalchemy import select
 from src.equipos import schemas, services
+from src.equipos.models import TipoEquipo
 
-# Creamos un logger para este módulo específico. Más info.: https://docs.python.org/3/library/logging.html
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/equipos", tags=["equipos"])
 
 # Rutas para Equipos
-
+@router.get("/tipos", response_model=list[schemas.TipoEquipoBase])
+def read_tipos_equipo(db: Session = Depends(get_db)):
+    return db.scalars(select(TipoEquipo)).all()
 
 @router.post("/", response_model=schemas.Equipo)
 def create_equipo(equipo: schemas.EquipoCreate, db: Session = Depends(get_db)):
@@ -19,7 +22,7 @@ def create_equipo(equipo: schemas.EquipoCreate, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=list[schemas.Equipo])
 def read_equipos(db: Session = Depends(get_db)):
-    logger.info("Listando equipos desde router") # <- este mensaje se verá por la terminal
+    logger.info("Listando equipos desde router") 
     return services.listar_equipos(db)
 
 

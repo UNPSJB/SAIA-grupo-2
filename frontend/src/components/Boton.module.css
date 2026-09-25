@@ -1,62 +1,30 @@
-.crear {
-    background-color: #1a6a4a;
+.base {
     color: rgb(245, 255, 255);
     border: none;
     padding: 10px 15px;
-    cursor: pointer;
     border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: filter 0.2s ease;
 }
 
-.editar {
-    background-color: #1a6a4a;
-    color: rgb(245, 255, 255);
-    border: none;
-    padding: 10px 15px;
-    cursor: pointer;
-    border-radius: 10px;
+.base:hover:not(:disabled) {
+    filter: brightness(1.15);
 }
 
-.ver {
-    background-color: #1a6a4a;
-    color: rgb(245, 255, 255);
-    border: none;
-    padding: 10px 15px;
-    cursor: pointer;
-    border-radius: 10px;
-}
-
-.guardar {
-    background-color: #1a6a4a;
-    color: rgb(245, 255, 255);
-    border: none;
-    padding: 10px 15px;
-    cursor: pointer;
-    border-radius: 10px;
-}
-
-.volver {
-    background-color: #1a6a4a;
-    color: rgb(245, 255, 255);
-    border: none;
-    padding: 10px 15px;
-    cursor: pointer;
-    border-radius: 10px;
-}
-
+.crear, 
+.editar, 
+.ver, 
+.guardar, 
+.volver, 
 .siguiente {
     background-color: #1a6a4a;
-    color: rgb(245, 255, 255);
-    border: none;
-    padding: 10px 15px;
-    cursor: pointer;
-    border-radius: 10px;
 }
 
+/* Color Rojo */
 .eliminar {
     background-color: #ec1313;
-    color: rgb(245, 255, 255);
-    border: none;
-    padding: 10px 15px;
-    cursor: pointer;
-    border-radius: 10px;
 }

@@ -6,3 +6,6 @@ class EmpleadoNoEncontrado(NotFound):
 
 class NombreDuplicado(BadRequest):
     DETAIL = ErrorCode.NOMBRE_DUPLICADO
+
+class DniDuplicado(BadRequest):
+    DETAIL = ErrorCode.DNI_DUPLICADO

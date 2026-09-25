@@ -1,25 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-//import type { Capacidad } from '../../types/capacidades';
+import { useForm } from 'react-hook-form';
 import type { UnidadMedida } from '../../types/unidadesMedida';
 import type { InsumoPayload } from '../../types/insumos';
-//import { getCapacidades } from '../../services/capacidadesServices';
 import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
 import { getInsumoById, saveInsumo } from '../../services/insumosServices';
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
 
+interface FormValues {
+    nombre: string;
+    unidad_medida_id: number;
+}
+
 export default function InsumoForm() {
-    const [nombre, setNombre] = useState('');
     const [unidadesDisponibles, setUnidadesDisponibles] = useState<UnidadMedida[]>([]);
-    const [unidadMedidaId, setUnidadMedidaId] = useState<number | ''>('');
-    //no va a dejar crear hasta que no se conecte con unidades de medida
-    //const [capacidadesDisponibles, setCapacidadesDisponibles] = useState<Capacidad[]>([]);
-    //const [listaCapacidades, setListaCapacidades] = useState<number[]>([]);
     
     const navigate = useNavigate();
     const { id } = useParams();
     const editando = Boolean(id);
+
+    const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+        defaultValues: {
+            nombre: ''
+        }
+    });
 
     useEffect(() => {
         const cargarUnidades = async () => {
@@ -32,56 +37,31 @@ export default function InsumoForm() {
         };
         cargarUnidades(); 
     }, []);
-/*     useEffect(() => {
-        const cargarCapacidades = async () => {
-            try {
-                const data = await getCapacidades();
-                setCapacidadesDisponibles(data);
-            } catch (err) {
-                console.error("Error al cargar capacidades:", err);
-            }
-        };
-        cargarCapacidades(); 
-    }, []);*/
 
     useEffect(() => {
         if (editando && id) {
             const cargarInsumo = async () => {
                 try {
                     const data = await getInsumoById(id);
-                    setNombre(data.nombre);
-                    setUnidadMedidaId(data.unidad_medida_id)
-                    /* if (data.capacidades) {
-                        setListaCapacidades(data.capacidades.map((c) => c.id));
-                    } */
+                    reset({
+                        nombre: data.nombre,
+                        unidad_medida_id: data.unidad_medida_id
+                    });
                 } catch (err) {
                     console.error("Error al cargar insumo:", err);
                 }
             };
             cargarInsumo();
         }
-    }, [id, editando]);
+    }, [id, editando, reset]);
 
-    // const handleCheckboxChange = (capId: number) => {
-    //     setListaCapacidades(prev => 
-    //         prev.includes(capId) 
-    //             ? prev.filter(capacidadId => capacidadId !== capId)
-    //             : [...prev, capId]
-    //     );
-    // };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        if (unidadMedidaId === '') {
-            alert('Por favor, selecciona una unidad de medida.');
-            return;
-        }
+    const onSubmit = async (data: FormValues) => {
+        const nombreLimpio = data.nombre.trim();
+        if (!nombreLimpio) return;
 
         const datos: InsumoPayload = { 
-            nombre, 
-            unidad_medida_id:Number(unidadMedidaId)
-            //listaCapacidades: listaCapacidades.length > 0 ? listaCapacidades : null 
+            nombre: nombreLimpio, 
+            unidad_medida_id: Number(data.unidad_medida_id)
         };
 
         try {
@@ -98,57 +78,46 @@ export default function InsumoForm() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>{editando ? 'Editar Insumo' : 'Crer Nuevo Registro'}</h2>
+            <h2>{editando ? 'Editar Insumo' : 'Registrar Nuevo Insumo'}</h2>
             
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label>Nombre:</label>
-                    <input 
-                        type="text" 
-                        value={nombre} 
-                        onChange={(e) => setNombre(e.target.value)} 
-                        required 
-                    />
-                </div>
-                
-                <div>
-                    <label>Unidad de Medida:</label>
-                    <select 
-                        value={unidadMedidaId} 
-                        onChange={(e) => setUnidadMedidaId(Number(e.target.value))}
-                        required
-                    >
-                        <option value="" disabled>Seleccione una unidad...</option>
-                        {unidadesDisponibles.map(unidad => (
-                            <option key={unidad.id} value={unidad.id}>
-                                {unidad.nombre}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-
-                {/* <div className={styles.bloqueCapacidades}>
-                    <label>Capacidades (Opcional):</label>
-                    <div className={styles.listaCheckboxes}>
-                        {capacidadesDisponibles.map(cap => (
-                            <div key={cap.id} className={styles.filaCheckbox}>
-                                <input 
-                                    type="checkbox" 
-                                    id={`cap-${cap.id}`}
-                                    checked={listaCapacidades.includes(cap.id)}
-                                    onChange={() => handleCheckboxChange(cap.id)}
-                                    className={styles.checkbox}
-                                />
-                                <label htmlFor={`cap-${cap.id}`} className={styles.labelCheckbox}>
-                                    {cap.nombre}
-                                </label>
-                            </div>
-                        ))}
+            <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta} style={{ maxWidth: '600px' }}>
+                <div className={styles.formGrid} style={{ gridTemplateColumns: '1fr' }}>
+                    <div className={styles.formGroup}>
+                        <label>Nombre del Insumo:</label>
+                        <input 
+                            type="text" 
+                            {...register('nombre', { 
+                                required: "El nombre es obligatorio",
+                                validate: (value) => value.trim().length >= 2 || "No puede contener solo espacios o estar vacío",
+                                maxLength: { value: 100, message: "No puede superar los 100 caracteres" }
+                            })} 
+                            style={errors.nombre ? { borderColor: '#ef4444', outline: 'none' } : {}}
+                        />
+                        {errors.nombre && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.nombre.message}</span>}
                     </div>
-                </div> */}
+                    
+                    <div className={styles.formGroup}>
+                        <label>Unidad de Medida:</label>
+                        <select 
+                            {...register('unidad_medida_id', { 
+                                required: "Debe seleccionar una unidad de medida",
+                                valueAsNumber: true,
+                                validate: value => !isNaN(value) || "Debe seleccionar una unidad válida"
+                            })} 
+                            style={errors.unidad_medida_id ? { borderColor: '#ef4444', outline: 'none' } : {}}
+                        >
+                            <option value="">Seleccione una unidad...</option>
+                            {unidadesDisponibles.map(unidad => (
+                                <option key={unidad.id} value={unidad.id}>
+                                    {unidad.nombre}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.unidad_medida_id && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.unidad_medida_id.message}</span>}
+                    </div>
+                </div>
 
-                <div className={styles.filaBotones}>
+                <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
                     <Boton type="submit" variant="guardar">
                         {editando ? 'Actualizar Cambios' : 'Guardar'}
                     </Boton>

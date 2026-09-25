@@ -20,7 +20,6 @@ export default function InsumoDetail() {
                 }
             }
         };
-        
         cargarInsumo();
     }, [id]);
 
@@ -28,18 +27,13 @@ export default function InsumoDetail() {
         <div className={styles.contenedorPrincipal}>
             <h2>Detalle del Insumo</h2>
             {insumo ? (
-                <div>
-                    <p>Nombre: {insumo.nombre}</p>
-                    <p>Unidad de Medida: {insumo.unidad_medida.nombre}</p>
-                    {/* <p>
-                        Capacidades: {empleado.capacidades && empleado.capacidades.length > 0 
-                            ? empleado.capacidades.map(c => c.nombre).join(', ') 
-                            : 'Ninguna asignada'}
-                    </p> */}
+                <div className={styles.tarjetaEstatica} style={{ maxWidth: '600px', width: '100%' }}>
+                    <p><strong>Nombre:</strong> {insumo.nombre}</p>
+                    <p><strong>Unidad de Medida:</strong> {insumo.unidad_medida.nombre}</p>
 
-                    <div className={styles.bloqueDetalle}>
+                    <div className={styles.bloqueDetalle} style={{ textAlign: 'center', marginTop: '20px' }}>
                         <Link to="/insumos">
-                            <Boton variant="editar">Volver a la lista</Boton>
+                            <Boton variant="volver">Volver a la lista</Boton>
                         </Link>
                     </div>
                 </div>

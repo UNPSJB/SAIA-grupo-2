@@ -29,9 +29,10 @@ export default function EmpleadoDetail() {
             <h2>Detalle del Empleado</h2>
             {empleado ? (
                 <div>
+                    <p><strong>Legajo:</strong> {empleado.legajo}</p>
                     <p><strong>Nombre:</strong> {empleado.nombre}</p>
                     <p><strong>Apellido:</strong> {empleado.apellido}</p>
-                    
+                    <p><strong>DNI:</strong> {empleado.dni}</p>
                     <p>
                         <strong>Capacidades:</strong> {empleado.capacidades && empleado.capacidades.length > 0 
                             ? empleado.capacidades.map(c => c.nombre).join(', ') 

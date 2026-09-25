@@ -21,7 +21,6 @@ export default function EmpleadoDelete() {
                 }
             }
         };
-        
         cargarEmpleado();
     }, [id]);
 
@@ -33,7 +32,7 @@ export default function EmpleadoDelete() {
             if (exito) {
                 navigate('/empleados');
             } else {
-                alert('Hubo un error al intentar eliminar el registro.');
+                alert('Hubo un error al intentar dar de baja el registro.');
             }
         } catch (error) {
             console.error('Error de red:', error);
@@ -42,20 +41,42 @@ export default function EmpleadoDelete() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>¿Desea eliminar este empleado?</h2>
+            <h2>¿Desea dar de baja este empleado?</h2>
             {empleado ? (
-                <div>
-                    <p>Nombre: {empleado.nombre}</p>
-                    <p>Apellido: {empleado.apellido}</p>
+                <div className={styles.tarjetaEstatica} style={{ maxWidth: '600px', width: '100%', textAlign: 'center' }}>
+                    <h3 style={{ color: 'var(--text-h)' }}>{empleado.nombre} {empleado.apellido}</h3>
+                    <p><strong>Legajo:</strong> {empleado.legajo}</p>
+                    <p><strong>DNI / CUIL:</strong> {empleado.dni}</p>
                     
-                    <div className={styles.filaBotones}>
+                    <div style={{ margin: '15px 0' }}>
+                        <p style={{ marginBottom: '8px' }}><strong>Capacidad/es:</strong></p>
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                            {empleado.capacidades && empleado.capacidades.length > 0 ? (
+                                empleado.capacidades.map(cap => (
+                                    <span 
+                                        key={cap.id} 
+                                        className={`${styles.badge} ${cap.nombre.toLowerCase() === 'administrador' ? styles.badgeAdmin : ''}`}
+                                        style={{ fontSize: '0.75rem', padding: '4px 10px' }}
+                                    >
+                                        {cap.nombre}
+                                    </span>
+                                ))
+                            ) : (
+                                <span className={styles.badge} style={{ backgroundColor: 'var(--border)', color: 'var(--text)' }}>
+                                    Sin asignar
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                    
+                    <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
                         <Link to="/empleados">
                             <Boton variant="volver">
-                                volver
+                                Cancelar
                             </Boton>
                         </Link>
                         <Boton variant="eliminar" onClick={handleDelete}>
-                            Eliminar
+                            Confirmar Baja
                         </Boton>
                     </div>
                 </div>

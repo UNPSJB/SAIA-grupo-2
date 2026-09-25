@@ -1,4 +1,7 @@
-export type TipoEquipo = 'heladera' | 'horno' | 'balanza' | 'termometro'
+export interface TipoEquipo {
+    id: number;
+    nombre: string;
+}
 
 export interface Equipo {
     id: number;
@@ -11,7 +14,6 @@ export interface Equipo {
 export interface EquipoPayload {
     nombre: string;
     activo: boolean;
-    tipo: TipoEquipo;
+    tipo_id: number;
     ubicacion: string;
-    
 }

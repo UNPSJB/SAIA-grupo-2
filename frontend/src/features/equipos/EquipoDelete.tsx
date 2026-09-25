@@ -21,20 +21,15 @@ export default function EquipoDelete() {
                 }
             }
         };
-        
         cargarEquipo();
     }, [id]);
 
     const handleDelete = async () => {
         if (!id) return;
-
         try {
             const exito = await deleteEquipo(id);
-            if (exito) {
-                navigate('/equipos');
-            } else {
-                alert('Hubo un error al intentar eliminar el registro.');
-            }
+            if (exito) navigate('/equipos');
+            else alert('Hubo un error al intentar eliminar el registro.');
         } catch (error) {
             console.error('Error de red:', error);
         }
@@ -42,20 +37,19 @@ export default function EquipoDelete() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>¿Desea eliminar este equipo?</h2>
+            <h2>¿Desea dar de baja este equipo?</h2>
             {equipo ? (
-                <div>
-                    <p>Nombre: {equipo.nombre}</p>
+                <div className={styles.tarjetaEstatica} style={{ maxWidth: '600px', width: '100%', textAlign: 'center' }}>
+                    <h3 style={{ color: 'var(--text-h)' }}>{equipo.nombre}</h3>
+                    <p>Categoría: {equipo.tipo.nombre}</p>
+                    <p>Ubicación: {equipo.ubicacion}</p>
                     
-                    
-                    <div className={styles.filaBotones}>
+                    <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
                         <Link to="/equipos">
-                            <Boton variant="volver">
-                                Cancelar
-                            </Boton>
+                            <Boton variant="volver">Cancelar</Boton>
                         </Link>
                         <Boton variant="eliminar" onClick={handleDelete}>
-                            Eliminar
+                            Confirmar Baja
                         </Boton>
                     </div>
                 </div>

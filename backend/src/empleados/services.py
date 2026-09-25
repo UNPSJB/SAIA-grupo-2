@@ -1,31 +1,46 @@
 import logging
 from typing import List
-from sqlalchemy import delete, select, update
+from sqlalchemy import select, desc
 from sqlalchemy.orm import Session, selectinload
 
 from src.asociaciones.empleado_capacidad import empleado_capacidad
-
 from src.capacidades.models import Capacidad
 from src.capacidades.constants import CAPACIDAD_POR_DEFECTO
 from src.capacidades import exceptions as CapacidadesExceptions
-
 from src.empleados.models import Empleado
 from src.empleados import schemas, exceptions
 
-# Creacion de logger para modulo
-logger=logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
-# CRUD
-def crear_empleado(db: Session, empleado:schemas.EmpleadoCreate) -> schemas.Empleado:
-    # Constantes para lectura (No existe definicion de "empleado" fuera de la funcion asi que se definen dentro de esta)
+def generar_legajo(db: Session) -> str:
+    """Genera un nuevo legajo secuencial."""
+    ultimo_empleado = db.scalar(
+        select(Empleado).order_by(desc(Empleado.id))
+    )
+    
+    if ultimo_empleado and ultimo_empleado.legajo and ultimo_empleado.legajo.startswith("EMP-"):
+        try:
+            ultimo_numero = int(ultimo_empleado.legajo.split("-")[1])
+            nuevo_numero = ultimo_numero + 1
+            return f"EMP-{nuevo_numero}"
+        except ValueError:
+            return "EMP-1000"
+    
+    return "EMP-1000"
+
+def crear_empleado(db: Session, empleado: schemas.EmpleadoCreate) -> schemas.Empleado:
+    empleado_existente = db.scalar(select(Empleado).where(Empleado.dni == empleado.dni))
+    if empleado_existente:
+        raise exceptions.DniDuplicado()
+
     CAPACIDADES_NO_ESPECIFICADAS = empleado.listaCapacidades is None
     LISTA_CAPACIDADES_VACIA = empleado.listaCapacidades == []
 
-    if CAPACIDADES_NO_ESPECIFICADAS: # Asigna la capacidad por defecto (Constante en constants)
+    if CAPACIDADES_NO_ESPECIFICADAS:
         capacidades = db.scalars(
-            select(Capacidad).where(Capacidad.nombre == CAPACIDAD_POR_DEFECTO)
+            select(Capacidad).where(Capacidad.nombre.ilike(CAPACIDAD_POR_DEFECTO))
         ).all()
-    elif LISTA_CAPACIDADES_VACIA: # Error si la list SI existe pero se encuentra vacia
+    elif LISTA_CAPACIDADES_VACIA:
         raise CapacidadesExceptions.CapacidadRequerida()
     else:
         capacidades = db.scalars(
@@ -37,9 +52,12 @@ def crear_empleado(db: Session, empleado:schemas.EmpleadoCreate) -> schemas.Empl
         and len(capacidades) != len(set(empleado.listaCapacidades))
     ):
         raise CapacidadesExceptions.CapacidadNoEncontrada()
+        
+    nuevo_legajo = generar_legajo(db)
 
     _empleado = Empleado(
         **empleado.model_dump(exclude={"listaCapacidades"}),
+        legajo=nuevo_legajo,
         capacidades=capacidades,
     )
     db.add(_empleado)
@@ -68,8 +86,15 @@ def modificar_empleado(
     if db_empleado is None:
         raise exceptions.EmpleadoNoEncontrado()
 
+    if db_empleado.dni != empleado.dni:
+        dni_existente = db.scalar(select(Empleado).where(Empleado.dni == empleado.dni))
+        if dni_existente:
+            raise exceptions.DniDuplicado()
+
+    db_empleado.dni = empleado.dni
     db_empleado.nombre = empleado.nombre
     db_empleado.apellido = empleado.apellido
+    db_empleado.activo = empleado.activo
 
     if empleado.listaCapacidades is not None:
         if empleado.listaCapacidades == []:
@@ -91,20 +116,14 @@ def modificar_empleado(
 def eliminar_empleado(db: Session, empleado_id: int) -> schemas.Empleado:
     db_empleado = db.scalar(
         select(Empleado)
-        .options(selectinload(Empleado.capacidades)) # Evita que explote por "No estar vinculado a una sesion"
+        .options(selectinload(Empleado.capacidades))
         .where(Empleado.id == empleado_id)
     )
     if db_empleado is None:
         raise exceptions.EmpleadoNoEncontrado()
 
-    respuesta = schemas.Empleado.model_validate(db_empleado)
-    db.execute(
-        delete(empleado_capacidad).where(
-            empleado_capacidad.c.empleado_id == empleado_id
-        )
-    )
-    db.execute(
-        delete(Empleado)
-        .where(Empleado.id == empleado_id))
+    db_empleado.activo = False
     db.commit()
-    return respuesta
+    db.refresh(db_empleado)
+    
+    return schemas.Empleado.model_validate(db_empleado)

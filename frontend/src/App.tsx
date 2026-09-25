@@ -3,6 +3,7 @@ import EmpleadosList from './features/empleados/EmpleadosList';
 import EmpleadoForm from './features/empleados/EmpleadoForm';
 import EmpleadoDetail from './features/empleados/EmpleadoDetail';
 import EmpleadoDelete from './features/empleados/EmpleadoDelete';
+
 import CapacidadesList from './features/capacidades/CapacidadesList';
 import CapacidadForm from './features/capacidades/CapacidadForm';
 
@@ -12,10 +13,16 @@ import InsumoDelete from './features/insumos/InsumoDelete';
 import InsumoDetail from './features/insumos/InsumoDetail';
 
 import UnidadesMedidaList from './features/unidadesMedida/UnidadesMedidaList';
+
 import EquiposList from './features/equipos/EquiposList';
 import EquipoForm from './features/equipos/EquipoForm';
 import EquipoDetail from './features/equipos/EquipoDetail';
 import EquipoDelete from './features/equipos/EquipoDelete';
+
+import ElementosLimpiezaList from './features/elementosLimpieza/ElementosLimpiezaList';
+import ElementoLimpiezaForm from './features/elementosLimpieza/ElementoLimpiezaForm';
+import ElementoLimpiezaDetail from './features/elementosLimpieza/ElementoLimpiezaDetail';
+import ElementoLimpiezaDelete from './features/elementosLimpieza/ElementoLimpiezaDelete';
 
 import './App.css';
 
@@ -23,18 +30,43 @@ function App() {
   return (
     <BrowserRouter>
       <nav className="nav">
-        <Link to="/">Inicio</Link>
-        <Link to="/empleados">Empleados</Link>
-        <Link to="/capacidades">Capacidades</Link>
-        <Link to="/insumos">Insumos</Link>
-        <Link to="/unidadesMedida">Unidades</Link>
-        <Link to="/equipos">Equipos</Link>
+        <Link to="/" className="navLink">Inicio</Link>
+        
+        <div className="dropdown">
+          <span className="navLink">Recursos Humanos ▾</span>
+          <div className="dropdownContent">
+            <Link to="/empleados">Directorio de Empleados</Link>
+            <Link to="/capacidades">Gestión de Capacidades</Link>
+          </div>
+        </div>
+
+        <div className="dropdown">
+          <span className="navLink">Gestión de Insumos ▾</span>
+          <div className="dropdownContent">
+            <Link to="/insumos">Inventario de Insumos</Link>
+            <Link to="/unidadesMedida">Unidades de Medida</Link>
+          </div>
+        </div>
+
+        <div className="dropdown">
+          <span className="navLink">Equipamiento ▾</span>
+          <div className="dropdownContent">
+            <Link to="/equipos">Inventario de Equipos</Link>
+          </div>
+        </div>
       </nav>
+
+      <div className="dropdown">
+        <span className="navLink">Limpieza ▾</span>
+        <div className="dropdownContent">
+          <Link to="/elementosLimpieza">Elementos de Limpieza</Link>
+        </div>
+      </div>
 
       <div>
         <Routes>
           {/* Vista o ruta raíz */}
-          <Route path="/" element={<h2>Prueba de Empleado</h2>} />
+          <Route path="/" element={<h1>SAIA - Grupo 2</h1>} />
           
           {/* Rutas principales */}
           <Route path="/empleados" element={<EmpleadosList />} />
@@ -42,10 +74,10 @@ function App() {
           <Route path="/empleados/editar/:id" element={<EmpleadoForm />} />
           <Route path="/empleados/eliminar/:id" element={<EmpleadoDelete />} />
           <Route path="/empleados/:id" element={<EmpleadoDetail />} />
+          
           <Route path="/capacidades" element={<CapacidadesList />} />
           <Route path="/capacidades/nuevo" element={<CapacidadForm />} />
           
-
           <Route path="/insumos" element={<InsumosList />} />
           <Route path="/insumos/nuevo" element={<InsumoForm />} />
           <Route path="/insumos/editar/:id" element={<InsumoForm />} />
@@ -59,7 +91,13 @@ function App() {
           <Route path="/equipos/:id" element={<EquipoDetail />} />
           <Route path="/equipos/editar/:id" element={<EquipoForm />} />
           <Route path="/equipos/eliminar/:id" element={<EquipoDelete />} />
-             
+
+          <Route path="/elementosLimpieza" element={<ElementosLimpiezaList />} />
+          <Route path="/elementosLimpieza/nuevo" element={<ElementoLimpiezaForm />} />
+          <Route path="/elementosLimpieza/editar/:id" element={<ElementoLimpiezaForm />} />
+          <Route path="/elementosLimpieza/eliminar/:id" element={<ElementoLimpiezaDelete />} />
+          <Route path="/elementosLimpieza/:id" element={<ElementoLimpiezaDetail />} />
+
         </Routes>
       </div>
     </BrowserRouter>

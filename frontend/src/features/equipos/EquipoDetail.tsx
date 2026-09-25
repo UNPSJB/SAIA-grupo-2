@@ -20,7 +20,6 @@ export default function EquipoDetail() {
                 }
             }
         };
-        
         cargarEquipo();
     }, [id]);
 
@@ -28,16 +27,15 @@ export default function EquipoDetail() {
         <div className={styles.contenedorPrincipal}>
             <h2>Detalle del Equipo</h2>
             {equipo ? (
-                <div>
-                    <p>Nombre: {equipo.nombre}</p>
-                    <p>Activo: {equipo.activo}</p>
-                    <p>Tipo: {equipo.tipo}</p>
-                    <p>Ubicacion: {equipo.ubicacion}</p>
+                <div className={styles.tarjeta} style={{ maxWidth: '600px', width: '100%' }}>
+                    <p><strong>Nombre:</strong> {equipo.nombre}</p>
+                    <p><strong>Estado:</strong> {equipo.activo ? 'Operativo' : 'Fuera de Servicio'}</p>
+                    <p><strong>Categoría:</strong> {equipo.tipo.nombre}</p>
+                    <p><strong>Ubicación física:</strong> {equipo.ubicacion}</p>
                     
-
                     <div className={styles.bloqueDetalle}>
                         <Link to="/equipos">
-                            <Boton variant="editar">Volver a la lista</Boton>
+                            <Boton variant="volver">Volver a la lista</Boton>
                         </Link>
                     </div>
                 </div>

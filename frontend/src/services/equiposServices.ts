@@ -1,9 +1,10 @@
-import type { Equipo, EquipoPayload } from '../types/equipos';
+import type { Equipo, EquipoPayload, TipoEquipo } from '../types/equipos';
 
 const BASE_URL = 'http://127.0.0.1:8000/equipos';
+const TIPOS_URL = 'http://127.0.0.1:8000/equipos/tipos'; 
 
 export const getEquipos = async (): Promise<Equipo[]> => {
-    const res = await fetch(`${BASE_URL}`);
+    const res = await fetch(`${BASE_URL}/`);
     if (!res.ok) throw new Error("Error al cargar equipos");
     return res.json();
 };
@@ -29,4 +30,10 @@ export const saveEquipo = async (datos: EquipoPayload, id?: string): Promise<boo
         body: JSON.stringify(datos),
     });
     return res.ok;
+};
+
+export const getTiposEquipo = async (): Promise<TipoEquipo[]> => {
+    const res = await fetch(TIPOS_URL);
+    if (!res.ok) throw new Error("Error al cargar tipos de equipo");
+    return res.json();
 };
