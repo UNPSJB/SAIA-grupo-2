@@ -23,3 +23,6 @@ class SinStock(BadRequest):
 
 class SinPlanes(BadRequest):
     DETAIL = ErrorCode.SIN_PLANES
+
+class TareaYaCompletada(BadRequest):
+    DETAIL = ErrorCode.TAREA_YA_COMPLETADA

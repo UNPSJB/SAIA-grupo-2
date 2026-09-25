@@ -1,6 +1,7 @@
-from typing import List, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import Enum as SQLEnum, ForeignKey
+from sqlalchemy import Enum as SQLEnum, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.asociaciones.plan_tareas import plan_tarea
@@ -10,6 +11,7 @@ from src.tareas.constants import FrecuenciaTarea
 if TYPE_CHECKING:
     from src.planes.models import Plan
     from src.productos_limpieza.models import ProductoLimpieza
+    from src.empleados.models import Empleado
 
 
 class Tarea(ModeloBase):
@@ -25,6 +27,11 @@ class Tarea(ModeloBase):
         )
     )
 
+    # Campos para registrar autoria
+    completada: Mapped[bool] = mapped_column(default=False)
+    completada_por_id: Mapped[Optional[int]] = mapped_column(ForeignKey("empleados.id"), nullable=True)
+    fecha_finalizacion: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
     # Lista de planes en los que se encuentra
     planes: Mapped[List["Plan"]] = relationship(
         "Plan",
@@ -37,6 +44,8 @@ class Tarea(ModeloBase):
         back_populates="tarea",
         cascade="all, delete-orphan",
     )
+
+    completada_por: Mapped[Optional["Empleado"]] = relationship("Empleado")
 
 
 class ConsumoEstimado(ModeloBase):

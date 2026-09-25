@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from typing import List
 
 from sqlalchemy import delete, select
@@ -80,6 +81,9 @@ def modificar_tarea(
 ) -> schemas.Tarea:
     db_tarea = leer_tarea(db, tarea_id)
 
+    if db_tarea.completada:
+        raise exceptions.TareaYaCompletada()
+
     nuevos_consumos = _construir_consumos(db, tarea.consumos_estimados)
     db_tarea.planes = _resolver_planes(db, tarea.planes)
     for campo, valor in tarea.model_dump(
@@ -99,3 +103,19 @@ def eliminar_tarea(db: Session, tarea_id: int) -> schemas.TareaDelete:
     db.execute(delete(Tarea).where(Tarea.id == tarea_id))
     db.commit()
     return schemas.TareaDelete(id=tarea_id, msg="borrado")
+
+
+def completar_tarea(db: Session, tarea_id: int, empleado_id: int) -> schemas.Tarea:
+    db_tarea = leer_tarea(db, tarea_id)
+
+    #Control para asegurar la inmutabilidad de los registros historicos
+    if db_tarea.completada:
+        raise exceptions.TareaYaCompletada()
+
+    db_tarea.completada = True
+    db_tarea.completada_por_id = empleado_id
+    db_tarea.fecha_finalizacion = datetime.now()
+
+    db.commit()
+    db.refresh(db_tarea)
+    return db_tarea

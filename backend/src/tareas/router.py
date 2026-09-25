@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from src.database import get_db
@@ -15,6 +15,10 @@ router = APIRouter(prefix="/tareas", tags=["tareas"])
 def create_tarea(tarea: schemas.TareaCreate, db: Session = Depends(get_db)):
     return services.crear_tarea(db, tarea)
 
+@router.post("/{tarea_id}/completar", response_model=schemas.Tarea, status_code=status.HTTP_200_OK)
+def complete_tarea(tarea_id: int, payload: schemas.Autoria, db: Session = Depends(get_db)):
+    logger.info(f"Registrando finalizacion inmutable para la tarea {tarea_id} por empleado ID {payload.empleado_id}...")
+    return services.completar_tarea(db, tarea_id, payload.empleado_id)
 
 @router.get("/", response_model=list[schemas.Tarea])
 def read_tareas(plan_id: int | None = None, db: Session = Depends(get_db)):

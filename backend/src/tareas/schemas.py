@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Annotated, List
+from datetime import datetime
+from typing import TYPE_CHECKING, Annotated, List, Optional
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from src.productos_limpieza.schemas import ProductoLimpiezaResumen
 from src.tareas.constants import FrecuenciaTarea
@@ -11,6 +12,12 @@ TituloTarea = Annotated[str, StringConstraints(strip_whitespace=True, min_length
 class PlanResumen(BaseModel):
     id: int
     titulo: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+class EmpleadoResumen(BaseModel):
+    id: int
+    nombre: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -43,12 +50,19 @@ class TareaUpdate(TareaBase):
 
 class TareaResumen(TareaBase):
     id: int
+    completada: bool
+    completada_por_id: Optional[int] = None
+    fecha_finalizacion: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
 
 class Tarea(TareaBase):
     id: int
     planes: List[PlanResumen]
     consumos_estimados: List[ConsumoEstimado]
+    completada: bool
+    completada_por_id: Optional[int] = None
+    fecha_finalizacion: Optional[datetime] = None
+    completada_por: Optional[EmpleadoResumen] = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -56,3 +70,6 @@ class TareaDelete(BaseModel):
     id: int
     msg: str
     model_config = ConfigDict(from_attributes=True)
+
+class Autoria(BaseModel):
+    empleado_id: int
