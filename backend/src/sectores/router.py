@@ -1,7 +1,10 @@
+import logging
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from src.database import get_db
 from src.sectores import schemas, services
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/sectores", tags=["sectores"])
 
@@ -11,6 +14,7 @@ def create_sector(sector: schemas.SectorCreate, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=list[schemas.Sector])
 def read_sectores(db: Session = Depends(get_db)):
+    logger.info("Consultando la lista de sectores desde endpoint...")
     return services.listar_sectores(db)
 
 @router.get("/{sector_id}", response_model=schemas.Sector)

@@ -6,3 +6,6 @@ class SectorNoEncontrado(NotFound):
 
 class NombreDuplicado(BadRequest):
     DETAIL = ErrorCode.NOMBRE_DUPLICADO
+
+class SectorEnUso(BadRequest):
+    DETAIL = ErrorCode.SECTOR_EN_USO

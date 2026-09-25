@@ -1,5 +1,7 @@
-from pydantic import BaseModel, ConfigDict
-from typing import List, Optional
+from typing import Annotated, List, Optional
+from pydantic import BaseModel, ConfigDict, StringConstraints
+
+NombreSector = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 class EmpleadoRef(BaseModel):
     id: int
@@ -15,7 +17,7 @@ class EquipoRef(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class SectorBase(BaseModel):
-    nombre: str
+    nombre: NombreSector
     responsable_id: Optional[int] = None
 
 class SectorCreate(SectorBase):
@@ -30,4 +32,9 @@ class Sector(SectorBase):
     empleados: List[EmpleadoRef] = []
     equipos: List[EquipoRef] = []
     
+    model_config = ConfigDict(from_attributes=True)
+
+class SectorResumen(BaseModel):
+    id: int
+    nombre: str
     model_config = ConfigDict(from_attributes=True)

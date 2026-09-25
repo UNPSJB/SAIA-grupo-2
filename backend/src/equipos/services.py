@@ -25,7 +25,6 @@ def crear_equipo(db: Session, equipo: schemas.EquipoCreate) -> schemas.Equipo:
 
 def listar_equipos(db: Session) -> List[schemas.Equipo]:
     logger.info("Listando equipos desde services")
-    # Agregamos la carga del sector
     return db.scalars(
         select(Equipo).options(selectinload(Equipo.tipo), selectinload(Equipo.sector))
     ).all()

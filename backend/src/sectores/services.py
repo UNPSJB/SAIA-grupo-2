@@ -1,10 +1,14 @@
+import logging
 from typing import List
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from src.sectores.models import Sector
 from src.sectores import schemas, exceptions
 from src.empleados.models import Empleado
+
+logger = logging.getLogger(__name__)
 
 def crear_sector(db: Session, sector: schemas.SectorCreate) -> Sector:
     sector_existente = db.scalar(select(Sector).where(Sector.nombre.ilike(sector.nombre)))
@@ -26,6 +30,7 @@ def crear_sector(db: Session, sector: schemas.SectorCreate) -> Sector:
     return nuevo_sector
 
 def listar_sectores(db: Session) -> List[Sector]:
+    logger.info("Listando sectores desde services")
     return db.scalars(
         select(Sector)
         .options(selectinload(Sector.empleados), selectinload(Sector.responsable), selectinload(Sector.equipos))
@@ -41,23 +46,10 @@ def leer_sector(db: Session, sector_id: int) -> Sector:
         raise exceptions.SectorNoEncontrado()
     return db_sector
 
-def listar_sectores(db: Session) -> List[Sector]:
-    return db.scalars(select(Sector).options(selectinload(Sector.empleados), selectinload(Sector.responsable))).all()
-
-def leer_sector(db: Session, sector_id: int) -> Sector:
-    db_sector = db.scalar(
-        select(Sector)
-        .options(selectinload(Sector.empleados), selectinload(Sector.responsable))
-        .where(Sector.id == sector_id)
-    )
-    if db_sector is None:
-        raise exceptions.SectorNoEncontrado()
-    return db_sector
-
 def modificar_sector(db: Session, sector_id: int, sector: schemas.SectorUpdate) -> Sector:
     db_sector = db.scalar(
         select(Sector)
-        .options(selectinload(Sector.empleados), selectinload(Sector.responsable)) 
+        .options(selectinload(Sector.empleados), selectinload(Sector.responsable), selectinload(Sector.equipos)) 
         .where(Sector.id == sector_id)
     )
     if db_sector is None:
@@ -83,12 +75,19 @@ def modificar_sector(db: Session, sector_id: int, sector: schemas.SectorUpdate) 
     return db_sector
 
 def eliminar_sector(db: Session, sector_id: int) -> Sector:
-    db_sector = db.scalar(select(Sector).where(Sector.id == sector_id))
+    db_sector = db.scalar(
+        select(Sector)
+        .options(selectinload(Sector.empleados), selectinload(Sector.responsable), selectinload(Sector.equipos))
+        .where(Sector.id == sector_id)
+    )
     if db_sector is None:
         raise exceptions.SectorNoEncontrado()
 
-    db.delete(db_sector)
-    db.commit()
+    try:
+        db.delete(db_sector)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise exceptions.SectorEnUso()
+        
     return db_sector
-
-

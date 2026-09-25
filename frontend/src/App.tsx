@@ -21,7 +21,7 @@ import EquipoDelete from './features/equipos/EquipoDelete';
 
 import SectoresList from './features/sectores/SectoresList';
 import SectorForm from './features/sectores/SectorForm';
-import SectorDetail from './features/sectores/SectorDetail'; // <-- NUEVO COMPONENTE
+import SectorDetail from './features/sectores/SectorDetail';
 
 import './App.css';
 
@@ -89,7 +89,7 @@ function App() {
           <Route path="/sectores" element={<SectoresList />} />
           <Route path="/sectores/nuevo" element={<SectorForm />} />
           <Route path="/sectores/editar/:id" element={<SectorForm />} />
-          <Route path="/sectores/:id" element={<SectorDetail />} /> {/* <-- NUEVA RUTA */}
+          <Route path="/sectores/:id" element={<SectorDetail />} /> 
         </Routes>
       </div>
     </BrowserRouter>
