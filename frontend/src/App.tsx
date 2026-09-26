@@ -12,6 +12,11 @@ import InsumoForm from './features/insumos/InsumoForm';
 import InsumoDelete from './features/insumos/InsumoDelete';
 import InsumoDetail from './features/insumos/InsumoDetail';
 
+import ProductosLimpiezaList from './features/productosLimpieza/ProductosLimpiezaList';
+import ProductoLimpiezaForm from './features/productosLimpieza/ProductoLimpiezaForm';
+import ProductoLimpiezaDelete from './features/productosLimpieza/ProductoLimpiezaDelete';
+import ProductoLimpiezaDetail from './features/productosLimpieza/ProductoLimpiezaDetail';
+
 import UnidadesMedidaList from './features/unidadesMedida/UnidadesMedidaList';
 
 import EquiposList from './features/equipos/EquiposList';
@@ -39,6 +44,7 @@ function App() {
           <span className="navLink">Gestión de Insumos ▾</span>
           <div className="dropdownContent">
             <Link to="/insumos">Inventario de Insumos</Link>
+            <Link to="/productosLimpieza">Productos de Limpieza</Link>
             <Link to="/unidadesMedida">Unidades de Medida</Link>
           </div>
         </div>
@@ -71,6 +77,12 @@ function App() {
           <Route path="/insumos/editar/:id" element={<InsumoForm />} />
           <Route path="/insumos/eliminar/:id" element={<InsumoDelete />} />
           <Route path="/insumos/:id" element={<InsumoDetail />} />
+
+          <Route path="/productosLimpieza" element={<ProductosLimpiezaList />} />
+          <Route path="/productosLimpieza/nuevo" element={<ProductoLimpiezaForm />} />
+          <Route path="/productosLimpieza/editar/:id" element={<ProductoLimpiezaForm />} />
+          <Route path="/productosLimpieza/eliminar/:id" element={<ProductoLimpiezaDelete />} />
+          <Route path="/productosLimpieza/:id" element={<ProductoLimpiezaDetail />} />
 
           <Route path="/unidadesMedida" element={<UnidadesMedidaList />} />
 

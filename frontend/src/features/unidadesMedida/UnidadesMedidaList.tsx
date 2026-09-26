@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Link } from 'react-router-dom';
+//import { Link } from 'react-router-dom';
 import type { UnidadMedida } from '../../types/unidadesMedida';
 import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
-import Boton from '../../components/Boton';
+//import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
 
 export default function UnidadesMedidaList() {
