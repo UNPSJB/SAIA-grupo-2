@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import type { EquipoPayload, TipoEquipo } from '../../types/equipos';
+import type { EquipoPayload, TipoEquipo, EstadoEquipo } from '../../types/equipos';
 import type { Sector } from '../../types/sectores';
 import { getEquipoById, saveEquipo, getTiposEquipo } from '../../services/equiposServices';
 import { getSectores } from '../../services/sectoresServices'; 
@@ -11,8 +11,9 @@ import styles from '../../styles/shared.module.css';
 interface FormValues {
     nombre: string;
     activo: boolean;
-    tipo_id: number;
-    sector_id: number; 
+    tipo_id: number | '';
+    sector_id: number | ''; 
+    estado: EstadoEquipo;
 }
 
 export default function EquipoForm() {
@@ -27,6 +28,9 @@ export default function EquipoForm() {
         defaultValues: {
             nombre: '',
             activo: true,
+            tipo_id: '',
+            sector_id: '',
+            estado: 'bueno'
         }
     });
 
@@ -55,7 +59,8 @@ export default function EquipoForm() {
                         nombre: data.nombre,
                         activo: data.activo,
                         tipo_id: data.tipo.id,
-                        sector_id: data.sector.id 
+                        sector_id: data.sector.id,
+                        estado: data.estado
                     });
                 } catch (err) {
                     console.error("Error al cargar equipo:", err);
@@ -69,8 +74,9 @@ export default function EquipoForm() {
         const datos: EquipoPayload = { 
             nombre: data.nombre, 
             activo: data.activo, 
-            tipo_id: data.tipo_id,
-            sector_id: data.sector_id 
+            tipo_id: Number(data.tipo_id),
+            sector_id: Number(data.sector_id),
+            estado: data.estado
         };
 
         try {
@@ -111,9 +117,7 @@ export default function EquipoForm() {
                         <label>Categoría:</label>
                         <select 
                             {...register('tipo_id', { 
-                                required: "Debe seleccionar una categoría",
-                                valueAsNumber: true,
-                                validate: value => !isNaN(value) || "Debe seleccionar una categoría"
+                                required: "Debe seleccionar una categoría"
                             })} 
                             style={errors.tipo_id ? { borderColor: '#ef4444', outline: 'none' } : {}}
                         >
@@ -131,9 +135,7 @@ export default function EquipoForm() {
                         <label>Ubicación / Sector:</label>
                         <select 
                             {...register('sector_id', { 
-                                required: "Debe seleccionar un sector",
-                                valueAsNumber: true,
-                                validate: value => !isNaN(value) || "Debe seleccionar un sector"
+                                required: "Debe seleccionar un sector"
                             })} 
                             style={errors.sector_id ? { borderColor: '#ef4444', outline: 'none' } : {}}
                         >
@@ -147,6 +149,14 @@ export default function EquipoForm() {
                         {errors.sector_id && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.sector_id.message}</span>}
                     </div>
 
+                    <div className={styles.formGroup}>
+                        <label>Condición Física:</label>
+                        <select {...register('estado', { required: true })}>
+                            <option value="bueno">Operativo (Bueno)</option>
+                            <option value="danado">Dañado</option>
+                        </select>
+                    </div>
+
                     <div className={styles.formGroup} style={{ justifyContent: 'center' }}>
                         <label className={styles.filaCheckbox} style={{ width: '100%', cursor: 'pointer', margin: 0, marginTop: '22px' }}>
                             <input 
@@ -154,7 +164,7 @@ export default function EquipoForm() {
                                 className={styles.checkbox}
                                 {...register('activo')}
                             />
-                            <span className={styles.labelCheckbox}>Equipo Operativo</span>
+                            <span className={styles.labelCheckbox}>Activo en Sistema</span>
                         </label>
                     </div>
                 </div>

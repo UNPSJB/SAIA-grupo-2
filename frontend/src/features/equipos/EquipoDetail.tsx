@@ -30,7 +30,8 @@ export default function EquipoDetail() {
             {equipo ? (
                 <div className={styles.tarjetaEstatica} style={{ maxWidth: '600px', width: '100%' }}>
                     <p><strong>Nombre:</strong> {equipo.nombre}</p>
-                    <p><strong>Estado:</strong> {equipo.activo ? 'Operativo' : 'Fuera de Servicio'}</p>
+                    <p><strong>Activo en Sistema:</strong> {equipo.activo ? 'Sí' : 'No'}</p>
+                    <p><strong>Condición Física (Estado):</strong> {equipo.estado === 'bueno' ? 'Bueno (Operativo)' : 'Dañado'}</p>
                     <p><strong>Categoría:</strong> {equipo.tipo.nombre}</p>
                     <p><strong>Ubicación / Sector:</strong> {equipo.sector?.nombre}</p>
                     

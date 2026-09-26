@@ -41,10 +41,6 @@ class Plan(PlanBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-
-
-
 class PlanDelete(BaseModel):
     id: int
     msg: str

@@ -23,6 +23,18 @@ import SectoresList from './features/sectores/SectoresList';
 import SectorForm from './features/sectores/SectorForm';
 import SectorDetail from './features/sectores/SectorDetail';
 
+import ProductosList from './features/productosLimpieza/ProductosList';
+import ProductoForm from './features/productosLimpieza/ProductoForm';
+import ProductoDelete from './features/productosLimpieza/ProductoDelete';
+
+import TareasList from './features/tareas/TareasList';
+import TareaForm from './features/tareas/TareaForm';
+import TareaDelete from './features/tareas/TareaDelete'; 
+
+import PlanesList from './features/planes/PlanesList';
+import PlanForm from './features/planes/PlanForm';
+import PlanDelete from './features/planes/PlanDelete';
+
 import './App.css';
 
 function App() {
@@ -54,11 +66,19 @@ function App() {
             <Link to="/equipos">Inventario de Equipos</Link>
           </div>
         </div>
+
+        <div className="dropdown">
+          <span className="navLink">Limpieza y Planes ▾</span>
+          <div className="dropdownContent">
+            <Link to="/productos_limpieza">Productos de Limpieza</Link>
+            <Link to="/tareas">Tareas de Limpieza</Link>
+            <Link to="/planes">Planes de Limpieza</Link>
+          </div>
+        </div>
       </nav>
 
       <div>
         <Routes>
-          {/* Vista o ruta raíz */}
           <Route path="/" element={<h1>SAIA - Grupo 2</h1>} />
           
           {/* Rutas principales */}
@@ -85,11 +105,25 @@ function App() {
           <Route path="/equipos/editar/:id" element={<EquipoForm />} />
           <Route path="/equipos/eliminar/:id" element={<EquipoDelete />} />
 
-          {/* Rutas de Sectores */}
           <Route path="/sectores" element={<SectoresList />} />
           <Route path="/sectores/nuevo" element={<SectorForm />} />
           <Route path="/sectores/editar/:id" element={<SectorForm />} />
           <Route path="/sectores/:id" element={<SectorDetail />} /> 
+
+          <Route path="/productos_limpieza" element={<ProductosList />} />
+          <Route path="/productos_limpieza/nuevo" element={<ProductoForm />} />
+          <Route path="/productos_limpieza/editar/:id" element={<ProductoForm />} />
+          <Route path="/productos_limpieza/eliminar/:id" element={<ProductoDelete />} />
+
+          <Route path="/tareas" element={<TareasList />} />
+          <Route path="/tareas/nueva" element={<TareaForm />} />
+          <Route path="/tareas/editar/:id" element={<TareaForm />} />
+          <Route path="/tareas/eliminar/:id" element={<TareaDelete />} /> 
+
+          <Route path="/planes" element={<PlanesList />} />
+          <Route path="/planes/nuevo" element={<PlanForm />} />
+          <Route path="/planes/editar/:id" element={<PlanForm />} />
+          <Route path="/planes/eliminar/:id" element={<PlanDelete />} />
         </Routes>
       </div>
     </BrowserRouter>

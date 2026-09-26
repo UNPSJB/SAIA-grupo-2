@@ -43,6 +43,7 @@ export default function EquipoDelete() {
                     <h3 style={{ color: 'var(--text-h)' }}>{equipo.nombre}</h3>
                     <p>Categoría: {equipo.tipo.nombre}</p>
                     <p><strong>Ubicación / Sector:</strong> {equipo.sector?.nombre}</p>
+                    <p><strong>Condición Física:</strong> {equipo.estado === 'bueno' ? 'Operativo (Bueno)' : 'Dañado'}</p>
                     
                     <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
                         <Link to="/equipos">

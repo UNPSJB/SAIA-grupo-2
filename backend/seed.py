@@ -1,3 +1,4 @@
+from datetime import date
 from sqlalchemy.orm import Session
 from src.database import SessionLocal, engine
 from src.models import Base
@@ -6,7 +7,13 @@ from src.empleados.models import Empleado
 from src.equipos.models import Equipo, TipoEquipo
 from src.insumos.models import Insumo
 from src.unidades_medida.models import UnidadMedida
-from src.sectores.models import Sector # <-- Agregamos el modelo de Sector
+from src.sectores.models import Sector
+
+from src.productos_limpieza.models import ProductoLimpieza
+from src.productos_limpieza.constants import TipoProductoLimpieza
+from src.tareas.models import Tarea, ConsumoEstimado
+from src.tareas.constants import FrecuenciaTarea
+from src.planes.models import Plan
 
 def seed_database():
     Base.metadata.create_all(bind=engine)
@@ -132,7 +139,7 @@ def seed_database():
             db.commit()
             print("Empleados creados (14).")
 
-        # --- SECTORES (NUEVO) ---
+        # --- SECTORES ---
         if db.query(Sector).count() == 0:
             carlos_admin = db.query(Empleado).filter_by(legajo="EMP-1000").first()
             maria_admin = db.query(Empleado).filter_by(legajo="EMP-1001").first()
@@ -176,7 +183,6 @@ def seed_database():
 
         # --- EQUIPOS ---
         if db.query(Equipo).count() == 0:
-            # Tipos
             t_heladera = db.query(TipoEquipo).filter_by(nombre="Heladera").first().id
             t_horno = db.query(TipoEquipo).filter_by(nombre="Horno").first().id
             t_balanza = db.query(TipoEquipo).filter_by(nombre="Balanza").first().id
@@ -188,7 +194,6 @@ def seed_database():
             t_cinta = db.query(TipoEquipo).filter_by(nombre="Cinta Transportadora").first().id
             t_detector = db.query(TipoEquipo).filter_by(nombre="Detector de Metales").first().id
 
-            # Sectores
             s_frio = db.query(Sector).filter_by(nombre="Depósito Frío").first().id
             s_coccion = db.query(Sector).filter_by(nombre="Sector Cocción").first().id
             s_recepcion = db.query(Sector).filter_by(nombre="Recepción de Materia Prima").first().id
@@ -207,17 +212,84 @@ def seed_database():
                 Equipo(nombre="Termómetro Infrarrojo", activo=True, tipo_id=t_termometro, sector_id=s_calidad),
                 Equipo(nombre="Termómetro de Pinche", activo=True, tipo_id=t_termometro, sector_id=s_coccion),
                 Equipo(nombre="Cámara de Congelados", activo=True, tipo_id=t_heladera, sector_id=s_frio),
-                Equipo(nombre="Cortadora de Fiambre", activo=False, tipo_id=t_cortadora, sector_id=s_mantenimiento),
+                Equipo(nombre="Cortadora de Fiambre", activo=False, estado="danado", tipo_id=t_cortadora, sector_id=s_mantenimiento),
                 Equipo(nombre="Envasadora al Vacío", activo=True, tipo_id=t_envasadora, sector_id=s_empaque),
                 Equipo(nombre="Mezcladora de Polvos 100L", activo=True, tipo_id=t_mezcladora, sector_id=s_preparacion),
                 Equipo(nombre="Balanza de Precisión", activo=True, tipo_id=t_balanza, sector_id=s_laboratorio),
                 Equipo(nombre="Cinta Transportadora Ppal", activo=True, tipo_id=t_cinta, sector_id=s_produccion),
                 Equipo(nombre="Detector de Metales Fin de Línea", activo=True, tipo_id=t_detector, sector_id=s_empaque),
-                Equipo(nombre="Horno Convector Secundario", activo=False, tipo_id=t_horno, sector_id=s_mantenimiento)
+                Equipo(nombre="Horno Convector Secundario", activo=False, estado="danado", tipo_id=t_horno, sector_id=s_mantenimiento)
             ]
             db.add_all(equipos)
             db.commit()
             print("Equipos creados (14).")
+
+        if db.query(ProductoLimpieza).count() == 0:
+            u_l = db.query(UnidadMedida).filter_by(nombre="Litros").first().id
+            u_u = db.query(UnidadMedida).filter_by(nombre="Unidades").first().id
+            
+            productos_limpieza = [
+                ProductoLimpieza(nombre="Hipoclorito 10%", tipo=TipoProductoLimpieza.DESINFECTANTE, stock=100.0, unidad_medida_id=u_l),
+                ProductoLimpieza(nombre="Detergente Enzimático", tipo=TipoProductoLimpieza.DETERGENTE, stock=50.0, unidad_medida_id=u_l),
+                ProductoLimpieza(nombre="Desengrasante Alcalino", tipo=TipoProductoLimpieza.DESENGRASANTE, stock=75.0, unidad_medida_id=u_l),
+                ProductoLimpieza(nombre="Paños de Microfibra", tipo=TipoProductoLimpieza.OTRO, stock=200.0, unidad_medida_id=u_u)
+            ]
+            db.add_all(productos_limpieza)
+            db.commit()
+            print("Productos de Limpieza creados (4).")
+
+        if db.query(Tarea).count() == 0:
+            p_hipoclorito = db.query(ProductoLimpieza).filter_by(nombre="Hipoclorito 10%").first()
+            p_detergente = db.query(ProductoLimpieza).filter_by(nombre="Detergente Enzimático").first()
+            p_panos = db.query(ProductoLimpieza).filter_by(nombre="Paños de Microfibra").first()
+
+            tareas = [
+                Tarea(titulo="Desinfección de Superficies", frecuencia=FrecuenciaTarea.DIARIA),
+                Tarea(titulo="Limpieza Profunda de Equipos", frecuencia=FrecuenciaTarea.SEMANAL),
+                Tarea(titulo="Limpieza General de Sector", frecuencia=FrecuenciaTarea.DIARIA)
+            ]
+            db.add_all(tareas)
+            db.commit()
+
+            consumos = [
+                ConsumoEstimado(tarea_id=tareas[0].id, producto_limpieza_id=p_hipoclorito.id, cantidad=0.5),
+                ConsumoEstimado(tarea_id=tareas[0].id, producto_limpieza_id=p_panos.id, cantidad=1.0),
+                ConsumoEstimado(tarea_id=tareas[1].id, producto_limpieza_id=p_detergente.id, cantidad=1.5),
+                ConsumoEstimado(tarea_id=tareas[2].id, producto_limpieza_id=p_hipoclorito.id, cantidad=2.0)
+            ]
+            db.add_all(consumos)
+            db.commit()
+            print("Tareas y Consumos Estimados creados (3 tareas).")
+
+        if db.query(Plan).count() == 0:
+            s_frio = db.query(Sector).filter_by(nombre="Depósito Frío").first()
+            s_coccion = db.query(Sector).filter_by(nombre="Sector Cocción").first()
+            
+            e_heladera = db.query(Equipo).filter_by(nombre="Heladera Cámara 1").first()
+            e_horno = db.query(Equipo).filter_by(nombre="Horno Rotativo").first()
+            
+            t_desinfeccion = db.query(Tarea).filter_by(titulo="Desinfección de Superficies").first()
+            t_profunda = db.query(Tarea).filter_by(titulo="Limpieza Profunda de Equipos").first()
+
+            planes = [
+                Plan(
+                    titulo="Saneamiento Diario - Depósito Frío",
+                    fecha_inicio=date.today(),
+                    sector_id=s_frio.id,
+                    equipos=[e_heladera],
+                    tareas=[t_desinfeccion]
+                ),
+                Plan(
+                    titulo="Mantenimiento Semanal - Cocción",
+                    fecha_inicio=date.today(),
+                    sector_id=s_coccion.id,
+                    equipos=[e_horno],
+                    tareas=[t_profunda, t_desinfeccion]
+                )
+            ]
+            db.add_all(planes)
+            db.commit()
+            print("Planes de Limpieza creados (2).")
 
         print("Base de datos poblada exitosamente con datos de prueba para Inocuidad Alimentaria!")
 

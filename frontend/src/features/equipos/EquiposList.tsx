@@ -44,16 +44,17 @@ export default function EquiposList() {
             </Link>
 
             <div className={styles.contenedorTabla}>
-                <div className={styles.filaHeader}>
+                <div className={styles.filaHeader} style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1.5fr' }}>
                     <div>Nombre del Equipo</div>
                     <div>Categoría</div>
-                    <div>Ubicación / Sector</div>
-                    <div>Estado</div>
+                    <div>Sector</div>
+                    <div>Sistema</div>
+                    <div>Condición</div>
                     <div>Acciones</div>
                 </div>
 
                 {equiposActuales.map((eq) => (
-                    <div key={eq.id} className={styles.filaItem}>
+                    <div key={eq.id} className={styles.filaItem} style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1.5fr' }}>
                         <div style={{ fontWeight: '500', color: 'var(--text-h)' }}>
                             {eq.nombre}
                         </div>
@@ -68,9 +69,17 @@ export default function EquiposList() {
 
                         <div>
                             {eq.activo ? (
-                                <span style={{ color: '#16a34a', fontWeight: '500' }}>Operativo</span>
+                                <span style={{ color: '#16a34a', fontWeight: '500' }}>Activo</span>
                             ) : (
-                                <span style={{ color: '#dc2626', fontWeight: '500' }}>Fuera de Servicio</span>
+                                <span style={{ color: '#6b7280', fontWeight: '500' }}>Inactivo</span>
+                            )}
+                        </div>
+
+                        <div>
+                            {eq.estado === 'bueno' ? (
+                                <span style={{ color: '#16a34a', fontWeight: 'bold' }}>Bueno</span>
+                            ) : (
+                                <span style={{ color: '#dc2626', fontWeight: 'bold' }}>Dañado</span>
                             )}
                         </div>
                         
