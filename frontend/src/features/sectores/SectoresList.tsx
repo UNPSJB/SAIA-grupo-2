@@ -5,9 +5,11 @@ import { getSectores, deleteSector } from '../../services/sectoresServices';
 import Boton from '../../components/Boton';
 import ModalConfirmacion from '../../components/confirmacion';
 import ModalAlerta from '../../components/alerta';
+import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';
 
 export default function SectoresList() {
+    const { usuario } = useAuth();
     const [sectores, setSectores] = useState<Sector[]>([]);
     const [paginaActual, setPaginaActual] = useState(1);
     const sectoresPorPagina = 10;
@@ -63,11 +65,13 @@ export default function SectoresList() {
         <div className={styles.contenedorPrincipal}>
             <h2>Gestión de Sectores</h2>
             
-            <Link to="/sectores/nuevo" className={styles.linkCrear}>
-                <Boton variant="crear">
-                    Registrar Sector
-                </Boton>
-            </Link>
+            {usuario?.rol === 'admin' && (
+                <Link to="/sectores/nuevo" className={styles.linkCrear}>
+                    <Boton variant="crear">
+                        Registrar Sector
+                    </Boton>
+                </Link>
+            )}
 
             <div className={styles.contenedorTabla} style={{ maxWidth: '900px' }}>
                 <div className={styles.filaHeader} style={{ gridTemplateColumns: '2fr 2fr 1.5fr' }}>
@@ -90,16 +94,20 @@ export default function SectoresList() {
                             <Link to={`/sectores/${sec.id}`} title="Ver detalle">
                                 <Boton variant="ver" style={{ padding: '8px 12px' }}></Boton>
                             </Link>
-                            <Link to={`/sectores/editar/${sec.id}`} title="Editar sector">
-                                <Boton variant="editar" style={{ padding: '8px 12px' }}></Boton>
-                            </Link>
-                            <span title="Eliminar sector">
-                                <Boton 
-                                    variant="eliminar" 
-                                    onClick={() => solicitarEliminacion(sec.id)}
-                                    style={{ padding: '8px 12px' }}
-                                ></Boton>
-                            </span>
+                            {usuario?.rol === 'admin' && (
+                                <Link to={`/sectores/editar/${sec.id}`} title="Editar sector">
+                                    <Boton variant="editar" style={{ padding: '8px 12px' }}></Boton>
+                                </Link>
+                            )}
+                            {usuario?.rol === 'admin' && (
+                                <span title="Eliminar sector">
+                                    <Boton
+                                        variant="eliminar"
+                                        onClick={() => solicitarEliminacion(sec.id)}
+                                        style={{ padding: '8px 12px' }}
+                                    ></Boton>
+                                </span>
+                            )}
                         </div>
                     </div>
                 ))}

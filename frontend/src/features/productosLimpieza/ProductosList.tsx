@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import type { ProductoLimpieza } from '../../types/productosLimpieza';
 import { getProductos } from '../../services/productosLimpiezaServices';
 import Boton from '../../components/Boton';
+import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';
 
 export default function ProductosList() {
+    const { usuario } = useAuth();
     const [productos, setProductos] = useState<ProductoLimpieza[]>([]);
 
     useEffect(() => {
@@ -24,9 +26,11 @@ export default function ProductosList() {
         <div className={styles.contenedorPrincipal}>
             <h2>Gestión de Productos de Limpieza</h2>
             
-            <Link to="/productos_limpieza/nuevo" className={styles.linkCrear}>
-                <Boton variant="crear">Nuevo Producto</Boton>
-            </Link>
+            {usuario?.rol === 'admin' && (
+                <Link to="/productos_limpieza/nuevo" className={styles.linkCrear}>
+                    <Boton variant="crear">Nuevo Producto</Boton>
+                </Link>
+            )}
 
             <div className={styles.contenedorTabla}>
                 <div className={styles.filaHeader} style={{ gridTemplateColumns: '2fr 1.5fr 1.5fr 1.5fr' }}>
@@ -45,12 +49,16 @@ export default function ProductosList() {
                             {producto.stock <= 0 && " (Sin stock)"}
                         </div>
                         <div className={styles.grupoBotonesTabla}>
-                            <Link to={`/productos_limpieza/editar/${producto.id}`}>
-                                <Boton variant="editar"></Boton>
-                            </Link>
-                            <Link to={`/productos_limpieza/eliminar/${producto.id}`}>
-                                <Boton variant="eliminar"></Boton>
-                            </Link>
+                            {usuario?.rol === 'admin' && (
+                                <Link to={`/productos_limpieza/editar/${producto.id}`}>
+                                    <Boton variant="editar"></Boton>
+                                </Link>
+                            )}
+                            {usuario?.rol === 'admin' && (
+                                <Link to={`/productos_limpieza/eliminar/${producto.id}`}>
+                                    <Boton variant="eliminar"></Boton>
+                                </Link>
+                            )}
                         </div>
                     </div>
                 ))}

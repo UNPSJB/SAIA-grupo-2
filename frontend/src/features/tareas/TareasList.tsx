@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import type { Tarea } from '../../types/tareas';
 import { getTareas } from '../../services/tareasServices';
 import Boton from '../../components/Boton';
+import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';
 
 export default function TareasList() {
+    const { usuario } = useAuth();
     const [tareas, setTareas] = useState<Tarea[]>([]);
 
     useEffect(() => {
@@ -24,9 +26,11 @@ export default function TareasList() {
         <div className={styles.contenedorPrincipal}>
             <h2>Gestión de Tareas y Checklists</h2>
             
-            <Link to="/tareas/nueva" className={styles.linkCrear}>
-                <Boton variant="crear">Nueva Tarea</Boton>
-            </Link>
+            {usuario?.rol === 'admin' && (
+                <Link to="/tareas/nueva" className={styles.linkCrear}>
+                    <Boton variant="crear">Nueva Tarea</Boton>
+                </Link>
+            )}
 
             <div className={styles.contenedorTabla}>
                 <div className={styles.filaHeader} style={{ gridTemplateColumns: '2fr 1fr 2fr 1fr 1.5fr', textAlign: 'center' }}>
@@ -39,14 +43,10 @@ export default function TareasList() {
 
                 {tareas.map((tarea) => (
                     <div key={tarea.id} className={styles.filaItem} style={{ gridTemplateColumns: '2fr 1fr 2fr 1fr 1.5fr', alignItems: 'center', textAlign: 'center' }}>
-                        
-                        {/* Título */}
                         <div style={{ fontWeight: '500', textAlign: 'left' }}>{tarea.titulo}</div>
                         
-                        {/* Frecuencia  */}
                         <div style={{ textTransform: 'capitalize' }}>{tarea.frecuencia}</div>
                         
-                        {/* Planes asociados  */}
                         <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
                             {tarea.planes && tarea.planes.length > 0 ? (
                                 tarea.planes.map(p => p.titulo).join(', ')
@@ -55,7 +55,6 @@ export default function TareasList() {
                             )}
                         </div>
 
-                        {/* Insumos */}
                         <div>
                             {tarea.consumos_estimados && tarea.consumos_estimados.length > 0 ? (
                                 <span style={{ fontWeight: '500', color: '#166534' }}>
@@ -66,14 +65,17 @@ export default function TareasList() {
                             )}
                         </div>
                         
-                        {/* Botones de acción centrados */}
                         <div className={styles.grupoBotonesTabla} style={{ justifyContent: 'center' }}>
-                            <Link to={`/tareas/editar/${tarea.id}`}>
-                                <Boton variant="editar"></Boton>
-                            </Link>
-                            <Link to={`/tareas/eliminar/${tarea.id}`}>
-                                <Boton variant="eliminar"></Boton>
-                            </Link>
+                            {usuario?.rol === 'admin' && (
+                                <Link to={`/tareas/editar/${tarea.id}`}>
+                                    <Boton variant="editar"></Boton>
+                                </Link>
+                            )}
+                            {usuario?.rol === 'admin' && (
+                                <Link to={`/tareas/eliminar/${tarea.id}`}>
+                                    <Boton variant="eliminar"></Boton>
+                                </Link>
+                            )}
                         </div>
                     </div>
                 ))}

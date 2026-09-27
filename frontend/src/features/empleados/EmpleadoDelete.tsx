@@ -3,10 +3,12 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import type { Empleado } from '../../types/empleados';
 import { getEmpleadoById, deleteEmpleado } from '../../services/empleadosServices';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
 export default function EmpleadoDelete() {
     const [empleado, setEmpleado] = useState<Empleado | null>(null);
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '', exito: false });
     const { id } = useParams();
     const navigate = useNavigate(); 
 
@@ -30,24 +32,58 @@ export default function EmpleadoDelete() {
         try {
             const exito = await deleteEmpleado(id);
             if (exito) {
-                navigate('/empleados');
+                setModalAlerta({
+                    isOpen: true,
+                    titulo: "Operación Exitosa",
+                    mensaje: "El empleado ha sido eliminado permanentemente de la base de datos.",
+                    exito: true
+                });
             } else {
-                alert('Hubo un error al intentar dar de baja el registro.');
+                setModalAlerta({
+                    isOpen: true,
+                    titulo: "Error al Eliminar",
+                    mensaje: "Hubo un error al intentar eliminar físicamente el registro.",
+                    exito: false
+                });
             }
         } catch (error) {
             console.error('Error de red:', error);
+            setModalAlerta({
+                isOpen: true,
+                titulo: "Error de Conexión",
+                mensaje: "No se pudo conectar con el servidor. Verifique que el backend esté en ejecución.",
+                exito: false
+            });
+        }
+    };
+
+    const handleCerrarAlerta = () => {
+        const redirigir = modalAlerta.exito;
+        setModalAlerta({ ...modalAlerta, isOpen: false });
+        if (redirigir) {
+            navigate('/empleados');
         }
     };
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>¿Desea dar de baja este empleado?</h2>
+            <h2>{empleado?.activo ? 'Empleado Activo' : '¿Desea eliminar físicamente este empleado inactivo?'}</h2>
             {empleado ? (
                 <div className={styles.tarjetaEstatica} style={{ maxWidth: '600px', width: '100%', textAlign: 'center' }}>
                     <h3 style={{ color: 'var(--text-h)' }}>{empleado.nombre} {empleado.apellido}</h3>
                     <p><strong>Legajo:</strong> {empleado.legajo}</p>
                     <p><strong>DNI / CUIL:</strong> {empleado.dni}</p>
-                    
+
+                    {empleado.activo ? (
+                        <p style={{ color: '#0284c7', fontWeight: '500', margin: '15px 0' }}>
+                            Los empleados activos no se pueden borrar físicamente. Para dar de baja a un empleado activo, edite su perfil y desmarque la casilla "Empleado Activo".
+                        </p>
+                    ) : (
+                        <p style={{ color: '#dc2626', fontWeight: 'bold', margin: '15px 0' }}>
+                            * ATENCIÓN: Esta acción realizará un borrado físico y permanente de la base de datos.
+                        </p>
+                    )}
+
                     <div style={{ margin: '15px 0' }}>
                         <p style={{ marginBottom: '8px' }}><strong>Capacidad/es:</strong></p>
                         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -75,14 +111,23 @@ export default function EmpleadoDelete() {
                                 Cancelar
                             </Boton>
                         </Link>
-                        <Boton variant="eliminar" onClick={handleDelete}>
-                            Confirmar Baja
-                        </Boton>
+                        {!empleado.activo && (
+                            <Boton variant="eliminar" onClick={handleDelete}>
+                                Confirmar Borrado Físico
+                            </Boton>
+                        )}
                     </div>
                 </div>
             ) : (
                 <p>Empleado no encontrado</p>
             )}
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={handleCerrarAlerta}
+            />
         </div>
     );
 }

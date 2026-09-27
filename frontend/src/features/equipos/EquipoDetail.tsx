@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useParams,useNavigate } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import type { Equipo } from '../../types/equipos';
 import { getEquipoById } from '../../services/equiposServices';
 import Boton from '../../components/Boton';
@@ -8,7 +8,6 @@ import styles from '../../styles/shared.module.css';
 export default function EquipoDetail() {
     const [equipo, setEquipo] = useState<Equipo | null>(null);
     const { id } = useParams();
-    const navigate = useNavigate(); 
 
     useEffect(() => {
         const cargarEquipo = async () => {
@@ -37,7 +36,7 @@ export default function EquipoDetail() {
                     
                     <div className={styles.bloqueDetalle}>
                         <Link to="/equipos">
-                            <Boton variant="volver" onClick={() => navigate(-1)}>Volver a la lista</Boton>
+                            <Boton variant="volver">Volver a la lista</Boton>
                         </Link>
                     </div>
                 </div>

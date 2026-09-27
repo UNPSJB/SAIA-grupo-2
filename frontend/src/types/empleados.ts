@@ -12,6 +12,7 @@ export interface Empleado {
     nombre: string;
     apellido: string;
     activo: boolean;
+    rol: 'admin' | 'operario';
     capacidades: Capacidad[];
     sectores: SectorRef[];
 }

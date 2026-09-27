@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
+from src.empleados.models import RolEmpleado
 
 class CapacidadRef(BaseModel):
     id: int
@@ -16,6 +17,7 @@ class EmpleadoBase(BaseModel):
     nombre: str
     apellido: str
     activo: bool = True
+    rol: RolEmpleado = RolEmpleado.OPERARIO
 
 class EmpleadoCreate(EmpleadoBase):
     listaCapacidades: List[int] | None = None
@@ -31,3 +33,11 @@ class Empleado(EmpleadoBase):
     capacidades: List[CapacidadRef]
     sectores: List[SectorRef] = [] 
     model_config = ConfigDict(from_attributes=True)
+
+class LoginRequest(BaseModel):
+    legajo: str
+    dni: str
+
+class LoginResponse(BaseModel):
+    empleado: Empleado
+    mensaje: str

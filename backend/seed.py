@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from src.database import SessionLocal, engine
 from src.models import Base
 from src.capacidades.models import Capacidad
-from src.empleados.models import Empleado
+from src.empleados.models import Empleado, RolEmpleado
 from src.equipos.models import Equipo, TipoEquipo
 from src.insumos.models import Insumo
 from src.unidades_medida.models import UnidadMedida
@@ -14,6 +14,7 @@ from src.productos_limpieza.constants import TipoProductoLimpieza
 from src.tareas.models import Tarea, ConsumoEstimado
 from src.tareas.constants import FrecuenciaTarea
 from src.planes.models import Plan
+from src.checklists.models import Checklist, ConsumoReal
 
 def seed_database():
     Base.metadata.create_all(bind=engine)
@@ -42,20 +43,14 @@ def seed_database():
 
         # --- CAPACIDADES ---
         if db.query(Capacidad).count() == 0:
+            # Solo Administrador y Operario
             capacidades = [
                 Capacidad(nombre="Administrador"), 
-                Capacidad(nombre="Operario"),
-                Capacidad(nombre="Control de Calidad"),
-                Capacidad(nombre="Limpieza"),
-                Capacidad(nombre="Mantenimiento"),
-                Capacidad(nombre="Supervisor"),
-                Capacidad(nombre="Logística"),
-                Capacidad(nombre="Seguridad e Higiene"),
-                Capacidad(nombre="Empaque")
+                Capacidad(nombre="Operario")
             ]
             db.add_all(capacidades)
             db.commit()
-            print("Capacidades creadas (9).")
+            print("Capacidades creadas (2).")
 
         # --- INSUMOS ---
         if db.query(Insumo).count() == 0:
@@ -92,52 +87,32 @@ def seed_database():
         if db.query(Empleado).count() == 0:
             c_admin = db.query(Capacidad).filter_by(nombre="Administrador").first()
             c_operario = db.query(Capacidad).filter_by(nombre="Operario").first()
-            c_calidad = db.query(Capacidad).filter_by(nombre="Control de Calidad").first()
-            c_limpieza = db.query(Capacidad).filter_by(nombre="Limpieza").first()
-            c_mantenimiento = db.query(Capacidad).filter_by(nombre="Mantenimiento").first()
-            c_supervisor = db.query(Capacidad).filter_by(nombre="Supervisor").first()
-            c_logistica = db.query(Capacidad).filter_by(nombre="Logística").first()
-            c_empaque = db.query(Capacidad).filter_by(nombre="Empaque").first()
 
+            # Se les asigna explícitamente el rol además de la capacidad
             empleados = [
-                Empleado(legajo="EMP-1000", dni="11111111", nombre="Carlos", apellido="Gómez", activo=True),
-                Empleado(legajo="EMP-1001", dni="22222222", nombre="María", apellido="Pérez", activo=True),
-                Empleado(legajo="EMP-1002", dni="33333333", nombre="Juan", apellido="López", activo=True),
-                Empleado(legajo="EMP-1003", dni="44444444", nombre="Lucía", apellido="Martínez", activo=True),
-                Empleado(legajo="EMP-1004", dni="55555555", nombre="Pedro", apellido="Sánchez", activo=False),
-                Empleado(legajo="EMP-1005", dni="66666666", nombre="Ana", apellido="García", activo=True),
-                Empleado(legajo="EMP-1006", dni="77777777", nombre="Diego", apellido="Fernández", activo=True),
-                Empleado(legajo="EMP-1007", dni="88888888", nombre="Sofía", apellido="Romero", activo=True),
-                Empleado(legajo="EMP-1008", dni="99999999", nombre="Martín", apellido="Castro", activo=True),
-                Empleado(legajo="EMP-1009", dni="10101010", nombre="Laura", apellido="Díaz", activo=True),
-                Empleado(legajo="EMP-1010", dni="12121212", nombre="Jorge", apellido="Ruiz", activo=False),
-                Empleado(legajo="EMP-1011", dni="13131313", nombre="Elena", apellido="Vargas", activo=True),
-                Empleado(legajo="EMP-1012", dni="14141414", nombre="Andrés", apellido="Herrera", activo=True),
-                Empleado(legajo="EMP-1013", dni="15151515", nombre="Valeria", apellido="Guzmán", activo=True),
+                Empleado(legajo="EMP-1000", dni="11111111", nombre="Carlos", apellido="Gómez", activo=True, rol=RolEmpleado.ADMIN),
+                Empleado(legajo="EMP-1001", dni="22222222", nombre="María", apellido="Pérez", activo=True, rol=RolEmpleado.ADMIN),
+                Empleado(legajo="EMP-1002", dni="33333333", nombre="Juan", apellido="López", activo=True, rol=RolEmpleado.OPERARIO),
+                Empleado(legajo="EMP-1003", dni="44444444", nombre="Lucía", apellido="Martínez", activo=True, rol=RolEmpleado.OPERARIO),
+                Empleado(legajo="EMP-1004", dni="55555555", nombre="Pedro", apellido="Sánchez", activo=False, rol=RolEmpleado.OPERARIO),
+                Empleado(legajo="EMP-1005", dni="66666666", nombre="Ana", apellido="García", activo=True, rol=RolEmpleado.OPERARIO),
+                Empleado(legajo="EMP-1006", dni="77777777", nombre="Diego", apellido="Fernández", activo=True, rol=RolEmpleado.OPERARIO),
+                Empleado(legajo="EMP-1007", dni="88888888", nombre="Sofía", apellido="Romero", activo=True, rol=RolEmpleado.OPERARIO),
             ]
 
-            if c_admin: empleados[0].capacidades.append(c_admin)
-            if c_admin and c_supervisor: empleados[1].capacidades.extend([c_admin, c_supervisor])
+            # Los primeros dos son admins
+            if c_admin: 
+                empleados[0].capacidades.append(c_admin)
+                empleados[1].capacidades.append(c_admin)
+            
+            # El resto son operarios
             if c_operario:
-                empleados[2].capacidades.append(c_operario)
-                empleados[4].capacidades.append(c_operario)
-                empleados[8].capacidades.append(c_operario)
-            if c_operario and c_limpieza:
-                empleados[3].capacidades.extend([c_operario, c_limpieza])
-                empleados[5].capacidades.extend([c_operario, c_limpieza])
-            if c_calidad: 
-                empleados[6].capacidades.append(c_calidad)
-                empleados[13].capacidades.append(c_calidad)
-            if c_limpieza: empleados[7].capacidades.append(c_limpieza)
-            if c_mantenimiento: empleados[9].capacidades.append(c_mantenimiento)
-            if c_logistica: 
-                empleados[10].capacidades.append(c_logistica)
-                empleados[11].capacidades.append(c_logistica)
-            if c_empaque: empleados[12].capacidades.append(c_empaque)
+                for emp in empleados[2:]:
+                    emp.capacidades.append(c_operario)
             
             db.add_all(empleados)
             db.commit()
-            print("Empleados creados (14).")
+            print("Empleados creados (8).")
 
         # --- SECTORES ---
         if db.query(Sector).count() == 0:
