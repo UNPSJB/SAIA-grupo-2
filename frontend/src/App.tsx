@@ -17,10 +17,6 @@ import InsumoDetail from './features/insumos/InsumoDetail';
 
 import UnidadesMedidaList from './features/unidadesMedida/UnidadesMedidaList';
 
-import ProductosLimpiezaList from './features/productosLimpieza/ProductosLimpiezaList';
-import ProductoLimpiezaForm from './features/productosLimpieza/ProductoLimpiezaForm';
-import ProductoLimpiezaDelete from './features/productosLimpieza/ProductoLimpiezaDelete';
-import ProductoLimpiezaDetail from './features/productosLimpieza/ProductoLimpiezaDetail';
 
 import EquiposList from './features/equipos/EquiposList';
 import EquipoForm from './features/equipos/EquipoForm';
@@ -30,12 +26,7 @@ import EquipoDelete from './features/equipos/EquipoDelete';
 
 import ConsumoForm from './features/consumos/ConsumoForm';
 import ConsumoReporte from './features/consumos/ConsumoReporte';
-import ElementosLimpiezaList from './features/elementosLimpieza/ElementosLimpiezaList';
-import ElementoLimpiezaForm from './features/elementosLimpieza/ElementoLimpiezaForm';
-import ElementoLimpiezaDetail from './features/elementosLimpieza/ElementoLimpiezaDetail';
-import ElementoLimpiezaDelete from './features/elementosLimpieza/ElementoLimpiezaDelete';
 
-import AlertasRecambio from './features/elementosLimpieza/AlertasRecambio';
 import SectoresList from './features/sectores/SectoresList';
 import SectorForm from './features/sectores/SectorForm';
 import SectorDetail from './features/sectores/SectorDetail';
@@ -120,6 +111,10 @@ function RutasProtegidas() {
             <Link to="/tareas">Tareas de Limpieza</Link>
             {isAdmin && <Link to="/planes">Planes de Limpieza</Link>}
             <Link to="/checklists/hoy">Checklist del Día</Link>
+            <Link to="/consumos/nuevo">Registrar Consumo Limpieza</Link>
+            {isAdmin &&<Link to="/consumos/reporte">Reporte de Consumos</Link>}
+        
+          
           </div>
         </div>
 
@@ -141,9 +136,7 @@ function RutasProtegidas() {
         <div className="dropdownContent">
           <Link to="/elementosLimpieza">Elementos de Limpieza</Link>
           <Link to="/productosLimpieza">Productos de Limpieza</Link>
-          <Link to="/consumos/nuevo">Registrar Consumo Limpieza</Link>
-          <Link to="/consumos/reporte">Reporte de Consumos</Link>
-        </div>
+         </div>
       </div>
 
       <div>
@@ -182,6 +175,9 @@ function RutasProtegidas() {
           <Route path="/productos_limpieza/nuevo" element={<RutaAdmin><ProductoForm /></RutaAdmin>} />
           <Route path="/productos_limpieza/editar/:id" element={<RutaAdmin><ProductoForm /></RutaAdmin>} />
           <Route path="/productos_limpieza/eliminar/:id" element={<RutaAdmin><ProductoDelete /></RutaAdmin>} />
+
+          <Route path="/consumos/reporte" element={<RutaAdmin><ConsumoReporte /></RutaAdmin>} />
+          <Route path="/consumos/nuevo" element={<RutaAdmin><ConsumoForm /></RutaAdmin>} />
 
           <Route path="/tareas" element={<TareasList />} />
           <Route path="/tareas/nueva" element={<RutaAdmin><TareaForm /></RutaAdmin>} />

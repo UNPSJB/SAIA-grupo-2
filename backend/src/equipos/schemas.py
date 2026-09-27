@@ -31,13 +31,6 @@ class EquipoUpdate(EquipoBase):
 class Equipo(EquipoBase):
     id: int
     tipo: TipoEquipoBase 
-<<<<<<< HEAD
-    model_config = ConfigDict(from_attributes=True)
-    
-class EquipoResumen(BaseModel):
-    id: int
-    nombre: str
-=======
     sector: SectorRef
     model_config = ConfigDict(from_attributes=True)
 
@@ -45,5 +38,4 @@ class EquipoResumen(BaseModel):
     id: int
     nombre: str
     estado: EstadoEquipo
->>>>>>> origin/planes-rama
     model_config = ConfigDict(from_attributes=True)

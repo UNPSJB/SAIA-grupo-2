@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
 import { saveConsumo } from '../../services/consumosServices';
-import { getProductosLimpieza } from '../../services/productosLimpiezaServices';
+import { getProductos } from '../../services/productosLimpiezaServices';
 import type { ProductoLimpieza } from '../../types/productosLimpieza';
 import { getTareas } from '../../services/tareasServices';
 import Boton from '../../components/Boton';
@@ -29,7 +29,7 @@ export default function ConsumoForm() {
 
     useEffect(() => {
 
-        getProductosLimpieza().then(setProd);
+        getProductos().then(setProd);
         getTareas().then(setTareas);
     }, []);
 

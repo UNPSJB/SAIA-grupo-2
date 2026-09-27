@@ -14,13 +14,10 @@ class FechasInvalidas(BadRequest):
     DETAIL = ErrorCode.FECHAS_INVALIDAS
 
 
-<<<<<<< HEAD
-=======
 class EquipoDanado(BadRequest):
     DETAIL = ErrorCode.EQUIPO_DANADO
 
 
->>>>>>> origin/planes-rama
 class SinEquipos(BadRequest):
     DETAIL = ErrorCode.SIN_EQUIPOS
 

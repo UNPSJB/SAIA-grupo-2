@@ -71,19 +71,9 @@ app.include_router(insumos_router)
 app.include_router(empleados_router)
 app.include_router(capacidades_router)
 app.include_router(equipos_router)
-<<<<<<< HEAD
-app.include_router(consumos_router)
-app.include_router(productos_limpieza_router)
-
-app.include_router(elementos_limpieza_router)
-app.include_router(sectores_router)
-app.include_router(planes_router)
-app.include_router(tareas_router)
-
-=======
 app.include_router(sectores_router)
 app.include_router(planes_router)
 app.include_router(productos_limpieza_router)
 app.include_router(tareas_router)
 app.include_router(checklist_router)
->>>>>>> origin/planes-rama
+app.include_router(consumos_router)
