@@ -19,6 +19,10 @@ import EquipoForm from './features/equipos/EquipoForm';
 import EquipoDetail from './features/equipos/EquipoDetail';
 import EquipoDelete from './features/equipos/EquipoDelete';
 
+
+import ConsumoForm from './features/consumos/ConsumoForm';
+import ConsumoReporte from './features/consumos/ConsumoReporte';
+
 import './App.css';
 
 function App() {
@@ -40,6 +44,8 @@ function App() {
           <div className="dropdownContent">
             <Link to="/insumos">Inventario de Insumos</Link>
             <Link to="/unidadesMedida">Unidades de Medida</Link>
+            <Link to="/consumos/nuevo">Registrar Consumo Limpieza</Link>
+    <Link to="/consumos/reporte">Reporte de Consumos</Link>
           </div>
         </div>
 
@@ -79,6 +85,9 @@ function App() {
           <Route path="/equipos/:id" element={<EquipoDetail />} />
           <Route path="/equipos/editar/:id" element={<EquipoForm />} />
           <Route path="/equipos/eliminar/:id" element={<EquipoDelete />} />
+        
+          <Route path="/consumos/nuevo" element={<ConsumoForm />} />
+          <Route path="/consumos/reporte" element={<ConsumoReporte />} />
         </Routes>
       </div>
     </BrowserRouter>
