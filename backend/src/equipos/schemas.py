@@ -24,3 +24,8 @@ class Equipo(EquipoBase):
     id: int
     tipo: TipoEquipoBase 
     model_config = ConfigDict(from_attributes=True)
+    
+class EquipoResumen(BaseModel):
+    id: int
+    nombre: str
+    model_config = ConfigDict(from_attributes=True)

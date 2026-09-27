@@ -12,12 +12,12 @@ import InsumoForm from './features/insumos/InsumoForm';
 import InsumoDelete from './features/insumos/InsumoDelete';
 import InsumoDetail from './features/insumos/InsumoDetail';
 
+
+
 import ProductosLimpiezaList from './features/productosLimpieza/ProductosLimpiezaList';
 import ProductoLimpiezaForm from './features/productosLimpieza/ProductoLimpiezaForm';
 import ProductoLimpiezaDelete from './features/productosLimpieza/ProductoLimpiezaDelete';
 import ProductoLimpiezaDetail from './features/productosLimpieza/ProductoLimpiezaDetail';
-
-import UnidadesMedidaList from './features/unidadesMedida/UnidadesMedidaList';
 
 import EquiposList from './features/equipos/EquiposList';
 import EquipoForm from './features/equipos/EquipoForm';
@@ -27,6 +27,12 @@ import EquipoDelete from './features/equipos/EquipoDelete';
 
 import ConsumoForm from './features/consumos/ConsumoForm';
 import ConsumoReporte from './features/consumos/ConsumoReporte';
+import ElementosLimpiezaList from './features/elementosLimpieza/ElementosLimpiezaList';
+import ElementoLimpiezaForm from './features/elementosLimpieza/ElementoLimpiezaForm';
+import ElementoLimpiezaDetail from './features/elementosLimpieza/ElementoLimpiezaDetail';
+import ElementoLimpiezaDelete from './features/elementosLimpieza/ElementoLimpiezaDelete';
+
+import AlertasRecambio from './features/elementosLimpieza/AlertasRecambio';
 
 import './App.css';
 
@@ -48,10 +54,7 @@ function App() {
           <span className="navLink">Gestión de Insumos ▾</span>
           <div className="dropdownContent">
             <Link to="/insumos">Inventario de Insumos</Link>
-            <Link to="/productosLimpieza">Productos de Limpieza</Link>
             <Link to="/unidadesMedida">Unidades de Medida</Link>
-            <Link to="/consumos/nuevo">Registrar Consumo Limpieza</Link>
-    <Link to="/consumos/reporte">Reporte de Consumos</Link>
           </div>
         </div>
 
@@ -62,6 +65,16 @@ function App() {
           </div>
         </div>
       </nav>
+
+      <div className="dropdown">
+        <span className="navLink">Limpieza ▾</span>
+        <div className="dropdownContent">
+          <Link to="/elementosLimpieza">Elementos de Limpieza</Link>
+          <Link to="/productosLimpieza">Productos de Limpieza</Link>
+          <Link to="/consumos/nuevo">Registrar Consumo Limpieza</Link>
+          <Link to="/consumos/reporte">Reporte de Consumos</Link>
+        </div>
+      </div>
 
       <div>
         <Routes>
@@ -84,12 +97,6 @@ function App() {
           <Route path="/insumos/eliminar/:id" element={<InsumoDelete />} />
           <Route path="/insumos/:id" element={<InsumoDetail />} />
 
-          <Route path="/productosLimpieza" element={<ProductosLimpiezaList />} />
-          <Route path="/productosLimpieza/nuevo" element={<ProductoLimpiezaForm />} />
-          <Route path="/productosLimpieza/editar/:id" element={<ProductoLimpiezaForm />} />
-          <Route path="/productosLimpieza/eliminar/:id" element={<ProductoLimpiezaDelete />} />
-          <Route path="/productosLimpieza/:id" element={<ProductoLimpiezaDetail />} />
-
           <Route path="/unidadesMedida" element={<UnidadesMedidaList />} />
 
           <Route path="/equipos" element={<EquiposList />} />
@@ -100,6 +107,21 @@ function App() {
         
           <Route path="/consumos/nuevo" element={<ConsumoForm />} />
           <Route path="/consumos/reporte" element={<ConsumoReporte />} />
+
+          <Route path="/elementosLimpieza" element={<ElementosLimpiezaList />} />
+          <Route path="/elementosLimpieza/nuevo" element={<ElementoLimpiezaForm />} />
+          <Route path="/elementosLimpieza/editar/:id" element={<ElementoLimpiezaForm />} />
+          <Route path="/elementosLimpieza/eliminar/:id" element={<ElementoLimpiezaDelete />} />
+          <Route path="/elementosLimpieza/:id" element={<ElementoLimpiezaDetail />} />
+
+          <Route path="/productosLimpieza" element={<ProductosLimpiezaList />} />
+          <Route path="/productosLimpieza/nuevo" element={<ProductoLimpiezaForm />} />
+          <Route path="/productosLimpieza/editar/:id" element={<ProductoLimpiezaForm />} />
+          <Route path="/productosLimpieza/eliminar/:id" element={<ProductoLimpiezaDelete />} />
+          <Route path="/productosLimpieza/:id" element={<ProductoLimpiezaDetail />} />
+
+          <Route path="/elementosLimpieza/alertas" element={<AlertasRecambio />} />
+
         </Routes>
       </div>
     </BrowserRouter>

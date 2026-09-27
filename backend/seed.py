@@ -6,6 +6,10 @@ from src.empleados.models import Empleado
 from src.equipos.models import Equipo, TipoEquipo
 from src.insumos.models import Insumo
 from src.unidades_medida.models import UnidadMedida
+from src.productos_limpieza.models import ProductoLimpieza
+from src.sectores.models import Sector
+from src.planes.models import Plan
+from src.tareas.models import Tarea, ConsumoEstimado
 
 def seed_database():
     Base.metadata.create_all(bind=engine)

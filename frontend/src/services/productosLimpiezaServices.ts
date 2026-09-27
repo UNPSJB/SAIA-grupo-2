@@ -47,6 +47,8 @@ export const saveProductoLimpieza = async (
 
     const metodo = id ? 'PUT' : 'POST';
 
+    console.log('4 - FETCH', metodo, url, datos);
+
     const res = await fetch(url, {
         method: metodo,
         headers: {
@@ -54,6 +56,8 @@ export const saveProductoLimpieza = async (
         },
         body: JSON.stringify(datos),
     });
+
+    console.log('5 - STATUS', res.status);
 
     return res.ok;
 };

@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import type { ProductoLimpieza } from '../../types/productosLimpieza';
-
 import {
     deleteProductoLimpieza,
     getProductoLimpiezaById,
 } from '../../services/productosLimpiezaServices';
 
-function ProductoLimpiezaDelete() {
+import Boton from '../../components/Boton';
+import styles from '../../styles/shared.module.css';
+
+export default function ProductoLimpiezaDelete() {
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -24,6 +26,7 @@ function ProductoLimpiezaDelete() {
                 const data = await getProductoLimpiezaById(id);
                 setProducto(data);
             } catch (err) {
+                console.error('Error al cargar el producto de limpieza:', err);
                 setError('No se pudo cargar el producto de limpieza.');
             }
         };
@@ -38,60 +41,61 @@ function ProductoLimpiezaDelete() {
             setEliminando(true);
             setError(null);
 
-            const ok = await deleteProductoLimpieza(id);
+            const exito = await deleteProductoLimpieza(id);
 
-            if (!ok) {
-                throw new Error('No se pudo eliminar el producto.');
+            if (exito) {
+                navigate('/productosLimpieza');
+            } else {
+                setError('No se pudo eliminar el producto. Puede estar asociado a una tarea.');
             }
-
-            navigate('/productosLimpieza');
         } catch (err) {
-            setError(
-                'No se pudo eliminar el producto. Puede que esté asociado a una tarea.'
-            );
+            console.error('Error de red:', err);
+            setError('No se pudo eliminar el producto. Puede estar asociado a una tarea.');
         } finally {
             setEliminando(false);
         }
     };
 
-    if (error && !producto) {
-        return <p>{error}</p>;
-    }
-
-    if (!producto) {
-        return <p>Cargando...</p>;
-    }
-
     return (
-        <div>
-            <h1>Eliminar producto de limpieza</h1>
+        <div className={styles.contenedorPrincipal}>
+            <h2>¿Desea eliminar este producto de limpieza?</h2>
 
-            <p>
-                ¿Está seguro de que desea eliminar el producto?
-            </p>
+            {producto ? (
+                <div
+                    className={styles.tarjetaEstatica}
+                    style={{ maxWidth: '600px', width: '100%', textAlign: 'center' }}
+                >
+                    <h3 style={{ color: 'var(--text-h)' }}>{producto.nombre}</h3>
 
-            <p>
-                <strong>{producto.nombre}</strong>
-            </p>
+                    <p>
+                        <span
+                            className={styles.badge}
+                            style={{ fontSize: '0.75rem', padding: '3px 10px', textTransform: 'capitalize' }}
+                        >
+                            {producto.tipo}
+                        </span>
+                    </p>
 
-            {error && <p>{error}</p>}
+                    <p>Stock actual: {producto.stock} {producto.unidad_medida.nombre}</p>
 
-            <button
-                type="button"
-                onClick={handleDelete}
-                disabled={eliminando}
-            >
-                {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
-            </button>
+                    {error && (
+                        <p style={{ color: '#ef4444', marginTop: '15px' }}>{error}</p>
+                    )}
 
-            <button
-                type="button"
-                onClick={() => navigate('/productosLimpieza')}
-            >
-                Cancelar
-            </button>
+                    <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
+                        <Link to="/productosLimpieza">
+                            <Boton variant="volver">Cancelar</Boton>
+                        </Link>
+                        <Boton variant="eliminar" onClick={handleDelete} disabled={eliminando}>
+                            {eliminando ? 'Eliminando...' : 'Eliminar'}
+                        </Boton>
+                    </div>
+                </div>
+            ) : (
+                <p style={error ? { color: '#ef4444' } : {}}>
+                    {error ?? 'Cargando...'}
+                </p>
+            )}
         </div>
     );
 }
-
-export default ProductoLimpiezaDelete;
