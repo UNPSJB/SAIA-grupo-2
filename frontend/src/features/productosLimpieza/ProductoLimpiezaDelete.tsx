@@ -8,12 +8,19 @@ import {
     getProductoLimpiezaById,
 } from '../../services/productosLimpiezaServices';
 
+import Boton from '../../components/Boton';
+import ModalConfirmacion from '../../components/confirmacion';
+import styles from '../../styles/shared.module.css';
+
 function ProductoLimpiezaDelete() {
     const { id } = useParams();
     const navigate = useNavigate();
 
-    const [producto, setProducto] = useState<ProductoLimpieza | null>(null);
+    const [producto, setProducto] =
+        useState<ProductoLimpieza | null>(null);
+
     const [error, setError] = useState<string | null>(null);
+    const [modalAbierto, setModalAbierto] = useState(true);
     const [eliminando, setEliminando] = useState(false);
 
     useEffect(() => {
@@ -24,7 +31,10 @@ function ProductoLimpiezaDelete() {
                 const data = await getProductoLimpiezaById(id);
                 setProducto(data);
             } catch (err) {
-                setError('No se pudo cargar el producto de limpieza.');
+                setError(
+                    'No se pudo cargar el producto de limpieza.'
+                );
+                setModalAbierto(false);
             }
         };
 
@@ -41,7 +51,9 @@ function ProductoLimpiezaDelete() {
             const ok = await deleteProductoLimpieza(id);
 
             if (!ok) {
-                throw new Error('No se pudo eliminar el producto.');
+                throw new Error(
+                    'No se pudo eliminar el producto.'
+                );
             }
 
             navigate('/productosLimpieza');
@@ -49,47 +61,90 @@ function ProductoLimpiezaDelete() {
             setError(
                 'No se pudo eliminar el producto. Puede que esté asociado a una tarea.'
             );
+            setModalAbierto(false);
         } finally {
             setEliminando(false);
         }
     };
 
-    if (error && !producto) {
-        return <p>{error}</p>;
+    if (error) {
+        return (
+            <div className={styles.contenedorPrincipal}>
+                <p>{error}</p>
+
+                <Boton
+                    variant="volver"
+                    onClick={() =>
+                        navigate('/productosLimpieza')
+                    }
+                >
+                    Volver
+                </Boton>
+            </div>
+        );
     }
 
     if (!producto) {
-        return <p>Cargando...</p>;
+        return (
+            <div className={styles.contenedorPrincipal}>
+                <p>Cargando...</p>
+            </div>
+        );
     }
 
     return (
-        <div>
-            <h1>Eliminar producto de limpieza</h1>
+        <div className={styles.contenedorPrincipal}>
+            <h2>Eliminar Producto de Limpieza</h2>
 
-            <p>
-                ¿Está seguro de que desea eliminar el producto?
-            </p>
-
-            <p>
-                <strong>{producto.nombre}</strong>
-            </p>
-
-            {error && <p>{error}</p>}
-
-            <button
-                type="button"
-                onClick={handleDelete}
-                disabled={eliminando}
+            <div
+                className={styles.tarjetaEstatica}
+                style={{
+                    width: '100%',
+                    maxWidth: '600px',
+                }}
             >
-                {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
-            </button>
+                <div className={styles.tarjetaHeader}>
+                    <h3>{producto.nombre}</h3>
+                </div>
 
-            <button
-                type="button"
-                onClick={() => navigate('/productosLimpieza')}
-            >
-                Cancelar
-            </button>
+                <div className={styles.tarjetaBody}>
+                    <p>
+                        <strong>Tipo:</strong>{' '}
+                        {producto.tipo}
+                    </p>
+
+                    <p>
+                        <strong>Stock:</strong>{' '}
+                        {producto.stock}
+                    </p>
+
+                    <p>
+                        <strong>Unidad de medida:</strong>{' '}
+                        {producto.unidad_medida.nombre}
+                    </p>
+                </div>
+
+                <div className={styles.filaBotones}>
+                    <Boton
+                        variant="volver"
+                        onClick={() =>
+                            navigate('/productosLimpieza')
+                        }
+                    >
+                        Volver
+                    </Boton>
+                </div>
+            </div>
+
+            <ModalConfirmacion
+                isOpen={modalAbierto && !eliminando}
+                titulo="Eliminar producto de limpieza"
+                mensaje={`¿Está seguro de que desea eliminar "${producto.nombre}"?`}
+                onConfirm={handleDelete}
+                onCancel={() =>
+                    navigate('/productosLimpieza')
+                }
+            />
         </div>
     );
 }

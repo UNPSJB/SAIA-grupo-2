@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import type { ProductoLimpieza } from '../../types/productosLimpieza';
-
 import { getProductoLimpiezaById } from '../../services/productosLimpiezaServices';
+
+import Boton from '../../components/Boton';
+import styles from '../../styles/shared.module.css';
 
 function ProductoLimpiezaDetail() {
     const { id } = useParams();
+    const navigate = useNavigate();
 
-    const [producto, setProducto] = useState<ProductoLimpieza | null>(null);
+    const [producto, setProducto] =
+        useState<ProductoLimpieza | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -19,7 +23,13 @@ function ProductoLimpiezaDetail() {
                 const data = await getProductoLimpiezaById(id);
                 setProducto(data);
             } catch (err) {
-                setError('No se pudo cargar el producto de limpieza.');
+                console.error(
+                    'Error al cargar producto:',
+                    err
+                );
+                setError(
+                    'No se pudo cargar el producto de limpieza.'
+                );
             }
         };
 
@@ -27,41 +37,93 @@ function ProductoLimpiezaDetail() {
     }, [id]);
 
     if (error) {
-        return <p>{error}</p>;
+        return (
+            <div className={styles.contenedorPrincipal}>
+                <p>{error}</p>
+
+                <Boton
+                    variant="volver"
+                    onClick={() =>
+                        navigate('/productosLimpieza')
+                    }
+                >
+                    Volver
+                </Boton>
+            </div>
+        );
     }
 
     if (!producto) {
-        return <p>Cargando...</p>;
+        return (
+            <div className={styles.contenedorPrincipal}>
+                <p>Cargando...</p>
+            </div>
+        );
     }
 
     return (
-        <div>
-            <h1>Detalle del producto de limpieza</h1>
+        <div className={styles.contenedorPrincipal}>
+            <h2>Detalle del Producto de Limpieza</h2>
 
-            <p>
-                <strong>ID:</strong> {producto.id}
-            </p>
+            <div
+                className={styles.tarjetaEstatica}
+                style={{
+                    width: '100%',
+                    maxWidth: '700px',
+                }}
+            >
+                <div className={styles.tarjetaHeader}>
+                    <h3>{producto.nombre}</h3>
+                </div>
 
-            <p>
-                <strong>Nombre:</strong> {producto.nombre}
-            </p>
+                <div className={styles.tarjetaBody}>
+                    <p>
+                        <strong>ID:</strong>{' '}
+                        {producto.id}
+                    </p>
 
-            <p>
-                <strong>Tipo:</strong> {producto.tipo}
-            </p>
+                    <p>
+                        <strong>Tipo:</strong>{' '}
+                        <span className={styles.badge}>
+                            {producto.tipo}
+                        </span>
+                    </p>
 
-            <p>
-                <strong>Stock:</strong> {producto.stock}
-            </p>
+                    <p>
+                        <strong>Stock:</strong>{' '}
+                        {producto.stock}
+                    </p>
 
-            <p>
-                <strong>Unidad de medida:</strong>{' '}
-                {producto.unidad_medida.nombre}
-            </p>
+                    <p>
+                        <strong>Unidad de medida:</strong>{' '}
+                        <span className={styles.badge}>
+                            {producto.unidad_medida.nombre}
+                        </span>
+                    </p>
+                </div>
 
-            <Link to="/productosLimpieza">
-                Volver a productos de limpieza
-            </Link>
+                <div className={styles.filaBotones}>
+                    <Boton
+                        variant="editar"
+                        onClick={() =>
+                            navigate(
+                                `/productosLimpieza/editar/${producto.id}`
+                            )
+                        }
+                    >
+                        Editar
+                    </Boton>
+
+                    <Boton
+                        variant="volver"
+                        onClick={() =>
+                            navigate('/productosLimpieza')
+                        }
+                    >
+                        Volver
+                    </Boton>
+                </div>
+            </div>
         </div>
     );
 }
