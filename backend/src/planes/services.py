@@ -8,6 +8,10 @@ from sqlalchemy.orm import Session
 
 from src.equipos import services as equipos_services
 from src.tareas import services as tareas_services
+<<<<<<< HEAD
+=======
+from src.equipos.constants import EstadoEquipo
+>>>>>>> origin/planes-rama
 from src.planes import exceptions, schemas
 from src.planes.models import Plan
 from src.sectores import services as sectores_services
@@ -29,7 +33,14 @@ def _resolver_equipos(db: Session, equipos_ids: List[int]):
 
     equipos = []
     for equipo_id in dict.fromkeys(equipos_ids):
+<<<<<<< HEAD
         equipos.append(equipos_services.leer_equipo(db, equipo_id))
+=======
+        db_equipo = equipos_services.leer_equipo(db, equipo_id)
+        if db_equipo.estado == EstadoEquipo.DANADO:
+            raise exceptions.EquipoDanado()
+        equipos.append(db_equipo)
+>>>>>>> origin/planes-rama
     return equipos
 
 def _resolver_tareas(db: Session, tareas_ids: List[int]):
@@ -88,12 +99,25 @@ def modificar_plan(
 
 def eliminar_plan(db: Session, plan_id: int) -> schemas.PlanDelete:
     db_plan = leer_plan(db, plan_id)
+<<<<<<< HEAD
     if db_plan.tareas:
         raise exceptions.PlanConTareas()
     try:
+=======
+        
+    try:
+        db_plan.equipos.clear()
+        db_plan.tareas.clear()
+        
+>>>>>>> origin/planes-rama
         db.execute(delete(Plan).where(Plan.id == plan_id))
         db.commit()
     except IntegrityError:
         db.rollback()
         raise exceptions.PlanConTareas()
+<<<<<<< HEAD
     return schemas.PlanDelete(id=plan_id, msg="borrado")
+=======
+        
+    return schemas.PlanDelete(id=plan_id, msg="borrado")
+>>>>>>> origin/planes-rama

@@ -41,10 +41,13 @@ class Plan(PlanBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> origin/planes-rama
 class PlanDelete(BaseModel):
     id: int
     msg: str

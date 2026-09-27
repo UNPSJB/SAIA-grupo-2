@@ -9,13 +9,13 @@ export const getInsumos = async (): Promise<Insumo[]> => {
 };
 
 export const getInsumoById = async (id: string): Promise<Insumo> => {
-    const res = await fetch(`${BASE_URL}/${id}/`);
+    const res = await fetch(`${BASE_URL}/${id}`);
     if (!res.ok) throw new Error("Error al cargar el insumo");
     return res.json();
 };
 
 export const deleteInsumo = async (id: string): Promise<boolean> => {
-    const res = await fetch(`${BASE_URL}/${id}/`, { method: 'DELETE' });
+    const res = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE' });
     return res.ok;
 };
 

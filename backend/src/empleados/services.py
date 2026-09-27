@@ -3,17 +3,28 @@ from typing import List
 from sqlalchemy import select, desc
 from sqlalchemy.orm import Session, selectinload
 
-from src.asociaciones.empleado_capacidad import empleado_capacidad
 from src.capacidades.models import Capacidad
-from src.capacidades.constants import CAPACIDAD_POR_DEFECTO
 from src.capacidades import exceptions as CapacidadesExceptions
-from src.empleados.models import Empleado
+from src.capacidades.constants import CAPACIDAD_ADMINISTRADOR, CAPACIDAD_POR_DEFECTO
+from src.empleados.models import Empleado, RolEmpleado
 from src.empleados import schemas, exceptions
+from src.sectores.models import Sector
 
 logger = logging.getLogger(__name__)
 
+def autenticar_empleado(db: Session, credenciales: schemas.LoginRequest) -> schemas.Empleado:
+    db_empleado = db.scalar(
+        select(Empleado)
+        .options(selectinload(Empleado.capacidades), selectinload(Empleado.sectores))
+        .where(Empleado.legajo == credenciales.legajo)
+    )
+    
+    if not db_empleado or db_empleado.dni != credenciales.dni or not db_empleado.activo:
+        raise exceptions.CredencialesInvalidas()
+        
+    return db_empleado
+
 def generar_legajo(db: Session) -> str:
-    """Genera un nuevo legajo secuencial."""
     ultimo_empleado = db.scalar(
         select(Empleado).order_by(desc(Empleado.id))
     )
@@ -33,32 +44,40 @@ def crear_empleado(db: Session, empleado: schemas.EmpleadoCreate) -> schemas.Emp
     if empleado_existente:
         raise exceptions.DniDuplicado()
 
-    CAPACIDADES_NO_ESPECIFICADAS = empleado.listaCapacidades is None
-    LISTA_CAPACIDADES_VACIA = empleado.listaCapacidades == []
-
-    if CAPACIDADES_NO_ESPECIFICADAS:
-        capacidades = db.scalars(
-            select(Capacidad).where(Capacidad.nombre.ilike(CAPACIDAD_POR_DEFECTO))
-        ).all()
-    elif LISTA_CAPACIDADES_VACIA:
-        raise CapacidadesExceptions.CapacidadRequerida()
-    else:
+    capacidades = []
+    if empleado.listaCapacidades:
         capacidades = db.scalars(
             select(Capacidad).where(Capacidad.id.in_(empleado.listaCapacidades))
         ).all()
+        if len(capacidades) != len(set(empleado.listaCapacidades)):
+            raise CapacidadesExceptions.CapacidadNoEncontrada()
 
-    if not capacidades or (
-        empleado.listaCapacidades is not None
-        and len(capacidades) != len(set(empleado.listaCapacidades))
-    ):
-        raise CapacidadesExceptions.CapacidadNoEncontrada()
-        
+    if not capacidades:
+        cap_defecto = db.scalar(select(Capacidad).where(Capacidad.nombre.ilike(CAPACIDAD_POR_DEFECTO)))
+        if cap_defecto:
+            capacidades = [cap_defecto]
+
+    if not empleado.listaSectores or len(empleado.listaSectores) == 0:
+        raise exceptions.SectorRequerido()
+
+    sectores = db.scalars(
+        select(Sector).where(Sector.id.in_(empleado.listaSectores))
+    ).all()
+
+    rol_asignado = RolEmpleado.OPERARIO
+    if any(cap.nombre.strip().lower() == CAPACIDAD_ADMINISTRADOR.lower() for cap in capacidades):
+        rol_asignado = RolEmpleado.ADMIN
+
     nuevo_legajo = generar_legajo(db)
 
+    datos_empleado = empleado.model_dump(exclude={"listaCapacidades", "listaSectores", "rol"})
+    
     _empleado = Empleado(
-        **empleado.model_dump(exclude={"listaCapacidades"}),
+        **datos_empleado,
         legajo=nuevo_legajo,
+        rol=rol_asignado,
         capacidades=capacidades,
+        sectores=sectores,
     )
     db.add(_empleado)
     db.commit()
@@ -66,11 +85,16 @@ def crear_empleado(db: Session, empleado: schemas.EmpleadoCreate) -> schemas.Emp
     return _empleado
 
 def listar_empleados(db: Session) -> List[schemas.Empleado]:
-    logger.info("Listando empleados desde services")
-    return db.scalars(select(Empleado)).all()
+    return db.scalars(
+        select(Empleado).options(selectinload(Empleado.capacidades), selectinload(Empleado.sectores))
+    ).all()
 
 def leer_empleado(db: Session, empleado_id: int) -> schemas.Empleado:
-    db_empleado = db.scalar(select(Empleado).where(Empleado.id == empleado_id))
+    db_empleado = db.scalar(
+        select(Empleado)
+        .options(selectinload(Empleado.capacidades), selectinload(Empleado.sectores))
+        .where(Empleado.id == empleado_id)
+    )
     if db_empleado is None:
         raise exceptions.EmpleadoNoEncontrado()
     return db_empleado
@@ -80,7 +104,7 @@ def modificar_empleado(
 ) -> Empleado:
     db_empleado = db.scalar(
         select(Empleado)
-        .options(selectinload(Empleado.capacidades))
+        .options(selectinload(Empleado.capacidades), selectinload(Empleado.sectores))
         .where(Empleado.id == empleado_id)
     )
     if db_empleado is None:
@@ -97,17 +121,29 @@ def modificar_empleado(
     db_empleado.activo = empleado.activo
 
     if empleado.listaCapacidades is not None:
-        if empleado.listaCapacidades == []:
-            db_empleado.capacidades = []
+        if not empleado.listaCapacidades:
+            cap_defecto = db.scalar(select(Capacidad).where(Capacidad.nombre.ilike(CAPACIDAD_POR_DEFECTO)))
+            db_empleado.capacidades = [cap_defecto] if cap_defecto else []
+            db_empleado.rol = RolEmpleado.OPERARIO
         else:
             capacidades = db.scalars(
                 select(Capacidad).where(Capacidad.id.in_(empleado.listaCapacidades))
             ).all()
-            
-            if not capacidades or len(capacidades) != len(set(empleado.listaCapacidades)):
+            if len(capacidades) != len(set(empleado.listaCapacidades)):
                 raise CapacidadesExceptions.CapacidadNoEncontrada()
             
             db_empleado.capacidades = capacidades
+            
+            es_admin = any(c.nombre.strip().lower() == CAPACIDAD_ADMINISTRADOR.lower() for c in capacidades)
+            db_empleado.rol = RolEmpleado.ADMIN if es_admin else RolEmpleado.OPERARIO
+
+    if empleado.listaSectores is not None:
+        if not empleado.listaSectores or len(empleado.listaSectores) == 0:
+            raise exceptions.SectorRequerido()
+        sectores = db.scalars(
+            select(Sector).where(Sector.id.in_(empleado.listaSectores))
+        ).all()
+        db_empleado.sectores = sectores
 
     db.commit()
     db.refresh(db_empleado)
@@ -116,14 +152,24 @@ def modificar_empleado(
 def eliminar_empleado(db: Session, empleado_id: int) -> schemas.Empleado:
     db_empleado = db.scalar(
         select(Empleado)
-        .options(selectinload(Empleado.capacidades))
+        .options(selectinload(Empleado.capacidades), selectinload(Empleado.sectores))
         .where(Empleado.id == empleado_id)
     )
     if db_empleado is None:
         raise exceptions.EmpleadoNoEncontrado()
 
-    db_empleado.activo = False
+    respuesta = schemas.Empleado.model_validate(db_empleado)
+
+    sectores_responsable = db.scalars(select(Sector).where(Sector.responsable_id == empleado_id)).all()
+    for sec in sectores_responsable:
+        sec.responsable_id = None
+
+    if db_empleado.capacidades:
+        db_empleado.capacidades.clear()
+    if db_empleado.sectores:
+        db_empleado.sectores.clear()
+
+    db.delete(db_empleado)
     db.commit()
-    db.refresh(db_empleado)
-    
-    return schemas.Empleado.model_validate(db_empleado)
+
+    return respuesta

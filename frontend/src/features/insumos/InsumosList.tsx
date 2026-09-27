@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import type { Insumo } from '../../types/insumos';
 import { getInsumos } from '../../services/insumosServices';
 import Boton from '../../components/Boton';
+import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';
 
 export default function InsumosList() {
+    const { usuario } = useAuth();
     const [insumos, setInsumos] = useState<Insumo[]>([]);
     const [paginaActual, setPaginaActual] = useState(1);
     const insumosPorPagina = 10;
@@ -31,11 +33,13 @@ export default function InsumosList() {
         <div className={styles.contenedorPrincipal}>
             <h2>Inventario de Insumos</h2>
             
-            <Link to="/insumos/nuevo" className={styles.linkCrear}>
-                <Boton variant="crear">
-                    Registrar Insumo
-                </Boton>
-            </Link>
+            {usuario?.rol === 'admin' && (
+                <Link to="/insumos/nuevo" className={styles.linkCrear}>
+                    <Boton variant="crear">
+                        Registrar Insumo
+                    </Boton>
+                </Link>
+            )}
 
             <div className={styles.contenedorTabla} style={{ maxWidth: '900px' }}>
                 <div className={styles.filaHeader} style={{ gridTemplateColumns: '2fr 2fr 1.5fr' }}>
@@ -57,15 +61,19 @@ export default function InsumosList() {
                         </div>
                         
                         <div className={styles.grupoBotonesTabla}>
-                            <Link to={`/insumos/editar/${ins.id}`} title="Editar insumo">
-                                <Boton variant="editar" style={{ padding: '8px 12px' }}></Boton>
-                            </Link>
+                            {usuario?.rol === 'admin' && (
+                                <Link to={`/insumos/editar/${ins.id}`} title="Editar insumo">
+                                    <Boton variant="editar" style={{ padding: '8px 12px' }}></Boton>
+                                </Link>
+                            )}
                             <Link to={`/insumos/${ins.id}`} title="Ver detalle">
                                 <Boton variant="ver" style={{ padding: '8px 12px' }}></Boton>
                             </Link>
-                            <Link to={`/insumos/eliminar/${ins.id}`} title="Eliminar registro">
-                                <Boton variant="eliminar" style={{ padding: '8px 12px' }}></Boton>
-                            </Link>
+                            {usuario?.rol === 'admin' && (
+                                <Link to={`/insumos/eliminar/${ins.id}`} title="Eliminar registro">
+                                    <Boton variant="eliminar" style={{ padding: '8px 12px' }}></Boton>
+                                </Link>
+                            )}
                         </div>
                     </div>
                 ))}

@@ -27,11 +27,12 @@ export default function EquipoDetail() {
         <div className={styles.contenedorPrincipal}>
             <h2>Detalle del Equipo</h2>
             {equipo ? (
-                <div className={styles.tarjeta} style={{ maxWidth: '600px', width: '100%' }}>
+                <div className={styles.tarjetaEstatica} style={{ maxWidth: '600px', width: '100%' }}>
                     <p><strong>Nombre:</strong> {equipo.nombre}</p>
-                    <p><strong>Estado:</strong> {equipo.activo ? 'Operativo' : 'Fuera de Servicio'}</p>
+                    <p><strong>Activo en Sistema:</strong> {equipo.activo ? 'Sí' : 'No'}</p>
+                    <p><strong>Condición Física (Estado):</strong> {equipo.estado === 'bueno' ? 'Bueno (Operativo)' : 'Dañado'}</p>
                     <p><strong>Categoría:</strong> {equipo.tipo.nombre}</p>
-                    <p><strong>Ubicación física:</strong> {equipo.ubicacion}</p>
+                    <p><strong>Ubicación / Sector:</strong> {equipo.sector?.nombre}</p>
                     
                     <div className={styles.bloqueDetalle}>
                         <Link to="/equipos">

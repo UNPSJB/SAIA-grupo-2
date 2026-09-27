@@ -5,3 +5,4 @@ class ErrorCode:
 
 
 CAPACIDAD_POR_DEFECTO = "operario"
+CAPACIDAD_ADMINISTRADOR = "Administrador"
