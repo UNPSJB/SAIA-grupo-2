@@ -5,19 +5,19 @@ consumos_reales = Table(
     "consumos_reales",
     ModeloBase.metadata,
     Column(
-        "tarea_id",
-        ForeignKey("tareas.id", ondelete="CASCADE"),
-        primary_key=True
-    ),
-    Column(
-        "producto_limpieza_id",
-        ForeignKey("productos_limpieza.id", ondelete="CASCADE"),
+        "id",
+        Float,
         primary_key=True
     ),
     Column(
         "checklist_id",
         ForeignKey("checklists.id", ondelete="CASCADE"),
-        primary_key=True
+        nullable=False
+    ),
+    Column(
+        "producto_limpieza_id",
+        ForeignKey("productos_limpieza.id", ondelete="CASCADE"),
+        nullable=False
     ),
     Column(
         "cantidad",

@@ -1,11 +1,10 @@
 import type { Equipo, EquipoPayload, TipoEquipo } from '../types/equipos';
 
 const BASE_URL = 'http://127.0.0.1:8000/equipos';
-const TIPOS_URL = 'http://127.0.0.1:8000/equipos/tipos'; 
 
 export const getEquipos = async (): Promise<Equipo[]> => {
     const res = await fetch(`${BASE_URL}/`);
-    if (!res.ok) throw new Error("Error al cargar equipos");
+    if (!res.ok) throw new Error("Error al cargar los equipos");
     return res.json();
 };
 
@@ -15,9 +14,10 @@ export const getEquipoById = async (id: string): Promise<Equipo> => {
     return res.json();
 };
 
-export const deleteEquipo = async (id: string): Promise<boolean> => {
-    const res = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE' });
-    return res.ok;
+export const getTiposEquipo = async (): Promise<TipoEquipo[]> => {
+    const res = await fetch(`${BASE_URL}/tipos`);
+    if (!res.ok) throw new Error("Error al cargar los tipos de equipo");
+    return res.json();
 };
 
 export const saveEquipo = async (datos: EquipoPayload, id?: string): Promise<boolean> => {
@@ -32,8 +32,7 @@ export const saveEquipo = async (datos: EquipoPayload, id?: string): Promise<boo
     return res.ok;
 };
 
-export const getTiposEquipo = async (): Promise<TipoEquipo[]> => {
-    const res = await fetch(TIPOS_URL);
-    if (!res.ok) throw new Error("Error al cargar tipos de equipo");
-    return res.json();
+export const deleteEquipo = async (id: string): Promise<boolean> => {
+    const res = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE' });
+    return res.ok;
 };

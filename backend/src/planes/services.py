@@ -92,12 +92,15 @@ def modificar_plan(
 
 def eliminar_plan(db: Session, plan_id: int) -> schemas.PlanDelete:
     db_plan = leer_plan(db, plan_id)
-    if db_plan.tareas:
-        raise exceptions.PlanConTareas()
+        
     try:
+        db_plan.equipos.clear()
+        db_plan.tareas.clear()
+        
         db.execute(delete(Plan).where(Plan.id == plan_id))
         db.commit()
     except IntegrityError:
         db.rollback()
         raise exceptions.PlanConTareas()
+        
     return schemas.PlanDelete(id=plan_id, msg="borrado")

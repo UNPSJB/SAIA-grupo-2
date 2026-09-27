@@ -9,3 +9,6 @@ class NombreDuplicado(BadRequest):
 
 class DniDuplicado(BadRequest):
     DETAIL = ErrorCode.DNI_DUPLICADO
+
+class SectorRequerido(BadRequest):
+    DETAIL = ErrorCode.SECTOR_REQUERIDO
