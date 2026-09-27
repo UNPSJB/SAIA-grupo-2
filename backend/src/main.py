@@ -5,6 +5,7 @@ from src.models import ModeloBase
 
 from src.unidades_medida.models import UnidadMedida
 from src.insumos.models import Insumo
+from src.productos_limpieza.models import ProductoLimpieza
 
 # Importamos la configuración validada por Pydantic
 from src.config import settings
@@ -22,6 +23,7 @@ from src.equipos.router import router as equipos_router
 
 from src.consumos.router import router as consumos_router
 
+from src.productos_limpieza.router import router as productos_limpieza_router
 from fastapi.middleware.cors import CORSMiddleware
 
 ENV = settings.ENV.upper()
@@ -58,6 +60,5 @@ app.include_router(insumos_router)
 app.include_router(empleados_router)
 app.include_router(capacidades_router)
 app.include_router(equipos_router)
-
-
 app.include_router(consumos_router)
+app.include_router(productos_limpieza_router)
