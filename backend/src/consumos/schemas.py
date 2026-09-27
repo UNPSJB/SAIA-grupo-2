@@ -1,11 +1,11 @@
 from pydantic import BaseModel, ConfigDict
 from datetime import date
-from src.insumos.schemas import Insumo
+from src.productos_limpieza.schemas import ProductoLimpieza
 
 class ConsumoBase(BaseModel):
-    insumo_id: int
+    producto_limpieza_id: int
     cantidad_consumida: float
-    tarea_asociada: str
+    tarea_id: int
     fecha_registro: date
 
 class ConsumoCreate(ConsumoBase):
@@ -13,14 +13,24 @@ class ConsumoCreate(ConsumoBase):
 
 class Consumo(ConsumoBase):
     id: int
-    insumo: Insumo
+    producto_limpieza: ProductoLimpieza
     
     model_config = ConfigDict(from_attributes=True)
 
 class ConsumoAcumulado(BaseModel):
-    insumo_id: int
-    nombre_insumo: str
+    producto_limpieza_id: int 
+    nombre_producto: str
     unidad_medida: str
     cantidad_total: float
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class ConsumoDetallado(BaseModel):
+    id: int
+    fecha_registro: date
+    nombre_producto: str
+    titulo_tarea: str
+    cantidad_consumida: float
+    unidad_medida: str
     
     model_config = ConfigDict(from_attributes=True)

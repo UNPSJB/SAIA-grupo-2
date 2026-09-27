@@ -2,20 +2,23 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
 import { saveConsumo } from '../../services/consumosServices';
-import { getInsumos } from '../../services/insumosServices';
-import type { Insumo } from '../../types/insumos';
+import { getProductosLimpieza } from '../../services/productosLimpiezaServices';
+import type { ProductoLimpieza } from '../../types/productosLimpieza';
+import { getTareas } from '../../services/tareasServices';
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
 
 interface FormValues {
-    insumo_id: number;
-    cantidad_consumida: number;
-    tarea_asociada: string;
+   producto_limpieza_id: number;
+    cantidad_consumida: number; 
+    tarea_id: number;
     fecha_registro: string;
 }
 
 export default function ConsumoForm() {
-    const [insumos, setInsumos] = useState<Insumo[]>([]);
+
+    const [productoLimpieza, setProd] = useState<ProductoLimpieza[]>([])
+    const [tareas, setTareas] = useState<any[]>([]);
     const navigate = useNavigate();
     
     const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
@@ -25,13 +28,16 @@ export default function ConsumoForm() {
     });
 
     useEffect(() => {
-        getInsumos().then(setInsumos);
+
+        getProductosLimpieza().then(setProd);
+        getTareas().then(setTareas);
     }, []);
 
     const onSubmit = async (data: FormValues) => {
         const payload = {
             ...data,
-            insumo_id: Number(data.insumo_id),
+            producto_limpieza_id: Number(data.producto_limpieza_id),
+           tarea_id: Number(data.tarea_id),
             cantidad_consumida: Number(data.cantidad_consumida)
         };
         const exito = await saveConsumo(payload);
@@ -55,17 +61,22 @@ export default function ConsumoForm() {
                     
                     <div className={styles.formGroup}>
                         <label>Tarea Asociada:</label>
-                        <input type="text" {...register('tarea_asociada', { required: "Debe indicar la tarea" })} placeholder="Ej: Limpieza de cámara 1" />
-                        {errors.tarea_asociada && <span style={{color: 'red'}}>{errors.tarea_asociada.message}</span>}
+                        <select {...register('tarea_id', { required: "Seleccione una tarea" })}>
+                            <option value="">Seleccione...</option>
+                            {tareas.map(t => (
+                                <option key={t.id} value={t.id}>{t.titulo}</option>
+                            ))}
+                        </select>
+                        {errors.tarea_id && <span style={{color: 'red'}}>{errors.tarea_id.message}</span>}
                     </div>
 
                     <div className={styles.formGroup}>
                         <label>Producto / Insumo:</label>
-                        <select {...register('insumo_id', { required: "Seleccione un producto" })}>
+                        <select {...register('producto_limpieza_id', { required: "Seleccione un producto" })}>
                             <option value="">Seleccione...</option>
-                            {insumos.map(i => <option key={i.id} value={i.id}>{i.nombre} ({i.unidad_medida.nombre})</option>)}
+                            {productoLimpieza.map(i => <option key={i.id} value={i.id}>{i.nombre} ({i.unidad_medida.nombre})</option>)}
                         </select>
-                        {errors.insumo_id && <span style={{color: 'red'}}>{errors.insumo_id.message}</span>}
+                        {errors.producto_limpieza_id && <span style={{color: 'red'}}>{errors.producto_limpieza_id.message}</span>}
                     </div>
 
                     <div className={styles.formGroup}>

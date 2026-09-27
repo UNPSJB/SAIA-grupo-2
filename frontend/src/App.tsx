@@ -12,7 +12,7 @@ import InsumoForm from './features/insumos/InsumoForm';
 import InsumoDelete from './features/insumos/InsumoDelete';
 import InsumoDetail from './features/insumos/InsumoDetail';
 
-
+import UnidadesMedidaList from './features/unidadesMedida/UnidadesMedidaList';
 
 import ProductosLimpiezaList from './features/productosLimpieza/ProductosLimpiezaList';
 import ProductoLimpiezaForm from './features/productosLimpieza/ProductoLimpiezaForm';
@@ -97,7 +97,7 @@ function App() {
           <Route path="/insumos/eliminar/:id" element={<InsumoDelete />} />
           <Route path="/insumos/:id" element={<InsumoDetail />} />
 
-          <Route path="/unidadesMedida" element={<UnidadesMedidaList />} />
+<Route path="/unidadesMedida" element={<UnidadesMedidaList />} /> 
 
           <Route path="/equipos" element={<EquiposList />} />
           <Route path="/equipos/nuevo" element={<EquipoForm />} />

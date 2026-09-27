@@ -26,3 +26,22 @@ export const getConsumoAcumulado = async (): Promise<ConsumoAcumulado[]> => {
         return [];
     }
 };
+
+export const getReporteConsumos = async (
+    acumulado: boolean, 
+    fecha_inicio?: string, 
+    fecha_fin?: string
+): Promise<any[]> => {
+    try {
+        let url = `${BASE_URL}/reporte?acumulado=${acumulado}`;
+        if (fecha_inicio) url += `&fecha_inicio=${fecha_inicio}`;
+        if (fecha_fin) url += `&fecha_fin=${fecha_fin}`;
+        
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Error al cargar el reporte");
+        return res.json();
+    } catch (error) {
+        console.error("Error obteniendo reporte:", error);
+        return [];
+    }
+};

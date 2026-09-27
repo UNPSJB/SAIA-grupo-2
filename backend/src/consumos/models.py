@@ -7,11 +7,15 @@ class ConsumoLimpieza(ModeloBase):
     __tablename__ = "consumos_limpieza"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    insumo_id: Mapped[int] = mapped_column(ForeignKey("insumos.id"), index=True)
+    producto_limpieza_id: Mapped[int] = mapped_column(ForeignKey("productos_limpieza.id"), index=True)
     cantidad_consumida: Mapped[float] = mapped_column(Float)
-    tarea_asociada: Mapped[str] = mapped_column(String(150))
+    tarea_id: Mapped[int] = mapped_column(ForeignKey("tareas.id"), index=True)
     fecha_registro: Mapped[date] = mapped_column(Date, default=date.today)
 
-    insumo: Mapped["src.insumos.models.Insumo"] = relationship(
-        "src.insumos.models.Insumo"
+    producto_limpieza: Mapped["src.productos_limpieza.models.ProductoLimpieza"] = relationship(
+        "src.productos_limpieza.models.ProductoLimpieza"
+    )
+    tarea: Mapped["src.tareas.models.Tarea"] = relationship(
+        "src.tareas.models.Tarea"
+    
     )
