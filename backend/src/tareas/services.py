@@ -12,15 +12,15 @@ from src.tareas.models import ConsumoEstimado, Tarea
 logger = logging.getLogger(__name__)
 
 
-def _validar_titulo_unico_en_plan(
-    db: Session, titulo: str, plan_id: int, tarea_id: int | None = None
-) -> None:
-    consulta = select(Tarea).where(Tarea.titulo == titulo).where(Tarea.plan_id == plan_id)
-    if tarea_id is not None:
-        consulta = consulta.where(Tarea.id != tarea_id)
-    if db.scalar(consulta) is not None:
-        raise exceptions.TituloDuplicadoEnPlan()
+def _resolver_planes(db, planes_ids: List[int]):
+    if not planes_ids:
+        raise exceptions.SinPlanes()
 
+    planes = []
+    for plan_id in dict.fromkeys(planes_ids):
+        db_plan = planes_services.leer_plan(db, plan_id)
+        planes.append(db_plan)
+    return planes
 
 def _construir_consumos(
     db: Session, consumos: List[schemas.ConsumoEstimadoCreate]
@@ -46,12 +46,13 @@ def _construir_consumos(
 
 
 def crear_tarea(db: Session, tarea: schemas.TareaCreate) -> schemas.Tarea:
-    planes_services.leer_plan(db, tarea.plan_id)
-    _validar_titulo_unico_en_plan(db, tarea.titulo, tarea.plan_id)
-
+    if not tarea.planes:
+        raise exceptions.SinPlanes()
+    planes_services.leer_plan(db, tarea.planes[0])  # Verifico que el plan exista
     _tarea = Tarea(
-        **tarea.model_dump(exclude={"consumos_estimados"}),
+        **tarea.model_dump(exclude={"consumos_estimados", "planes"}),
         consumos_estimados=_construir_consumos(db, tarea.consumos_estimados),
+        planes=_resolver_planes(db, tarea.planes),
     )
     db.add(_tarea)
     db.commit()
@@ -63,8 +64,8 @@ def listar_tareas(db: Session, plan_id: int | None = None) -> List[schemas.Tarea
     logger.info("Listando tareas desde services")
     consulta = select(Tarea)
     if plan_id is not None:
-        consulta = consulta.where(Tarea.plan_id == plan_id)
-    return db.scalars(consulta).all()
+        consulta = consulta.join(Tarea.planes).where(planes_services.Plan.id == plan_id)
+    return list(db.scalars(consulta).all())
 
 
 def leer_tarea(db: Session, tarea_id: int) -> schemas.Tarea:
@@ -78,12 +79,12 @@ def modificar_tarea(
     db: Session, tarea_id: int, tarea: schemas.TareaUpdate
 ) -> schemas.Tarea:
     db_tarea = leer_tarea(db, tarea_id)
-    planes_services.leer_plan(db, tarea.plan_id)
-    _validar_titulo_unico_en_plan(db, tarea.titulo, tarea.plan_id, tarea_id)
 
     nuevos_consumos = _construir_consumos(db, tarea.consumos_estimados)
-
-    for campo, valor in tarea.model_dump(exclude={"consumos_estimados"}).items():
+    db_tarea.planes = _resolver_planes(db, tarea.planes)
+    for campo, valor in tarea.model_dump(
+        exclude={"consumos_estimados", "planes"}
+        ).items():
         setattr(db_tarea, campo, valor)
 
     db_tarea.consumos_estimados = nuevos_consumos
@@ -97,4 +98,4 @@ def eliminar_tarea(db: Session, tarea_id: int) -> schemas.TareaDelete:
     leer_tarea(db, tarea_id)
     db.execute(delete(Tarea).where(Tarea.id == tarea_id))
     db.commit()
-    return {"id": tarea_id, "msg": "borrado"}
+    return schemas.TareaDelete(id=tarea_id, msg="borrado")

@@ -14,5 +14,12 @@ class FechasInvalidas(BadRequest):
     DETAIL = ErrorCode.FECHAS_INVALIDAS
 
 
+class SinEquipos(BadRequest):
+    DETAIL = ErrorCode.SIN_EQUIPOS
+
+
 class PlanConTareas(BadRequest):
     DETAIL = ErrorCode.PLAN_CON_TAREAS
+
+class SinTareas(BadRequest):
+    DETAIL = ErrorCode.SIN_TAREAS

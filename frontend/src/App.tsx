@@ -14,6 +14,11 @@ import InsumoDetail from './features/insumos/InsumoDetail';
 
 import UnidadesMedidaList from './features/unidadesMedida/UnidadesMedidaList';
 
+import ProductosLimpiezaList from './features/productosLimpieza/ProductosLimpiezaList';
+import ProductoLimpiezaForm from './features/productosLimpieza/ProductoLimpiezaForm';
+import ProductoLimpiezaDelete from './features/productosLimpieza/ProductoLimpiezaDelete';
+import ProductoLimpiezaDetail from './features/productosLimpieza/ProductoLimpiezaDetail';
+
 import EquiposList from './features/equipos/EquiposList';
 import EquipoForm from './features/equipos/EquipoForm';
 import EquipoDetail from './features/equipos/EquipoDetail';
@@ -23,6 +28,8 @@ import ElementosLimpiezaList from './features/elementosLimpieza/ElementosLimpiez
 import ElementoLimpiezaForm from './features/elementosLimpieza/ElementoLimpiezaForm';
 import ElementoLimpiezaDetail from './features/elementosLimpieza/ElementoLimpiezaDetail';
 import ElementoLimpiezaDelete from './features/elementosLimpieza/ElementoLimpiezaDelete';
+
+import AlertasRecambio from './features/elementosLimpieza/AlertasRecambio';
 
 import './App.css';
 
@@ -60,6 +67,7 @@ function App() {
         <span className="navLink">Limpieza ▾</span>
         <div className="dropdownContent">
           <Link to="/elementosLimpieza">Elementos de Limpieza</Link>
+          <Link to="/productosLimpieza">Productos de Limpieza</Link>
         </div>
       </div>
 
@@ -97,6 +105,14 @@ function App() {
           <Route path="/elementosLimpieza/editar/:id" element={<ElementoLimpiezaForm />} />
           <Route path="/elementosLimpieza/eliminar/:id" element={<ElementoLimpiezaDelete />} />
           <Route path="/elementosLimpieza/:id" element={<ElementoLimpiezaDetail />} />
+
+          <Route path="/productosLimpieza" element={<ProductosLimpiezaList />} />
+          <Route path="/productosLimpieza/nuevo" element={<ProductoLimpiezaForm />} />
+          <Route path="/productosLimpieza/editar/:id" element={<ProductoLimpiezaForm />} />
+          <Route path="/productosLimpieza/eliminar/:id" element={<ProductoLimpiezaDelete />} />
+          <Route path="/productosLimpieza/:id" element={<ProductoLimpiezaDetail />} />
+
+          <Route path="/elementosLimpieza/alertas" element={<AlertasRecambio />} />
 
         </Routes>
       </div>

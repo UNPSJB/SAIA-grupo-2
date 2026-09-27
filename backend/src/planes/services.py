@@ -6,10 +6,10 @@ from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from src.empleados import services as empleados_services
 from src.equipos import services as equipos_services
+from src.tareas import services as tareas_services
 from src.planes import exceptions, schemas
-from src.planes.models import AsignacionPlan, Plan
+from src.planes.models import Plan
 from src.sectores import services as sectores_services
 
 logger = logging.getLogger(__name__)
@@ -24,36 +24,31 @@ def _validar_titulo_unico(db: Session, titulo: str, plan_id: int | None = None) 
 
 
 def _resolver_equipos(db: Session, equipos_ids: List[int]):
+    if not equipos_ids:
+        raise exceptions.SinEquipos()
+
     equipos = []
     for equipo_id in dict.fromkeys(equipos_ids):
         equipos.append(equipos_services.leer_equipo(db, equipo_id))
     return equipos
 
-
-def _asignar_responsable(db: Session, db_plan: Plan, empleado_id: int) -> None:
-    empleados_services.leer_empleado(db, empleado_id)
-
-    vigente = next((a for a in db_plan.asignaciones if a.fecha_fin is None), None)
-    if vigente is not None:
-        if vigente.empleado_id == empleado_id:
-            return
-        vigente.fecha_fin = date.today()
-
-    db_plan.asignaciones.append(
-        AsignacionPlan(empleado_id=empleado_id, fecha_asignacion=date.today())
-    )
-
+def _resolver_tareas(db: Session, tareas_ids: List[int]):
+    tareas = []
+    for tarea_id in dict.fromkeys(tareas_ids):
+        db_tarea = tareas_services.leer_tarea(db, tarea_id)
+        tareas.append(db_tarea)
+    return tareas
 
 def crear_plan(db: Session, plan: schemas.PlanCreate) -> schemas.Plan:
     sectores_services.leer_sector(db, plan.sector_id)
     _validar_titulo_unico(db, plan.titulo)
 
     equipos = _resolver_equipos(db, plan.equipos_ids)
+    tareas = _resolver_tareas(db, plan.tareas_ids)
 
-    datos = plan.model_dump(exclude={"equipos_ids", "responsable_id"})
-    _plan = Plan(**datos, equipos=equipos)
+    datos = plan.model_dump(exclude={"equipos_ids", "tareas_ids"})
+    _plan = Plan(**datos, equipos=equipos, tareas=tareas)
     db.add(_plan)
-    _asignar_responsable(db, _plan, plan.responsable_id)
 
     db.commit()
     db.refresh(_plan)
@@ -80,13 +75,11 @@ def modificar_plan(
     _validar_titulo_unico(db, plan.titulo, plan_id)
 
     db_plan.equipos = _resolver_equipos(db, plan.equipos_ids)
-
+    db_plan.tareas = _resolver_tareas(db, plan.tareas_ids)
     for campo, valor in plan.model_dump(
-        exclude={"equipos_ids", "responsable_id"}
+        exclude={"equipos_ids", "tareas_ids"}
     ).items():
         setattr(db_plan, campo, valor)
-
-    _asignar_responsable(db, db_plan, plan.responsable_id)
 
     db.commit()
     db.refresh(db_plan)
@@ -103,4 +96,4 @@ def eliminar_plan(db: Session, plan_id: int) -> schemas.PlanDelete:
     except IntegrityError:
         db.rollback()
         raise exceptions.PlanConTareas()
-    return {"id": plan_id, "msg": "borrado"}
+    return schemas.PlanDelete(id=plan_id, msg="borrado")

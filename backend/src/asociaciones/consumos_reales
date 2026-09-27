@@ -1,0 +1,27 @@
+from sqlalchemy import Table, Column, ForeignKey, Float
+from src.models import ModeloBase
+
+consumos_reales = Table(
+    "consumos_reales",
+    ModeloBase.metadata,
+    Column(
+        "tarea_id",
+        ForeignKey("tareas.id", ondelete="CASCADE"),
+        primary_key=True
+    ),
+    Column(
+        "producto_limpieza_id",
+        ForeignKey("productos_limpieza.id", ondelete="CASCADE"),
+        primary_key=True
+    ),
+    Column(
+        "checklist_id",
+        ForeignKey("checklists.id", ondelete="CASCADE"),
+        primary_key=True
+    ),
+    Column(
+        "cantidad",
+        Float,
+        nullable=False
+    )
+)

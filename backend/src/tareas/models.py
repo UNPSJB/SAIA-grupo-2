@@ -1,8 +1,9 @@
 from typing import List, TYPE_CHECKING
-
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import Enum as SQLEnum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.asociaciones.plan_tareas import plan_tarea
 from src.models import ModeloBase
 from src.tareas.constants import FrecuenciaTarea
 
@@ -23,9 +24,13 @@ class Tarea(ModeloBase):
             create_constraint=True,
         )
     )
-    plan_id: Mapped[int] = mapped_column(ForeignKey("planes.id"))
 
-    plan: Mapped["Plan"] = relationship("Plan", back_populates="tareas")
+    # Lista de planes en los que se encuentra
+    planes: Mapped[List["Plan"]] = relationship(
+        "Plan",
+        secondary="plan_tarea",
+        back_populates="tareas",
+    )
 
     consumos_estimados: Mapped[List["ConsumoEstimado"]] = relationship(
         "ConsumoEstimado",

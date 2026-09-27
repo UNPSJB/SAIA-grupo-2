@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 from typing import List
 
 from sqlalchemy import delete, select, update
@@ -6,15 +7,22 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src.elementos_limpieza import exceptions, schemas
+from src.elementos_limpieza.constants import EstadoRecambio
 from src.elementos_limpieza.models import ElementoLimpieza
 
 logger = logging.getLogger(__name__)
+
+ESTADOS_QUE_ALERTAN = (EstadoRecambio.VENCIDO, EstadoRecambio.PROXIMO)
 
 
 def crear_elemento(
     db: Session, elemento: schemas.ElementoLimpiezaCreate
 ) -> schemas.ElementoLimpieza:
-    _elemento = ElementoLimpieza(**elemento.model_dump())
+    if elemento.fecha_ultimo_recambio is not None and elemento.fecha_ultimo_recambio > date.today():
+        raise exceptions.FechaFutura()
+
+    datos = elemento.model_dump(exclude_none=True)
+    _elemento = ElementoLimpieza(**datos)
     db.add(_elemento)
     db.commit()
     db.refresh(_elemento)
@@ -24,6 +32,16 @@ def crear_elemento(
 def listar_elementos(db: Session) -> List[schemas.ElementoLimpieza]:
     logger.info("Listando elementos de limpieza desde services")
     return db.scalars(select(ElementoLimpieza)).all()
+
+
+def listar_alertas(db: Session) -> List[schemas.ElementoLimpieza]:
+    """Elementos vencidos o proximos a vencer, los mas urgentes primero."""
+    logger.info("Calculando alertas de recambio desde services")
+    elementos = db.scalars(select(ElementoLimpieza)).all()
+
+    alertas = [e for e in elementos if e.estado_recambio in ESTADOS_QUE_ALERTAN]
+    alertas.sort(key=lambda e: e.fecha_proximo_recambio)
+    return alertas
 
 
 def leer_elemento(db: Session, elemento_id: int) -> schemas.ElementoLimpieza:
@@ -39,11 +57,37 @@ def modificar_elemento(
     db: Session, elemento_id: int, elemento: schemas.ElementoLimpiezaUpdate
 ) -> schemas.ElementoLimpieza:
     db_elemento = leer_elemento(db, elemento_id)
+
+    datos = elemento.model_dump()
+    if datos.get("fecha_ultimo_recambio") is None:
+        datos.pop("fecha_ultimo_recambio", None)
+    elif datos["fecha_ultimo_recambio"] > date.today():
+        raise exceptions.FechaFutura()
+
     db.execute(
         update(ElementoLimpieza)
         .where(ElementoLimpieza.id == elemento_id)
-        .values(**elemento.model_dump())
+        .values(**datos)
     )
+    db.commit()
+    db.refresh(db_elemento)
+    return db_elemento
+
+
+def registrar_recambio(
+    db: Session, elemento_id: int, recambio: schemas.RecambioCreate
+) -> schemas.ElementoLimpieza:
+    """Mueve la fecha base del elemento. La proxima alerta se recalcula sola."""
+    db_elemento = leer_elemento(db, elemento_id)
+
+    if db_elemento.frecuencia_recambio_dias is None:
+        raise exceptions.SinFrecuencia()
+
+    fecha = recambio.fecha_recambio or date.today()
+    if fecha > date.today():
+        raise exceptions.FechaFutura()
+
+    db_elemento.fecha_ultimo_recambio = fecha
     db.commit()
     db.refresh(db_elemento)
     return db_elemento

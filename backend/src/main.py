@@ -7,7 +7,7 @@ from src.unidades_medida.models import UnidadMedida
 from src.insumos.models import Insumo
 from src.productos_limpieza.models import ProductoLimpieza
 from src.sectores.models import Sector
-from src.planes.models import Plan, AsignacionPlan
+from src.planes.models import Plan
 from src.tareas.models import Tarea, ConsumoEstimado
 from src.elementos_limpieza.models import ElementoLimpieza
 

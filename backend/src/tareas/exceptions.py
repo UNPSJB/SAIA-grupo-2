@@ -20,3 +20,6 @@ class ProductoRepetido(BadRequest):
 
 class SinStock(BadRequest):
     DETAIL = ErrorCode.SIN_STOCK
+
+class SinPlanes(BadRequest):
+    DETAIL = ErrorCode.SIN_PLANES

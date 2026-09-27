@@ -3,8 +3,8 @@ from typing import Annotated, List, Optional
 
 from pydantic import BaseModel, ConfigDict, StringConstraints, model_validator
 
-from src.empleados.schemas import Empleado
 from src.equipos.schemas import EquipoResumen
+from src.tareas.schemas import TareaResumen
 from src.sectores.schemas import SectorResumen
 
 TituloPlan = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
@@ -24,39 +24,25 @@ class PlanBase(BaseModel):
 
 
 class PlanCreate(PlanBase):
-    equipos_ids: List[int] = []
-    responsable_id: int
+    equipos_ids: List[int]
+    tareas_ids: List[int]
 
 
 class PlanUpdate(PlanBase):
-    equipos_ids: List[int] = []
-    responsable_id: int
-
-
-class AsignacionPlan(BaseModel):
-    id: int
-    empleado: Empleado
-    fecha_asignacion: date
-    fecha_fin: Optional[date]
-
-    model_config = ConfigDict(from_attributes=True)
+    equipos_ids: List[int]
+    tareas_ids: List[int]
 
 
 class Plan(PlanBase):
     id: int
     sector: SectorResumen
     equipos: List[EquipoResumen]
-    responsable_actual: Optional[Empleado]
-    asignaciones: List[AsignacionPlan]
+    tareas: List[TareaResumen]
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class PlanResumen(BaseModel):
-    id: int
-    titulo: str
 
-    model_config = ConfigDict(from_attributes=True)
 
 
 class PlanDelete(BaseModel):

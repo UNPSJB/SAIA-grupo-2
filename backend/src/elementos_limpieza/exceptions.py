@@ -8,3 +8,11 @@ class ElementoNoEncontrado(NotFound):
 
 class ElementoEnUso(BadRequest):
     DETAIL = ErrorCode.ELEMENTO_EN_USO
+
+
+class SinFrecuencia(BadRequest):
+    DETAIL = ErrorCode.SIN_FRECUENCIA
+
+
+class FechaFutura(BadRequest):
+    DETAIL = ErrorCode.FECHA_FUTURA

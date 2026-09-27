@@ -7,6 +7,7 @@ class ErrorCode:
     CANTIDAD_INVALIDA = "La cantidad estimada debe ser mayor a cero."
     PRODUCTO_REPETIDO = "No se puede cargar dos veces el mismo producto en una tarea."
     SIN_STOCK = "No se puede estimar consumo de un producto sin stock."
+    SIN_PLANES = "La tarea debe estar asociada a al menos un plan."
 
 
 class FrecuenciaTarea(str, Enum):
