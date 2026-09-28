@@ -126,170 +126,126 @@ function ProductoLimpiezaForm() {
     };
 
     return (
-        <div className={styles.contenedorPrincipal}>
-            <h2>
-                {esEdicion
-                    ? 'Editar Producto de Limpieza'
-                    : 'Registrar Producto de Limpieza'}
-            </h2>
+    <div className={styles.contenedorPrincipal}>
+        <h2>
+            {esEdicion
+                ? 'Editar Producto de Limpieza'
+                : 'Registrar Nuevo Producto de Limpieza'}
+        </h2>
 
-            <div className={styles.contenedorPrincipal}>
-            <h2>
-                {esEdicion
-                    ? 'Editar Producto de Limpieza'
-                    : 'Registrar Producto de Limpieza'}
-            </h2>
-                {error && (
-                    <p
-                        style={{
-                            color: 'var(--text-h)',
-                            textAlign: 'center',
-                        }}
+        {error && (
+            <p
+                style={{
+                    color: '#ef4444',
+                    textAlign: 'center',
+                }}
+            >
+                {error}
+            </p>
+        )}
+
+        <form
+            onSubmit={handleSubmit}
+            className={styles.formularioTarjeta}
+            style={{ maxWidth: '800px' }}
+        >
+            <div
+                className={styles.formGrid}
+                style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}
+            >
+                {/* Nombre */}
+                <div className={styles.formGroup}>
+                    <label htmlFor="nombre">
+                        Nombre del Producto:
+                    </label>
+                    <input
+                        id="nombre"
+                        type="text"
+                        value={nombre}
+                        onChange={(e) => setNombre(e.target.value)}
+                    />
+                </div>
+
+                {/* Tipo */}
+                <div className={styles.formGroup}>
+                    <label htmlFor="tipo">
+                        Tipo de Producto:
+                    </label>
+                    <select
+                        id="tipo"
+                        value={tipo}
+                        onChange={(e) =>
+                            setTipo(e.target.value as TipoProductoLimpieza)
+                        }
                     >
-                        {error}
-                    </p>
-                )}
+                        <option value="detergente">Detergente</option>
+                        <option value="desinfectante">Desinfectante</option>
+                        <option value="desengrasante">Desengrasante</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
 
-                <form
-                    onSubmit={handleSubmit}
-                    className={styles.formularioTarjeta}
-                    style={{ maxWidth: '800px' }}
-                >
-                    <div className={styles.formGrid}>
-                        <div className={styles.formGroup}>
-                            <label htmlFor="nombre">
-                                Nombre
-                            </label>
+                {/* Stock */}
+                <div className={styles.formGroup}>
+                    <label htmlFor="stock">
+                        Stock:
+                    </label>
+                    <input
+                        id="stock"
+                        type="number"
+                        min="0"
+                        value={stock}
+                        onChange={(e) => setStock(Number(e.target.value))}
+                    />
+                </div>
 
-                            <input
-                                id="nombre"
-                                type="text"
-                                value={nombre}
-                                onChange={(e) =>
-                                    setNombre(
-                                        e.target.value
-                                    )
-                                }
-                                placeholder="Ej. Detergente"
-                            />
-                        </div>
+                {/* Unidad de medida */}
+                <div className={styles.formGroup}>
+                    <label htmlFor="unidadMedida">
+                        Unidad de Medida:
+                    </label>
+                    <select
+                        id="unidadMedida"
+                        value={unidadMedidaId}
+                        onChange={(e) =>
+                            setUnidadMedidaId(Number(e.target.value))
+                        }
+                    >
+                        <option value={0}>
+                            Seleccione una unidad...
+                        </option>
 
-                        <div className={styles.formGroup}>
-                            <label htmlFor="tipo">
-                                Tipo
-                            </label>
-
-                            <select
-                                id="tipo"
-                                value={tipo}
-                                onChange={(e) =>
-                                    setTipo(
-                                        e.target.value as TipoProductoLimpieza
-                                    )
-                                }
-                            >
-                                {tiposProducto.map(
-                                    (tipoProducto) => (
-                                        <option
-                                            key={tipoProducto}
-                                            value={
-                                                tipoProducto
-                                            }
-                                        >
-                                            {tipoProducto
-                                                .charAt(0)
-                                                .toUpperCase() +
-                                                tipoProducto.slice(
-                                                    1
-                                                )}
-                                        </option>
-                                    )
-                                )}
-                            </select>
-                        </div>
-
-                        <div className={styles.formGroup}>
-                            <label htmlFor="stock">
-                                Stock
-                            </label>
-
-                            <input
-                                id="stock"
-                                type="number"
-                                min="0"
-                                step="any"
-                                value={stock}
-                                onChange={(e) =>
-                                    setStock(
-                                        Number(
-                                            e.target.value
-                                        )
-                                    )
-                                }
-                                placeholder="0"
-                            />
-                        </div>
-
-                        <div className={styles.formGroup}>
-                            <label htmlFor="unidadMedida">
-                                Unidad de medida
-                            </label>
-
-                            <select
-                                id="unidadMedida"
-                                value={unidadMedidaId}
-                                onChange={(e) =>
-                                    setUnidadMedidaId(
-                                        Number(
-                                            e.target.value
-                                        )
-                                    )
-                                }
-                            >
-                                <option value={0}>
-                                    Seleccione una unidad
-                                </option>
-
-                                {unidadesMedida.map(
-                                    (unidad) => (
-                                        <option
-                                            key={unidad.id}
-                                            value={unidad.id}
-                                        >
-                                            {unidad.nombre}
-                                        </option>
-                                    )
-                                )}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className={styles.filaBotones}>
-                        <Boton
-                            variant="crear"
-                            type="submit"
-                            disabled={guardando}
-                        >
-                            {guardando
-                                ? 'Guardando...'
-                                : 'Guardar'}
-                        </Boton>
-
-                        <Boton
-                            variant="volver"
-                            type="button"
-                            onClick={() =>
-                                navigate(
-                                    '/productosLimpieza'
-                                )
-                            }
-                        >
-                            Cancelar
-                        </Boton>
-                    </div>
-                </form>
+                        {/* acá van tus opciones de unidades */}
+                    </select>
+                </div>
             </div>
-        </div>
+
+            <div
+                className={styles.filaBotones}
+                style={{ marginTop: '20px' }}
+            >
+                <Boton
+                    type="submit"
+                    variant="guardar"
+                    disabled={guardando}
+                >
+                    {guardando
+                        ? 'Guardando...'
+                        : esEdicion
+                            ? 'Actualizar Cambios'
+                            : 'Guardar'}
+                </Boton>
+
+                <Boton
+                    type="button"
+                    variant="eliminar"
+                    onClick={() => navigate('/productosLimpieza')}
+                >
+                    Cancelar
+                </Boton>
+            </div>
+        </form>
+    </div>
     );
 }
 
