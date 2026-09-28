@@ -1,10 +1,10 @@
-import type { UnidadMedida } from './unidadesMedida';
+export interface UnidadMedida {
+    id: number;
+    nombre: string;
+    abreviatura: string;
+}
 
-export type TipoProductoLimpieza =
-    | 'detergente'
-    | 'desinfectante'
-    | 'desengrasante'
-    | 'otro';
+export type TipoProductoLimpieza = 'detergente' | 'desinfectante' | 'desengrasante' | 'otro';
 
 export interface ProductoLimpieza {
     id: number;

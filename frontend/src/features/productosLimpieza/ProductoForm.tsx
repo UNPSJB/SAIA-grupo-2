@@ -1,18 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 
-import type {
-    ProductoLimpiezaPayload,
-    TipoProductoLimpieza,
-} from '../../types/productosLimpieza';
+import type { ProductoLimpiezaPayload, TipoProductoLimpieza } from '../../types/productosLimpieza';
 import type { UnidadMedida } from '../../types/unidadesMedida';
-
-import {
-    getProductoLimpiezaById,
-    saveProductoLimpieza,
-} from '../../services/productosLimpiezaServices';
+import { getProductoById, saveProducto } from '../../services/productosLimpiezaServices';
 import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
-
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
 
@@ -25,21 +17,22 @@ const tiposProducto: TipoProductoLimpieza[] = [
 
 interface Errores {
     nombre?: string;
+    tipo?: string;
     stock?: string;
     unidad_medida_id?: string;
 }
 
-export default function ProductoLimpiezaForm() {
+export default function ProductoForm() {
     const { id } = useParams();
     const navigate = useNavigate();
     const editando = Boolean(id);
 
     const [nombre, setNombre] = useState('');
-    const [tipo, setTipo] = useState<TipoProductoLimpieza>('otro');
+    const [tipo, setTipo] = useState<string>('');
     const [stock, setStock] = useState('0');
     const [unidadMedidaId, setUnidadMedidaId] = useState('0');
 
-    const [unidadesMedida, setUnidadesMedida] = useState<UnidadMedida[]>([]);
+    const [unidades, setUnidades] = useState<UnidadMedida[]>([]);
     const [errores, setErrores] = useState<Errores>({});
     const [errorCarga, setErrorCarga] = useState<string | null>(null);
     const [guardando, setGuardando] = useState(false);
@@ -50,25 +43,25 @@ export default function ProductoLimpiezaForm() {
         if (yaCargado.current) return;
         yaCargado.current = true;
 
-        const cargarDatos = async () => {
+        const cargarTodo = async () => {
             try {
-                const unidades = await getUnidadesMedida();
-                setUnidadesMedida(unidades);
+                const unidadesData = await getUnidadesMedida();
+                setUnidades(unidadesData);
 
                 if (id) {
-                    const producto = await getProductoLimpiezaById(id);
+                    const producto = await getProductoById(id);
                     setNombre(producto.nombre);
                     setTipo(producto.tipo);
                     setStock(String(producto.stock));
                     setUnidadMedidaId(String(producto.unidad_medida_id));
                 }
-            } catch (err) {
-                console.error('Error al cargar los datos del formulario:', err);
+            } catch (error) {
+                console.error('Error al cargar los datos del formulario:', error);
                 setErrorCarga('No se pudieron cargar los datos.');
             }
         };
 
-        cargarDatos();
+        cargarTodo();
     }, [id]);
 
     const validar = (): Errores => {
@@ -82,11 +75,15 @@ export default function ProductoLimpiezaForm() {
             nuevos.nombre = 'No puede superar los 100 caracteres';
         }
 
+        if (!tipo) {
+            nuevos.tipo = 'Debe seleccionar un tipo';
+        }
+
         const stockNumero = Number(stock);
         if (stock.trim() === '' || Number.isNaN(stockNumero)) {
             nuevos.stock = 'El stock es obligatorio';
         } else if (stockNumero < 0) {
-            nuevos.stock = 'Debe ser mayor o igual a cero';
+            nuevos.stock = 'El stock no puede ser negativo';
         }
 
         if (Number(unidadMedidaId) === 0) {
@@ -101,27 +98,26 @@ export default function ProductoLimpiezaForm() {
 
         const nuevosErrores = validar();
         setErrores(nuevosErrores);
-
         if (Object.keys(nuevosErrores).length > 0) return;
 
         const datos: ProductoLimpiezaPayload = {
             nombre: nombre.trim(),
-            tipo,
+            tipo: tipo as TipoProductoLimpieza,
             stock: Number(stock),
             unidad_medida_id: Number(unidadMedidaId),
         };
 
         try {
             setGuardando(true);
-            const exito = await saveProductoLimpieza(datos, id);
+            const exito = await saveProducto(datos, id);
 
             if (exito) {
-                navigate('/productosLimpieza');
+                navigate('/productos_limpieza');
             } else {
                 alert('Hubo un error al guardar el registro.');
             }
-        } catch (err) {
-            console.error('Error de red:', err);
+        } catch (error) {
+            console.error('Error de red:', error);
             alert('Hubo un error al guardar el registro.');
         } finally {
             setGuardando(false);
@@ -139,9 +135,7 @@ export default function ProductoLimpiezaForm() {
                     : 'Registrar Nuevo Producto de Limpieza'}
             </h2>
 
-            {errorCarga && (
-                <p style={{ color: '#ef4444' }}>{errorCarga}</p>
-            )}
+            {errorCarga && <p style={{ color: '#ef4444' }}>{errorCarga}</p>}
 
             <form
                 onSubmit={handleSubmit}
@@ -165,14 +159,17 @@ export default function ProductoLimpiezaForm() {
                         <label>Tipo:</label>
                         <select
                             value={tipo}
-                            onChange={(e) => setTipo(e.target.value as TipoProductoLimpieza)}
+                            onChange={(e) => setTipo(e.target.value)}
+                            style={errores.tipo ? estiloError : {}}
                         >
+                            <option value="">Seleccione un tipo</option>
                             {tiposProducto.map((tipoProducto) => (
                                 <option key={tipoProducto} value={tipoProducto}>
                                     {tipoProducto}
                                 </option>
                             ))}
                         </select>
+                        {errores.tipo && <span style={estiloMensaje}>{errores.tipo}</span>}
                     </div>
 
                     <div className={styles.formGroup}>
@@ -197,7 +194,7 @@ export default function ProductoLimpiezaForm() {
                             style={errores.unidad_medida_id ? estiloError : {}}
                         >
                             <option value="0">Seleccione una unidad</option>
-                            {unidadesMedida.map((unidad) => (
+                            {unidades.map((unidad) => (
                                 <option key={unidad.id} value={String(unidad.id)}>
                                     {unidad.nombre}
                                 </option>
@@ -217,7 +214,7 @@ export default function ProductoLimpiezaForm() {
                                 ? 'Actualizar Cambios'
                                 : 'Guardar'}
                     </Boton>
-                    <Link to="/productosLimpieza">
+                    <Link to="/productos_limpieza">
                         <Boton variant="volver">Cancelar</Boton>
                     </Link>
                 </div>

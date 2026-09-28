@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import type { ElementoLimpieza } from '../../types/elementosLimpieza';
 import { getAlertasRecambio, registrarRecambio } from '../../services/elementosLimpiezaServices';
 import { COLOR_ESTADO, ETIQUETA_ESTADO, textoRecambio } from './estadoRecambio';
@@ -7,6 +8,9 @@ import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
 
 export default function AlertasRecambio() {
+    const { usuario } = useAuth();
+    const esAdmin = usuario?.rol === 'admin';
+
     const [alertas, setAlertas] = useState<ElementoLimpieza[]>([]);
     const [cargando, setCargando] = useState(true);
 
@@ -49,11 +53,13 @@ export default function AlertasRecambio() {
                 </p>
             )}
 
-            <Link to="/elementosLimpieza" className={styles.linkCrear}>
-                <Boton variant="volver">
-                    Ver todos los elementos
-                </Boton>
-            </Link>
+            {esAdmin && (
+                <Link to="/elementosLimpieza" className={styles.linkCrear}>
+                    <Boton variant="volver">
+                        Ver todos los elementos
+                    </Boton>
+                </Link>
+            )}
 
             <div className={styles.contenedorTabla} style={{ maxWidth: '900px' }}>
                 <div className={styles.filaHeader} style={{ gridTemplateColumns: '2fr 1.3fr 1.5fr 1.2fr' }}>
@@ -88,9 +94,11 @@ export default function AlertasRecambio() {
                         </div>
 
                         <div className={styles.grupoBotonesTabla}>
-                            <Boton variant="guardar" onClick={() => handleRecambio(el)}>
-                                Registrar recambio
-                            </Boton>
+                            {esAdmin && (
+                                <Boton variant="guardar" onClick={() => handleRecambio(el)}>
+                                    Registrar recambio
+                                </Boton>
+                            )}
                         </div>
                     </div>
                 ))}

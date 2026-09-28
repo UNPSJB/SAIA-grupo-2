@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link } from 'react-router-dom';
 import type { UnidadMedida } from '../../types/unidadesMedida';
 import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
-import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
 
 export default function UnidadesMedidaList() {
@@ -14,7 +12,7 @@ export default function UnidadesMedidaList() {
                 const data = await getUnidadesMedida();
                 setUnidadesMedida(data);
             } catch (error) {
-                console.error("Error al cargar unidades medida:", error);
+                console.error("Error al cargar unidades de medida:", error);
             }
         };
         
@@ -23,33 +21,27 @@ export default function UnidadesMedidaList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Lista de unidades de medida</h2>
-            
-            {/* <Link to="/unidadesmedida/nuevo" className={styles.linkCrear}>
-                <Boton variant="crear">
-                    + Crear Nueva unidad
-                </Boton>
-            </Link> */}
+            <h2>Unidades de Medida</h2>
 
-            <ul>
+            <div className={styles.contenedorTabla} style={{ maxWidth: '600px' }}>
+                <div className={styles.filaHeader} style={{ gridTemplateColumns: '1fr 3fr' }}>
+                    <div>ID</div>
+                    <div>Nombre de la Unidad</div>
+                </div>
+
                 {unidadesMedida.map((unidad) => (
-                    <li key={unidad.id}>
-                        <span>{unidad.nombre}</span>
-                        
-                        <div className={styles.grupoBotones}>
-                            {/* <Link to={`/insumos/editar/${unidad.id}`}>
-                                <Boton variant="editar">Editar</Boton>
-                            </Link>
-                            <Link to={`/insumos/${unidad.id}`}>
-                                <Boton variant="editar">Ver</Boton>
-                            </Link>
-                            <Link to={`/insumos/eliminar/${unidad.id}`}>
-                                <Boton variant="eliminar">Eliminar</Boton>
-                            </Link> */}
-                        </div>
-                    </li>
+                    <div key={unidad.id} className={styles.filaItem} style={{ gridTemplateColumns: '1fr 3fr' }}>
+                        <div style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>#{unidad.id}</div>
+                        <div style={{ fontWeight: '500', color: 'var(--text-h)' }}>{unidad.nombre}</div>
+                    </div>
                 ))}
-            </ul>
+
+                {unidadesMedida.length === 0 && (
+                    <div className={styles.emptyMensaje}>
+                        No hay unidades de medida registradas.
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

@@ -1,15 +1,21 @@
+from datetime import date, timedelta
 from sqlalchemy.orm import Session
 from src.database import SessionLocal, engine
 from src.models import Base
 from src.capacidades.models import Capacidad
-from src.empleados.models import Empleado
+from src.empleados.models import Empleado, RolEmpleado
 from src.equipos.models import Equipo, TipoEquipo
 from src.insumos.models import Insumo
 from src.unidades_medida.models import UnidadMedida
-from src.productos_limpieza.models import ProductoLimpieza
 from src.sectores.models import Sector
-from src.planes.models import Plan
+
+from src.productos_limpieza.models import ProductoLimpieza
+from src.productos_limpieza.constants import TipoProductoLimpieza
 from src.tareas.models import Tarea, ConsumoEstimado
+from src.tareas.constants import FrecuenciaTarea
+from src.elementos_limpieza.models import ElementoLimpieza
+from src.planes.models import Plan
+from src.checklists.models import Checklist, ConsumoReal
 
 def seed_database():
     Base.metadata.create_all(bind=engine)
@@ -38,20 +44,14 @@ def seed_database():
 
         # --- CAPACIDADES ---
         if db.query(Capacidad).count() == 0:
+            # Solo Administrador y Operario
             capacidades = [
                 Capacidad(nombre="Administrador"), 
-                Capacidad(nombre="Operario"),
-                Capacidad(nombre="Control de Calidad"),
-                Capacidad(nombre="Limpieza"),
-                Capacidad(nombre="Mantenimiento"),
-                Capacidad(nombre="Supervisor"),
-                Capacidad(nombre="Logística"),
-                Capacidad(nombre="Seguridad e Higiene"),
-                Capacidad(nombre="Empaque")
+                Capacidad(nombre="Operario")
             ]
             db.add_all(capacidades)
             db.commit()
-            print("Capacidades creadas (9).")
+            print("Capacidades creadas (2).")
 
         # --- INSUMOS ---
         if db.query(Insumo).count() == 0:
@@ -88,52 +88,55 @@ def seed_database():
         if db.query(Empleado).count() == 0:
             c_admin = db.query(Capacidad).filter_by(nombre="Administrador").first()
             c_operario = db.query(Capacidad).filter_by(nombre="Operario").first()
-            c_calidad = db.query(Capacidad).filter_by(nombre="Control de Calidad").first()
-            c_limpieza = db.query(Capacidad).filter_by(nombre="Limpieza").first()
-            c_mantenimiento = db.query(Capacidad).filter_by(nombre="Mantenimiento").first()
-            c_supervisor = db.query(Capacidad).filter_by(nombre="Supervisor").first()
-            c_logistica = db.query(Capacidad).filter_by(nombre="Logística").first()
-            c_empaque = db.query(Capacidad).filter_by(nombre="Empaque").first()
 
+            # Se les asigna explícitamente el rol además de la capacidad
             empleados = [
-                Empleado(legajo="EMP-1000", dni="11111111", nombre="Carlos", apellido="Gómez", activo=True),
-                Empleado(legajo="EMP-1001", dni="22222222", nombre="María", apellido="Pérez", activo=True),
-                Empleado(legajo="EMP-1002", dni="33333333", nombre="Juan", apellido="López", activo=True),
-                Empleado(legajo="EMP-1003", dni="44444444", nombre="Lucía", apellido="Martínez", activo=True),
-                Empleado(legajo="EMP-1004", dni="55555555", nombre="Pedro", apellido="Sánchez", activo=False),
-                Empleado(legajo="EMP-1005", dni="66666666", nombre="Ana", apellido="García", activo=True),
-                Empleado(legajo="EMP-1006", dni="77777777", nombre="Diego", apellido="Fernández", activo=True),
-                Empleado(legajo="EMP-1007", dni="88888888", nombre="Sofía", apellido="Romero", activo=True),
-                Empleado(legajo="EMP-1008", dni="99999999", nombre="Martín", apellido="Castro", activo=True),
-                Empleado(legajo="EMP-1009", dni="10101010", nombre="Laura", apellido="Díaz", activo=True),
-                Empleado(legajo="EMP-1010", dni="12121212", nombre="Jorge", apellido="Ruiz", activo=False),
-                Empleado(legajo="EMP-1011", dni="13131313", nombre="Elena", apellido="Vargas", activo=True),
-                Empleado(legajo="EMP-1012", dni="14141414", nombre="Andrés", apellido="Herrera", activo=True),
-                Empleado(legajo="EMP-1013", dni="15151515", nombre="Valeria", apellido="Guzmán", activo=True),
+                Empleado(legajo="EMP-1000", dni="11111111", nombre="Carlos", apellido="Gómez", activo=True, rol=RolEmpleado.ADMIN),
+                Empleado(legajo="EMP-1001", dni="22222222", nombre="María", apellido="Pérez", activo=True, rol=RolEmpleado.ADMIN),
+                Empleado(legajo="EMP-1002", dni="33333333", nombre="Juan", apellido="López", activo=True, rol=RolEmpleado.OPERARIO),
+                Empleado(legajo="EMP-1003", dni="44444444", nombre="Lucía", apellido="Martínez", activo=True, rol=RolEmpleado.OPERARIO),
+                Empleado(legajo="EMP-1004", dni="55555555", nombre="Pedro", apellido="Sánchez", activo=False, rol=RolEmpleado.OPERARIO),
+                Empleado(legajo="EMP-1005", dni="66666666", nombre="Ana", apellido="García", activo=True, rol=RolEmpleado.OPERARIO),
+                Empleado(legajo="EMP-1006", dni="77777777", nombre="Diego", apellido="Fernández", activo=True, rol=RolEmpleado.OPERARIO),
+                Empleado(legajo="EMP-1007", dni="88888888", nombre="Sofía", apellido="Romero", activo=True, rol=RolEmpleado.OPERARIO),
             ]
 
-            if c_admin: empleados[0].capacidades.append(c_admin)
-            if c_admin and c_supervisor: empleados[1].capacidades.extend([c_admin, c_supervisor])
+            # Los primeros dos son admins
+            if c_admin: 
+                empleados[0].capacidades.append(c_admin)
+                empleados[1].capacidades.append(c_admin)
+            
+            # El resto son operarios
             if c_operario:
-                empleados[2].capacidades.append(c_operario)
-                empleados[4].capacidades.append(c_operario)
-                empleados[8].capacidades.append(c_operario)
-            if c_operario and c_limpieza:
-                empleados[3].capacidades.extend([c_operario, c_limpieza])
-                empleados[5].capacidades.extend([c_operario, c_limpieza])
-            if c_calidad: 
-                empleados[6].capacidades.append(c_calidad)
-                empleados[13].capacidades.append(c_calidad)
-            if c_limpieza: empleados[7].capacidades.append(c_limpieza)
-            if c_mantenimiento: empleados[9].capacidades.append(c_mantenimiento)
-            if c_logistica: 
-                empleados[10].capacidades.append(c_logistica)
-                empleados[11].capacidades.append(c_logistica)
-            if c_empaque: empleados[12].capacidades.append(c_empaque)
+                for emp in empleados[2:]:
+                    emp.capacidades.append(c_operario)
             
             db.add_all(empleados)
             db.commit()
-            print("Empleados creados (14).")
+            print("Empleados creados (8).")
+
+        # --- SECTORES ---
+        if db.query(Sector).count() == 0:
+            carlos_admin = db.query(Empleado).filter_by(legajo="EMP-1000").first()
+            maria_admin = db.query(Empleado).filter_by(legajo="EMP-1001").first()
+            juan_op = db.query(Empleado).filter_by(legajo="EMP-1002").first()
+            lucia_op = db.query(Empleado).filter_by(legajo="EMP-1003").first()
+
+            sectores = [
+                Sector(nombre="Depósito Frío", responsable_id=carlos_admin.id if carlos_admin else None, empleados=[carlos_admin, juan_op] if carlos_admin and juan_op else []),
+                Sector(nombre="Sector Cocción", responsable_id=maria_admin.id if maria_admin else None, empleados=[maria_admin, lucia_op] if maria_admin and lucia_op else []),
+                Sector(nombre="Recepción de Materia Prima"),
+                Sector(nombre="Sector Preparación"),
+                Sector(nombre="Control de Calidad"),
+                Sector(nombre="Mantenimiento"),
+                Sector(nombre="Sector Empaque"),
+                Sector(nombre="Laboratorio de Calidad"),
+                Sector(nombre="Línea de Producción")
+            ]
+            
+            db.add_all(sectores)
+            db.commit()
+            print("Sectores creados (9).")
 
         # --- TIPOS DE EQUIPO ---
         if db.query(TipoEquipo).count() == 0:
@@ -167,25 +170,135 @@ def seed_database():
             t_cinta = db.query(TipoEquipo).filter_by(nombre="Cinta Transportadora").first().id
             t_detector = db.query(TipoEquipo).filter_by(nombre="Detector de Metales").first().id
 
+            s_frio = db.query(Sector).filter_by(nombre="Depósito Frío").first().id
+            s_coccion = db.query(Sector).filter_by(nombre="Sector Cocción").first().id
+            s_recepcion = db.query(Sector).filter_by(nombre="Recepción de Materia Prima").first().id
+            s_preparacion = db.query(Sector).filter_by(nombre="Sector Preparación").first().id
+            s_calidad = db.query(Sector).filter_by(nombre="Control de Calidad").first().id
+            s_mantenimiento = db.query(Sector).filter_by(nombre="Mantenimiento").first().id
+            s_empaque = db.query(Sector).filter_by(nombre="Sector Empaque").first().id
+            s_laboratorio = db.query(Sector).filter_by(nombre="Laboratorio de Calidad").first().id
+            s_produccion = db.query(Sector).filter_by(nombre="Línea de Producción").first().id
+
             equipos = [
-                Equipo(nombre="Heladera Cámara 1", activo=True, tipo_id=t_heladera, ubicacion="Depósito Frío"),
-                Equipo(nombre="Horno Rotativo", activo=True, tipo_id=t_horno, ubicacion="Sector Cocción"),
-                Equipo(nombre="Balanza Digital 30kg", activo=True, tipo_id=t_balanza, ubicacion="Recepción de Materia Prima"),
-                Equipo(nombre="Amasadora Industrial 50kg", activo=True, tipo_id=t_amasadora, ubicacion="Sector Preparación"),
-                Equipo(nombre="Termómetro Infrarrojo", activo=True, tipo_id=t_termometro, ubicacion="Control de Calidad"),
-                Equipo(nombre="Termómetro de Pinche", activo=True, tipo_id=t_termometro, ubicacion="Sector Cocción"),
-                Equipo(nombre="Cámara de Congelados", activo=True, tipo_id=t_heladera, ubicacion="Depósito Frío"),
-                Equipo(nombre="Cortadora de Fiambre", activo=False, tipo_id=t_cortadora, ubicacion="Mantenimiento"),
-                Equipo(nombre="Envasadora al Vacío", activo=True, tipo_id=t_envasadora, ubicacion="Sector Empaque"),
-                Equipo(nombre="Mezcladora de Polvos 100L", activo=True, tipo_id=t_mezcladora, ubicacion="Sector Preparación"),
-                Equipo(nombre="Balanza de Precisión", activo=True, tipo_id=t_balanza, ubicacion="Laboratorio de Calidad"),
-                Equipo(nombre="Cinta Transportadora Ppal", activo=True, tipo_id=t_cinta, ubicacion="Línea de Producción"),
-                Equipo(nombre="Detector de Metales Fin de Línea", activo=True, tipo_id=t_detector, ubicacion="Sector Empaque"),
-                Equipo(nombre="Horno Convector Secundario", activo=False, tipo_id=t_horno, ubicacion="Mantenimiento")
+                Equipo(nombre="Heladera Cámara 1", activo=True, tipo_id=t_heladera, sector_id=s_frio),
+                Equipo(nombre="Horno Rotativo", activo=True, tipo_id=t_horno, sector_id=s_coccion),
+                Equipo(nombre="Balanza Digital 30kg", activo=True, tipo_id=t_balanza, sector_id=s_recepcion),
+                Equipo(nombre="Amasadora Industrial 50kg", activo=True, tipo_id=t_amasadora, sector_id=s_preparacion),
+                Equipo(nombre="Termómetro Infrarrojo", activo=True, tipo_id=t_termometro, sector_id=s_calidad),
+                Equipo(nombre="Termómetro de Pinche", activo=True, tipo_id=t_termometro, sector_id=s_coccion),
+                Equipo(nombre="Cámara de Congelados", activo=True, tipo_id=t_heladera, sector_id=s_frio),
+                Equipo(nombre="Cortadora de Fiambre", activo=False, estado="danado", tipo_id=t_cortadora, sector_id=s_mantenimiento),
+                Equipo(nombre="Envasadora al Vacío", activo=True, tipo_id=t_envasadora, sector_id=s_empaque),
+                Equipo(nombre="Mezcladora de Polvos 100L", activo=True, tipo_id=t_mezcladora, sector_id=s_preparacion),
+                Equipo(nombre="Balanza de Precisión", activo=True, tipo_id=t_balanza, sector_id=s_laboratorio),
+                Equipo(nombre="Cinta Transportadora Ppal", activo=True, tipo_id=t_cinta, sector_id=s_produccion),
+                Equipo(nombre="Detector de Metales Fin de Línea", activo=True, tipo_id=t_detector, sector_id=s_empaque),
+                Equipo(nombre="Horno Convector Secundario", activo=False, estado="danado", tipo_id=t_horno, sector_id=s_mantenimiento)
             ]
             db.add_all(equipos)
             db.commit()
             print("Equipos creados (14).")
+
+        if db.query(ProductoLimpieza).count() == 0:
+            u_l = db.query(UnidadMedida).filter_by(nombre="Litros").first().id
+            u_u = db.query(UnidadMedida).filter_by(nombre="Unidades").first().id
+            
+            productos_limpieza = [
+                ProductoLimpieza(nombre="Hipoclorito 10%", tipo=TipoProductoLimpieza.DESINFECTANTE, stock=100.0, unidad_medida_id=u_l),
+                ProductoLimpieza(nombre="Detergente Enzimático", tipo=TipoProductoLimpieza.DETERGENTE, stock=50.0, unidad_medida_id=u_l),
+                ProductoLimpieza(nombre="Desengrasante Alcalino", tipo=TipoProductoLimpieza.DESENGRASANTE, stock=75.0, unidad_medida_id=u_l),
+                ProductoLimpieza(nombre="Paños de Microfibra", tipo=TipoProductoLimpieza.OTRO, stock=200.0, unidad_medida_id=u_u)
+            ]
+            db.add_all(productos_limpieza)
+            db.commit()
+            print("Productos de Limpieza creados (4).")
+
+        if db.query(Tarea).count() == 0:
+            p_hipoclorito = db.query(ProductoLimpieza).filter_by(nombre="Hipoclorito 10%").first()
+            p_detergente = db.query(ProductoLimpieza).filter_by(nombre="Detergente Enzimático").first()
+            p_panos = db.query(ProductoLimpieza).filter_by(nombre="Paños de Microfibra").first()
+
+            tareas = [
+                Tarea(titulo="Desinfección de Superficies", frecuencia=FrecuenciaTarea.DIARIA),
+                Tarea(titulo="Limpieza Profunda de Equipos", frecuencia=FrecuenciaTarea.SEMANAL),
+                Tarea(titulo="Limpieza General de Sector", frecuencia=FrecuenciaTarea.DIARIA)
+            ]
+            db.add_all(tareas)
+            db.commit()
+
+            consumos = [
+                ConsumoEstimado(tarea_id=tareas[0].id, producto_limpieza_id=p_hipoclorito.id, cantidad=0.5),
+                ConsumoEstimado(tarea_id=tareas[0].id, producto_limpieza_id=p_panos.id, cantidad=1.0),
+                ConsumoEstimado(tarea_id=tareas[1].id, producto_limpieza_id=p_detergente.id, cantidad=1.5),
+                ConsumoEstimado(tarea_id=tareas[2].id, producto_limpieza_id=p_hipoclorito.id, cantidad=2.0)
+            ]
+            db.add_all(consumos)
+            db.commit()
+            print("Tareas y Consumos Estimados creados (3 tareas).")
+
+        if db.query(Plan).count() == 0:
+            s_frio = db.query(Sector).filter_by(nombre="Depósito Frío").first()
+            s_coccion = db.query(Sector).filter_by(nombre="Sector Cocción").first()
+            
+            e_heladera = db.query(Equipo).filter_by(nombre="Heladera Cámara 1").first()
+            e_horno = db.query(Equipo).filter_by(nombre="Horno Rotativo").first()
+            
+            t_desinfeccion = db.query(Tarea).filter_by(titulo="Desinfección de Superficies").first()
+            t_profunda = db.query(Tarea).filter_by(titulo="Limpieza Profunda de Equipos").first()
+
+            planes = [
+                Plan(
+                    titulo="Saneamiento Diario - Depósito Frío",
+                    fecha_inicio=date.today(),
+                    sector_id=s_frio.id,
+                    equipos=[e_heladera],
+                    tareas=[t_desinfeccion]
+                ),
+                Plan(
+                    titulo="Mantenimiento Semanal - Cocción",
+                    fecha_inicio=date.today(),
+                    sector_id=s_coccion.id,
+                    equipos=[e_horno],
+                    tareas=[t_profunda, t_desinfeccion]
+                )
+            ]
+            db.add_all(planes)
+            db.commit()
+            print("Planes de Limpieza creados (2).")
+
+        if db.query(ElementoLimpieza).count() == 0:
+            hoy = date.today()
+            elementos = [
+                ElementoLimpieza(
+                    nombre="Cepillo de cerdas duras",
+                    frecuencia_recambio_dias=90,
+                    fecha_ultimo_recambio=hoy - timedelta(days=100),
+                ),
+                ElementoLimpieza(
+                    nombre="Trapo de piso",
+                    frecuencia_recambio_dias=30,
+                    fecha_ultimo_recambio=hoy - timedelta(days=25),
+                ),
+                ElementoLimpieza(
+                    nombre="Esponja abrasiva",
+                    frecuencia_recambio_dias=60,
+                    fecha_ultimo_recambio=hoy,
+                ),
+                ElementoLimpieza(
+                    nombre="Guantes de nitrilo",
+                    frecuencia_recambio_dias=45,
+                    fecha_ultimo_recambio=hoy - timedelta(days=10),
+                ),
+                ElementoLimpieza(
+                    nombre="Balde de 10 litros",
+                    frecuencia_recambio_dias=None,
+                    fecha_ultimo_recambio=hoy,
+                ),
+            ]
+            db.add_all(elementos)
+            db.commit()
+            print("Elementos de Limpieza creados (5).")
 
         print("Base de datos poblada exitosamente con datos de prueba para Inocuidad Alimentaria!")
 

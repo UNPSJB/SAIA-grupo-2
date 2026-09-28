@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import type { Equipo } from '../../types/equipos';
 import { getEquipos } from '../../services/equiposServices';
 import Boton from '../../components/Boton';
+import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';
 
 export default function EquiposList() {
+    const { usuario } = useAuth();
     const [equipos, setEquipos] = useState<Equipo[]>([]);
     const [paginaActual, setPaginaActual] = useState(1);
     const equiposPorPagina = 5; 
@@ -15,7 +17,6 @@ export default function EquiposList() {
             try {
                 const data = await getEquipos();
                 
-                // Ordenamos: Operativos arriba, Fuera de Servicio abajo
                 const datosOrdenados = data.sort((a, b) => {
                     if (a.activo === b.activo) return 0;
                     return a.activo ? -1 : 1;
@@ -38,23 +39,26 @@ export default function EquiposList() {
         <div className={styles.contenedorPrincipal}>
             <h2>Inventario de Equipamiento</h2>
             
-            <Link to="/equipos/nuevo" className={styles.linkCrear}>
-                <Boton variant="crear">
-                    Registrar Equipo
-                </Boton>
-            </Link>
+            {usuario?.rol === 'admin' && (
+                <Link to="/equipos/nuevo" className={styles.linkCrear}>
+                    <Boton variant="crear">
+                        Registrar Equipo
+                    </Boton>
+                </Link>
+            )}
 
             <div className={styles.contenedorTabla}>
-                <div className={styles.filaHeader}>
+                <div className={styles.filaHeader} style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1.5fr' }}>
                     <div>Nombre del Equipo</div>
                     <div>Categoría</div>
-                    <div>Ubicación / Sector</div>
-                    <div>Estado</div>
+                    <div>Sector</div>
+                    <div>Sistema</div>
+                    <div>Condición</div>
                     <div>Acciones</div>
                 </div>
 
                 {equiposActuales.map((eq) => (
-                    <div key={eq.id} className={styles.filaItem}>
+                    <div key={eq.id} className={styles.filaItem} style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1.5fr' }}>
                         <div style={{ fontWeight: '500', color: 'var(--text-h)' }}>
                             {eq.nombre}
                         </div>
@@ -65,26 +69,38 @@ export default function EquiposList() {
                             </span>
                         </div>
                         
-                        <div>{eq.ubicacion}</div>
+                        <div>{eq.sector ? eq.sector.nombre : <span style={{ color: 'var(--text-muted)' }}>Sin asignar</span>}</div>
 
                         <div>
                             {eq.activo ? (
-                                <span style={{ color: '#16a34a', fontWeight: '500' }}>Operativo</span>
+                                <span style={{ color: '#16a34a', fontWeight: '500' }}>Activo</span>
                             ) : (
-                                <span style={{ color: '#dc2626', fontWeight: '500' }}>Fuera de Servicio</span>
+                                <span style={{ color: '#6b7280', fontWeight: '500' }}>Inactivo</span>
+                            )}
+                        </div>
+
+                        <div>
+                            {eq.estado === 'bueno' ? (
+                                <span style={{ color: '#16a34a', fontWeight: 'bold' }}>Bueno</span>
+                            ) : (
+                                <span style={{ color: '#dc2626', fontWeight: 'bold' }}>Dañado</span>
                             )}
                         </div>
                         
                         <div className={styles.grupoBotonesTabla}>
-                            <Link to={`/equipos/editar/${eq.id}`} title="Editar equipo">
-                                <Boton variant="editar" style={{ padding: '8px 12px' }}></Boton>
-                            </Link>
+                            {usuario?.rol === 'admin' && (
+                                <Link to={`/equipos/editar/${eq.id}`} title="Editar equipo">
+                                    <Boton variant="editar" style={{ padding: '8px 12px' }}></Boton>
+                                </Link>
+                            )}
                             <Link to={`/equipos/${eq.id}`} title="Ver detalle">
                                 <Boton variant="ver" style={{ padding: '8px 12px' }}></Boton>
                             </Link>
-                            <Link to={`/equipos/eliminar/${eq.id}`} title="Eliminar registro">
-                                <Boton variant="eliminar" style={{ padding: '8px 12px' }}></Boton>
-                            </Link>
+                            {usuario?.rol === 'admin' && (
+                                <Link to={`/equipos/eliminar/${eq.id}`} title="Eliminar registro">
+                                    <Boton variant="eliminar" style={{ padding: '8px 12px' }}></Boton>
+                                </Link>
+                            )}
                         </div>
                     </div>
                 ))}

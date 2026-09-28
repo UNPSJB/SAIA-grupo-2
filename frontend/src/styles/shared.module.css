@@ -73,6 +73,7 @@ label {
 
 input[type="text"], 
 input[type="number"], 
+input[type="password"],
 select {
     background-color: var(--bg);
     color: var(--text-h);
@@ -255,6 +256,33 @@ p {
     justify-content: space-between;
     box-shadow: var(--shadow);
     text-align: left;
+}
+
+.textDanger {
+    color: #ef4444;
+    font-size: 0.8rem;
+    margin-top: 5px;
+    display: block;
+}
+
+.textSuccess {
+    color: #16a34a;
+    font-weight: 500;
+}
+
+.textInactive {
+    color: #dc2626;
+    font-weight: 500;
+}
+
+.textMuted {
+    color: #64748b;
+}
+
+.emptyMensaje {
+    padding: 30px;
+    text-align: center;
+    color: var(--text);
 }
 
 .modalOverlay {

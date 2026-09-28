@@ -45,7 +45,6 @@ def modificar_insumo(
 
 def eliminar_insumo(db: Session, insumo_id: int) -> schemas.InsumoDelete:
     db_insumo = leer_insumo(db, insumo_id)
-    #import pdb; pdb.set_trace()
     db.execute(delete(Insumo).where(Insumo.id == insumo_id))
     db.commit()
     return {"id": insumo_id, "msg": "borrado"}

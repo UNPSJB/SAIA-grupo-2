@@ -5,9 +5,11 @@ import { getCapacidades, deleteCapacidad } from '../../services/capacidadesServi
 import Boton from '../../components/Boton';
 import ModalConfirmacion from '../../components/confirmacion';
 import ModalAlerta from '../../components/alerta';
+import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';
 
 export default function CapacidadesList() {
+    const { usuario } = useAuth();
     const [capacidades, setCapacidades] = useState<Capacidad[]>([]);
     const [paginaActual, setPaginaActual] = useState(1);
     const capacidadesPorPagina = 10;
@@ -63,11 +65,13 @@ export default function CapacidadesList() {
         <div className={styles.contenedorPrincipal}>
             <h2>Gestión de Capacidades y Roles</h2>
             
-            <Link to="/capacidades/nuevo" className={styles.linkCrear}>
-                <Boton variant="crear">
-                    Registrar Capacidad
-                </Boton>
-            </Link>
+            {usuario?.rol === 'admin' && (
+                <Link to="/capacidades/nuevo" className={styles.linkCrear}>
+                    <Boton variant="crear">
+                        Registrar Capacidad
+                    </Boton>
+                </Link>
+            )}
 
             <div className={styles.contenedorTabla} style={{ maxWidth: '800px' }}>
                 <div className={styles.filaHeader} style={{ gridTemplateColumns: '3fr 1fr' }}>
@@ -82,11 +86,13 @@ export default function CapacidadesList() {
                         </div>
                         
                         <div className={styles.grupoBotonesTabla}>
-                            <Boton 
-                                variant="eliminar" 
-                                onClick={() => solicitarEliminacion(cap.id)}
-                                style={{ padding: '8px 12px' }}
-                            ></Boton>
+                            {usuario?.rol === 'admin' && (
+                                <Boton
+                                    variant="eliminar"
+                                    onClick={() => solicitarEliminacion(cap.id)}
+                                    style={{ padding: '8px 12px' }}
+                                ></Boton>
+                            )}
                         </div>
                     </div>
                 ))}

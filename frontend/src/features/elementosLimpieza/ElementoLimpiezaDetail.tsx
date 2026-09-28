@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import type { ElementoLimpieza } from '../../types/elementosLimpieza';
 import { getElementoLimpiezaById, registrarRecambio } from '../../services/elementosLimpiezaServices';
 import { COLOR_ESTADO, ETIQUETA_ESTADO, textoRecambio } from './estadoRecambio';
@@ -7,6 +8,9 @@ import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
 
 export default function ElementoLimpiezaDetail() {
+    const { usuario } = useAuth();
+    const esAdmin = usuario?.rol === 'admin';
+
     const [elemento, setElemento] = useState<ElementoLimpieza | null>(null);
     const { id } = useParams();
 
@@ -72,13 +76,13 @@ export default function ElementoLimpiezaDetail() {
                     </p>
 
                     <div className={styles.filaBotones} style={{ marginTop: '20px', justifyContent: 'center' }}>
-                        {elemento.frecuencia_recambio_dias !== null && (
+                        {esAdmin && elemento.frecuencia_recambio_dias !== null && (
                             <Boton variant="guardar" onClick={handleRecambio}>
                                 Registrar recambio
                             </Boton>
                         )}
-                        <Link to="/elementosLimpieza">
-                            <Boton variant="volver">Volver a la lista</Boton>
+                        <Link to={esAdmin ? "/elementosLimpieza" : "/elementosLimpieza/alertas"}>
+                            <Boton variant="volver">Volver</Boton>
                         </Link>
                     </div>
                 </div>

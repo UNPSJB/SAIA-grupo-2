@@ -3,10 +3,13 @@ import { Link } from 'react-router-dom';
 import type { Empleado } from '../../types/empleados';
 import { getEmpleados } from '../../services/empleadosServices';
 import Boton from '../../components/Boton';
+import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';
 
 export default function EmpleadosList() {
+    const { usuario } = useAuth();
     const [empleados, setEmpleados] = useState<Empleado[]>([]);
+    const [mostrarInactivos, setMostrarInactivos] = useState(false);
     const [paginaActual, setPaginaActual] = useState(1);
     const empleadosPorPagina = 5; 
 
@@ -29,27 +32,45 @@ export default function EmpleadosList() {
         cargarDatos();
     }, []);
 
-    // Paginación
+    const empleadosFiltrados = empleados.filter(emp => mostrarInactivos || emp.activo);
+
     const indiceUltimo = paginaActual * empleadosPorPagina;
     const indicePrimer = indiceUltimo - empleadosPorPagina;
-    const empleadosActuales = empleados.slice(indicePrimer, indiceUltimo);
-    const totalPaginas = Math.ceil(empleados.length / empleadosPorPagina);
+    const empleadosActuales = empleadosFiltrados.slice(indicePrimer, indiceUltimo);
+    const totalPaginas = Math.ceil(empleadosFiltrados.length / empleadosPorPagina);
 
     return (
         <div className={styles.contenedorPrincipal}>
             <h2>Directorio de Personal</h2>
             
-            <Link to="/empleados/nuevo" className={styles.linkCrear}>
-                <Boton variant="crear">
-                    Registrar Empleado
-                </Boton>
-            </Link>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '1100px', marginBottom: '20px' }}>
+                {usuario?.rol === 'admin' ? (
+                    <Link to="/empleados/nuevo">
+                        <Boton variant="crear">
+                            Registrar Empleado
+                        </Boton>
+                    </Link>
+                ) : <div />}
+
+                <label className={styles.labelCheckbox} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input
+                        type="checkbox"
+                        className={styles.checkbox}
+                        checked={mostrarInactivos}
+                        onChange={(e) => {
+                            setMostrarInactivos(e.target.checked);
+                            setPaginaActual(1);
+                        }}
+                    />
+                    <span>Mostrar empleados dados de baja</span>
+                </label>
+            </div>
 
             <div className={styles.contenedorTabla}>
                 <div className={styles.filaHeader} style={{ gridTemplateColumns: '1fr 2fr 1.5fr 2.5fr 1fr 1.5fr' }}>
                     <div>Legajo</div>
                     <div>Nombre Completo</div>
-                    <div>DNI</div>
+                    <div>Sector/es</div> 
                     <div>Roles Asignados</div>
                     <div>Estado</div>
                     <div>Acciones</div>
@@ -65,7 +86,13 @@ export default function EmpleadosList() {
                             {emp.nombre} {emp.apellido}
                         </div>
                         
-                        <div>{emp.dni || '-'}</div>
+                        <div style={{ color: 'var(--text)', textAlign: 'center' }}>
+                            {emp.sectores && emp.sectores.length > 0 ? (
+                                emp.sectores.map(sec => sec.nombre).join(', ')
+                            ) : (
+                                <span style={{ color: 'var(--text-muted)' }}>Sin asignar</span>
+                            )}
+                        </div>
                         
                         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
                             {emp.capacidades && emp.capacidades.length > 0 ? (
@@ -79,7 +106,7 @@ export default function EmpleadosList() {
                                     </span>
                                 ))
                             ) : (
-                                <span className={styles.badge} style={{ backgroundColor: 'var(--border)', color: 'var(--text)' }}>
+                                <span className={styles.badge} style={{ color: 'var(--text)' }}>
                                     Sin asignar
                                 </span>
                             )}
@@ -87,29 +114,33 @@ export default function EmpleadosList() {
 
                         <div>
                             {emp.activo ? (
-                                <span style={{ color: '#16a34a', fontWeight: '500' }}>Activo</span>
+                                <span className={styles.textSuccess}>Activo</span>
                             ) : (
-                                <span style={{ color: '#dc2626', fontWeight: '500' }}>Inactivo</span>
+                                <span className={styles.textInactive}>Inactivo</span>
                             )}
                         </div>
                         
                         <div className={styles.grupoBotonesTabla}>
-                            <Link to={`/empleados/editar/${emp.id}`} title="Editar empleado">
-                                <Boton variant="editar" style={{ padding: '8px 12px' }}></Boton>
-                            </Link>
+                            {usuario?.rol === 'admin' && (
+                                <Link to={`/empleados/editar/${emp.id}`} title="Editar empleado">
+                                    <Boton variant="editar" style={{ padding: '8px 12px' }}></Boton>
+                                </Link>
+                            )}
                             <Link to={`/empleados/${emp.id}`} title="Ver detalle">
                                 <Boton variant="ver" style={{ padding: '8px 12px' }}></Boton>
                             </Link>
-                            <Link to={`/empleados/eliminar/${emp.id}`} title="Eliminar registro">
-                                <Boton variant="eliminar" style={{ padding: '8px 12px' }}></Boton>
-                            </Link>
+                            {usuario?.rol === 'admin' && !emp.activo && (
+                                <Link to={`/empleados/eliminar/${emp.id}`} title="Eliminar físicamente">
+                                    <Boton variant="eliminar" style={{ padding: '8px 12px' }}></Boton>
+                                </Link>
+                            )}
                         </div>
                     </div>
                 ))}
 
                 {empleadosActuales.length === 0 && (
-                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text)' }}>
-                        No hay empleados registrados.
+                    <div className={styles.emptyMensaje}>
+                        {mostrarInactivos ? "No hay empleados registrados." : "No hay empleados activos actualmente."}
                     </div>
                 )}
             </div>
