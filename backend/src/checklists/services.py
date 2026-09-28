@@ -105,19 +105,34 @@ def marcar_tarea_completada(
         db_checklist.evidencia_url = payload.evidencia_url
         db_checklist.observaciones = payload.observaciones
 
-    for consumo in payload.consumos:
-        db_consumo = ConsumoReal(
-            checklist_id=db_checklist.id,
-            producto_limpieza_id=consumo.producto_limpieza_id,
-            cantidad=consumo.cantidad
+        for consumo_previo in list(db_checklist.consumos_reales):
+            db_producto = db.scalar(
+            select(ProductoLimpieza).where(ProductoLimpieza.id == consumo_previo.producto_limpieza_id)
         )
-        db.add(db_consumo)
+        if db_producto:
+            db_producto.stock += consumo_previo.cantidad
+        db.delete(consumo_previo)
+    db.flush()
 
+    for consumo in payload.consumos:
         db_producto = db.scalar(
             select(ProductoLimpieza).where(ProductoLimpieza.id == consumo.producto_limpieza_id)
         )
-        if db_producto:
-            db_producto.stock = max(0.0, db_producto.stock - consumo.cantidad)
+        if db_producto is None:
+            db.rollback()
+            raise exceptions.ProductoNoEncontrado()
+
+        if db_producto.stock < consumo.cantidad:
+            db.rollback()
+            raise exceptions.StockInsuficiente()
+
+        db_producto.stock -= consumo.cantidad
+
+        db.add(ConsumoReal(
+            checklist_id=db_checklist.id,
+            producto_limpieza_id=consumo.producto_limpieza_id,
+            cantidad=consumo.cantidad
+        ))
 
     db.commit()
 
