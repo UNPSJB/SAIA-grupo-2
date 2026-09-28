@@ -177,7 +177,7 @@ function RutasProtegidas() {
           <Route path="/productos_limpieza/eliminar/:id" element={<RutaAdmin><ProductoDelete /></RutaAdmin>} />
 
           <Route path="/consumos/reporte" element={<RutaAdmin><ConsumoReporte /></RutaAdmin>} />
-          <Route path="/consumos/nuevo" element={<RutaAdmin><ConsumoForm /></RutaAdmin>} />
+          <Route path="/consumos/nuevo" element={<ConsumoForm />} />
 
           <Route path="/tareas" element={<TareasList />} />
           <Route path="/tareas/nueva" element={<RutaAdmin><TareaForm /></RutaAdmin>} />
