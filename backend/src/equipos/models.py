@@ -28,7 +28,7 @@ class Equipo(ModeloBase):
     tipo_id: Mapped[int] = mapped_column(ForeignKey("tipos_equipo.id"))
     
     tipo: Mapped["TipoEquipo"] = relationship(back_populates="equipos")
-    sector: Mapped["Sector"] = relationship()
+    sector: Mapped["Sector"] = relationship("Sector", back_populates="equipos")
     
     estado: Mapped[EstadoEquipo] = mapped_column(
         SQLEnum(

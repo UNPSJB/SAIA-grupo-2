@@ -25,4 +25,4 @@ class Sector(ModeloBase):
         back_populates="sectores"
     )
 
-    equipos: Mapped[List["Equipo"]] = relationship("Equipo")
+    equipos: Mapped[List["Equipo"]] = relationship("Equipo", back_populates="sector")

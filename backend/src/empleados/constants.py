@@ -3,3 +3,4 @@ class ErrorCode:
     NOMBRE_DUPLICADO = "El nombre ya existe"
     DNI_DUPLICADO = "El DNI ya se encuentra registrado"
     SECTOR_REQUERIDO = "El empleado debe tener al menos un sector asignado"
+    CREDENCIALES_INVALIDAS = "Legajo o DNI incorrectos, o el empleado no esta activo"

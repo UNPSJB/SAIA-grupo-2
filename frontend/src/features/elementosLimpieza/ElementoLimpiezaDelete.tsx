@@ -1,38 +1,38 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import type { Insumo } from '../../types/insumos';
-import { getInsumoById, deleteInsumo } from '../../services/insumosServices';
+import type { ElementoLimpieza } from '../../types/elementosLimpieza';
+import { getElementoLimpiezaById, deleteElementoLimpieza } from '../../services/elementosLimpiezaServices';
 import Boton from '../../components/Boton';
 import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
-export default function InsumoDelete() {
-    const [insumo, setInsumo] = useState<Insumo | null>(null);
+export default function ElementoLimpiezaDelete() {
+    const [elemento, setElemento] = useState<ElementoLimpieza | null>(null);
     const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
     const { id } = useParams();
-    const navigate = useNavigate(); 
+    const navigate = useNavigate();
 
     useEffect(() => {
-        const cargarInsumo = async () => {
+        const cargarElemento = async () => {
             if (id) {
                 try {
-                    const data = await getInsumoById(id);
-                    setInsumo(data);
+                    const data = await getElementoLimpiezaById(id);
+                    setElemento(data);
                 } catch (error) {
-                    console.error("Error al cargar insumo:", error);
+                    console.error("Error al cargar el elemento de limpieza:", error);
                 }
             }
         };
-        cargarInsumo();
+        cargarElemento();
     }, [id]);
 
     const handleDelete = async () => {
         if (!id) return;
 
         try {
-            const exito = await deleteInsumo(id);
+            const exito = await deleteElementoLimpieza(id);
             if (exito) {
-                navigate('/insumos');
+                navigate('/elementosLimpieza');
             } else {
                 setModalAlerta({
                     isOpen: true,
@@ -52,14 +52,18 @@ export default function InsumoDelete() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>¿Desea eliminar este insumo?</h2>
-            {insumo ? (
+            <h2>¿Desea eliminar este elemento de limpieza?</h2>
+            {elemento ? (
                 <div className={styles.tarjetaEstatica} style={{ maxWidth: '600px', width: '100%', textAlign: 'center' }}>
-                    <h3 style={{ color: 'var(--text-h)' }}>{insumo.nombre}</h3>
-                    <p>Unidad de Medida: {insumo.unidad_medida.nombre}</p>
-                    
+                    <h3 style={{ color: 'var(--text-h)' }}>{elemento.nombre}</h3>
+                    <p>
+                        {elemento.frecuencia_recambio_dias !== null
+                            ? `Recambio cada ${elemento.frecuencia_recambio_dias} días`
+                            : 'Sin frecuencia de recambio definida'}
+                    </p>
+
                     <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
-                        <Link to="/insumos">
+                        <Link to="/elementosLimpieza">
                             <Boton variant="volver">
                                 Cancelar
                             </Boton>
@@ -70,7 +74,7 @@ export default function InsumoDelete() {
                     </div>
                 </div>
             ) : (
-                <p>Insumo no encontrado</p>
+                <p>Elemento de limpieza no encontrado</p>
             )}
 
             <ModalAlerta

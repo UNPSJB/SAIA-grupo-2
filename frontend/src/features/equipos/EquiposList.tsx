@@ -64,7 +64,7 @@ export default function EquiposList() {
                         </div>
                         
                         <div>
-                            <span className={styles.badge} style={{ fontSize: '0.7rem', padding: '2px 8px' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-h)' }}>
                                 {eq.tipo.nombre}
                             </span>
                         </div>

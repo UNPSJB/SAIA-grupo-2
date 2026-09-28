@@ -14,8 +14,8 @@ export default function ModalAlerta({ isOpen, titulo, mensaje, onClose }: ModalA
     return (
         <div className={styles.modalOverlay}>
             <div className={styles.modalContent}>
-                <h3 style={{ color: 'var(--text-h)', marginTop: 0 }}>{titulo}</h3>
-                <p style={{ color: 'var(--text)', marginBottom: '25px' }}>{mensaje}</p>
+                <h3>{titulo}</h3>
+                <p>{mensaje}</p>
                 
                 <div className={styles.filaBotones} style={{ justifyContent: 'center' }}>
                     <Boton variant="volver" onClick={onClose}>

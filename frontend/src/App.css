@@ -73,3 +73,32 @@
   background-color: var(--accent-bg);
   color: var(--accent);
 }
+
+.userSection {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding-right: 20px;
+}
+
+.userInfo {
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.logoutBtn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: none;
+  background-color: #ef4444;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  transition: opacity 0.2s ease;
+}
+
+.logoutBtn:hover {
+  opacity: 0.9;
+}

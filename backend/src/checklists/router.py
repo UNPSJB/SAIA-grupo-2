@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, Header
 from sqlalchemy.orm import Session, selectinload
@@ -48,3 +49,12 @@ def obtener_detalle_tarea(
     db: Session = Depends(get_db)
 ):
     return services.obtener_detalle_tarea_realizada(db, tarea_id, plan_id)
+
+@router.get("/historial", response_model=schemas.HistorialChecklistResumen)
+def obtener_historial_checklists(
+    fecha_inicio: Optional[date] = Query(None),
+    fecha_fin: Optional[date] = Query(None),
+    sector_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db)
+):
+    return services.obtener_historial_checklists(db, fecha_inicio, fecha_fin, sector_id)

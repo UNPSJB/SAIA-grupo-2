@@ -1,161 +1,241 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+
 import type { ProductoLimpiezaPayload, TipoProductoLimpieza } from '../../types/productosLimpieza';
 import type { UnidadMedida } from '../../types/unidadesMedida';
 import { getProductoById, saveProducto } from '../../services/productosLimpiezaServices';
 import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
-interface FormValues {
-    nombre: string;
-    tipo: TipoProductoLimpieza | '';
-    stock: number | '';
-    unidad_medida_id: number | '';
+const tiposProducto: TipoProductoLimpieza[] = [
+    'detergente',
+    'desinfectante',
+    'desengrasante',
+    'otro',
+];
+
+interface Errores {
+    nombre?: string;
+    tipo?: string;
+    stock?: string;
+    unidad_medida_id?: string;
 }
 
 export default function ProductoForm() {
-    const [unidades, setUnidades] = useState<UnidadMedida[]>([]);
-    const [cargando, setCargando] = useState(true);
-    const navigate = useNavigate();
     const { id } = useParams();
+    const navigate = useNavigate();
     const editando = Boolean(id);
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
 
-    const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
-        defaultValues: {
-            nombre: '',
-            tipo: '',
-            stock: 0,
-            unidad_medida_id: ''
-        }
-    });
+    const [nombre, setNombre] = useState('');
+    const [tipo, setTipo] = useState<string>('');
+    const [stock, setStock] = useState('0');
+    const [unidadMedidaId, setUnidadMedidaId] = useState('0');
+
+    const [unidades, setUnidades] = useState<UnidadMedida[]>([]);
+    const [errores, setErrores] = useState<Errores>({});
+    const [errorCarga, setErrorCarga] = useState<string | null>(null);
+    const [guardando, setGuardando] = useState(false);
+
+    const yaCargado = useRef(false);
 
     useEffect(() => {
+        if (yaCargado.current) return;
+        yaCargado.current = true;
+
         const cargarTodo = async () => {
-            setCargando(true);
             try {
                 const unidadesData = await getUnidadesMedida();
                 setUnidades(unidadesData);
 
-                if (editando && id) {
-                    const productoData = await getProductoById(id);
-                    reset({
-                        nombre: productoData.nombre,
-                        tipo: productoData.tipo,
-                        stock: productoData.stock,
-                        unidad_medida_id: productoData.unidad_medida_id
-                    });
+                if (id) {
+                    const producto = await getProductoById(id);
+                    setNombre(producto.nombre);
+                    setTipo(producto.tipo);
+                    setStock(String(producto.stock));
+                    setUnidadMedidaId(String(producto.unidad_medida_id));
                 }
             } catch (error) {
-                console.error("Error al cargar los datos del producto:", error);
-            } finally {
-                setCargando(false);
+                console.error('Error al cargar los datos del formulario:', error);
+                setErrorCarga('No se pudieron cargar los datos.');
             }
         };
-        
-        cargarTodo();
-    }, [id, editando, reset]);
 
-    const onSubmit = async (data: FormValues) => {
-        const payload: ProductoLimpiezaPayload = {
-            nombre: data.nombre,
-            tipo: data.tipo as TipoProductoLimpieza,
-            stock: Number(data.stock),
-            unidad_medida_id: Number(data.unidad_medida_id)
+        cargarTodo();
+    }, [id]);
+
+    const validar = (): Errores => {
+        const nuevos: Errores = {};
+
+        if (!nombre.trim()) {
+            nuevos.nombre = 'El nombre es obligatorio';
+        } else if (nombre.trim().length < 2) {
+            nuevos.nombre = 'Debe tener al menos 2 caracteres';
+        } else if (nombre.trim().length > 100) {
+            nuevos.nombre = 'No puede superar los 100 caracteres';
+        }
+
+        if (!tipo) {
+            nuevos.tipo = 'Debe seleccionar un tipo';
+        }
+
+        const stockNumero = Number(stock);
+        if (stock.trim() === '' || Number.isNaN(stockNumero)) {
+            nuevos.stock = 'El stock es obligatorio';
+        } else if (stockNumero < 0) {
+            nuevos.stock = 'El stock no puede ser negativo';
+        }
+
+        if (Number(unidadMedidaId) === 0) {
+            nuevos.unidad_medida_id = 'Debe seleccionar una unidad de medida';
+        }
+
+        return nuevos;
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        const nuevosErrores = validar();
+        setErrores(nuevosErrores);
+        if (Object.keys(nuevosErrores).length > 0) return;
+
+        const datos: ProductoLimpiezaPayload = {
+            nombre: nombre.trim(),
+            tipo: tipo as TipoProductoLimpieza,
+            stock: Number(stock),
+            unidad_medida_id: Number(unidadMedidaId),
         };
 
         try {
-            const exito = await saveProducto(payload, id);
-            if (exito) navigate('/productos_limpieza');
+            setGuardando(true);
+            const exito = await saveProducto(datos, id);
+
+            if (exito) {
+                navigate('/productos_limpieza');
+            } else {
+                setModalAlerta({
+                    isOpen: true,
+                    titulo: 'Error al Guardar',
+                    mensaje: 'Hubo un error al guardar el registro.'
+                });
+            }
         } catch (error) {
-            console.error('Error al guardar el producto:', error);
+            console.error('Error de red:', error);
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error de Red',
+                mensaje: 'Hubo un error de conexión al intentar guardar.'
+            });
+        } finally {
+            setGuardando(false);
         }
     };
 
-    if (cargando) {
-        return (
-            <div className={styles.contenedorPrincipal}>
-                <h2>{editando ? 'Editar Producto' : 'Nuevo Producto'}</h2>
-                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                    Cargando información del producto...
-                </div>
-            </div>
-        );
-    }
+    const estiloError = { borderColor: '#ef4444', outline: 'none' };
+    const estiloMensaje = { color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' };
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>{editando ? 'Editar Producto' : 'Nuevo Producto'}</h2>
-            
-            <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta}>
-                <div className={styles.formGroup}>
-                    <label>Nombre del Producto:</label>
-                    <input 
-                        type="text" 
-                        {...register('nombre', { 
-                            required: "El nombre es obligatorio",
-                            minLength: { value: 3, message: "Debe tener al menos 3 caracteres" },
-                            validate: (value) => value.trim().length > 0 || "No puede estar vacío"
-                        })} 
-                        placeholder="Ej: Lavandina concentrada"
-                        style={errors.nombre ? { borderColor: '#ef4444', outline: 'none' } : {}}
-                    />
-                    {errors.nombre && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.nombre.message}</span>}
+            <h2>
+                {editando
+                    ? 'Editar Producto de Limpieza'
+                    : 'Registrar Nuevo Producto de Limpieza'}
+            </h2>
+
+            {errorCarga && <p style={{ color: '#ef4444' }}>{errorCarga}</p>}
+
+            <form
+                onSubmit={handleSubmit}
+                className={styles.formularioTarjeta}
+                style={{ maxWidth: '700px' }}
+            >
+                <div className={styles.formGrid}>
+                    <div className={styles.formGroup}>
+                        <label>Nombre:</label>
+                        <input
+                            type="text"
+                            placeholder="Ej: Detergente concentrado"
+                            value={nombre}
+                            onChange={(e) => setNombre(e.target.value)}
+                            style={errores.nombre ? estiloError : {}}
+                        />
+                        {errores.nombre && <span style={estiloMensaje}>{errores.nombre}</span>}
+                    </div>
+
+                    <div className={styles.formGroup}>
+                        <label>Tipo:</label>
+                        <select
+                            value={tipo}
+                            onChange={(e) => setTipo(e.target.value)}
+                            style={errores.tipo ? estiloError : {}}
+                        >
+                            <option value="">Seleccione un tipo</option>
+                            {tiposProducto.map((tipoProducto) => (
+                                <option key={tipoProducto} value={tipoProducto}>
+                                    {tipoProducto}
+                                </option>
+                            ))}
+                        </select>
+                        {errores.tipo && <span style={estiloMensaje}>{errores.tipo}</span>}
+                    </div>
+
+                    <div className={styles.formGroup}>
+                        <label>Stock:</label>
+                        <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            placeholder="Cantidad disponible"
+                            value={stock}
+                            onChange={(e) => setStock(e.target.value)}
+                            style={errores.stock ? estiloError : {}}
+                        />
+                        {errores.stock && <span style={estiloMensaje}>{errores.stock}</span>}
+                    </div>
+
+                    <div className={styles.formGroup}>
+                        <label>Unidad de medida:</label>
+                        <select
+                            value={unidadMedidaId}
+                            onChange={(e) => setUnidadMedidaId(e.target.value)}
+                            style={errores.unidad_medida_id ? estiloError : {}}
+                        >
+                            <option value="0">Seleccione una unidad</option>
+                            {unidades.map((unidad) => (
+                                <option key={unidad.id} value={String(unidad.id)}>
+                                    {unidad.nombre}
+                                </option>
+                            ))}
+                        </select>
+                        {errores.unidad_medida_id && (
+                            <span style={estiloMensaje}>{errores.unidad_medida_id}</span>
+                        )}
+                    </div>
                 </div>
 
-                <div className={styles.formGroup}>
-                    <label>Tipo de Producto:</label>
-                    <select 
-                        {...register('tipo', { required: "Debe seleccionar un tipo" })}
-                        style={errors.tipo ? { borderColor: '#ef4444', outline: 'none' } : {}}
-                    >
-                        <option value="">-- Seleccionar --</option>
-                        <option value="detergente">Detergente</option>
-                        <option value="desinfectante">Desinfectante</option>
-                        <option value="desengrasante">Desengrasante</option>
-                        <option value="otro">Otro</option>
-                    </select>
-                    {errors.tipo && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.tipo.message}</span>}
-                </div>
-
-                <div className={styles.formGroup}>
-                    <label>Stock Inicial:</label>
-                    <input 
-                        type="number" 
-                        step="0.01" 
-                        {...register('stock', { 
-                            required: "El stock es obligatorio",
-                            min: { value: 0, message: "El stock no puede ser negativo" }
-                        })} 
-                        style={errors.stock ? { borderColor: '#ef4444', outline: 'none' } : {}}
-                    />
-                    {errors.stock && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.stock.message}</span>}
-                </div>
-
-                <div className={styles.formGroup}>
-                    <label>Unidad de Medida:</label>
-                    <select 
-                        {...register('unidad_medida_id', { required: "Debe seleccionar una unidad de medida" })}
-                        style={errors.unidad_medida_id ? { borderColor: '#ef4444', outline: 'none' } : {}}
-                    >
-                        <option value="">-- Seleccionar --</option>
-                        {unidades.map(u => (
-                            <option key={u.id} value={u.id}>{u.nombre}</option>
-                        ))}
-                    </select>
-                    {errors.unidad_medida_id && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.unidad_medida_id.message}</span>}
-                </div>
-
-                <div className={styles.filaBotones} style={{ marginTop: '30px' }}>
-                    <Boton type="submit" variant="guardar">
-                        {editando ? 'Actualizar Producto' : 'Guardar Producto'}
+                <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
+                    <Boton type="submit" variant="guardar" disabled={guardando}>
+                        {guardando
+                            ? 'Guardando...'
+                            : editando
+                                ? 'Actualizar Cambios'
+                                : 'Guardar'}
                     </Boton>
                     <Link to="/productos_limpieza">
                         <Boton variant="volver">Cancelar</Boton>
                     </Link>
                 </div>
             </form>
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }

@@ -40,6 +40,13 @@ import PlanDelete from './features/planes/PlanDelete';
 import PlanDetail from './features/planes/PlanDetail';
 
 import ChecklistList from './features/checklists/ChecklistList';
+import HistorialChecklistList from './features/checklists/HistorialChecklistList';
+
+import ElementosLimpiezaList from './features/elementosLimpieza/ElementosLimpiezaList';
+import ElementoLimpiezaForm from './features/elementosLimpieza/ElementoLimpiezaForm';
+import ElementoLimpiezaDetail from './features/elementosLimpieza/ElementoLimpiezaDetail';
+import ElementoLimpiezaDelete from './features/elementosLimpieza/ElementoLimpiezaDelete';
+import AlertasRecambio from './features/elementosLimpieza/AlertasRecambio';
 
 import './App.css';
 
@@ -103,20 +110,20 @@ function RutasProtegidas() {
           <span className="navLink">Limpieza y Planes ▾</span>
           <div className="dropdownContent">
             {isAdmin && <Link to="/productos_limpieza">Productos de Limpieza</Link>}
+            {isAdmin && <Link to="/elementosLimpieza">Elementos de Limpieza</Link>}
+            <Link to="/elementosLimpieza/alertas">Alertas de Recambio</Link>
             <Link to="/tareas">Tareas de Limpieza</Link>
             {isAdmin && <Link to="/planes">Planes de Limpieza</Link>}
             <Link to="/checklists/hoy">Checklist del Día</Link>
+            {isAdmin && <Link to="/checklists/historial">Historial de Checklists</Link>}
           </div>
         </div>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '15px', paddingRight: '20px' }}>
-          <span style={{ color: 'green', fontSize: '0.9rem', fontWeight: 'bold' }}>
+        <div className="userSection">
+          <span className="userInfo">
             {usuario?.nombre} {usuario?.apellido} ({usuario?.rol})
           </span>
-          <button 
-            onClick={logout} 
-            style={{ padding: '5px 12px', borderRadius: '6px', border: 'none', backgroundColor: '#ef4444', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}
-          >
+          <button onClick={logout} className="logoutBtn">
             Salir
           </button>
         </div>
@@ -159,6 +166,13 @@ function RutasProtegidas() {
           <Route path="/productos_limpieza/editar/:id" element={<RutaAdmin><ProductoForm /></RutaAdmin>} />
           <Route path="/productos_limpieza/eliminar/:id" element={<RutaAdmin><ProductoDelete /></RutaAdmin>} />
 
+          <Route path="/elementosLimpieza" element={<RutaAdmin><ElementosLimpiezaList /></RutaAdmin>} />
+          <Route path="/elementosLimpieza/nuevo" element={<RutaAdmin><ElementoLimpiezaForm /></RutaAdmin>} />
+          <Route path="/elementosLimpieza/alertas" element={<AlertasRecambio />} />
+          <Route path="/elementosLimpieza/editar/:id" element={<RutaAdmin><ElementoLimpiezaForm /></RutaAdmin>} />
+          <Route path="/elementosLimpieza/eliminar/:id" element={<RutaAdmin><ElementoLimpiezaDelete /></RutaAdmin>} />
+          <Route path="/elementosLimpieza/:id" element={<ElementoLimpiezaDetail />} />
+
           <Route path="/tareas" element={<TareasList />} />
           <Route path="/tareas/nueva" element={<RutaAdmin><TareaForm /></RutaAdmin>} />
           <Route path="/tareas/editar/:id" element={<RutaAdmin><TareaForm /></RutaAdmin>} />
@@ -171,6 +185,7 @@ function RutasProtegidas() {
           <Route path="/planes/:id" element={<PlanDetail />} />
 
           <Route path="/checklists/hoy" element={<ChecklistList />} />
+          <Route path="/checklists/historial" element={<RutaAdmin><HistorialChecklistList /></RutaAdmin>} />
         </Routes>
       </div>
     </>

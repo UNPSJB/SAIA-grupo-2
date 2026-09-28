@@ -171,7 +171,6 @@ export default function PlanForm() {
             <h2>{editando ? 'Editar Plan de Limpieza' : 'Configurar Nuevo Plan'}</h2>
             {errorMsg && <div style={{ color: '#ef4444', marginBottom: '15px', fontWeight: 'bold' }}>{errorMsg}</div>}
             
-            {/* El noValidate apaga los carteles nativos del navegador */}
             <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta} noValidate>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '10px' }}>

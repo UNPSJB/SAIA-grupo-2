@@ -3,10 +3,12 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import type { Tarea } from '../../types/tareas'; 
 import { getTareaById, deleteTarea } from '../../services/tareasServices';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
 export default function TareaDelete() {
     const [tarea, setTarea] = useState<Tarea | null>(null);
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -25,11 +27,19 @@ export default function TareaDelete() {
             if (exito) {
                 navigate('/tareas');
             } else {
-                alert('No se pudo eliminar la tarea. Comprueba las dependencias.');
+                setModalAlerta({
+                    isOpen: true,
+                    titulo: 'Error al Eliminar',
+                    mensaje: 'No se pudo eliminar la tarea. Comprueba las dependencias.'
+                });
             }
         } catch (error) {
             console.error('Error de red:', error);
-            alert('Error en el servidor al intentar eliminar.');
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error de Servidor',
+                mensaje: 'Error en el servidor al intentar eliminar.'
+            });
         }
     };
 
@@ -54,6 +64,13 @@ export default function TareaDelete() {
             ) : (
                 <p style={{ textAlign: 'center', marginTop: '40px' }}>Cargando información de la tarea...</p>
             )}
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }

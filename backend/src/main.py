@@ -13,14 +13,11 @@ from src.sectores.models import Sector
 from src.planes.models import Plan
 from src.productos_limpieza.models import ProductoLimpieza
 from src.tareas.models import Tarea
+from src.elementos_limpieza.models import ElementoLimpieza
 
-#configuración validada por Pydantic
 from src.config import settings
-
-#configuracion de logger
 from src.logger import setup_logging
 
-#routers desde nuestros modulos
 from src.unidades_medida.router import router as unidades_medida_router
 from src.insumos.router import router as insumos_router
 from src.empleados.router import router as empleados_router
@@ -31,6 +28,7 @@ from src.planes.router import router as planes_router
 from src.productos_limpieza.router import router as productos_limpieza_router
 from src.tareas.router import router as tareas_router
 from src.checklists.router import router as checklist_router
+from src.elementos_limpieza.router import router as elementos_limpieza_router
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -64,7 +62,6 @@ app.add_middleware(
 )
 
 
-#routers a nuestra app
 app.include_router(unidades_medida_router)
 app.include_router(insumos_router)
 app.include_router(empleados_router)
@@ -75,3 +72,4 @@ app.include_router(planes_router)
 app.include_router(productos_limpieza_router)
 app.include_router(tareas_router)
 app.include_router(checklist_router)
+app.include_router(elementos_limpieza_router)

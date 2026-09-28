@@ -44,3 +44,40 @@ export interface RegistroChecklistDetalle {
     observaciones?: string;
     consumos_reales: ConsumoRealResumen[];
 }
+
+export interface TareaIncumplidaResumen {
+    tarea_id: number;
+    titulo_tarea: string;
+    plan_titulo: string;
+    sector_nombre: string;
+    frecuencia: string;
+    veces_incumplida: number;
+}
+
+export interface RegistroHistorialItem {
+    id?: number | null;
+    tarea_id: number;
+    titulo_tarea: string;
+    plan_id?: number | null;
+    plan_titulo: string;
+    sector_nombre: string;
+    frecuencia: string;
+    fecha_programada: string;
+    realizada: boolean;
+    fecha_hora_completada?: string | null;
+    empleado_id?: number | null;
+    nombre_empleado?: string | null;
+    evidencia_url?: string | null;
+    observaciones?: string | null;
+}
+
+export interface HistorialChecklistResumen {
+    fecha_inicio: string;
+    fecha_fin: string;
+    porcentaje_cumplimiento: number;
+    total_esperadas: number;
+    total_realizadas: number;
+    total_incumplidas: number;
+    tareas_incumplidas_resumen: TareaIncumplidaResumen[];
+    registros: RegistroHistorialItem[];
+}

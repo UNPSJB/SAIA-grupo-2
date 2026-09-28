@@ -100,13 +100,12 @@ export default function EmpleadosList() {
                                     <span 
                                         key={cap.id} 
                                         className={`${styles.badge} ${cap.nombre.toLowerCase() === 'administrador' ? styles.badgeAdmin : ''}`}
-                                        style={{ fontSize: '0.7rem', padding: '2px 8px' }}
                                     >
                                         {cap.nombre}
                                     </span>
                                 ))
                             ) : (
-                                <span className={styles.badge} style={{ color: 'var(--text)' }}>
+                                <span className={styles.badge} style={{ color: 'var(--text-muted)' }}>
                                     Sin asignar
                                 </span>
                             )}

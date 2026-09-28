@@ -8,6 +8,7 @@
     justify-content: center;
     font-family: inherit;
     font-size: 1rem;
+    cursor: pointer;
     transition: filter 0.2s ease;
 }
 
@@ -15,12 +16,18 @@
     filter: brightness(1.15);
 }
 
+.base:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .crear, 
 .editar, 
 .ver, 
 .guardar, 
 .volver, 
-.siguiente {
+.siguiente,
+.buscar {
     background-color: #1a6a4a;
 }
 

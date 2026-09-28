@@ -9,6 +9,7 @@ import { getSectores } from '../../services/sectoresServices';
 import { getEmpleadoById, saveEmpleado } from '../../services/empleadosServices';
 import { useAuth } from '../../context/AuthContext';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
 interface FormValues {
@@ -25,6 +26,7 @@ export default function EmpleadoForm() {
     const [capacidadesDisponibles, setCapacidadesDisponibles] = useState<Capacidad[]>([]);
     const [sectoresDisponibles, setSectoresDisponibles] = useState<Sector[]>([]);
     const [errorSector, setErrorSector] = useState('');
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
 
     const navigate = useNavigate();
     const { id } = useParams();
@@ -134,10 +136,19 @@ export default function EmpleadoForm() {
                 await refreshUsuario();
                 navigate('/empleados');
             } else {
-                alert('Error al guardar el registro. Verifica que el DNI no esté duplicado.');
+                setModalAlerta({
+                    isOpen: true,
+                    titulo: 'Error al Guardar',
+                    mensaje: 'Error al guardar el registro. Verifica que el DNI no esté duplicado.'
+                });
             }
         } catch (error) {
             console.error('Error de red:', error);
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error de Red',
+                mensaje: 'No se pudo conectar con el servidor.'
+            });
         }
     };
 
@@ -261,6 +272,13 @@ export default function EmpleadoForm() {
                     <Link to="/empleados"><Boton variant="eliminar">Cancelar</Boton></Link>
                 </div>
             </form>
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }
