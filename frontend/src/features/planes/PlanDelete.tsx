@@ -3,10 +3,12 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import type { PlanLimpieza } from '../../types/planes'; 
 import { getPlanById, deletePlan } from '../../services/planesServices';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
 export default function PlanDelete() {
     const [plan, setPlan] = useState<PlanLimpieza | null>(null);
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -25,11 +27,19 @@ export default function PlanDelete() {
             if (exito) {
                 navigate('/planes');
             } else {
-                alert('No se pudo eliminar el plan. Comprueba las dependencias.');
+                setModalAlerta({
+                    isOpen: true,
+                    titulo: 'Error al Eliminar',
+                    mensaje: 'No se pudo eliminar el plan. Comprueba las dependencias.'
+                });
             }
         } catch (error) {
             console.error('Error de red:', error);
-            alert('Error en el servidor al intentar eliminar.');
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error de Servidor',
+                mensaje: 'Error en el servidor al intentar eliminar.'
+            });
         }
     };
 
@@ -55,6 +65,13 @@ export default function PlanDelete() {
             ) : (
                 <p style={{ textAlign: 'center', marginTop: '40px' }}>Cargando información del plan...</p>
             )}
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }

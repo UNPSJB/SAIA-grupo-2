@@ -1,15 +1,13 @@
-//import type { Capacidad } from './capacidades';
-import type {UnidadMedida} from './unidadesMedida'
+import type { UnidadMedida } from './unidadesMedida';
+
 export interface Insumo {
     id: number;
     nombre: string;
-    unidad_medida_id:number;
-    unidad_medida:UnidadMedida;
-    //capacidades: Capacidad[];
+    unidad_medida_id: number;
+    unidad_medida: UnidadMedida;
 }
 
 export interface InsumoPayload {
     nombre: string;
-    unidad_medida_id:number;
-    //listaCapacidades: number[] | null;
+    unidad_medida_id: number;
 }

@@ -5,6 +5,7 @@ import type { ElementoLimpieza } from '../../types/elementosLimpieza';
 import { getElementoLimpiezaById, registrarRecambio } from '../../services/elementosLimpiezaServices';
 import { COLOR_ESTADO, ETIQUETA_ESTADO, textoRecambio } from './estadoRecambio';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
 export default function ElementoLimpiezaDetail() {
@@ -12,6 +13,7 @@ export default function ElementoLimpiezaDetail() {
     const esAdmin = usuario?.rol === 'admin';
 
     const [elemento, setElemento] = useState<ElementoLimpieza | null>(null);
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
     const { id } = useParams();
 
     const cargarElemento = async () => {
@@ -34,7 +36,11 @@ export default function ElementoLimpiezaDetail() {
         if (exito) {
             cargarElemento();
         } else {
-            alert('Hubo un error al registrar el recambio.');
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error',
+                mensaje: 'Hubo un error al registrar el recambio.'
+            });
         }
     };
 
@@ -48,12 +54,10 @@ export default function ElementoLimpiezaDetail() {
                     <p>
                         <strong>Estado:</strong>{' '}
                         <span
-                            className={styles.badge}
                             style={{
-                                fontSize: '0.75rem',
-                                padding: '3px 10px',
-                                backgroundColor: COLOR_ESTADO[elemento.estado_recambio],
-                                color: '#ffffff'
+                                fontSize: '0.9rem',
+                                fontWeight: 'bold',
+                                color: COLOR_ESTADO[elemento.estado_recambio]
                             }}
                         >
                             {ETIQUETA_ESTADO[elemento.estado_recambio]}
@@ -89,6 +93,13 @@ export default function ElementoLimpiezaDetail() {
             ) : (
                 <p>Elemento de limpieza no encontrado</p>
             )}
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }

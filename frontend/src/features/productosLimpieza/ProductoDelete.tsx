@@ -3,10 +3,12 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import type { ProductoLimpieza } from '../../types/productosLimpieza';
 import { getProductoById, deleteProducto } from '../../services/productosLimpiezaServices';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
 export default function ProductoDelete() {
     const [producto, setProducto] = useState<ProductoLimpieza | null>(null);
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -25,11 +27,19 @@ export default function ProductoDelete() {
             if (exito) {
                 navigate('/productos_limpieza');
             } else {
-                alert('No se puede eliminar el producto. Es probable que esté asociado a una o más tareas.');
+                setModalAlerta({
+                    isOpen: true,
+                    titulo: 'Error al Eliminar',
+                    mensaje: 'No se puede eliminar el producto. Es probable que esté asociado a una o más tareas.'
+                });
             }
         } catch (error) {
             console.error('Error de red:', error);
-            alert('No se pudo eliminar el producto por un error en el servidor.');
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error de Servidor',
+                mensaje: 'No se pudo eliminar el producto por un error en el servidor.'
+            });
         }
     };
 
@@ -54,6 +64,13 @@ export default function ProductoDelete() {
             ) : (
                 <p style={{ textAlign: 'center' }}>Cargando información...</p>
             )}
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }

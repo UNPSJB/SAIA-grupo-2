@@ -7,7 +7,6 @@ from src.tareas.constants import FrecuenciaTarea
 
 TituloTarea = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
-# He pasado por una penitencia de 3 horas, PlanResumen se queda aca.
 class PlanResumen(BaseModel):
     id: int
     titulo: str

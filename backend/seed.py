@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from sqlalchemy.orm import Session
 from src.database import SessionLocal, engine
 from src.models import Base
@@ -121,17 +121,56 @@ def seed_database():
             maria_admin = db.query(Empleado).filter_by(legajo="EMP-1001").first()
             juan_op = db.query(Empleado).filter_by(legajo="EMP-1002").first()
             lucia_op = db.query(Empleado).filter_by(legajo="EMP-1003").first()
+            ana_op = db.query(Empleado).filter_by(legajo="EMP-1005").first()
+            diego_op = db.query(Empleado).filter_by(legajo="EMP-1006").first()
+            sofia_op = db.query(Empleado).filter_by(legajo="EMP-1007").first()
 
             sectores = [
-                Sector(nombre="Depósito Frío", responsable_id=carlos_admin.id if carlos_admin else None, empleados=[carlos_admin, juan_op] if carlos_admin and juan_op else []),
-                Sector(nombre="Sector Cocción", responsable_id=maria_admin.id if maria_admin else None, empleados=[maria_admin, lucia_op] if maria_admin and lucia_op else []),
-                Sector(nombre="Recepción de Materia Prima"),
-                Sector(nombre="Sector Preparación"),
-                Sector(nombre="Control de Calidad"),
-                Sector(nombre="Mantenimiento"),
-                Sector(nombre="Sector Empaque"),
-                Sector(nombre="Laboratorio de Calidad"),
-                Sector(nombre="Línea de Producción")
+                Sector(
+                    nombre="Depósito Frío",
+                    responsable_id=carlos_admin.id if carlos_admin else None,
+                    empleados=[emp for emp in [carlos_admin, juan_op] if emp]
+                ),
+                Sector(
+                    nombre="Sector Cocción",
+                    responsable_id=maria_admin.id if maria_admin else None,
+                    empleados=[emp for emp in [maria_admin, lucia_op] if emp]
+                ),
+                Sector(
+                    nombre="Recepción de Materia Prima",
+                    responsable_id=carlos_admin.id if carlos_admin else None,
+                    empleados=[emp for emp in [carlos_admin, ana_op] if emp]
+                ),
+                Sector(
+                    nombre="Sector Preparación",
+                    responsable_id=maria_admin.id if maria_admin else None,
+                    empleados=[emp for emp in [maria_admin, diego_op] if emp]
+                ),
+                Sector(
+                    nombre="Control de Calidad",
+                    responsable_id=carlos_admin.id if carlos_admin else None,
+                    empleados=[emp for emp in [carlos_admin, sofia_op] if emp]
+                ),
+                Sector(
+                    nombre="Mantenimiento",
+                    responsable_id=maria_admin.id if maria_admin else None,
+                    empleados=[emp for emp in [maria_admin, juan_op, diego_op] if emp]
+                ),
+                Sector(
+                    nombre="Sector Empaque",
+                    responsable_id=carlos_admin.id if carlos_admin else None,
+                    empleados=[emp for emp in [carlos_admin, lucia_op, sofia_op] if emp]
+                ),
+                Sector(
+                    nombre="Laboratorio de Calidad",
+                    responsable_id=maria_admin.id if maria_admin else None,
+                    empleados=[emp for emp in [maria_admin, ana_op] if emp]
+                ),
+                Sector(
+                    nombre="Línea de Producción",
+                    responsable_id=carlos_admin.id if carlos_admin else None,
+                    empleados=[emp for emp in [carlos_admin, juan_op, diego_op] if emp]
+                )
             ]
             
             db.add_all(sectores)
@@ -250,14 +289,14 @@ def seed_database():
             planes = [
                 Plan(
                     titulo="Saneamiento Diario - Depósito Frío",
-                    fecha_inicio=date.today(),
+                    fecha_inicio=date.today() - timedelta(days=35),
                     sector_id=s_frio.id,
                     equipos=[e_heladera],
                     tareas=[t_desinfeccion]
                 ),
                 Plan(
                     titulo="Mantenimiento Semanal - Cocción",
-                    fecha_inicio=date.today(),
+                    fecha_inicio=date.today() - timedelta(days=35),
                     sector_id=s_coccion.id,
                     equipos=[e_horno],
                     tareas=[t_profunda, t_desinfeccion]
@@ -299,6 +338,82 @@ def seed_database():
             db.add_all(elementos)
             db.commit()
             print("Elementos de Limpieza creados (5).")
+
+        # --- CHECKLISTS (HISTORIAL DE EJECUCIONES HASTA EL PRIMERO DEL MES Y DÍAS PREVIOS) ---
+        if db.query(Checklist).count() == 0:
+            hoy = date.today()
+            maria_admin = db.query(Empleado).filter_by(legajo="EMP-1001").first()
+            juan_op = db.query(Empleado).filter_by(legajo="EMP-1002").first()
+            lucia_op = db.query(Empleado).filter_by(legajo="EMP-1003").first()
+
+            plan1 = db.query(Plan).filter_by(titulo="Saneamiento Diario - Depósito Frío").first()
+            plan2 = db.query(Plan).filter_by(titulo="Mantenimiento Semanal - Cocción").first()
+
+            p_hipoclorito = db.query(ProductoLimpieza).filter_by(nombre="Hipoclorito 10%").first()
+            p_detergente = db.query(ProductoLimpieza).filter_by(nombre="Detergente Enzimático").first()
+            p_panos = db.query(ProductoLimpieza).filter_by(nombre="Paños de Microfibra").first()
+
+            t_desinfeccion = db.query(Tarea).filter_by(titulo="Desinfección de Superficies").first()
+            t_profunda = db.query(Tarea).filter_by(titulo="Limpieza Profunda de Equipos").first()
+
+            checklists_seed = []
+
+            # Generar historial para los últimos 30 días
+            for i in range(30, 0, -1):
+                f_prog = hoy - timedelta(days=i)
+
+                # Tarea diaria en plan1 (se completa casi todos los días)
+                if i % 5 != 0:
+                    c1 = Checklist(
+                        tarea_id=t_desinfeccion.id,
+                        plan_id=plan1.id if plan1 else None,
+                        fecha_programada=f_prog,
+                        realizada=True,
+                        fecha_hora_completada=datetime.combine(f_prog, datetime.min.time().replace(hour=10, minute=15)),
+                        empleado_id=juan_op.id if juan_op else None,
+                        evidencia_url=None,
+                        observaciones="Pisos y mesadas desinfectadas correctamente."
+                    )
+                    if p_hipoclorito:
+                        c1.consumos_reales.append(ConsumoReal(producto_limpieza_id=p_hipoclorito.id, cantidad=0.5))
+                    checklists_seed.append(c1)
+
+                # Tarea diaria en plan2
+                if i % 4 != 0:
+                    c2 = Checklist(
+                        tarea_id=t_desinfeccion.id,
+                        plan_id=plan2.id if plan2 else None,
+                        fecha_programada=f_prog,
+                        realizada=True,
+                        fecha_hora_completada=datetime.combine(f_prog, datetime.min.time().replace(hour=11, minute=30)),
+                        empleado_id=lucia_op.id if lucia_op else None,
+                        evidencia_url=None,
+                        observaciones="Sanitización completa del sector."
+                    )
+                    if p_panos:
+                        c2.consumos_reales.append(ConsumoReal(producto_limpieza_id=p_panos.id, cantidad=1.0))
+                    checklists_seed.append(c2)
+
+                # Tarea semanal profunda (incumplida frecuentemente para simular reporte)
+                if i in (28, 21, 14, 7):
+                    if i in (28, 7):
+                        c3 = Checklist(
+                            tarea_id=t_profunda.id,
+                            plan_id=plan2.id if plan2 else None,
+                            fecha_programada=f_prog,
+                            realizada=True,
+                            fecha_hora_completada=datetime.combine(f_prog, datetime.min.time().replace(hour=16, minute=45)),
+                            empleado_id=maria_admin.id if maria_admin else None,
+                            evidencia_url=None,
+                            observaciones="Limpieza profunda con detergente enzimático realizada."
+                        )
+                        if p_detergente:
+                            c3.consumos_reales.append(ConsumoReal(producto_limpieza_id=p_detergente.id, cantidad=1.5))
+                        checklists_seed.append(c3)
+
+            db.add_all(checklists_seed)
+            db.commit()
+            print(f"Historial de Checklists creado ({len(checklists_seed)} ejecuciones de prueba).")
 
         print("Base de datos poblada exitosamente con datos de prueba para Inocuidad Alimentaria!")
 

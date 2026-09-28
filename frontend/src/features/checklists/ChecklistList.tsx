@@ -4,6 +4,8 @@ import type { ChecklistItem, ChecklistMarcarPayload, RegistroChecklistDetalle } 
 import { getChecklistHoy, marcarTareaCompletada, getDetalleTareaRealizada } from '../../services/checklistsServices';
 import { getEmpleados } from '../../services/empleadosServices';
 import { getTareaById } from '../../services/tareasServices';
+import { getProductos } from '../../services/productosLimpiezaServices';
+import ModalAlerta from '../../components/alerta';
 import Boton from '../../components/Boton';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';
@@ -16,7 +18,8 @@ interface FormValues {
         producto_limpieza_id: string;
         nombre_producto: string;
         cantidad_estimada: number;
-        cantidad: string; 
+        cantidad: string;
+        stock_disponible: number;
     }[];
 }
 
@@ -36,7 +39,10 @@ export default function ChecklistList() {
     const [detalleTarea, setDetalleTarea] = useState<RegistroChecklistDetalle | null>(null);
     const [cargandoDetalle, setCargandoDetalle] = useState(false);
 
-    const { register, control, handleSubmit, reset } = useForm<FormValues>({
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
+    const [vistaPreviaEvidencia, setVistaPreviaEvidencia] = useState<string | null>(null);
+
+    const { register, control, handleSubmit, reset, setValue, formState: { errors } } = useForm<FormValues>({
         defaultValues: { empleado_id: '', observaciones: '', consumos: [] }
     });
 
@@ -65,17 +71,27 @@ export default function ChecklistList() {
     const abrirModal = async (tarea_id: number, plan_id: number) => {
         setTareaActiva(tarea_id);
         setPlanActivo(plan_id);
+        setVistaPreviaEvidencia(null);
         setModalAbierto(true);
         setCargandoModal(true);
         
         try {
-            const tareaOriginal = await getTareaById(tarea_id.toString());
-            const consumosPredefinidos = tareaOriginal.consumos_estimados?.map((c: any) => ({
-                producto_limpieza_id: c.producto_limpieza.id.toString(),
-                nombre_producto: c.producto_limpieza.nombre,
-                cantidad_estimada: c.cantidad,
-                cantidad: c.cantidad.toString() 
-            })) || [];
+            const [tareaOriginal, productosData] = await Promise.all([
+                getTareaById(tarea_id.toString()),
+                getProductos()
+            ]);
+
+            const consumosPredefinidos = tareaOriginal.consumos_estimados?.map((c: any) => {
+                const prod = productosData.find((p: any) => p.id === c.producto_limpieza.id);
+                const stockActual = prod ? prod.stock : (c.producto_limpieza.stock ?? 0);
+                return {
+                    producto_limpieza_id: c.producto_limpieza.id.toString(),
+                    nombre_producto: c.producto_limpieza.nombre,
+                    cantidad_estimada: c.cantidad,
+                    cantidad: c.cantidad.toString(),
+                    stock_disponible: stockActual
+                };
+            }) || [];
 
             reset({ empleado_id: usuario?.id ? usuario.id.toString() : '', observaciones: '', consumos: consumosPredefinidos });
         } catch (error) {
@@ -83,6 +99,28 @@ export default function ChecklistList() {
             reset({ empleado_id: usuario?.id ? usuario.id.toString() : '', observaciones: '', consumos: [] });
         } finally {
             setCargandoModal(false);
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setVistaPreviaEvidencia(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            setVistaPreviaEvidencia(null);
+        }
+    };
+
+    const quitarEvidencia = () => {
+        setVistaPreviaEvidencia(null);
+        try {
+            setValue('evidencia', new DataTransfer().files);
+        } catch {
+            // fallback for environments without DataTransfer constructor
         }
     };
 
@@ -102,24 +140,33 @@ export default function ChecklistList() {
     const onSubmit = async (data: FormValues) => {
         if (!tareaActiva) return;
 
-        const nombreArchivo = data.evidencia && data.evidencia.length > 0 ? data.evidencia[0].name : '';
+        let evidenciaUrl = '';
+        if (data.evidencia && data.evidencia.length > 0) {
+            evidenciaUrl = vistaPreviaEvidencia || data.evidencia[0].name;
+        }
+
         const payload: ChecklistMarcarPayload = {
             plan_id: planActivo || undefined,
             empleado_id: Number(data.empleado_id),
             observaciones: data.observaciones,
-            evidencia_url: nombreArchivo, 
+            evidencia_url: evidenciaUrl,
             consumos: data.consumos.map(c => ({
                 producto_limpieza_id: Number(c.producto_limpieza_id),
                 cantidad: Number(c.cantidad)
             }))
         };
 
-        const exito = await marcarTareaCompletada(tareaActiva, payload);
-        if (exito) {
+        const res = await marcarTareaCompletada(tareaActiva, payload);
+        if (res.ok) {
             setModalAbierto(false);
+            setVistaPreviaEvidencia(null);
             cargarDatos();
         } else {
-            alert("Error al guardar el registro.");
+            setModalAlerta({
+                isOpen: true,
+                titulo: "Error al Guardar",
+                mensaje: res.mensaje || "Error al guardar el registro."
+            });
         }
     };
 
@@ -181,8 +228,7 @@ export default function ChecklistList() {
                             
                             <div>
                                 <span style={{ 
-                                    padding: '6px 12px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 'bold',
-                                    backgroundColor: tarea.estado === 'realizada' ? '#dcfce7' : '#fee2e2',
+                                    fontSize: '0.85rem', fontWeight: 'bold',
                                     color: tarea.estado === 'realizada' ? '#166534' : '#991b1b'
                                 }}>
                                     {tarea.estado.toUpperCase()}
@@ -232,10 +278,48 @@ export default function ChecklistList() {
                                         type="file" 
                                         accept="image/*" 
                                         capture="environment" 
-                                        {...register('evidencia')} 
+                                        {...register('evidencia', {
+                                            onChange: handleFileChange
+                                        })}
                                         style={{ width: '100%', padding: '10px', fontSize: '1rem', borderRadius: '8px', border: '1px dashed var(--border)', backgroundColor: '#f9fafb', color: '#1f2937' }} 
                                     />
                                     <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '5px' }}>Desde el celular, esto abrirá la cámara directamente.</small>
+
+                                    {vistaPreviaEvidencia && (
+                                        <div style={{ position: 'relative', marginTop: '12px', textAlign: 'center', backgroundColor: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                                <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-h)' }}>Vista previa de la evidencia:</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={quitarEvidencia}
+                                                    title="Quitar foto"
+                                                    style={{
+                                                        background: '#fee2e2',
+                                                        color: '#dc2626',
+                                                        border: '1px solid #fca5a5',
+                                                        borderRadius: '50%',
+                                                        width: '26px',
+                                                        height: '26px',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        cursor: 'pointer',
+                                                        fontWeight: 'bold',
+                                                        fontSize: '1rem',
+                                                        lineHeight: 1,
+                                                        padding: 0
+                                                    }}
+                                                >
+                                                    &times;
+                                                </button>
+                                            </div>
+                                            <img
+                                                src={vistaPreviaEvidencia}
+                                                alt="Vista previa evidencia"
+                                                style={{ maxWidth: '100%', maxHeight: '220px', borderRadius: '6px', objectFit: 'contain' }}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className={styles.formGroup} style={{ marginBottom: '25px' }}>
@@ -269,24 +353,73 @@ export default function ChecklistList() {
                                         <p style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Esta tarea no requiere insumos.</p>
                                     ) : (
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                            {fields.map((item, index) => (
-                                                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px' }}>
-                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                        <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#166534' }}>{item.nombre_producto}</span>
-                                                        <span style={{ fontSize: '0.9rem', color: '#15803d' }}>Estimado: {item.cantidad_estimada}</span>
+                                            {fields.map((item, index) => {
+                                                const errCant = errors.consumos?.[index]?.cantidad;
+                                                return (
+                                                    <div
+                                                        key={item.id}
+                                                        style={{
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            padding: '15px',
+                                                            backgroundColor: errCant ? '#fef2f2' : '#f0fdf4',
+                                                            border: errCant ? '1px solid #fca5a5' : '1px solid #bbf7d0',
+                                                            borderRadius: '8px',
+                                                            gap: '8px'
+                                                        }}
+                                                    >
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: errCant ? '#991b1b' : '#166534' }}>
+                                                                    {item.nombre_producto}
+                                                                </span>
+                                                                <span style={{ fontSize: '0.85rem', color: errCant ? '#b91c1c' : '#15803d' }}>
+                                                                    Estimado: {item.cantidad_estimada} | Stock disponible: {item.stock_disponible}
+                                                                </span>
+                                                            </div>
+
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                                <label style={{ fontSize: '0.9rem', fontWeight: 'bold', color: errCant ? '#991b1b' : '#166534' }}>
+                                                                    Usado:
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    step="any"
+                                                                    {...register(`consumos.${index}.cantidad`, {
+                                                                        required: "Debe ingresar una cantidad",
+                                                                        min: { value: 0, message: "No puede ser menor a 0" },
+                                                                        validate: (val) => {
+                                                                            const num = Number(val);
+                                                                            if (isNaN(num)) return "Ingresa un número válido";
+                                                                            if (num > item.stock_disponible) {
+                                                                                return `Stock insuficiente para registrar el consumo`;
+                                                                            }
+                                                                            return true;
+                                                                        }
+                                                                    })}
+                                                                    style={{
+                                                                        width: '110px',
+                                                                        padding: '10px',
+                                                                        fontSize: '1.1rem',
+                                                                        borderRadius: '6px',
+                                                                        border: errCant ? '2px solid #ef4444' : '1px solid #16a34a',
+                                                                        textAlign: 'center',
+                                                                        backgroundColor: '#fff',
+                                                                        color: '#1f2937',
+                                                                        outline: 'none'
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {errCant && (
+                                                            <span style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: '600', marginTop: '2px', textAlign: 'right' }}>
+                                                                {errCant.message}
+                                                            </span>
+                                                        )}
                                                     </div>
-                                                    
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                        <label style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#166534' }}>Usado:</label>
-                                                        <input 
-                                                            type="number" 
-                                                            step="any"
-                                                            {...register(`consumos.${index}.cantidad`, { required: true, min: 0 })} 
-                                                            style={{ width: '100px', padding: '10px', fontSize: '1.1rem', borderRadius: '6px', border: '1px solid #16a34a', textAlign: 'center', backgroundColor: '#fff', color: '#1f2937' }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>
@@ -328,7 +461,22 @@ export default function ChecklistList() {
                                             : detalleTarea.fecha_programada}
                                     </p>
                                     {detalleTarea.evidencia_url && (
-                                        <p style={{ margin: '4px 0' }}><strong>Evidencia adjuntada:</strong> <code>{detalleTarea.evidencia_url}</code></p>
+                                        <div style={{ marginTop: '10px' }}>
+                                            <p style={{ margin: '0 0 6px 0', fontWeight: 'bold' }}>Evidencia adjuntada:</p>
+                                            {detalleTarea.evidencia_url.startsWith('data:image') ||
+                                             detalleTarea.evidencia_url.startsWith('http') ||
+                                             detalleTarea.evidencia_url.startsWith('blob:') ? (
+                                                <div style={{ textAlign: 'center', backgroundColor: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                                    <img
+                                                        src={detalleTarea.evidencia_url}
+                                                        alt="Evidencia adjuntada"
+                                                        style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '6px', objectFit: 'contain' }}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <code>{detalleTarea.evidencia_url}</code>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
 
@@ -367,6 +515,13 @@ export default function ChecklistList() {
                     </div>
                 </div>
             )}
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }

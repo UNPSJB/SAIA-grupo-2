@@ -5,6 +5,7 @@ import type { ElementoLimpieza } from '../../types/elementosLimpieza';
 import { getAlertasRecambio, registrarRecambio } from '../../services/elementosLimpiezaServices';
 import { COLOR_ESTADO, ETIQUETA_ESTADO, textoRecambio } from './estadoRecambio';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
 export default function AlertasRecambio() {
@@ -13,6 +14,7 @@ export default function AlertasRecambio() {
 
     const [alertas, setAlertas] = useState<ElementoLimpieza[]>([]);
     const [cargando, setCargando] = useState(true);
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
 
     const cargarAlertas = async () => {
         try {
@@ -34,7 +36,11 @@ export default function AlertasRecambio() {
         if (exito) {
             cargarAlertas();
         } else {
-            alert('Hubo un error al registrar el recambio.');
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error',
+                mensaje: 'Hubo un error al registrar el recambio.'
+            });
         }
     };
 
@@ -77,12 +83,10 @@ export default function AlertasRecambio() {
 
                         <div>
                             <span
-                                className={styles.badge}
                                 style={{
-                                    fontSize: '0.75rem',
-                                    padding: '3px 10px',
-                                    backgroundColor: COLOR_ESTADO[el.estado_recambio],
-                                    color: '#ffffff'
+                                    fontSize: '0.85rem',
+                                    fontWeight: 'bold',
+                                    color: COLOR_ESTADO[el.estado_recambio]
                                 }}
                             >
                                 {ETIQUETA_ESTADO[el.estado_recambio]}
@@ -115,6 +119,13 @@ export default function AlertasRecambio() {
                     </div>
                 )}
             </div>
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }

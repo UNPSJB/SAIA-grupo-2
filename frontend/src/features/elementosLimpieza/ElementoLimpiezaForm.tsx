@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import type { ElementoLimpiezaPayload } from '../../types/elementosLimpieza';
 import { getElementoLimpiezaById, saveElementoLimpieza } from '../../services/elementosLimpiezaServices';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
 interface FormValues {
@@ -13,6 +14,7 @@ interface FormValues {
 
 export default function ElementoLimpiezaForm() {
     const navigate = useNavigate();
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
     const { id } = useParams();
     const editando = Boolean(id);
 
@@ -54,10 +56,19 @@ export default function ElementoLimpiezaForm() {
             if (exito) {
                 navigate('/elementosLimpieza');
             } else {
-                alert('Hubo un error al guardar el registro.');
+                setModalAlerta({
+                    isOpen: true,
+                    titulo: 'Error al Guardar',
+                    mensaje: 'Hubo un error al guardar el registro.'
+                });
             }
         } catch (error) {
             console.error('Error de red:', error);
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error de Red',
+                mensaje: 'No se pudo conectar con el servidor.'
+            });
         }
     };
 
@@ -113,6 +124,13 @@ export default function ElementoLimpiezaForm() {
                     </Link>
                 </div>
             </form>
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }

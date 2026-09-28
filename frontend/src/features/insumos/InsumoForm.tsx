@@ -6,6 +6,7 @@ import type { InsumoPayload } from '../../types/insumos';
 import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
 import { getInsumoById, saveInsumo } from '../../services/insumosServices';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
 interface FormValues {
@@ -15,7 +16,8 @@ interface FormValues {
 
 export default function InsumoForm() {
     const [unidadesDisponibles, setUnidadesDisponibles] = useState<UnidadMedida[]>([]);
-    
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
+
     const navigate = useNavigate();
     const { id } = useParams();
     const editando = Boolean(id);
@@ -69,10 +71,19 @@ export default function InsumoForm() {
             if (exito) {
                 navigate('/insumos');
             } else {
-                alert('Hubo un error al guardar el registro.');
+                setModalAlerta({
+                    isOpen: true,
+                    titulo: 'Error al Guardar',
+                    mensaje: 'Hubo un error al guardar el registro.'
+                });
             }
         } catch (error) {
             console.error('Error de red:', error);
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error de Red',
+                mensaje: 'No se pudo conectar con el servidor.'
+            });
         }
     };
 
@@ -128,6 +139,13 @@ export default function InsumoForm() {
                     </Link>
                 </div>
             </form>
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }

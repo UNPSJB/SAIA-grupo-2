@@ -54,3 +54,47 @@ class RegistroChecklistDetalle(BaseModel):
     consumos_reales: List[ConsumoRealResumen] = []
     
     model_config = ConfigDict(from_attributes=True)
+
+
+# --- Envío de datos (Backend -> Frontend) para Historial ---
+class TareaIncumplidaResumen(BaseModel):
+    tarea_id: int
+    titulo_tarea: str
+    plan_titulo: str
+    sector_nombre: str
+    frecuencia: str
+    veces_incumplida: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RegistroHistorialItem(BaseModel):
+    id: Optional[int] = None
+    tarea_id: int
+    titulo_tarea: str
+    plan_id: Optional[int] = None
+    plan_titulo: str
+    sector_nombre: str
+    frecuencia: str
+    fecha_programada: date
+    realizada: bool
+    fecha_hora_completada: Optional[datetime] = None
+    empleado_id: Optional[int] = None
+    nombre_empleado: Optional[str] = None
+    evidencia_url: Optional[str] = None
+    observaciones: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class HistorialChecklistResumen(BaseModel):
+    fecha_inicio: date
+    fecha_fin: date
+    porcentaje_cumplimiento: float
+    total_esperadas: int
+    total_realizadas: int
+    total_incumplidas: int
+    tareas_incumplidas_resumen: List[TareaIncumplidaResumen] = []
+    registros: List[RegistroHistorialItem] = []
+
+    model_config = ConfigDict(from_attributes=True)

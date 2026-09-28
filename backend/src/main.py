@@ -15,13 +15,9 @@ from src.productos_limpieza.models import ProductoLimpieza
 from src.tareas.models import Tarea
 from src.elementos_limpieza.models import ElementoLimpieza
 
-#configuración validada por Pydantic
 from src.config import settings
-
-#configuracion de logger
 from src.logger import setup_logging
 
-#routers desde nuestros modulos
 from src.unidades_medida.router import router as unidades_medida_router
 from src.insumos.router import router as insumos_router
 from src.empleados.router import router as empleados_router
@@ -66,7 +62,6 @@ app.add_middleware(
 )
 
 
-#routers a nuestra app
 app.include_router(unidades_medida_router)
 app.include_router(insumos_router)
 app.include_router(empleados_router)

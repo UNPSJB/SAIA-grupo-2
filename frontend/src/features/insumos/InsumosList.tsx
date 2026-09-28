@@ -55,7 +55,7 @@ export default function InsumosList() {
                         </div>
                         
                         <div>
-                            <span className={styles.badge} style={{ fontSize: '0.75rem', padding: '3px 10px' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-muted)' }}>
                                 {ins.unidad_medida.nombre}
                             </span>
                         </div>

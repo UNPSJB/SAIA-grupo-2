@@ -40,6 +40,7 @@ import PlanDelete from './features/planes/PlanDelete';
 import PlanDetail from './features/planes/PlanDetail';
 
 import ChecklistList from './features/checklists/ChecklistList';
+import HistorialChecklistList from './features/checklists/HistorialChecklistList';
 
 import ElementosLimpiezaList from './features/elementosLimpieza/ElementosLimpiezaList';
 import ElementoLimpiezaForm from './features/elementosLimpieza/ElementoLimpiezaForm';
@@ -114,17 +115,15 @@ function RutasProtegidas() {
             <Link to="/tareas">Tareas de Limpieza</Link>
             {isAdmin && <Link to="/planes">Planes de Limpieza</Link>}
             <Link to="/checklists/hoy">Checklist del Día</Link>
+            {isAdmin && <Link to="/checklists/historial">Historial de Checklists</Link>}
           </div>
         </div>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '15px', paddingRight: '20px' }}>
-          <span style={{ color: 'green', fontSize: '0.9rem', fontWeight: 'bold' }}>
+        <div className="userSection">
+          <span className="userInfo">
             {usuario?.nombre} {usuario?.apellido} ({usuario?.rol})
           </span>
-          <button 
-            onClick={logout} 
-            style={{ padding: '5px 12px', borderRadius: '6px', border: 'none', backgroundColor: '#ef4444', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}
-          >
+          <button onClick={logout} className="logoutBtn">
             Salir
           </button>
         </div>
@@ -186,6 +185,7 @@ function RutasProtegidas() {
           <Route path="/planes/:id" element={<PlanDetail />} />
 
           <Route path="/checklists/hoy" element={<ChecklistList />} />
+          <Route path="/checklists/historial" element={<RutaAdmin><HistorialChecklistList /></RutaAdmin>} />
         </Routes>
       </div>
     </>

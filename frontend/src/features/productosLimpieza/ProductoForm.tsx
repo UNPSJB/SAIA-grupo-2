@@ -6,6 +6,7 @@ import type { UnidadMedida } from '../../types/unidadesMedida';
 import { getProductoById, saveProducto } from '../../services/productosLimpiezaServices';
 import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
 const tiposProducto: TipoProductoLimpieza[] = [
@@ -26,6 +27,7 @@ export default function ProductoForm() {
     const { id } = useParams();
     const navigate = useNavigate();
     const editando = Boolean(id);
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
 
     const [nombre, setNombre] = useState('');
     const [tipo, setTipo] = useState<string>('');
@@ -114,11 +116,19 @@ export default function ProductoForm() {
             if (exito) {
                 navigate('/productos_limpieza');
             } else {
-                alert('Hubo un error al guardar el registro.');
+                setModalAlerta({
+                    isOpen: true,
+                    titulo: 'Error al Guardar',
+                    mensaje: 'Hubo un error al guardar el registro.'
+                });
             }
         } catch (error) {
             console.error('Error de red:', error);
-            alert('Hubo un error al guardar el registro.');
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error de Red',
+                mensaje: 'Hubo un error de conexión al intentar guardar.'
+            });
         } finally {
             setGuardando(false);
         }
@@ -219,6 +229,13 @@ export default function ProductoForm() {
                     </Link>
                 </div>
             </form>
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }

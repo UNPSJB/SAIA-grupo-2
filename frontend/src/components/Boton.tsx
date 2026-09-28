@@ -3,14 +3,15 @@ import styles from './Boton.module.css';
 
 interface BotonProps {
     children?: React.ReactNode; 
-    variant: 'guardar' | 'eliminar' | 'editar' | 'crear' | 'ver' | 'volver' | 'siguiente';
+    variant: 'guardar' | 'eliminar' | 'editar' | 'crear' | 'ver' | 'volver' | 'siguiente' | 'buscar';
     onClick?: () => void;
     type?: 'button' | 'submit';
     disabled?: boolean;
     style?: React.CSSProperties; 
+    title?: string;
 }
 
-export default function Boton({ children, variant, onClick, type = 'button', disabled = false, style }: BotonProps) {
+export default function Boton({ children, variant, onClick, type = 'button', disabled = false, style, title }: BotonProps) {
     
     const renderIcono = () => {
         const estiloIcono = { marginRight: children ? '6px' : '0' };
@@ -30,6 +31,8 @@ export default function Boton({ children, variant, onClick, type = 'button', dis
                 return <i className="bi bi-arrow-left" style={estiloIcono}></i>;
             case 'siguiente':
                 return <i className="bi bi-arrow-right" style={estiloIcono}></i>;
+            case 'buscar':
+                return <i className="bi bi-search" style={estiloIcono}></i>;
             default:
                 return null;
         }
@@ -41,11 +44,8 @@ export default function Boton({ children, variant, onClick, type = 'button', dis
             className={`${styles.base} ${styles[variant]}`} 
             onClick={onClick}
             disabled={disabled}
-            style={{ 
-                opacity: disabled ? 0.5 : 1, 
-                cursor: disabled ? 'not-allowed' : 'pointer',
-                ...style 
-            }}
+            style={style}
+            title={title}
         >
             {renderIcono()}
             {children}

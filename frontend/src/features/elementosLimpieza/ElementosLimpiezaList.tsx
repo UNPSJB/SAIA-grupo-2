@@ -4,11 +4,13 @@ import type { ElementoLimpieza } from '../../types/elementosLimpieza';
 import { getElementosLimpieza, registrarRecambio } from '../../services/elementosLimpiezaServices';
 import { COLOR_ESTADO, ETIQUETA_ESTADO, textoRecambio } from './estadoRecambio';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
 export default function ElementosLimpiezaList() {
     const [elementos, setElementos] = useState<ElementoLimpieza[]>([]);
     const [paginaActual, setPaginaActual] = useState(1);
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
     const elementosPorPagina = 10;
 
     const cargarDatos = async () => {
@@ -29,7 +31,11 @@ export default function ElementosLimpiezaList() {
         if (exito) {
             cargarDatos();
         } else {
-            alert('Hubo un error al registrar el recambio.');
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error',
+                mensaje: 'Hubo un error al registrar el recambio.'
+            });
         }
     };
 
@@ -84,12 +90,10 @@ export default function ElementosLimpiezaList() {
 
                         <div>
                             <span
-                                className={styles.badge}
                                 style={{
-                                    fontSize: '0.75rem',
-                                    padding: '3px 10px',
-                                    backgroundColor: COLOR_ESTADO[el.estado_recambio],
-                                    color: '#ffffff'
+                                    fontSize: '0.85rem',
+                                    fontWeight: 'bold',
+                                    color: COLOR_ESTADO[el.estado_recambio]
                                 }}
                             >
                                 {ETIQUETA_ESTADO[el.estado_recambio]}
@@ -106,6 +110,7 @@ export default function ElementosLimpiezaList() {
                                     variant="guardar"
                                     style={{ padding: '8px 12px' }}
                                     onClick={() => handleRecambio(el)}
+                                    title="Registrar recambio"
                                 >
                                 </Boton>
                             )}
@@ -142,6 +147,13 @@ export default function ElementosLimpiezaList() {
                     </Boton>
                 </div>
             )}
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }

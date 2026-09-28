@@ -92,13 +92,12 @@ export default function EmpleadoDelete() {
                                     <span 
                                         key={cap.id} 
                                         className={`${styles.badge} ${cap.nombre.toLowerCase() === 'administrador' ? styles.badgeAdmin : ''}`}
-                                        style={{ fontSize: '0.75rem', padding: '4px 10px' }}
                                     >
                                         {cap.nombre}
                                     </span>
                                 ))
                             ) : (
-                                <span className={styles.badge} style={{ backgroundColor: 'var(--border)', color: 'var(--text)' }}>
+                                <span className={styles.badge} style={{ color: 'var(--text-muted)' }}>
                                     Sin asignar
                                 </span>
                             )}

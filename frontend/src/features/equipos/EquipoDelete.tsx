@@ -3,10 +3,12 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import type { Equipo } from '../../types/equipos';
 import { getEquipoById, deleteEquipo } from '../../services/equiposServices';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
 export default function EquipoDelete() {
     const [equipo, setEquipo] = useState<Equipo | null>(null);
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
     const { id } = useParams();
     const navigate = useNavigate(); 
 
@@ -29,9 +31,18 @@ export default function EquipoDelete() {
         try {
             const exito = await deleteEquipo(id);
             if (exito) navigate('/equipos');
-            else alert('Hubo un error al intentar eliminar el registro.');
+            else setModalAlerta({
+                isOpen: true,
+                titulo: 'Error al Eliminar',
+                mensaje: 'Hubo un error al intentar eliminar el registro.'
+            });
         } catch (error) {
             console.error('Error de red:', error);
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error de Red',
+                mensaje: 'No se pudo conectar con el servidor.'
+            });
         }
     };
 
@@ -57,6 +68,13 @@ export default function EquipoDelete() {
             ) : (
                 <p>Equipo no encontrado</p>
             )}
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }

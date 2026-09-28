@@ -3,7 +3,6 @@ from sqlalchemy.orm import declarative_base,Mapped,mapped_column,relationship
 Base = declarative_base()
 
 
-# autor original: https://stackoverflow.com/a/54034230
 def keyvalgen(obj):
     """Genera pares nombre/valor, quitando/filtrando los atributos de SQLAlchemy."""
     excl = ("_sa_adapter", "_sa_instance_state")
