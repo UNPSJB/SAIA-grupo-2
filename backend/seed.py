@@ -14,6 +14,7 @@ from src.productos_limpieza.constants import TipoProductoLimpieza
 from src.tareas.models import Tarea, ConsumoEstimado
 from src.tareas.constants import FrecuenciaTarea
 from src.elementos_limpieza.models import ElementoLimpieza
+from src.documentacion.models import Documentacion, LibretaSanitaria, Capacitacion, CertificadoAptitudFisica, RequisitoDocumentacion
 from src.planes.models import Plan
 from src.checklists.models import Checklist, ConsumoReal
 
