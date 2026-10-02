@@ -1,14 +1,23 @@
 import logging
+from datetime import date, timedelta
 from typing import List
-from sqlalchemy import delete, select
+
+from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session, selectinload
-from src.equipos.models import Equipo, TipoEquipo
+
 from src.equipos import schemas, exceptions
+from src.equipos.constants import EstadoCalibracion
+from src.equipos.models import Equipo, TipoEquipo
 from src.sectores.models import Sector
 
 logger = logging.getLogger(__name__)
 
-def crear_equipo(db: Session, equipo: schemas.EquipoCreate) -> schemas.Equipo:
+ESTADOS_QUE_ALERTAN = (EstadoCalibracion.VENCIDO, EstadoCalibracion.PROXIMO)
+
+
+def crear_equipo(
+    db: Session, equipo: schemas.EquipoCreate
+) -> schemas.Equipo:
     tipo_existente = db.scalar(select(TipoEquipo).where(TipoEquipo.id == equipo.tipo_id))
     if not tipo_existente:
         raise exceptions.TipoEquipoNoEncontrado()
@@ -16,8 +25,16 @@ def crear_equipo(db: Session, equipo: schemas.EquipoCreate) -> schemas.Equipo:
     sector_existente = db.scalar(select(Sector).where(Sector.id == equipo.sector_id))
     if not sector_existente:
         raise ValueError("El sector asignado no existe")
-
-    _equipo = Equipo(**equipo.model_dump())
+    
+    if equipo.fecha_vencimiento < date.today():
+        raise exceptions.VencimientoInvalido()
+    
+    fecha_ultima_calibracion = equipo.fecha_vencimiento - timedelta(
+        days=equipo.frecuencia_calibracion_dias
+    )
+    datos_equipo = equipo.model_dump(exclude={"fecha_vencimiento"})
+    datos_equipo["fecha_ultima_calibracion"] = fecha_ultima_calibracion
+    _equipo = Equipo(**datos_equipo)
     db.add(_equipo)
     db.commit()
     db.refresh(_equipo)
