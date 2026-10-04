@@ -14,6 +14,7 @@ from src.productos_limpieza.constants import TipoProductoLimpieza
 from src.tareas.models import Tarea, ConsumoEstimado
 from src.tareas.constants import FrecuenciaTarea
 from src.elementos_limpieza.models import ElementoLimpieza
+from src.documentacion.constants import TipoDocumentacion
 from src.documentacion.models import Documentacion, LibretaSanitaria, Capacitacion, CertificadoAptitudFisica, RequisitoDocumentacion
 from src.planes.models import Plan
 from src.checklists.models import Checklist, ConsumoReal
@@ -415,6 +416,44 @@ def seed_database():
             db.add_all(checklists_seed)
             db.commit()
             print(f"Historial de Checklists creado ({len(checklists_seed)} ejecuciones de prueba).")
+
+        if db.query(RequisitoDocumentacion).count() == 0:
+            db.add_all([
+                RequisitoDocumentacion(
+                    tipo=TipoDocumentacion.LIBRETA_SANITARIA,
+                    obligatorio=True,
+                    dias_aviso_previo=150,
+                ),
+                RequisitoDocumentacion(
+                    tipo=TipoDocumentacion.CAPACITACION,
+                    obligatorio=False,
+                    dias_aviso_previo=30,
+                ),
+                RequisitoDocumentacion(
+                    tipo=TipoDocumentacion.CERTIFICADO_APTITUD_FISICA,
+                    obligatorio=False,
+                    dias_aviso_previo=30,
+                ),
+            ])
+            db.commit()
+            print("Requisitos de documentacion creados (3).")
+
+        if db.query(Documentacion).count() == 0:
+            hoy_doc = date.today()
+            empleados_doc = db.query(Empleado).order_by(Empleado.id).all()
+            libretas = [
+                LibretaSanitaria(
+                    empleado_id=emp.id,
+                    numero_carnet=f"LS-{1000 + indice}",
+                    autoridad_emisora="Municipalidad de Trelew",
+                    fecha_vencimiento=hoy_doc + timedelta(days=365),
+                )
+                for indice, emp in enumerate(empleados_doc)
+            ]
+            db.add_all(libretas)
+            db.commit()
+            print(f"Libretas sanitarias creadas ({len(libretas)}).")
+
 
         print("Base de datos poblada exitosamente con datos de prueba para Inocuidad Alimentaria!")
 

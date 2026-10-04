@@ -6,6 +6,8 @@ import EmpleadosList from './features/empleados/EmpleadosList';
 import EmpleadoForm from './features/empleados/EmpleadoForm';
 import EmpleadoDetail from './features/empleados/EmpleadoDetail';
 import EmpleadoDelete from './features/empleados/EmpleadoDelete';
+import DocumentacionEmpleado from './features/documentacion/DocumentacionEmpleado';
+import DocumentacionForm from './features/documentacion/DocumentacionForm';
 
 import CapacidadesList from './features/capacidades/CapacidadesList';
 import CapacidadForm from './features/capacidades/CapacidadForm';
@@ -138,6 +140,9 @@ function RutasProtegidas() {
           <Route path="/empleados/editar/:id" element={<RutaAdmin><EmpleadoForm /></RutaAdmin>} />
           <Route path="/empleados/eliminar/:id" element={<RutaAdmin><EmpleadoDelete /></RutaAdmin>} />
           <Route path="/empleados/:id" element={<EmpleadoDetail />} />
+          <Route path="/empleados/:empleadoId/documentacion" element={<RutaAdmin><DocumentacionEmpleado /></RutaAdmin>} />
+          <Route path="/empleados/:empleadoId/documentacion/nuevo" element={<RutaAdmin><DocumentacionForm /></RutaAdmin>} />
+          <Route path="/empleados/:empleadoId/documentacion/editar/:id" element={<RutaAdmin><DocumentacionForm /></RutaAdmin>} />
           
           <Route path="/capacidades" element={<RutaAdmin><CapacidadesList /></RutaAdmin>} />
           <Route path="/capacidades/nuevo" element={<RutaAdmin><CapacidadForm /></RutaAdmin>} />

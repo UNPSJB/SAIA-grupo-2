@@ -15,7 +15,7 @@ class ErrorCode:
 
 
 DIAS_AVISO_POR_DEFECTO = {
-    TipoDocumentacion.LIBRETA_SANITARIA: 15,
+    TipoDocumentacion.LIBRETA_SANITARIA: 150,
     TipoDocumentacion.CAPACITACION: 30,
     TipoDocumentacion.CERTIFICADO_APTITUD_FISICA: 30,
 }
