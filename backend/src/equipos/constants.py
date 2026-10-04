@@ -17,7 +17,7 @@ class EstadoEquipo(str, Enum):
     BUENO = "bueno"
     DANADO = "danado"
 
-class EstadoCalibracion(str, Enum):
+class EstadoMantenimiento(str, Enum):
     VENCIDO = "vencido"
     PROXIMO = "proximo"
     VIGENTE = "vigente"
