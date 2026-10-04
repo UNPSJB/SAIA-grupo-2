@@ -6,13 +6,13 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session, selectinload
 
 from src.equipos import schemas, exceptions
-from src.equipos.constants import EstadoCalibracion
+from src.equipos.constants import EstadoMantenimiento
 from src.equipos.models import Equipo, TipoEquipo
 from src.sectores.models import Sector
 
 logger = logging.getLogger(__name__)
 
-ESTADOS_QUE_ALERTAN = (EstadoCalibracion.VENCIDO, EstadoCalibracion.PROXIMO)
+ESTADOS_QUE_ALERTAN = (EstadoMantenimiento.VENCIDO, EstadoMantenimiento.PROXIMO)
 
 
 def crear_equipo(
@@ -26,14 +26,20 @@ def crear_equipo(
     if not sector_existente:
         raise ValueError("El sector asignado no existe")
     
-    if equipo.fecha_vencimiento < date.today():
+    fecha_vencimiento = equipo.fecha_vencimiento
+    if fecha_vencimiento is None:
+        fecha_vencimiento = date.today() + timedelta(
+            days=equipo.frecuencia_mantenimiento_dias
+        )
+
+    if fecha_vencimiento < date.today():
         raise exceptions.VencimientoInvalido()
-    
-    fecha_ultima_calibracion = equipo.fecha_vencimiento - timedelta(
-        days=equipo.frecuencia_calibracion_dias
+
+    fecha_ultimo_mantenimiento = fecha_vencimiento - timedelta(
+        days=equipo.frecuencia_mantenimiento_dias
     )
     datos_equipo = equipo.model_dump(exclude={"fecha_vencimiento"})
-    datos_equipo["fecha_ultima_calibracion"] = fecha_ultima_calibracion
+    datos_equipo["fecha_ultimo_mantenimiento"] = fecha_ultimo_mantenimiento
     _equipo = Equipo(**datos_equipo)
     db.add(_equipo)
     db.commit()
