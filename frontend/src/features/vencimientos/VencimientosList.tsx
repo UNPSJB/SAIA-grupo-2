@@ -10,10 +10,6 @@ import { getVencimientosConsolidados } from '../../services/vencimientosServices
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
 
-/**
- * Paleta de colores estándar para los estados de vencimiento.
- * Mantiene coherencia visual con el resto del sistema.
- */
 const COLOR_ESTADO: Record<EstadoVencimiento, string> = {
     vencido: '#ef4444',
     proximo: '#f59e0b',
@@ -152,7 +148,6 @@ export default function VencimientosList() {
                 </div>
             )}
 
-            {/* Barra de Filtros */}
             <div
                 style={{
                     display: 'flex',
@@ -308,7 +303,6 @@ export default function VencimientosList() {
                 )}
             </div>
 
-            {/* Paginación de 5 elementos */}
             {totalPaginas > 1 && (
                 <div
                     className={styles.filaBotones}

@@ -159,17 +159,16 @@ export default function DocumentacionEmpleado() {
 
                         <div>
                             <span
-                                className={styles.badge}
                                 style={{
-                                    fontSize: '0.75rem',
-                                    padding: '3px 10px',
-                                    backgroundColor: COLOR_ESTADO[documento.estado],
-                                    color: '#ffffff',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 'bold',
+                                    color: COLOR_ESTADO[documento.estado],
                                 }}
                             >
                                 {ETIQUETA_ESTADO[documento.estado]}
                             </span>
                         </div>
+
 
                         <div style={{ fontSize: '0.85rem' }}>
                             {textoVencimiento(documento.dias_restantes)}
