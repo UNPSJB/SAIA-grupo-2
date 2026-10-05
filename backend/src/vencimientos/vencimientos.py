@@ -9,14 +9,6 @@ class EstadoVencimiento(str, Enum):
 
 
 class ControlDeVencimiento:
-    """Aporta el calculo de estado a cualquier entidad que tenga fecha_vencimiento.
-
-    La entidad que hereda debe definir una columna fecha_vencimiento de tipo date.
-    El umbral sale de dias_aviso_previo, que por defecto lee la constante de clase.
-    Una subclase puede pisar esa property para tomarlo de otro lado, por ejemplo
-    de una tabla de parametros.
-    """
-
     DIAS_AVISO_PREVIO = 15
 
     @property
