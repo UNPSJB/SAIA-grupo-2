@@ -20,7 +20,6 @@ interface FormValues {
         cantidad_estimada: number;
         cantidad: string;
         stock_disponible: number;
-        unidad_medida: string;
     }[];
 }
 
@@ -85,14 +84,12 @@ export default function ChecklistList() {
             const consumosPredefinidos = tareaOriginal.consumos_estimados?.map((c: any) => {
                 const prod = productosData.find((p: any) => p.id === c.producto_limpieza.id);
                 const stockActual = prod ? prod.stock : (c.producto_limpieza.stock ?? 0);
-                const unidad = c.producto_limpieza?.unidad_medida?.nombre || '';
                 return {
                     producto_limpieza_id: c.producto_limpieza.id.toString(),
                     nombre_producto: c.producto_limpieza.nombre,
                     cantidad_estimada: c.cantidad,
                     cantidad: c.cantidad.toString(),
-                    stock_disponible: stockActual,
-                    unidad_medida: unidad
+                    stock_disponible: stockActual
                 };
             }) || [];
 
@@ -412,11 +409,6 @@ export default function ChecklistList() {
                                                                         outline: 'none'
                                                                     }}
                                                                 />
-                                                                <span style={{color:'var(--text-muted', fontWeight: '500', fontSize:'0.9rem'}}>
-                                                                    {item.unidad_medida || 'sdsd'}
-                                                                    {/* {productos.find(p=> p.id.toString()=== consumosActuales[index]?.producto_limpieza_id?.toString())?.unidad_medida?.nombre ||''} */}
-                                                                </span>
-                                                                
                                                             </div>
                                                         </div>
 
