@@ -25,7 +25,7 @@ class EquipoBase(BaseModel):
 
 class EquipoCreate(EquipoBase):
     frecuencia_mantenimiento_dias: int = Field(gt=0)
-    fecha_vencimiento: Optional[date] = None
+    fecha_proximo_mantenimiento: Optional[date] = None
 
 class EquipoUpdate(EquipoBase):
     pass
@@ -38,7 +38,7 @@ class Equipo(EquipoBase):
     tipo: TipoEquipoBase 
     sector: SectorRef
     fecha_ultimo_mantenimiento: date = Field(default=date.today())
-    fecha_vencimiento: Optional[date]
+    fecha_proximo_mantenimiento: Optional[date]
     dias_restantes: Optional[int]
     estado_mantenimiento: EstadoMantenimiento
 

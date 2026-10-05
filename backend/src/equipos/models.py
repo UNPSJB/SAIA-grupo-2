@@ -28,21 +28,21 @@ class Equipo(ModeloBase):
     fecha_ultimo_mantenimiento: Mapped[date] = mapped_column(default=date.today)
 
     @property
-    def fecha_vencimiento(self) -> Optional[date]:
+    def fecha_proximo_mantenimiento(self) -> Optional[date]:
         if self.frecuencia_mantenimiento_dias is None:
             return None
         return self.fecha_ultimo_mantenimiento + timedelta(days=self.frecuencia_mantenimiento_dias)
 
     @property
     def dias_restantes(self) -> Optional[int]:
-        proxima = self.fecha_vencimiento
+        proxima = self.fecha_proximo_mantenimiento
         if proxima is None:
             return None
         return (proxima - date.today()).days
 
     @property
     def estado_mantenimiento(self) -> EstadoMantenimiento:
-        proxima = self.fecha_vencimiento
+        proxima = self.fecha_proximo_mantenimiento
         if proxima is None:
             return EstadoMantenimiento.SIN_CONTROL
 

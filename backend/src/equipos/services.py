@@ -26,19 +26,19 @@ def crear_equipo(
     if not sector_existente:
         raise ValueError("El sector asignado no existe")
     
-    fecha_vencimiento = equipo.fecha_vencimiento
-    if fecha_vencimiento is None:
-        fecha_vencimiento = date.today() + timedelta(
+    fecha_proximo_mantenimiento = equipo.fecha_proximo_mantenimiento
+    if fecha_proximo_mantenimiento is None:
+        fecha_proximo_mantenimiento = date.today() + timedelta(
             days=equipo.frecuencia_mantenimiento_dias
         )
 
-    if fecha_vencimiento < date.today():
+    if fecha_proximo_mantenimiento < date.today():
         raise exceptions.VencimientoInvalido()
 
-    fecha_ultimo_mantenimiento = fecha_vencimiento - timedelta(
+    fecha_ultimo_mantenimiento = fecha_proximo_mantenimiento - timedelta(
         days=equipo.frecuencia_mantenimiento_dias
     )
-    datos_equipo = equipo.model_dump(exclude={"fecha_vencimiento"})
+    datos_equipo = equipo.model_dump(exclude={"fecha_proximo_mantenimiento"})
     datos_equipo["fecha_ultimo_mantenimiento"] = fecha_ultimo_mantenimiento
     _equipo = Equipo(**datos_equipo)
     db.add(_equipo)
@@ -65,11 +65,8 @@ def leer_equipo(db: Session, equipo_id: int) -> schemas.Equipo:
 def modificar_equipo(
     db: Session, equipo_id: int, equipo: schemas.EquipoUpdate
 ) -> Equipo:
-    db_equipo = db.scalar(
-        select(Equipo)
-        .options(selectinload(Equipo.tipo), selectinload(Equipo.sector))
-        .where(Equipo.id == equipo_id)
-    )
+    db_equipo = leer_equipo(db, equipo_id)
+
     if db_equipo is None:
         raise exceptions.EquipoNoEncontrado()
 
@@ -81,8 +78,15 @@ def modificar_equipo(
     if not sector_existente:
         raise ValueError("El sector asignado no existe")
 
-    for key, value in equipo.model_dump().items():
-        setattr(db_equipo, key, value)
+    datos = equipo.model_dump()
+    if datos.get("fecha_proximo_mantenimiento") is None:
+        datos.pop("fecha_proximo_mantenimiento", None)
+
+    db.execute(
+        update(Equipo)
+        .where(Equipo.id == equipo_id)
+        .values(**datos)
+    )
         
     db.commit()
     db.refresh(db_equipo)
