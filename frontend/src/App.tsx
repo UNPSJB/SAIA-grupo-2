@@ -51,6 +51,7 @@ import ElementoLimpiezaDelete from './features/elementosLimpieza/ElementoLimpiez
 import AlertasRecambio from './features/elementosLimpieza/AlertasRecambio';
 import VencimientosList from './features/vencimientos/VencimientosList';
 
+
 import './App.css';
 
 function RutaAdmin({ children }: { children: React.ReactElement }) {
@@ -86,6 +87,7 @@ function RutasProtegidas() {
               <Link to="/empleados">Directorio de Empleados</Link>
               <Link to="/capacidades">Gestión de Capacidades</Link>
               <Link to="/sectores">Gestión de Sectores</Link>
+              <Link to="/vencimientos">Vencimientos de Personal</Link>
             </div>
           </div>
         )}
@@ -194,6 +196,8 @@ function RutasProtegidas() {
 
           <Route path="/checklists/hoy" element={<ChecklistList />} />
           <Route path="/checklists/historial" element={<RutaAdmin><HistorialChecklistList /></RutaAdmin>} />
+
+          <Route path="/vencimientos" element={<RutaAdmin><VencimientosList /></RutaAdmin>}/>
         </Routes>
       </div>
     </>

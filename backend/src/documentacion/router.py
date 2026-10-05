@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends
@@ -13,13 +14,38 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/documentacion", tags=["documentacion"])
 
 
+# @router.get("/alertas", response_model=list[schemas.AlertaVencimiento])
+# def read_alertas(
+#     tipo: Optional[TipoDocumentacion] = None, db: Session = Depends(get_db)
+# ):
+#     logger.info("Consultando alertas de vencimiento desde endpoint...")
+#     return services.obtener_alertas(db, tipo)
+
+# @router.get("/alertas", response_model=list[schemas.AlertaVencimiento])
+# def read_alertas(
+#     tipo: Optional[TipoDocumentacion] = None,
+#     empleado_id: Optional[int] = None,
+#     db: Session = Depends(get_db),
+# ):
+#     logger.info("Consultando alertas de vencimiento desde endpoint...")
+#     return services.obtener_alertas(db, tipo, empleado_id)
+
 @router.get("/alertas", response_model=list[schemas.AlertaVencimiento])
 def read_alertas(
-    tipo: Optional[TipoDocumentacion] = None, db: Session = Depends(get_db)
+    tipo: Optional[TipoDocumentacion] = None,
+    empleado_id: Optional[int] = None,
+    fecha_desde: Optional[date] = None,
+    fecha_hasta: Optional[date] = None,
+    db: Session = Depends(get_db),
 ):
     logger.info("Consultando alertas de vencimiento desde endpoint...")
-    return services.obtener_alertas(db, tipo)
-
+    return services.obtener_alertas(
+        db,
+        tipo,
+        empleado_id,
+        fecha_desde,
+        fecha_hasta,
+    )
 
 @router.get("/requisitos", response_model=list[schemas.RequisitoDocumentacion])
 def read_requisitos(db: Session = Depends(get_db)):
