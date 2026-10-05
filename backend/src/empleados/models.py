@@ -8,7 +8,8 @@ from src.asociaciones.empleado_sector import empleado_sector
 
 if TYPE_CHECKING:
     from src.capacidades.models import Capacidad
-    from src.sectores.models import Sector 
+    from src.sectores.models import Sector
+    from src.documentacion.models import Documentacion 
 
 class RolEmpleado(str, enum.Enum):
     ADMIN = "admin"
@@ -35,4 +36,10 @@ class Empleado(ModeloBase):
         "Sector",
         secondary=empleado_sector,
         back_populates="empleados"
+    )
+
+    documentacion: Mapped[List["Documentacion"]] = relationship(
+        "Documentacion",
+        back_populates="empleado",
+        cascade="all, delete-orphan"
     )

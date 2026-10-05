@@ -38,7 +38,7 @@ export default function InsumoForm() {
             }
         };
         cargarUnidades(); 
-    }, []);
+    }, [editando, id, reset]);
 
     useEffect(() => {
         if (editando && id) {

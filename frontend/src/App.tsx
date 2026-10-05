@@ -6,6 +6,8 @@ import EmpleadosList from './features/empleados/EmpleadosList';
 import EmpleadoForm from './features/empleados/EmpleadoForm';
 import EmpleadoDetail from './features/empleados/EmpleadoDetail';
 import EmpleadoDelete from './features/empleados/EmpleadoDelete';
+import DocumentacionEmpleado from './features/documentacion/DocumentacionEmpleado';
+import DocumentacionForm from './features/documentacion/DocumentacionForm';
 
 import CapacidadesList from './features/capacidades/CapacidadesList';
 import CapacidadForm from './features/capacidades/CapacidadForm';
@@ -47,6 +49,7 @@ import ElementoLimpiezaForm from './features/elementosLimpieza/ElementoLimpiezaF
 import ElementoLimpiezaDetail from './features/elementosLimpieza/ElementoLimpiezaDetail';
 import ElementoLimpiezaDelete from './features/elementosLimpieza/ElementoLimpiezaDelete';
 import AlertasRecambio from './features/elementosLimpieza/AlertasRecambio';
+import VencimientosList from './features/vencimientos/VencimientosList';
 
 import './App.css';
 
@@ -102,6 +105,7 @@ function RutasProtegidas() {
             <span className="navLink">Equipamiento ▾</span>
             <div className="dropdownContent">
               <Link to="/equipos">Inventario de Equipos</Link>
+              <Link to="/vencimientos">Control de Vencimientos</Link>
             </div>
           </div>
         )}
@@ -138,6 +142,9 @@ function RutasProtegidas() {
           <Route path="/empleados/editar/:id" element={<RutaAdmin><EmpleadoForm /></RutaAdmin>} />
           <Route path="/empleados/eliminar/:id" element={<RutaAdmin><EmpleadoDelete /></RutaAdmin>} />
           <Route path="/empleados/:id" element={<EmpleadoDetail />} />
+          <Route path="/empleados/:empleadoId/documentacion" element={<RutaAdmin><DocumentacionEmpleado /></RutaAdmin>} />
+          <Route path="/empleados/:empleadoId/documentacion/nuevo" element={<RutaAdmin><DocumentacionForm /></RutaAdmin>} />
+          <Route path="/empleados/:empleadoId/documentacion/editar/:id" element={<RutaAdmin><DocumentacionForm /></RutaAdmin>} />
           
           <Route path="/capacidades" element={<RutaAdmin><CapacidadesList /></RutaAdmin>} />
           <Route path="/capacidades/nuevo" element={<RutaAdmin><CapacidadForm /></RutaAdmin>} />
@@ -155,6 +162,7 @@ function RutasProtegidas() {
           <Route path="/equipos/:id" element={<EquipoDetail />} />
           <Route path="/equipos/editar/:id" element={<RutaAdmin><EquipoForm /></RutaAdmin>} />
           <Route path="/equipos/eliminar/:id" element={<RutaAdmin><EquipoDelete /></RutaAdmin>} />
+          <Route path="/vencimientos" element={<RutaAdmin><VencimientosList /></RutaAdmin>} />
 
           <Route path="/sectores" element={<RutaAdmin><SectoresList /></RutaAdmin>} />
           <Route path="/sectores/nuevo" element={<RutaAdmin><SectorForm /></RutaAdmin>} />

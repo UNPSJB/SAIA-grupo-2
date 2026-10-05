@@ -128,6 +128,11 @@ export default function EmpleadosList() {
                             <Link to={`/empleados/${emp.id}`} title="Ver detalle">
                                 <Boton variant="ver" style={{ padding: '8px 12px' }}></Boton>
                             </Link>
+                            {usuario?.rol === 'admin' && (
+                                <Link to={`/empleados/${emp.id}/documentacion`} title="Documentación y vencimientos">
+                                    <Boton variant="buscar" style={{ padding: '8px 12px' }}>Doc.</Boton>
+                                </Link>
+                            )}
                             {usuario?.rol === 'admin' && !emp.activo && (
                                 <Link to={`/empleados/eliminar/${emp.id}`} title="Eliminar físicamente">
                                     <Boton variant="eliminar" style={{ padding: '8px 12px' }}></Boton>
