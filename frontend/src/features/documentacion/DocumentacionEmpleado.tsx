@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams,useNavigate} from 'react-router-dom';
 
 import type { CumplimientoEmpleado, Documentacion } from '../../types/documentacion';
 import type { Empleado } from '../../types/empleados';
@@ -26,6 +26,7 @@ export default function DocumentacionEmpleado() {
     const [documentos, setDocumentos] = useState<Documentacion[]>([]);
     const [cumplimiento, setCumplimiento] = useState<CumplimientoEmpleado | null>(null);
     const [cargando, setCargando] = useState(true);
+    const navigate = useNavigate(); 
 
     const cargarDatos = async () => {
         if (!empleadoId) return;
@@ -128,9 +129,9 @@ export default function DocumentacionEmpleado() {
                 <Link to={`/empleados/${empleadoId}/documentacion/nuevo`}>
                     <Boton variant="crear">Cargar Documento</Boton>
                 </Link>
-                <Link to="/empleados">
-                    <Boton variant="volver">Volver al directorio</Boton>
-                </Link>
+                <Boton variant="volver" onClick={() => navigate(-1)} style={{ marginLeft: '10px' }}>
+                    Volver atrás
+                </Boton>
             </div>
 
             <div className={styles.contenedorTabla} style={{ maxWidth: '1000px' }}>
