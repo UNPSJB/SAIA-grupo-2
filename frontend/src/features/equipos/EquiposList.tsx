@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
 import type { Equipo } from '../../types/equipos';
 import { getEquipos } from '../../services/equiposServices';
+import { COLOR_ESTADO, ETIQUETA_ESTADO } from './estadoMantenimiento';
 import Boton from '../../components/Boton';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';
@@ -48,17 +49,19 @@ export default function EquiposList() {
             )}
 
             <div className={styles.contenedorTabla}>
-                <div className={styles.filaHeader} style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1.5fr' }}>
+                <div className={styles.filaHeader} style={{ gridTemplateColumns: '1.5fr 1.5fr 1fr 1fr 0.8fr 1.2fr 1.3fr 1.8fr' }}>
                     <div>Nombre del Equipo</div>
                     <div>Categoría</div>
                     <div>Sector</div>
                     <div>Sistema</div>
                     <div>Condición</div>
+                    <div>Mantenimiento</div>
+                    <div>Frecuencia</div>
                     <div>Acciones</div>
                 </div>
 
                 {equiposActuales.map((eq) => (
-                    <div key={eq.id} className={styles.filaItem} style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1.5fr' }}>
+                    <div key={eq.id} className={styles.filaItem} style={{ gridTemplateColumns: '1.5fr 1.5fr 1fr 1fr 0.8fr 1.2fr 1.3fr 1.8fr', alignItems: 'center' }}>
                         <div style={{ fontWeight: '500', color: 'var(--text-h)' }}>
                             {eq.nombre}
                         </div>
@@ -86,19 +89,37 @@ export default function EquiposList() {
                                 <span style={{ color: '#dc2626', fontWeight: 'bold' }}>Dañado</span>
                             )}
                         </div>
+
+                        <div>
+                            <span
+                                style={{
+                                    fontSize: '0.85rem',
+                                    fontWeight: 'bold',
+                                    color: COLOR_ESTADO[eq.estado_mantenimiento]
+                                }}
+                            >
+                                {ETIQUETA_ESTADO[eq.estado_mantenimiento]}
+                            </span>
+                        </div>
                         
+                        <div style={{ fontSize: '0.85rem' }}>
+                            {eq.frecuencia_mantenimiento_dias
+                                ? `Cada ${eq.frecuencia_mantenimiento_dias} días`
+                                : <span style={{ opacity: 0.6 }}>No definido</span>}
+                        </div>
+
                         <div className={styles.grupoBotonesTabla}>
                             {usuario?.rol === 'admin' && (
                                 <Link to={`/equipos/editar/${eq.id}`} title="Editar equipo">
-                                    <Boton variant="editar" style={{ padding: '8px 12px' }}></Boton>
+                                    <Boton variant="editar"></Boton>
                                 </Link>
                             )}
                             <Link to={`/equipos/${eq.id}`} title="Ver detalle">
-                                <Boton variant="ver" style={{ padding: '8px 12px' }}></Boton>
+                                <Boton variant="ver"></Boton>
                             </Link>
                             {usuario?.rol === 'admin' && (
                                 <Link to={`/equipos/eliminar/${eq.id}`} title="Eliminar registro">
-                                    <Boton variant="eliminar" style={{ padding: '8px 12px' }}></Boton>
+                                    <Boton variant="eliminar"></Boton>
                                 </Link>
                             )}
                         </div>
