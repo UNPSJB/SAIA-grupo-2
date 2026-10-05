@@ -34,8 +34,6 @@ class ProductoLimpiezaResumen(BaseModel):
     id: int
     nombre: str
     tipo: TipoProductoLimpieza
-    unidad_medida: UnidadMedida
-
 
     model_config = ConfigDict(from_attributes=True)
 
