@@ -21,7 +21,7 @@ interface FormValues {
 
 export default function TareaForm() {
     const [planes, setPlanes] = useState<PlanLimpieza[]>([]);
-    const [productos, setProductos] = useState<{id: number, nombre: string, stock: number}[]>([]); 
+    const [productos, setProductos] = useState<{id: number, nombre: string, stock: number, unidad_medida?:{nombre:string}}[]>([]); 
     
     const [cargando, setCargando] = useState(true);
     const [errorMsg, setErrorMsg] = useState('');
@@ -47,6 +47,7 @@ export default function TareaForm() {
     });
 
     const planesSeleccionados = watch('planes_ids') || [];
+    const consumosActuales = watch('consumos_estimados')||[]
 
     const removerPlan = (idPlan: string) => {
         setValue('planes_ids', planesSeleccionados.filter(val => val !== idPlan), { shouldValidate: true });
@@ -235,6 +236,7 @@ export default function TareaForm() {
                                     
                                     <div style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>
                                         <label style={{ fontSize: '0.9rem', fontWeight: '500' }}>Cantidad estimada:</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <input 
                                             type="number" 
                                             step="any"
@@ -242,6 +244,11 @@ export default function TareaForm() {
                                             {...register(`consumos_estimados.${index}.cantidad`, { required: "Ingresá una cantidad", min: { value: 0.01, message: "Debe ser mayor a 0" } })} 
                                             style={{ width: '100%', padding: '10px', borderRadius: '6px', border: errorCant ? '1px solid #ef4444' : '1px solid var(--border)', outline: 'none' }}
                                         />
+
+                                        <span style={{color:'var(--text-muted', fontWeight: '500', fontSize:'0.9rem'}}>
+                                            {productos.find(p=> p.id.toString()=== consumosActuales[index]?.producto_limpieza_id?.toString())?.unidad_medida?.nombre ||''}
+                                        </span>
+                                        </div>
                                         {errorCant && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{errorCant.message}</span>}
                                     </div>
 
