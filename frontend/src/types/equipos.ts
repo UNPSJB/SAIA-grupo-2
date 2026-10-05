@@ -11,15 +11,15 @@ export interface Equipo {
     nombre: string;
     activo: boolean;
     sector_id: number;
+    sector: { id: number; nombre: string };
     tipo_id: number;
+    tipo: TipoEquipo;
     estado: EstadoEquipo;
     frecuencia_mantenimiento_dias: number | null;
     fecha_ultimo_mantenimiento: string;
     fecha_proximo_mantenimiento: string | null;
     dias_restantes: number | null;
     estado_mantenimiento: EstadoMantenimiento;
-    tipo: TipoEquipo;
-    sector: { id: number; nombre: string };
 }
 
 export interface EquipoPayload {
