@@ -130,7 +130,7 @@ export default function EmpleadosList() {
                             </Link>
                             {usuario?.rol === 'admin' && (
                                 <Link to={`/empleados/${emp.id}/documentacion`} title="Documentación y vencimientos">
-                                    <Boton variant="buscar" style={{ padding: '8px 12px' }}>Doc.</Boton>
+                                    <Boton variant="documentos" style={{ padding: '8px 12px' }}></Boton>
                                 </Link>
                             )}
                             {usuario?.rol === 'admin' && !emp.activo && (

@@ -27,6 +27,9 @@
 .guardar, 
 .volver, 
 .siguiente,
+.documentos {
+    background-color: #1a6a4a;
+}
 .buscar {
     background-color: #1a6a4a;
 }
