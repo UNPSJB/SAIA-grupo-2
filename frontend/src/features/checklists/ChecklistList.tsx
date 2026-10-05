@@ -156,7 +156,7 @@ export default function ChecklistList() {
 
         const payload: ChecklistMarcarPayload = {
             plan_id: planActivo || undefined,
-            empleado_id: Number(data.empleado_id),
+            empleado_id: Number(data.empleado_id || usuario?.id),
             observaciones: data.observaciones,
             evidencia_url: evidenciaUrl,
             consumos: data.consumos.map(c => ({
@@ -273,7 +273,7 @@ export default function ChecklistList() {
                                 
                                 <div className={styles.formGroup} style={{ marginBottom: '20px' }}>
                                     <label style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Empleado a cargo:</label>
-                                    <select {...register('empleado_id', { required: true })} style={{ width: '100%', padding: '12px', fontSize: '1rem', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: '#fff', color: '#1f2937' }}>
+                                    <select {...register('empleado_id', { required: true })} disabled={usuario?.rol !== 'admin'} style={{ width: '100%', padding: '12px', fontSize: '1rem', borderRadius: '8px', border: '1px solid var(--border)',backgroundColor: usuario?.rol === 'admin' ? '#fff' : '#f3f4f6', color: '#1f2937' }}>
                                         <option value="">-- Seleccionar empleado --</option>
                                         {empleados.map(e => (
                                             <option key={e.id} value={e.id}>{e.nombre} {e.apellido}</option>
