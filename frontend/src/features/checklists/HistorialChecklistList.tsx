@@ -3,6 +3,7 @@ import type { HistorialChecklistResumen, RegistroChecklistDetalle } from '../../
 import type { Sector } from '../../types/sectores';
 import { getHistorialChecklists, getDetalleTareaRealizada } from '../../services/checklistsServices';
 import { getSectores } from '../../services/sectoresServices';
+import { getProductos } from '../../services/productosLimpiezaServices';
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
 
@@ -35,6 +36,7 @@ export default function HistorialChecklistList() {
     const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
     const [detalleTarea, setDetalleTarea] = useState<RegistroChecklistDetalle | null>(null);
     const [cargandoDetalle, setCargandoDetalle] = useState(false);
+    const [productosList, setProductosList] = useState<any[]>([]);
 
     useEffect(() => {
         const cargarSectores = async () => {
@@ -101,7 +103,11 @@ export default function HistorialChecklistList() {
         setModalDetalleAbierto(true);
         setCargandoDetalle(true);
         try {
-            const data = await getDetalleTareaRealizada(tarea_id, plan_id || 0);
+            const [data, productosData] = await Promise.all([
+                getDetalleTareaRealizada(tarea_id, plan_id || 0),
+                productosList.length > 0 ? Promise.resolve(productosList) : getProductos()
+            ]);
+            setProductosList(productosData);
             setDetalleTarea(data);
         } catch (error) {
             console.error("Error al obtener detalle de la tarea:", error);
@@ -394,12 +400,16 @@ export default function HistorialChecklistList() {
                                     <h4 style={{ margin: '15px 0 10px 0', color: 'var(--text-h)' }}>Consumo Real de Insumos:</h4>
                                     {detalleTarea.consumos_reales && detalleTarea.consumos_reales.length > 0 ? (
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            {detalleTarea.consumos_reales.map(c => (
-                                                <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 15px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px' }}>
-                                                    <span style={{ fontWeight: '500', color: '#166534' }}>{c.nombre_producto}</span>
-                                                    <span style={{ fontWeight: 'bold', color: '#15803d' }}>{c.cantidad} unidades</span>
-                                                </div>
-                                            ))}
+                                            {detalleTarea.consumos_reales.map(c => {
+                                                const prod = productosList.find((p: any) => p.id === c.producto_limpieza_id);
+                                                const unidad = prod?.unidad_medida?.nombre || '';
+                                                return (
+                                                    <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 15px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px' }}>
+                                                        <span style={{ fontWeight: '500', color: '#166534' }}>{c.nombre_producto}</span>
+                                                        <span style={{ fontWeight: 'bold', color: '#15803d' }}>{c.cantidad} {unidad ? unidad : 'unidades'}</span>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     ) : (
                                         <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', margin: 0 }}>No se registraron consumos para esta ejecución.</p>

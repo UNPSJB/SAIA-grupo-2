@@ -184,7 +184,7 @@ p {
 
 .badge {
     color: #16a34a;
-    background-color: transparent;
+    background-color: transparent !important;
     border: none !important;
     padding: 0 !important;
     border-radius: 0 !important;

@@ -20,6 +20,7 @@ interface FormValues {
         cantidad_estimada: number;
         cantidad: string;
         stock_disponible: number;
+        unidad_medida?: string;
     }[];
 }
 
@@ -27,6 +28,7 @@ export default function ChecklistList() {
     const { usuario } = useAuth();
     const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
     const [empleados, setEmpleados] = useState<any[]>([]);
+    const [productosList, setProductosList] = useState<any[]>([]);
     const [cargando, setCargando] = useState(true);
     const [sectorFiltro, setSectorFiltro] = useState<string>('todos');
 
@@ -80,16 +82,19 @@ export default function ChecklistList() {
                 getTareaById(tarea_id.toString()),
                 getProductos()
             ]);
+            setProductosList(productosData);
 
             const consumosPredefinidos = tareaOriginal.consumos_estimados?.map((c: any) => {
                 const prod = productosData.find((p: any) => p.id === c.producto_limpieza.id);
                 const stockActual = prod ? prod.stock : (c.producto_limpieza.stock ?? 0);
+                const unidadMedida = prod?.unidad_medida?.nombre || c.producto_limpieza?.unidad_medida?.nombre || '';
                 return {
                     producto_limpieza_id: c.producto_limpieza.id.toString(),
                     nombre_producto: c.producto_limpieza.nombre,
                     cantidad_estimada: c.cantidad,
                     cantidad: c.cantidad.toString(),
-                    stock_disponible: stockActual
+                    stock_disponible: stockActual,
+                    unidad_medida: unidadMedida
                 };
             }) || [];
 
@@ -128,7 +133,11 @@ export default function ChecklistList() {
         setModalDetalleAbierto(true);
         setCargandoDetalle(true);
         try {
-            const data = await getDetalleTareaRealizada(tarea_id, plan_id);
+            const [data, productosData] = await Promise.all([
+                getDetalleTareaRealizada(tarea_id, plan_id),
+                productosList.length > 0 ? Promise.resolve(productosList) : getProductos()
+            ]);
+            setProductosList(productosData);
             setDetalleTarea(data);
         } catch (error) {
             console.error("Error al obtener detalle de la tarea:", error);
@@ -373,8 +382,9 @@ export default function ChecklistList() {
                                                                 <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: errCant ? '#991b1b' : '#166534' }}>
                                                                     {item.nombre_producto}
                                                                 </span>
+                                                                
                                                                 <span style={{ fontSize: '0.85rem', color: errCant ? '#b91c1c' : '#15803d' }}>
-                                                                    Estimado: {item.cantidad_estimada} | Stock disponible: {item.stock_disponible}
+                                                                    Estimado: {item.cantidad_estimada} {item.unidad_medida || ''} | Stock disponible: {item.stock_disponible} {item.unidad_medida || ''}
                                                                 </span>
                                                             </div>
 
@@ -409,6 +419,11 @@ export default function ChecklistList() {
                                                                         outline: 'none'
                                                                     }}
                                                                 />
+                                                                {item.unidad_medida && (
+                                                                    <span style={{ fontSize: '0.9rem', color: errCant ? '#991b1b' : '#166534', fontWeight: '500' }}>
+                                                                        {item.unidad_medida}
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         </div>
 
@@ -493,12 +508,16 @@ export default function ChecklistList() {
                                     <h4 style={{ margin: '15px 0 10px 0', color: 'var(--text-h)' }}>Consumo Real de Insumos:</h4>
                                     {detalleTarea.consumos_reales && detalleTarea.consumos_reales.length > 0 ? (
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            {detalleTarea.consumos_reales.map(c => (
-                                                <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 15px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px' }}>
-                                                    <span style={{ fontWeight: '500', color: '#166534' }}>{c.nombre_producto}</span>
-                                                    <span style={{ fontWeight: 'bold', color: '#15803d' }}>{c.cantidad} unidades</span>
-                                                </div>
-                                            ))}
+                                            {detalleTarea.consumos_reales.map(c => {
+                                                const prod = productosList.find((p: any) => p.id === c.producto_limpieza_id);
+                                                const unidad = prod?.unidad_medida?.nombre || '';
+                                                return (
+                                                    <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 15px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px' }}>
+                                                        <span style={{ fontWeight: '500', color: '#166534' }}>{c.nombre_producto}</span>
+                                                        <span style={{ fontWeight: 'bold', color: '#15803d' }}>{c.cantidad} {unidad ? unidad : 'unidades'}</span>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     ) : (
                                         <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', margin: 0 }}>No se registraron consumos para esta ejecución.</p>
