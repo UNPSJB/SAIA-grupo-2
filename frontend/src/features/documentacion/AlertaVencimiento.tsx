@@ -18,6 +18,7 @@ interface alertasPorEmpleado{
     documentos: AlertaVencimiento[];
 }
 
+
 export default function AlertasDocumentacion(){
     const { usuario } = useAuth();
     const esAdmin = usuario?.rol === 'admin';

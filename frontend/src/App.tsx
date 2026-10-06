@@ -10,6 +10,7 @@ import DocumentacionEmpleado from './features/documentacion/DocumentacionEmplead
 import DocumentacionForm from './features/documentacion/DocumentacionForm';
 import AlertasDocumentacion from './features/documentacion/AlertaVencimiento';
 
+
 import CapacidadesList from './features/capacidades/CapacidadesList';
 import CapacidadForm from './features/capacidades/CapacidadForm';
 
