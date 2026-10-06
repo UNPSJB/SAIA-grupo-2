@@ -8,6 +8,7 @@ import EmpleadoDetail from './features/empleados/EmpleadoDetail';
 import EmpleadoDelete from './features/empleados/EmpleadoDelete';
 import DocumentacionEmpleado from './features/documentacion/DocumentacionEmpleado';
 import DocumentacionForm from './features/documentacion/DocumentacionForm';
+import AlertasDocumentacion from './features/documentacion/AlertaVencimiento';
 
 import CapacidadesList from './features/capacidades/CapacidadesList';
 import CapacidadForm from './features/capacidades/CapacidadForm';
@@ -84,6 +85,7 @@ function RutasProtegidas() {
             <span className="navLink">Recursos Humanos ▾</span>
             <div className="dropdownContent">
               <Link to="/empleados">Directorio de Empleados</Link>
+              <Link to="/empleados/alertas"> Alertas de Vencimiento</Link>
               <Link to="/capacidades">Gestión de Capacidades</Link>
               <Link to="/sectores">Gestión de Sectores</Link>
             </div>
@@ -138,6 +140,7 @@ function RutasProtegidas() {
           <Route path="/" element={<h1>SAIA - Grupo 2</h1>} />
           
           <Route path="/empleados" element={<RutaAdmin><EmpleadosList /></RutaAdmin>} />
+          <Route path="/empleados/alertas" element={<RutaAdmin><AlertasDocumentacion /></RutaAdmin>} />
           <Route path="/empleados/nuevo" element={<RutaAdmin><EmpleadoForm /></RutaAdmin>} />
           <Route path="/empleados/editar/:id" element={<RutaAdmin><EmpleadoForm /></RutaAdmin>} />
           <Route path="/empleados/eliminar/:id" element={<RutaAdmin><EmpleadoDelete /></RutaAdmin>} />
