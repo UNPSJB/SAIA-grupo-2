@@ -107,7 +107,6 @@ function RutasProtegidas() {
             <span className="navLink">Equipamiento ▾</span>
             <div className="dropdownContent">
               <Link to="/equipos">Inventario de Equipos</Link>
-              <Link to="/vencimientos-documentacion">Control de Vencimientos</Link>
             </div>
           </div>
         )}
