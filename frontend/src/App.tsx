@@ -49,7 +49,7 @@ import ElementoLimpiezaForm from './features/elementosLimpieza/ElementoLimpiezaF
 import ElementoLimpiezaDetail from './features/elementosLimpieza/ElementoLimpiezaDetail';
 import ElementoLimpiezaDelete from './features/elementosLimpieza/ElementoLimpiezaDelete';
 import AlertasRecambio from './features/elementosLimpieza/AlertasRecambio';
-import VencimientosList from './features/vencimientos/VencimientosList';
+import VencimientosDocumentacionList from './features/vencimientosDocumentacion/VencimientosDocumentacionList';
 
 
 import './App.css';
@@ -87,7 +87,7 @@ function RutasProtegidas() {
               <Link to="/empleados">Directorio de Empleados</Link>
               <Link to="/capacidades">Gestión de Capacidades</Link>
               <Link to="/sectores">Gestión de Sectores</Link>
-              <Link to="/vencimientos">Vencimientos de Personal</Link>
+              <Link to="/vencimientos-documentacion">Vencimientos de Personal</Link>
             </div>
           </div>
         )}
@@ -107,7 +107,7 @@ function RutasProtegidas() {
             <span className="navLink">Equipamiento ▾</span>
             <div className="dropdownContent">
               <Link to="/equipos">Inventario de Equipos</Link>
-              <Link to="/vencimientos">Control de Vencimientos</Link>
+              <Link to="/vencimientos-documentacion">Control de Vencimientos</Link>
             </div>
           </div>
         )}
@@ -164,7 +164,6 @@ function RutasProtegidas() {
           <Route path="/equipos/:id" element={<EquipoDetail />} />
           <Route path="/equipos/editar/:id" element={<RutaAdmin><EquipoForm /></RutaAdmin>} />
           <Route path="/equipos/eliminar/:id" element={<RutaAdmin><EquipoDelete /></RutaAdmin>} />
-          <Route path="/vencimientos" element={<RutaAdmin><VencimientosList /></RutaAdmin>} />
 
           <Route path="/sectores" element={<RutaAdmin><SectoresList /></RutaAdmin>} />
           <Route path="/sectores/nuevo" element={<RutaAdmin><SectorForm /></RutaAdmin>} />
@@ -197,7 +196,7 @@ function RutasProtegidas() {
           <Route path="/checklists/hoy" element={<ChecklistList />} />
           <Route path="/checklists/historial" element={<RutaAdmin><HistorialChecklistList /></RutaAdmin>} />
 
-          <Route path="/vencimientos" element={<RutaAdmin><VencimientosList /></RutaAdmin>}/>
+          <Route path="/vencimientos-documentacion" element={<RutaAdmin><VencimientosDocumentacionList /></RutaAdmin>}/>
         </Routes>
       </div>
     </>

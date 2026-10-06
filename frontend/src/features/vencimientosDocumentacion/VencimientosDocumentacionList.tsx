@@ -13,7 +13,7 @@ import {
 } from '../documentacion/estadoVencimiento';
 import styles from '../../styles/shared.module.css';
 
-export default function VencimientosList() {
+export default function VencimientosDocumentacionList() {
     const [vencimientos, setVencimientos] = useState<AlertaVencimiento[]>([]);
     const [empleados, setEmpleados] = useState<Empleado[]>([]);
 
