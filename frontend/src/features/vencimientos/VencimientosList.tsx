@@ -3,6 +3,7 @@ import type { AlertaVencimiento } from '../../types/documentacion';
 import type { Empleado } from '../../types/empleados';
 import { getAlertasDocumentacion } from '../../services/documentacionServices';
 import { getEmpleados } from '../../services/empleadosServices';
+import Boton from '../../components/Boton';
 import {
     COLOR_ESTADO,
     ETIQUETA_ESTADO,
@@ -113,8 +114,8 @@ export default function VencimientosList() {
                 </span>
             </p>
 
-            <div className={styles.formularioTarjeta}>
-                <div>
+            <div className={styles.filtrosVencimientos}>
+                <div className={styles.filtroVencimiento}>
                     <label htmlFor="empleado">Persona</label>
                     <select
                         id="empleado"
@@ -134,7 +135,7 @@ export default function VencimientosList() {
                     </select>
                 </div>
 
-                <div>
+                <div className={styles.filtroVencimiento}>
                     <label htmlFor="fechaDesde">Vencimiento desde</label>
                     <input
                         id="fechaDesde"
@@ -144,7 +145,7 @@ export default function VencimientosList() {
                     />
                 </div>
 
-                <div>
+                <div className={styles.filtroVencimiento}>
                     <label htmlFor="fechaHasta">Vencimiento hasta</label>
                     <input
                         id="fechaHasta"
@@ -154,14 +155,13 @@ export default function VencimientosList() {
                     />
                 </div>
 
-                <div className={styles.filaBotones}>
-                    <button
-                        type="button"
-                        onClick={limpiarFiltros}
-                    >
-                        Limpiar filtros
-                    </button>
-                </div>
+                <Boton
+                    type="button"
+                    variant="volver"
+                    onClick={limpiarFiltros}
+                >
+                    Limpiar filtros
+                </Boton>
             </div>
 
             {error && (
@@ -224,10 +224,9 @@ export default function VencimientosList() {
 
                         <div>
                             <span
-                                className={styles.badge}
+                                className={styles.badgeVencimiento}
                                 style={{
-                                    backgroundColor:
-                                        COLOR_ESTADO[vencimiento.estado],
+                                    backgroundColor: COLOR_ESTADO[vencimiento.estado],
                                     color: 'white',
                                 }}
                             >
