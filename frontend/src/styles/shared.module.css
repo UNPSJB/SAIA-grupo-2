@@ -30,6 +30,45 @@
     margin-top: 20px;
 }
 
+.accordion {
+    width: 100%;
+}
+
+.accordionItem {
+    width: 100%;
+}
+
+.accordionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    cursor: pointer;
+    list-style: none;
+}
+
+.accordionHeader::-webkit-details-marker {
+    display: none;
+}
+
+.accordionHeader::marker {
+    content: '';
+}
+
+.accordionIcon {
+    display: block;
+    flex: 0 0 16px;
+    transition: transform 0.2s ease;
+}
+
+.accordionItem[open] .accordionIcon {
+    transform: rotate(180deg);
+}
+
+.accordionBody {
+    padding-top: 12px;
+}
+
 .formularioTarjeta {
     width: 100%;
 }

@@ -59,6 +59,18 @@ export default function EquipoDetail() {
                     </p>
                     
                     <p><strong>Último mantenimiento:</strong> {equipo.fecha_ultimo_mantenimiento}</p>
+                    <div className={styles.accordion}>
+                        <details className={styles.accordionItem} name="accordionExample" open>
+                            <summary className={styles.accordionHeader}>
+                                <strong>Calibraciones</strong>{' '}
+                                <svg className={styles.accordionIcon} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m2 5 6 6 6-6"/></svg>
+                            </summary>
+                            <div className={styles.accordionBody}>
+                            <strong>This is the first item’s accordion body.</strong> It is shown by default because the <code>open</code> attribute is present. The native <code>&lt;details&gt;</code> element handles all the show/hide logic without any JavaScript. You can put any HTML content within the <code>.accordion-body</code>.
+                            </div>
+                        </details>
+                    </div>
+
                     <div className={styles.bloqueDetalle}>
                         <Link to="/equipos">
                             <Boton variant="volver">Volver a la lista</Boton>
