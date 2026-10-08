@@ -139,11 +139,13 @@ export default function PlanForm() {
         borderRadius: '6px',
         backgroundColor: '#ffffff',
         color: '#374151',
+        colorScheme: 'light' as const,
         fontSize: '1rem',
         fontFamily: 'inherit',
         boxSizing: 'border-box' as const,
         cursor: 'pointer'
     };
+
 
     const fechaAmigable = hoyLocal.split('-').reverse().join('/');
 

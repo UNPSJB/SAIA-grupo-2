@@ -140,6 +140,7 @@ export default function VencimientosDocumentacionList() {
                     <input
                         id="fechaDesde"
                         type="date"
+                        className={styles.filtroFecha}
                         value={fechaDesde}
                         onChange={(e) => setFechaDesde(e.target.value)}
                     />
@@ -150,6 +151,7 @@ export default function VencimientosDocumentacionList() {
                     <input
                         id="fechaHasta"
                         type="date"
+                        className={styles.filtroFecha}
                         value={fechaHasta}
                         onChange={(e) => setFechaHasta(e.target.value)}
                     />

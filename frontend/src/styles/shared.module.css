@@ -375,22 +375,6 @@ p {
     cursor: pointer;
 }
 
-.filtroVencimiento input[type="date"] {
-    width: 100%;
-    height: 40px;
-    min-width: 0;
-    padding: 0 10px;
-    box-sizing: border-box;
-}
-
-
-.filtroVencimiento select:focus,
-.filtroVencimiento input[type="date"]:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
-}
-
 /* Badges de estado de vencimiento */
 .badgeVencimiento {
     display: inline-flex;
@@ -416,4 +400,45 @@ p {
     .filtrosVencimientos {
         grid-template-columns: 1fr;
     }
+}
+
+.filtroFecha {
+    width: 100%;
+    height: 40px;
+    min-width: 0;
+    padding: 0 10px;
+    box-sizing: border-box;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--input-bg, white);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.filtroFecha:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
+}
+
+.filtroFechaError,
+.filtroFechaError:focus {
+    border-color: #ef4444;
+}
+
+input[type="date"].filtroFecha {
+    color-scheme: light;
+    padding-right: 8px;
+}
+
+input[type="date"].filtroFecha::-webkit-calendar-picker-indicator {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    margin-left: 6px;
 }

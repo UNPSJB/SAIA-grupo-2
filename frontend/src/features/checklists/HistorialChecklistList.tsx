@@ -140,13 +140,15 @@ export default function HistorialChecklistList() {
                         <input
                             type="date"
                             value={fechaInicio}
+                            className={`${styles.filtroFecha} ${
+                                errorFechaInicio ? styles.filtroFechaError : ''
+                            }`}
                             onChange={(e) => {
                                 setFechaInicioInvalida(e.target.validity.badInput);
                                 setFechaInicio(e.target.value);
                                 setErrorFechaInicio('');
                             }}
                             onBlur={(e) => setFechaInicioInvalida(e.target.validity.badInput)}
-                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: errorFechaInicio ? '1px solid #ef4444' : '1px solid var(--border)', backgroundColor: 'var(--bg)', color: 'var(--text-h)', outline: 'none' }}
                         />
                         {errorFechaInicio && <span className={styles.textDanger}>{errorFechaInicio}</span>}
                     </div>
@@ -156,13 +158,15 @@ export default function HistorialChecklistList() {
                         <input
                             type="date"
                             value={fechaFin}
+                            className={`${styles.filtroFecha} ${
+                                errorFechaFin ? styles.filtroFechaError : ''
+                            }`}
                             onChange={(e) => {
                                 setFechaFinInvalida(e.target.validity.badInput);
                                 setFechaFin(e.target.value);
                                 setErrorFechaFin('');
                             }}
                             onBlur={(e) => setFechaFinInvalida(e.target.validity.badInput)}
-                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: errorFechaFin ? '1px solid #ef4444' : '1px solid var(--border)', backgroundColor: 'var(--bg)', color: 'var(--text-h)', outline: 'none' }}
                         />
                         {errorFechaFin && <span className={styles.textDanger}>{errorFechaFin}</span>}
                     </div>
