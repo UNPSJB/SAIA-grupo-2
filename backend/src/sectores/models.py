@@ -1,5 +1,5 @@
 from typing import Optional, List, TYPE_CHECKING
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.models import ModeloBase
 from src.asociaciones.empleado_sector import empleado_sector
@@ -13,7 +13,8 @@ class Sector(ModeloBase):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     nombre: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
-    
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+
     # Responsable a cargo del sector
     responsable_id: Mapped[Optional[int]] = mapped_column(ForeignKey("empleados.id"), nullable=True)
     responsable: Mapped[Optional["Empleado"]] = relationship("Empleado", foreign_keys=[responsable_id])

@@ -99,6 +99,9 @@ def leer_empleado(db: Session, empleado_id: int) -> schemas.Empleado:
         raise exceptions.EmpleadoNoEncontrado()
     return db_empleado
 
+from fastapi import HTTPException
+from sqlalchemy import update, delete
+
 def modificar_empleado(
     db: Session, empleado_id: int, empleado: schemas.EmpleadoUpdate
 ) -> Empleado:
@@ -114,6 +117,15 @@ def modificar_empleado(
         dni_existente = db.scalar(select(Empleado).where(Empleado.dni == empleado.dni))
         if dni_existente:
             raise exceptions.DniDuplicado()
+
+    if not empleado.activo:
+        sectores_cargo = db.scalars(select(Sector).where(Sector.responsable_id == empleado_id)).all()
+        if sectores_cargo:
+            nombres = ", ".join(s.nombre for s in sectores_cargo)
+            raise HTTPException(
+                status_code=400,
+                detail=f"Este empleado no puede darse de baja, es el encargado del sector {nombres}."
+            )
 
     db_empleado.dni = empleado.dni
     db_empleado.nombre = empleado.nombre
@@ -158,11 +170,24 @@ def eliminar_empleado(db: Session, empleado_id: int) -> schemas.Empleado:
     if db_empleado is None:
         raise exceptions.EmpleadoNoEncontrado()
 
-    respuesta = schemas.Empleado.model_validate(db_empleado)
+    if db_empleado.activo:
+        raise HTTPException(
+            status_code=400,
+            detail="Los empleados activos no se pueden eliminar físicamente. Primero debe darlo de baja lógica."
+        )
 
     sectores_responsable = db.scalars(select(Sector).where(Sector.responsable_id == empleado_id)).all()
-    for sec in sectores_responsable:
-        sec.responsable_id = None
+    if sectores_responsable:
+        nombres = ", ".join(s.nombre for s in sectores_responsable)
+        raise HTTPException(
+            status_code=400,
+            detail=f"Este empleado no puede eliminarse, es el encargado del sector {nombres}."
+        )
+
+    respuesta = schemas.Empleado.model_validate(db_empleado)
+
+    from src.checklists.models import Checklist
+    db.execute(update(Checklist).where(Checklist.empleado_id == empleado_id).values(empleado_id=None))
 
     if db_empleado.capacidades:
         db_empleado.capacidades.clear()

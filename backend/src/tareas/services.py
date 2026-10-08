@@ -22,6 +22,9 @@ def _resolver_planes(db, planes_ids: List[int]):
         planes.append(db_plan)
     return planes
 
+from fastapi import HTTPException
+from sqlalchemy import update
+
 def _construir_consumos(
     db: Session, consumos: List[schemas.ConsumoEstimadoCreate]
 ) -> List[ConsumoEstimado]:
@@ -33,6 +36,11 @@ def _construir_consumos(
         vistos.add(consumo.producto_limpieza_id)
 
         db_producto = productos_services.leer_producto(db, consumo.producto_limpieza_id)
+        if not db_producto.activo:
+            raise HTTPException(
+                status_code=400,
+                detail=f"El producto de limpieza '{db_producto.nombre}' está inactivo y no se puede agregar a la tarea."
+            )
         if db_producto.stock <= 0:
             raise exceptions.SinStock()
 
@@ -75,15 +83,26 @@ def leer_tarea(db: Session, tarea_id: int) -> schemas.Tarea:
     return db_tarea
 
 
+def obtener_impacto_tarea(db: Session, tarea_id: int) -> List[str]:
+    db_tarea = leer_tarea(db, tarea_id)
+    return [p.titulo for p in db_tarea.planes]
+
+
 def modificar_tarea(
     db: Session, tarea_id: int, tarea: schemas.TareaUpdate
 ) -> schemas.Tarea:
     db_tarea = leer_tarea(db, tarea_id)
 
+    if not tarea.activo and db_tarea.activo:
+        db_tarea.planes.clear()
+        db_tarea.activo = False
+    elif tarea.activo:
+        db_tarea.planes = _resolver_planes(db, tarea.planes)
+        db_tarea.activo = True
+
     nuevos_consumos = _construir_consumos(db, tarea.consumos_estimados)
-    db_tarea.planes = _resolver_planes(db, tarea.planes)
     for campo, valor in tarea.model_dump(
-        exclude={"consumos_estimados", "planes"}
+        exclude={"consumos_estimados", "planes", "activo"}
         ).items():
         setattr(db_tarea, campo, valor)
 
@@ -95,7 +114,20 @@ def modificar_tarea(
 
 
 def eliminar_tarea(db: Session, tarea_id: int) -> schemas.TareaDelete:
-    leer_tarea(db, tarea_id)
+    db_tarea = leer_tarea(db, tarea_id)
+    if db_tarea.activo:
+        raise HTTPException(
+            status_code=400,
+            detail="Las tareas activas no se pueden eliminar físicamente. Primero debe darla de baja lógica."
+        )
+
+    if db_tarea.planes:
+        titulos = ", ".join(p.titulo for p in db_tarea.planes)
+        raise HTTPException(
+            status_code=400,
+            detail=f"No se puede eliminar físicamente esta tarea porque aún se encuentra asociada a los planes: {titulos}."
+        )
+
     db.execute(delete(Tarea).where(Tarea.id == tarea_id))
     db.commit()
     return schemas.TareaDelete(id=tarea_id, msg="borrado")

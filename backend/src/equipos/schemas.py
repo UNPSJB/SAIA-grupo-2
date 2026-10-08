@@ -17,7 +17,7 @@ class SectorRef(BaseModel):
 
 class EquipoBase(BaseModel):
     nombre: NombreEquipo
-    activo: bool
+    activo: bool = True
     sector_id: int 
     tipo_id: int 
     estado: EstadoEquipo = EstadoEquipo.BUENO

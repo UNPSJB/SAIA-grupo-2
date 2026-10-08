@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, Enum as SQLEnum
+from sqlalchemy import ForeignKey, Boolean, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.models import ModeloBase
 from src.productos_limpieza.constants import TipoProductoLimpieza
@@ -9,6 +9,7 @@ class ProductoLimpieza(ModeloBase):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     nombre: Mapped[str] = mapped_column(index=True)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
     tipo: Mapped[TipoProductoLimpieza] = mapped_column(
         SQLEnum(
             TipoProductoLimpieza,

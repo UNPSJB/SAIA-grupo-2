@@ -11,6 +11,7 @@ NombreElemento = Annotated[str, StringConstraints(strip_whitespace=True, min_len
 class ElementoLimpiezaBase(BaseModel):
     nombre: NombreElemento
     frecuencia_recambio_dias: Optional[int] = Field(default=None, gt=0)
+    activo: bool = True
 
 
 class ElementoLimpiezaCreate(ElementoLimpiezaBase):
@@ -19,6 +20,7 @@ class ElementoLimpiezaCreate(ElementoLimpiezaBase):
 
 class ElementoLimpiezaUpdate(ElementoLimpiezaBase):
     fecha_ultimo_recambio: Optional[date] = None
+    activo: bool = True
 
 
 class RecambioCreate(BaseModel):

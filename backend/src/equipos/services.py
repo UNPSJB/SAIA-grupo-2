@@ -92,6 +92,13 @@ def modificar_equipo(
     db.refresh(db_equipo)
     return db_equipo
 
+from fastapi import HTTPException
+from src.planes.models import Plan
+
+def obtener_impacto_equipo(db: Session, equipo_id: int) -> List[str]:
+    planes = db.scalars(select(Plan).where(Plan.equipos.any(id=equipo_id))).all()
+    return [p.titulo for p in planes]
+
 def eliminar_equipo(db: Session, equipo_id: int) -> schemas.Equipo:
     db_equipo = db.scalar(
         select(Equipo)
@@ -100,6 +107,20 @@ def eliminar_equipo(db: Session, equipo_id: int) -> schemas.Equipo:
     )
     if db_equipo is None:
         raise exceptions.EquipoNoEncontrado()
+
+    if db_equipo.activo:
+        raise HTTPException(
+            status_code=400,
+            detail="Los equipos activos no se pueden eliminar físicamente. Primero debe darlo de baja lógica."
+        )
+
+    planes = db.scalars(select(Plan).where(Plan.equipos.any(id=equipo_id))).all()
+    if planes:
+        titulos = ", ".join(p.titulo for p in planes)
+        raise HTTPException(
+            status_code=400,
+            detail=f"No se puede eliminar físicamente este equipo porque está vinculado a los siguientes planes: {titulos}."
+        )
 
     respuesta = schemas.Equipo.model_validate(db_equipo)
     db.execute(delete(Equipo).where(Equipo.id == equipo_id))

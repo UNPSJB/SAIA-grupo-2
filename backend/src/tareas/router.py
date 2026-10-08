@@ -34,6 +34,11 @@ def update_tarea(
     return services.modificar_tarea(db, tarea_id, tarea)
 
 
+@router.get("/{tarea_id}/impacto", response_model=list[str])
+def get_impacto_tarea(tarea_id: int, db: Session = Depends(get_db)):
+    return services.obtener_impacto_tarea(db, tarea_id)
+
+
 @router.delete("/{tarea_id}", response_model=schemas.TareaDelete)
 def delete_tarea(tarea_id: int, db: Session = Depends(get_db)):
     return services.eliminar_tarea(db, tarea_id)

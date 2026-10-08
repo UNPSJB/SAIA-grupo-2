@@ -40,6 +40,11 @@ def update_producto(
     return services.modificar_producto(db, producto_id, producto)
 
 
+@router.get("/{producto_id}/impacto")
+def get_impacto_producto(producto_id: int, db: Session = Depends(get_db)):
+    return services.obtener_impacto_producto(db, producto_id)
+
+
 @router.delete("/{producto_id}", response_model=schemas.ProductoLimpiezaDelete)
 def delete_producto(producto_id: int, db: Session = Depends(get_db)):
     return services.eliminar_producto(db, producto_id)

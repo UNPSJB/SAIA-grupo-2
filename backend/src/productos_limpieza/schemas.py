@@ -13,6 +13,7 @@ class ProductoLimpiezaBase(BaseModel):
     tipo: TipoProductoLimpieza
     stock: float = Field(default=0, ge=0)
     unidad_medida_id: int
+    activo: bool = True
 
 
 class ProductoLimpiezaCreate(ProductoLimpiezaBase):
@@ -20,7 +21,7 @@ class ProductoLimpiezaCreate(ProductoLimpiezaBase):
 
 
 class ProductoLimpiezaUpdate(ProductoLimpiezaBase):
-    pass
+    activo: bool = True
 
 
 class ProductoLimpieza(ProductoLimpiezaBase):

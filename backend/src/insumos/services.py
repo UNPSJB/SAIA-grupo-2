@@ -43,8 +43,15 @@ def modificar_insumo(
     db.refresh(db_insumo)
     return db_insumo
 
+from fastapi import HTTPException
+
 def eliminar_insumo(db: Session, insumo_id: int) -> schemas.InsumoDelete:
     db_insumo = leer_insumo(db, insumo_id)
+    if db_insumo.activo:
+        raise HTTPException(
+            status_code=400,
+            detail="Los insumos activos no se pueden eliminar físicamente. Primero debe darlo de baja lógica."
+        )
     db.execute(delete(Insumo).where(Insumo.id == insumo_id))
     db.commit()
     return {"id": insumo_id, "msg": "borrado"}

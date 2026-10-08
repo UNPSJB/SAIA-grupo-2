@@ -1,6 +1,6 @@
 from typing import List, TYPE_CHECKING
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import Enum as SQLEnum, ForeignKey
+from sqlalchemy import Enum as SQLEnum, ForeignKey, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.asociaciones.plan_tareas import plan_tarea
@@ -17,6 +17,7 @@ class Tarea(ModeloBase):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     titulo: Mapped[str] = mapped_column(index=True)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
     frecuencia: Mapped[FrecuenciaTarea] = mapped_column(
         SQLEnum(
             FrecuenciaTarea,

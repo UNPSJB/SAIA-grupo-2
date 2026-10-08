@@ -19,15 +19,18 @@ class EquipoRef(BaseModel):
 class SectorBase(BaseModel):
     nombre: NombreSector
     responsable_id: Optional[int] = None
+    activo: bool = True
 
 class SectorCreate(SectorBase):
     listaEmpleados: Optional[List[int]] = None
 
 class SectorUpdate(SectorBase):
     listaEmpleados: Optional[List[int]] = None
+    activo: Optional[bool] = True
 
 class Sector(SectorBase):
     id: int
+    activo: bool = True
     responsable: Optional[EmpleadoRef] = None
     empleados: List[EmpleadoRef] = []
     equipos: List[EquipoRef] = []
