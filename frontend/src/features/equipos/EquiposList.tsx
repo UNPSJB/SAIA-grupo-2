@@ -10,24 +10,24 @@ import styles from '../../styles/shared.module.css';
 export default function EquiposList() {
     const { usuario } = useAuth();
     const [equipos, setEquipos] = useState<Equipo[]>([]);
+
     const [paginaActual, setPaginaActual] = useState(1);
     const equiposPorPagina = 5; 
 
-    useEffect(() => {
         const cargarDatos = async () => {
             try {
                 const data = await getEquipos();
-                
                 const datosOrdenados = data.sort((a, b) => {
                     if (a.activo === b.activo) return 0;
                     return a.activo ? -1 : 1;
                 });
-                
                 setEquipos(datosOrdenados);
             } catch (error) {
                 console.error("Error al cargar equipos:", error);
             }
         };
+
+    useEffect(() => {
         cargarDatos();
     }, []);
 

@@ -33,9 +33,13 @@ def crear_calibracion_realizada(db: Session, calibracion: schemas.CalibracionRea
     
     if _calibracionrealizada.equipo_id is None:
         raise exceptions.EquipoRequerido()
-    EQUIPO_EXISTE = buscar_equipo(db, _calibracionrealizada.equipo_id)
-    if EQUIPO_EXISTE is None:
+
+    equipo = buscar_equipo(db, _calibracionrealizada.equipo_id)
+    EQUIPO_EXISTE = equipo is not None
+    if not EQUIPO_EXISTE:
         raise exceptions.EquipoNoEncontrado()
+    if _calibracionrealizada.fecha > equipo.fecha_ultimo_mantenimiento:
+        equipo.fecha_ultimo_mantenimiento = _calibracionrealizada.fecha
     
     if _calibracionrealizada.certificacion_url is None:
         raise exceptions.CertificacionRequerida()
@@ -48,6 +52,7 @@ def crear_calibracion_realizada(db: Session, calibracion: schemas.CalibracionRea
         raise exceptions.CalibracionDuplicada()
     
     db.add(_calibracionrealizada)
+    db.add(equipo)
     db.commit()
     db.refresh(_calibracionrealizada)
     return _calibracionrealizada
