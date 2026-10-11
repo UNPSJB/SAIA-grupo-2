@@ -6,11 +6,14 @@ import { getEquipoById } from '../../services/equiposServices';
 import { getCalibracionesByEquipoId } from '../../services/calibracionRealizadaServices';
 import { COLOR_ESTADO, ETIQUETA_ESTADO, textoMantenimiento } from './estadoMantenimiento';
 import Boton from '../../components/Boton';
+import RegistrarCalibracionModal from './RegistrarCalibracionModal';
 import styles from '../../styles/shared.module.css';
 
 export default function EquipoDetail() {
     const [equipo, setEquipo] = useState<Equipo | null>(null);
     const [calibraciones, setCalibraciones] = useState<CalibracionRealizada[] | null>([]);
+    const [certificacionAbierta, setCertificacionAbierta] = useState<CalibracionRealizada | null>(null);
+    const [modalCalibracionAbierto, setModalCalibracionAbierto] = useState(false);
     const { id } = useParams();
 
     const cargarEquipo = async()=>{
@@ -67,13 +70,13 @@ export default function EquipoDetail() {
                     <p style={{marginBottom: '20px'}}><strong>Último mantenimiento:</strong> {equipo.fecha_ultimo_mantenimiento}</p>
 
                     {calibraciones?.length > 0 ? (
-                    <div className={styles.accordion}>
+                        <div className={styles.accordion}>
                             <details className={styles.accordionItem} open>
-                            <summary className={styles.accordionHeader}>
-                                <strong>Calibraciones</strong>{' '}
-                                <svg className={styles.accordionIcon} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m2 5 6 6 6-6"/></svg>
-                            </summary>
-                            <div className={styles.accordionBody}>
+                                <summary className={styles.accordionHeader}>
+                                    <strong>Calibraciones</strong>{' '}
+                                    <svg className={styles.accordionIcon} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m2 5 6 6 6-6"/></svg>
+                                </summary>
+                                <div className={styles.accordionBody}> 
                                     <div className={styles.contenedorTabla}>
                                         <div className={styles.filaHeader} style={{ gridTemplateColumns: '2.5fr 0fr' }}>
                                             <div>Fecha</div>
@@ -85,18 +88,18 @@ export default function EquipoDetail() {
                                                     {cr.fecha}
                                                 </div>
                                                 <div className={styles.grupoBotonesTabla}>
-                                                        <Boton
-                                                            variant="documentos"
-                                                            onClick={() => setCertificacionAbierta(cr)}
-                                                            title="Ver certificación"
-                                                        />
+                                                    <Boton
+                                                        variant="documentos"
+                                                        onClick={() => setCertificacionAbierta(cr)}
+                                                        title="Ver certificación"
+                                                    />
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
-                            </div>
-                        </details>
-                    </div>
+                                </div>
+                            </details>
+                        </div>
                         ) : (
                             <p>El equipo no posee calibraciones registradas</p>
                         )}
@@ -105,10 +108,79 @@ export default function EquipoDetail() {
                         <Link to="/equipos">
                             <Boton variant="volver">Volver a la lista</Boton>
                         </Link>
+                        <Boton variant="crear" onClick={() => setModalCalibracionAbierto(true)}>
+                            Registrar calibración
+                        </Boton>
                     </div>
                 </div>
             ) : (
                 <p>Equipo no encontrado</p>
+            )}
+
+            {certificacionAbierta && (
+                <div
+                    className={styles.modalOverlay}
+                    role="presentation"
+                    onClick={(event) => {
+                        if (event.target === event.currentTarget) setCertificacionAbierta(null);
+                    }}
+                >
+                    <section
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="titulo-certificacion"
+                        style={{
+                            backgroundColor: 'var(--bg)',
+                            width: '95%',
+                            maxWidth: '1000px',
+                            maxHeight: '90vh',
+                            overflowY: 'auto',
+                            borderRadius: '12px',
+                            padding: '24px',
+                            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)'
+                        }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                            <h2 id="titulo-certificacion" style={{ margin: 0, color: 'var(--text-h)' }}>
+                                Certificación - {certificacionAbierta.fecha}
+                            </h2>
+                            <Boton variant="volver" onClick={() => setCertificacionAbierta(null)}>
+                                Cerrar
+                            </Boton>
+                        </div>
+
+                        {certificacionAbierta.certificacion_url.startsWith('data:image/') ||
+                        /\.(png|jpe?g|gif|webp|svg)(?:[?#]|$)/i.test(certificacionAbierta.certificacion_url) ? (
+                            <img
+                                src={certificacionAbierta.certificacion_url}
+                                alt={`Certificación del ${certificacionAbierta.fecha}`}
+                                style={{ display: 'block', maxWidth: '100%', maxHeight: '75vh', margin: '0 auto', objectFit: 'contain' }}
+                            />
+                        ) : certificacionAbierta.certificacion_url.startsWith('data:application/pdf') ||
+                          /\.pdf(?:[?#]|$)/i.test(certificacionAbierta.certificacion_url) ||
+                          certificacionAbierta.certificacion_url.startsWith('http') ? (
+                            <iframe
+                                src={certificacionAbierta.certificacion_url}
+                                title={`Certificación del ${certificacionAbierta.fecha}`}
+                                style={{ display: 'block', width: '100%', height: '75vh', border: 0, backgroundColor: '#fff' }}
+                            />
+                        ) : (
+                            <p style={{ color: 'var(--text-muted)' }}>
+                                No se puede previsualizar este formato de certificación.
+                            </p>
+                        )}
+                    </section>
+                </div>
+            )}
+
+            {modalCalibracionAbierto && equipo && (
+                <RegistrarCalibracionModal
+                    equipo={equipo}
+                    onClose={() => setModalCalibracionAbierto(false)}
+                    onSuccess={() => {
+                        void cargarEquipo();
+                    }}
+                />
             )}
         </div>
     );
