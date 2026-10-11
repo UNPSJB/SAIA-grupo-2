@@ -1,19 +1,24 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from 'react-router-dom';
 import type { Equipo } from '../../types/equipos';
+import type { CalibracionRealizada } from '../../types/calibracionRealizada';
 import { getEquipoById } from '../../services/equiposServices';
+import { getCalibracionesByEquipoId } from '../../services/calibracionRealizadaServices';
 import { COLOR_ESTADO, ETIQUETA_ESTADO, textoMantenimiento } from './estadoMantenimiento';
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
 
 export default function EquipoDetail() {
     const [equipo, setEquipo] = useState<Equipo | null>(null);
+    const [calibraciones, setCalibraciones] = useState<CalibracionRealizada[] | null>([]);
     const { id } = useParams();
 
     const cargarEquipo = async()=>{
         if (!id) return;
         try{
             const data = await getEquipoById(id);
+            const calibracionesData = await getCalibracionesByEquipoId(id);
+            setCalibraciones(calibracionesData);
             setEquipo(data);
         } catch (error){
             console.error("Error al cargar el equipo:", error);
@@ -38,6 +43,7 @@ export default function EquipoDetail() {
                     <p><strong>Mantenimiento:</strong>{' '}
                         <span
                             style={{
+                                marginBottom: '20px',
                                 fontSize: '0.9rem',
                                 fontWeight: 'bold',
                                 color: COLOR_ESTADO[equipo.estado_mantenimiento]
@@ -58,20 +64,44 @@ export default function EquipoDetail() {
                         {equipo.fecha_proximo_mantenimiento && ` (${textoMantenimiento(equipo)})`}
                     </p>
                     
-                    <p><strong>Último mantenimiento:</strong> {equipo.fecha_ultimo_mantenimiento}</p>
+                    <p style={{marginBottom: '20px'}}><strong>Último mantenimiento:</strong> {equipo.fecha_ultimo_mantenimiento}</p>
+
+                    {calibraciones?.length > 0 ? (
                     <div className={styles.accordion}>
-                        <details className={styles.accordionItem} name="accordionExample" open>
+                            <details className={styles.accordionItem} open>
                             <summary className={styles.accordionHeader}>
                                 <strong>Calibraciones</strong>{' '}
                                 <svg className={styles.accordionIcon} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m2 5 6 6 6-6"/></svg>
                             </summary>
                             <div className={styles.accordionBody}>
-                            <strong>This is the first item’s accordion body.</strong> It is shown by default because the <code>open</code> attribute is present. The native <code>&lt;details&gt;</code> element handles all the show/hide logic without any JavaScript. You can put any HTML content within the <code>.accordion-body</code>.
+                                    <div className={styles.contenedorTabla}>
+                                        <div className={styles.filaHeader} style={{ gridTemplateColumns: '2.5fr 0fr' }}>
+                                            <div>Fecha</div>
+                                            <div>Certificacion</div>
+                                        </div>
+                                        {calibraciones.map((cr) => (
+                                            <div key={cr.fecha} className={styles.filaItem} style={{ gridTemplateColumns: '2.5fr 0fr' }}>
+                                                <div style={{ fontWeight: '500', color: 'var(--text-h)' }}>
+                                                    {cr.fecha}
+                                                </div>
+                                                <div className={styles.grupoBotonesTabla}>
+                                                        <Boton
+                                                            variant="documentos"
+                                                            onClick={() => setCertificacionAbierta(cr)}
+                                                            title="Ver certificación"
+                                                        />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                             </div>
                         </details>
                     </div>
+                        ) : (
+                            <p>El equipo no posee calibraciones registradas</p>
+                        )}
 
-                    <div className={styles.bloqueDetalle}>
+                    <div className={styles.bloqueDetalle} style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                         <Link to="/equipos">
                             <Boton variant="volver">Volver a la lista</Boton>
                         </Link>
