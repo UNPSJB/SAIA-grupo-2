@@ -6,28 +6,31 @@ import { COLOR_ESTADO, ETIQUETA_ESTADO } from './estadoMantenimiento';
 import Boton from '../../components/Boton';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';
+import RegistrarCalibracionModal from './RegistrarCalibracionModal';
 
 export default function EquiposList() {
+    const [equipoParaCalibrar, setEquipoParaCalibrar] = useState<Equipo | null>(null);
+
     const { usuario } = useAuth();
     const [equipos, setEquipos] = useState<Equipo[]>([]);
+
     const [paginaActual, setPaginaActual] = useState(1);
-    const equiposPorPagina = 5; 
+    const equiposPorPagina = 5;
+
+    const cargarDatos = async () => {
+        try {
+            const data = await getEquipos();
+            const datosOrdenados = data.sort((a, b) => {
+                if (a.activo === b.activo) return 0;
+                return a.activo ? -1 : 1;
+            });
+            setEquipos(datosOrdenados);
+        } catch (error) {
+            console.error("Error al cargar equipos:", error);
+        }
+    };
 
     useEffect(() => {
-        const cargarDatos = async () => {
-            try {
-                const data = await getEquipos();
-                
-                const datosOrdenados = data.sort((a, b) => {
-                    if (a.activo === b.activo) return 0;
-                    return a.activo ? -1 : 1;
-                });
-                
-                setEquipos(datosOrdenados);
-            } catch (error) {
-                console.error("Error al cargar equipos:", error);
-            }
-        };
         cargarDatos();
     }, []);
 
@@ -39,7 +42,7 @@ export default function EquiposList() {
     return (
         <div className={styles.contenedorPrincipal}>
             <h2>Inventario de Equipamiento</h2>
-            
+
             {usuario?.rol === 'admin' && (
                 <Link to="/equipos/nuevo" className={styles.linkCrear}>
                     <Boton variant="crear">
@@ -65,13 +68,13 @@ export default function EquiposList() {
                         <div style={{ fontWeight: '500', color: 'var(--text-h)' }}>
                             {eq.nombre}
                         </div>
-                        
+
                         <div>
                             <span style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-h)' }}>
                                 {eq.tipo.nombre}
                             </span>
                         </div>
-                        
+
                         <div>{eq.sector ? eq.sector.nombre : <span style={{ color: 'var(--text-muted)' }}>Sin asignar</span>}</div>
 
                         <div>
@@ -101,7 +104,7 @@ export default function EquiposList() {
                                 {ETIQUETA_ESTADO[eq.estado_mantenimiento]}
                             </span>
                         </div>
-                        
+
                         <div style={{ fontSize: '0.85rem' }}>
                             {eq.frecuencia_mantenimiento_dias
                                 ? `Cada ${eq.frecuencia_mantenimiento_dias} días`
@@ -109,6 +112,10 @@ export default function EquiposList() {
                         </div>
 
                         <div className={styles.grupoBotonesTabla}>
+                            {eq.frecuencia_mantenimiento_dias !== null && (
+                                <Boton variant="guardar" title="Registrar calibración" onClick={() => setEquipoParaCalibrar(eq)} ></Boton>
+                            )}
+
                             {usuario?.rol === 'admin' && (
                                 <Link to={`/equipos/editar/${eq.id}`} title="Editar equipo">
                                     <Boton variant="editar"></Boton>
@@ -125,7 +132,7 @@ export default function EquiposList() {
                         </div>
                     </div>
                 ))}
-
+                
                 {equiposActuales.length === 0 && (
                     <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text)' }}>
                         No hay equipos registrados.
@@ -135,26 +142,36 @@ export default function EquiposList() {
 
             {totalPaginas > 1 && (
                 <div className={styles.filaBotones} style={{ alignItems: 'center', marginTop: '30px', justifyContent: 'center' }}>
-                    <Boton 
-                        variant="volver" 
-                        onClick={() => setPaginaActual(p => p - 1)} 
+                    <Boton
+                        variant="volver"
+                        onClick={() => setPaginaActual(p => p - 1)}
                         disabled={paginaActual === 1}
                     >
                         Anterior
                     </Boton>
-                    
+
                     <span style={{ color: 'var(--text-h)', fontWeight: 'bold', margin: '0 15px' }}>
                         Página {paginaActual} de {totalPaginas}
                     </span>
-                    
-                    <Boton 
-                        variant="siguiente" 
-                        onClick={() => setPaginaActual(p => p + 1)} 
+
+                    <Boton
+                        variant="siguiente"
+                        onClick={() => setPaginaActual(p => p + 1)}
                         disabled={paginaActual === totalPaginas}
                     >
                         Siguiente
                     </Boton>
                 </div>
+            )}
+
+            {equipoParaCalibrar && (
+                <RegistrarCalibracionModal
+                    equipo={equipoParaCalibrar}
+                    onClose={() => setEquipoParaCalibrar(null)}
+                    onSuccess={() => {
+                        void cargarDatos();
+                    }}
+                />
             )}
         </div>
     );
