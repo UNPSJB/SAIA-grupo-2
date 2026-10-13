@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 from typing import List, Optional
 
 from sqlalchemy import select
@@ -73,11 +74,53 @@ def listar_documentacion(
     return sorted(documentos, key=lambda d: d.fecha_vencimiento)
 
 
+# def obtener_alertas(
+#     db: Session, tipo: Optional[TipoDocumentacion] = None, empleado_id: Optional[int] = None,
+# ) -> List[schemas.AlertaVencimiento]:
+#     logger.info("Generando alertas de vencimiento de documentacion desde services")
+#     documentos = listar_documentacion(db, tipo=tipo)
+
+#     alertas = [
+#         schemas.AlertaVencimiento(
+#             id=d.id,
+#             tipo=d.tipo,
+#             descripcion=_descripcion(d),
+#             empleado=d.empleado,
+#             fecha_vencimiento=d.fecha_vencimiento,
+#             dias_restantes=d.dias_restantes,
+#             estado=d.estado,
+#         )
+#         for d in documentos
+#     ]
+
+#     return sorted(alertas, key=lambda a: (ORDEN_ESTADO[a.estado], a.dias_restantes))
+
 def obtener_alertas(
-    db: Session, tipo: Optional[TipoDocumentacion] = None
+    db: Session,
+    tipo: Optional[TipoDocumentacion] = None,
+    empleado_id: Optional[int] = None,
+    fecha_desde: Optional[date] = None,
+    fecha_hasta: Optional[date] = None,
 ) -> List[schemas.AlertaVencimiento]:
     logger.info("Generando alertas de vencimiento de documentacion desde services")
-    documentos = listar_documentacion(db, tipo=tipo)
+
+    documentos = listar_documentacion(
+        db,
+        empleado_id=empleado_id,
+        tipo=tipo,
+    )
+
+    if fecha_desde is not None:
+        documentos = [
+            d for d in documentos
+            if d.fecha_vencimiento >= fecha_desde
+        ]
+
+    if fecha_hasta is not None:
+        documentos = [
+            d for d in documentos
+            if d.fecha_vencimiento <= fecha_hasta
+        ]
 
     alertas = [
         schemas.AlertaVencimiento(
@@ -92,8 +135,10 @@ def obtener_alertas(
         for d in documentos
     ]
 
-    return sorted(alertas, key=lambda a: (ORDEN_ESTADO[a.estado], a.dias_restantes))
-
+    return sorted(
+        alertas,
+        key=lambda a: (ORDEN_ESTADO[a.estado], a.dias_restantes),
+    )
 
 def leer_documentacion(db: Session, documentacion_id: int) -> schemas.Documentacion:
     db_documento = db.scalar(

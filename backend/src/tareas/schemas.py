@@ -29,6 +29,7 @@ class ConsumoEstimado(BaseModel):
 class TareaBase(BaseModel):
     titulo: TituloTarea
     frecuencia: FrecuenciaTarea
+    activo: bool = True
 
 
 class TareaCreate(TareaBase):
@@ -39,13 +40,16 @@ class TareaCreate(TareaBase):
 class TareaUpdate(TareaBase):
     planes: List[int]
     consumos_estimados: List[ConsumoEstimadoCreate] = []
+    activo: bool = True
 
 class TareaResumen(TareaBase):
     id: int
+    activo: bool = True
     model_config = ConfigDict(from_attributes=True)
 
 class Tarea(TareaBase):
     id: int
+    activo: bool = True
     planes: List[PlanResumen]
     consumos_estimados: List[ConsumoEstimado]
     model_config = ConfigDict(from_attributes=True)

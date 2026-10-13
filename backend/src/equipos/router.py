@@ -33,6 +33,10 @@ def update_equipo(
 ):
     return services.modificar_equipo(db, equipo_id, equipo)
 
+@router.get("/{equipo_id}/impacto", response_model=list[str])
+def get_impacto_equipo(equipo_id: int, db: Session = Depends(get_db)):
+    return services.obtener_impacto_equipo(db, equipo_id)
+
 @router.delete("/{equipo_id}", response_model=schemas.Equipo)
 def delete_equipo(equipo_id: int, db: Session = Depends(get_db)):
     return services.eliminar_equipo(db, equipo_id)

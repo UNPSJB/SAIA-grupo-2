@@ -10,10 +10,6 @@ import { getVencimientosConsolidados } from '../../services/vencimientosServices
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
 
-/**
- * Paleta de colores estándar para los estados de vencimiento.
- * Mantiene coherencia visual con el resto del sistema.
- */
 const COLOR_ESTADO: Record<EstadoVencimiento, string> = {
     vencido: '#ef4444',
     proximo: '#f59e0b',
@@ -29,7 +25,7 @@ const ETIQUETA_ESTADO: Record<EstadoVencimiento, string> = {
 const ETIQUETA_CATEGORIA: Record<CategoriaVencimiento, string> = {
     personal: 'Personal',
     documentos: 'Documentación',
-    equipos: 'Elementos / Equipamiento',
+    equipos: 'Elementos de Limpieza',
     calibracion: 'Calibración / Mantenimiento',
 };
 
@@ -152,7 +148,6 @@ export default function VencimientosList() {
                 </div>
             )}
 
-            {/* Barra de Filtros */}
             <div
                 style={{
                     display: 'flex',
@@ -182,7 +177,7 @@ export default function VencimientosList() {
                             <option value="">Todas las categorías</option>
                             <option value="personal">Personal / Libretas</option>
                             <option value="documentos">Documentación General</option>
-                            <option value="equipos">Elementos y Equipamiento</option>
+                            <option value="equipos">Elementos de Limpieza</option>
                             <option value="calibracion">Calibración y Mantenimiento</option>
                         </select>
                     </div>
@@ -308,7 +303,6 @@ export default function VencimientosList() {
                 )}
             </div>
 
-            {/* Paginación de 5 elementos */}
             {totalPaginas > 1 && (
                 <div
                     className={styles.filaBotones}

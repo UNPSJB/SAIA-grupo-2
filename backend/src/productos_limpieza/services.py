@@ -76,12 +76,54 @@ def descontar_stock(db: Session, producto_id: int, cantidad: float) -> ProductoL
     return db_producto
 
 
+from fastapi import HTTPException
+from src.tareas.models import Tarea, ConsumoEstimado
+
+def obtener_impacto_producto(db: Session, producto_id: int) -> dict:
+    db_producto = leer_producto(db, producto_id)
+    consumos = db.scalars(
+        select(ConsumoEstimado).where(ConsumoEstimado.producto_limpieza_id == producto_id)
+    ).all()
+    tarea_ids = [c.tarea_id for c in consumos]
+    tareas = []
+    if tarea_ids:
+        tareas = list(db.scalars(select(Tarea).where(Tarea.id.in_(tarea_ids))).all())
+
+    return {
+        "stock": db_producto.stock,
+        "tareas": [t.titulo for t in tareas]
+    }
+
 def eliminar_producto(db: Session, producto_id: int) -> schemas.ProductoLimpiezaDelete:
-    leer_producto(db, producto_id)
+    db_producto = db.scalar(select(ProductoLimpieza).where(ProductoLimpieza.id == producto_id))
+    if db_producto is None:
+        raise exceptions.ProductoNoEncontrado()
+
+    if db_producto.activo:
+        raise HTTPException(
+            status_code=400,
+            detail="Los productos activos no se pueden eliminar físicamente. Primero debe darlo de baja lógica."
+        )
+
+    consumos = db.scalars(
+        select(ConsumoEstimado).where(ConsumoEstimado.producto_limpieza_id == producto_id)
+    ).all()
+    if consumos:
+        tarea_ids = [c.tarea_id for c in consumos]
+        tareas = db.scalars(select(Tarea).where(Tarea.id.in_(tarea_ids))).all()
+        titulos = ", ".join(t.titulo for t in tareas)
+        raise HTTPException(
+            status_code=400,
+            detail=f"No se puede eliminar físicamente este producto porque se encuentra asignado en las tareas: {titulos}."
+        )
+
     try:
         db.execute(delete(ProductoLimpieza).where(ProductoLimpieza.id == producto_id))
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise exceptions.ProductoEnUso()
+        raise HTTPException(
+            status_code=400,
+            detail="No se puede eliminar físicamente el producto porque posee registros históricos guardados."
+        )
     return {"id": producto_id, "msg": "borrado"}

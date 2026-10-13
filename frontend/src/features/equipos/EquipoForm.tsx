@@ -15,6 +15,7 @@ interface FormValues {
     tipo_id: number | '';
     sector_id: number | ''; 
     estado: EstadoEquipo;
+    frecuencia_mantenimiento_dias: number | null;
 }
 
 export default function EquipoForm() {
@@ -32,7 +33,8 @@ export default function EquipoForm() {
             activo: true,
             tipo_id: '',
             sector_id: '',
-            estado: 'bueno'
+            estado: 'bueno',
+            frecuencia_mantenimiento_dias: null
         }
     });
 
@@ -62,7 +64,8 @@ export default function EquipoForm() {
                         activo: data.activo,
                         tipo_id: data.tipo.id,
                         sector_id: data.sector.id,
-                        estado: data.estado
+                        estado: data.estado,
+                        frecuencia_mantenimiento_dias: data.frecuencia_mantenimiento_dias
                     });
                 } catch (err) {
                     console.error("Error al cargar equipo:", err);
@@ -78,7 +81,8 @@ export default function EquipoForm() {
             activo: data.activo, 
             tipo_id: Number(data.tipo_id),
             sector_id: Number(data.sector_id),
-            estado: data.estado
+            estado: data.estado,
+            frecuencia_mantenimiento_dias: data.frecuencia_mantenimiento_dias
         };
 
         try {
@@ -166,6 +170,24 @@ export default function EquipoForm() {
                             <option value="bueno">Operativo (Bueno)</option>
                             <option value="danado">Dañado</option>
                         </select>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                        <label>Frecuencia de mantenimiento recomendada (opcional):</label>
+                        <input
+                            type="number"
+                            step="1"
+                            placeholder="Cantidad de días. Dejar vacío si no aplica."
+                            {...register('frecuencia_mantenimiento_dias', {
+                                setValueAs: (valor) => (valor === '' || valor === null ? null : Number(valor)),
+                                validate: (valor) =>
+                                    valor === null ||
+                                    (Number.isInteger(valor) && valor > 0) ||
+                                    "Debe ser un número entero mayor a cero"
+                            })}
+                            style={errors.frecuencia_mantenimiento_dias ? { borderColor: '#ef4444', outline: 'none' } : {}}
+                        />
+                        {errors.frecuencia_mantenimiento_dias && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.frecuencia_mantenimiento_dias.message}</span>}
                     </div>
 
                     <div className={styles.formGroup} style={{ justifyContent: 'center' }}>

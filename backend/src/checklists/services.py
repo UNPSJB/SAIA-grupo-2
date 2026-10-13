@@ -33,6 +33,8 @@ def obtener_checklist_diario(db: Session, empleado: Optional[Empleado] = None) -
     vistos = set()
 
     for plan in planes:
+        if not plan.activo and plan.fecha_desactivacion and plan.fecha_desactivacion < date.today():
+            continue
         for tarea in plan.tareas:
             clave = (tarea.id, plan.id)
             if clave in vistos:

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import type { Empleado } from '../../types/empleados';
 import { getEmpleadoById } from '../../services/empleadosServices';
 import Boton from '../../components/Boton';
@@ -55,11 +55,18 @@ export default function EmpleadoDetail() {
                             : <span style={{ color: 'var(--text-muted)' }}>Ninguna asignada</span>}
                     </p>
 
+
+
                     <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                         <Boton variant="volver" onClick={() => navigate(-1)}>
                             Volver atrás
                         </Boton>
+
+                        <Link to={`/empleados/${empleado.id}/documentacion`} title="Documentación y vencimientos">
+                                    <Boton variant="documentos" style={{ padding: '12px 12px' , margin: '0 10px' }}>Ver Documentación</Boton>
+                        </Link>
                     </div>
+                    
                 </div>
             ) : (
                 <p style={{ color: 'var(--text-muted)', marginTop: '20px' }}>Cargando información del empleado...</p>

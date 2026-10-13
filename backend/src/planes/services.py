@@ -24,6 +24,9 @@ def _validar_titulo_unico(db: Session, titulo: str, plan_id: int | None = None) 
         raise exceptions.TituloDuplicado()
 
 
+from fastapi import HTTPException
+from sqlalchemy import update
+
 def _resolver_equipos(db: Session, equipos_ids: List[int]):
     if not equipos_ids:
         raise exceptions.SinEquipos()
@@ -31,6 +34,11 @@ def _resolver_equipos(db: Session, equipos_ids: List[int]):
     equipos = []
     for equipo_id in dict.fromkeys(equipos_ids):
         db_equipo = equipos_services.leer_equipo(db, equipo_id)
+        if not db_equipo.activo:
+            raise HTTPException(
+                status_code=400,
+                detail=f"El equipo '{db_equipo.nombre}' está inactivo y no se puede agregar al plan."
+            )
         if db_equipo.estado == EstadoEquipo.DANADO:
             raise exceptions.EquipoDanado()
         equipos.append(db_equipo)
@@ -40,6 +48,11 @@ def _resolver_tareas(db: Session, tareas_ids: List[int]):
     tareas = []
     for tarea_id in dict.fromkeys(tareas_ids):
         db_tarea = tareas_services.leer_tarea(db, tarea_id)
+        if not db_tarea.activo:
+            raise HTTPException(
+                status_code=400,
+                detail=f"La tarea '{db_tarea.titulo}' está inactiva y no se puede agregar al plan."
+            )
         tareas.append(db_tarea)
     return tareas
 
@@ -80,10 +93,18 @@ def modificar_plan(
 
     db_plan.equipos = _resolver_equipos(db, plan.equipos_ids)
     db_plan.tareas = _resolver_tareas(db, plan.tareas_ids)
+
+    estaba_activo = db_plan.activo
+
     for campo, valor in plan.model_dump(
-        exclude={"equipos_ids", "tareas_ids"}
+        exclude={"equipos_ids", "tareas_ids", "fecha_desactivacion"}
     ).items():
         setattr(db_plan, campo, valor)
+
+    if estaba_activo and not plan.activo:
+        db_plan.fecha_desactivacion = date.today()
+    elif not estaba_activo and plan.activo:
+        db_plan.fecha_desactivacion = None
 
     db.commit()
     db.refresh(db_plan)
@@ -92,8 +113,27 @@ def modificar_plan(
 
 def eliminar_plan(db: Session, plan_id: int) -> schemas.PlanDelete:
     db_plan = leer_plan(db, plan_id)
-        
+    if db_plan.activo:
+        raise HTTPException(
+            status_code=400,
+            detail="Los planes activos no se pueden eliminar físicamente. Primero debe darlo de baja lógica."
+        )
+
+    hoy = date.today()
+    fecha_des = db_plan.fecha_desactivacion or hoy
+    dias_inactivo = (hoy - fecha_des).days
+
+    if dias_inactivo < 7:
+        faltan = 7 - dias_inactivo
+        raise HTTPException(
+            status_code=400,
+            detail=f"El plan debe estar inactivo durante al menos 7 días antes de poder ser eliminado físicamente. Días de inactivación actuales: {dias_inactivo}. Faltan {faltan} día(s)."
+        )
+
     try:
+        from src.checklists.models import Checklist
+        db.execute(update(Checklist).where(Checklist.plan_id == plan_id).values(plan_id=None))
+
         db_plan.equipos.clear()
         db_plan.tareas.clear()
         

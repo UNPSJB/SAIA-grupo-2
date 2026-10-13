@@ -34,14 +34,37 @@ def listar_elementos(db: Session) -> List[schemas.ElementoLimpieza]:
     return db.scalars(select(ElementoLimpieza)).all()
 
 
+from fastapi import HTTPException
+
 def listar_alertas(db: Session) -> List[schemas.ElementoLimpieza]:
     """Elementos vencidos o proximos a vencer, los mas urgentes primero."""
     logger.info("Calculando alertas de recambio desde services")
-    elementos = db.scalars(select(ElementoLimpieza)).all()
+    elementos = db.scalars(select(ElementoLimpieza).where(ElementoLimpieza.activo == True)).all()
 
     alertas = [e for e in elementos if e.estado_recambio in ESTADOS_QUE_ALERTAN]
     alertas.sort(key=lambda e: e.fecha_proximo_recambio)
     return alertas
+
+def eliminar_elemento(
+    db: Session, elemento_id: int
+) -> schemas.ElementoLimpiezaDelete:
+    db_elemento = db.scalar(select(ElementoLimpieza).where(ElementoLimpieza.id == elemento_id))
+    if db_elemento is None:
+        raise exceptions.ElementoNoEncontrado()
+
+    if db_elemento.activo:
+        raise HTTPException(
+            status_code=400,
+            detail="Los elementos activos no se pueden eliminar físicamente. Primero debe darlo de baja lógica."
+        )
+
+    try:
+        db.execute(delete(ElementoLimpieza).where(ElementoLimpieza.id == elemento_id))
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise exceptions.ElementoEnUso()
+    return {"id": elemento_id, "msg": "borrado"}
 
 
 def leer_elemento(db: Session, elemento_id: int) -> schemas.ElementoLimpieza:
@@ -96,7 +119,16 @@ def registrar_recambio(
 def eliminar_elemento(
     db: Session, elemento_id: int
 ) -> schemas.ElementoLimpiezaDelete:
-    leer_elemento(db, elemento_id)
+    db_elemento = db.scalar(select(ElementoLimpieza).where(ElementoLimpieza.id == elemento_id))
+    if db_elemento is None:
+        raise exceptions.ElementoNoEncontrado()
+
+    if db_elemento.activo:
+        raise HTTPException(
+            status_code=400,
+            detail="Los elementos activos no se pueden eliminar físicamente. Primero debe darlo de baja lógica."
+        )
+
     try:
         db.execute(delete(ElementoLimpieza).where(ElementoLimpieza.id == elemento_id))
         db.commit()

@@ -9,6 +9,8 @@ from src.documentacion import models as doc_models
 from src.documentacion.constants import TipoDocumentacion
 from src.documentacion.services import _descripcion as _descripcion_documento
 from src.elementos_limpieza import models as elem_models
+from src.equipos import models as equipo_models
+from src.equipos.constants import EstadoMantenimiento
 from src.elementos_limpieza.constants import EstadoRecambio
 from src.vencimientos.schemas import (
     CategoriaVencimiento,
@@ -19,7 +21,6 @@ from src.vencimientos.vencimientos import EstadoVencimiento
 
 logger = logging.getLogger(__name__)
 
-# Prioridad de ordenamiento por urgencia: Vencido (0) > Próximo (1) > Vigente (2)
 ORDEN_URGENCIA = {
     EstadoVencimiento.VENCIDO: 0,
     EstadoVencimiento.PROXIMO: 1,
@@ -34,10 +35,17 @@ TITULOS_TIPO_DOC = {
 
 
 def _mapear_estado_recambio(estado_recambio: EstadoRecambio) -> EstadoVencimiento:
-    """Mapea los estados del módulo de elementos de limpieza al enum estándar de vencimiento."""
     if estado_recambio == EstadoRecambio.VENCIDO:
         return EstadoVencimiento.VENCIDO
     if estado_recambio == EstadoRecambio.PROXIMO:
+        return EstadoVencimiento.PROXIMO
+    return EstadoVencimiento.VIGENTE
+
+
+def _mapear_estado_mantenimiento(estado: EstadoMantenimiento) -> EstadoVencimiento:
+    if estado == EstadoMantenimiento.VENCIDO:
+        return EstadoVencimiento.VENCIDO
+    if estado == EstadoMantenimiento.PROXIMO:
         return EstadoVencimiento.PROXIMO
     return EstadoVencimiento.VIGENTE
 
@@ -107,34 +115,32 @@ def obtener_vencimientos_consolidados(
                 )
             )
 
-    # =========================================================================
-    # [PUNTO DE EXTENSIÓN PARA CALIBRACIÓN Y MANTENIMIENTO TÉCNICO]
-    #
-    # INSTRUCCIONES PARA CUANDO SE IMPLEMENTE EL MÓDULO DE CALIBRACIÓN:
-    # 1. Importar el modelo de la nueva tabla de Calibración/Mantenimiento.
-    #    Ejemplo: from src.calibraciones.models import Calibracion
-    #
-    # 2. Consultar la tabla directamente desde la base de datos:
-    #    consulta_calib = select(Calibracion).options(selectinload(Calibracion.equipo))
-    #    calibraciones = db.scalars(consulta_calib).all()
-    #
-    # 3. Iterar los registros y agregarlos a la lista 'items':
-    #    for c in calibraciones:
-    #        items.append(
-    #            ItemVencimientoConsolidado(
-    #                id=f"calib-{c.id}",
-    #                categoria=CategoriaVencimiento.CALIBRACION,
-    #                categoria_label="Calibración de Instrumentos",
-    #                titulo=f"Calibración: {c.equipo.nombre}",
-    #                detalle=f"Certificado / Protocolo: {c.numero_protocolo}",
-    #                referencia=f"Equipo: {c.equipo.nombre} (Sector {c.equipo.sector.nombre})",
-    #                fecha_vencimiento=c.fecha_proxima_calibracion,
-    #                dias_restantes=(c.fecha_proxima_calibracion - hoy).days,
-    #                estado=c.estado,  # Usa ControlDeVencimiento
-    #                bloqueado=False
-    #            )
-    #        )
-    # =========================================================================
+    consulta_calib = select(equipo_models.Equipo).options(
+        selectinload(equipo_models.Equipo.sector)
+    ).where(equipo_models.Equipo.frecuencia_mantenimiento_dias.isnot(None))
+    equipos = db.scalars(consulta_calib).all()
+
+    for eq in equipos:
+        proxima = eq.fecha_proximo_mantenimiento
+        if proxima is None:
+            continue
+
+        sector_nombre = eq.sector.nombre if eq.sector else "Sin sector"
+
+        items.append(
+            ItemVencimientoConsolidado(
+                id=f"calib-{eq.id}",
+                categoria=CategoriaVencimiento.CALIBRACION,
+                categoria_label="Calibración y Mantenimiento",
+                titulo=f"Calibración: {eq.nombre}",
+                detalle=f"Periodicidad: cada {eq.frecuencia_mantenimiento_dias} días",
+                referencia=f"Sector {sector_nombre} · Último: {eq.fecha_ultimo_mantenimiento.strftime('%d/%m/%Y')}",
+                fecha_vencimiento=proxima,
+                dias_restantes=eq.dias_restantes if eq.dias_restantes is not None else (proxima - hoy).days,
+                estado=_mapear_estado_mantenimiento(eq.estado_mantenimiento),
+                bloqueado=False,
+            )
+        )
 
     if categoria is not None:
         items = [i for i in items if i.categoria == categoria]

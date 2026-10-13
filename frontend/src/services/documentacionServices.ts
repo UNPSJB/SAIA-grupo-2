@@ -31,12 +31,43 @@ export const getDocumentacionById = async (id: string): Promise<Documentacion> =
     return res.json();
 };
 
+// export const getAlertasDocumentacion = async (
+//     tipo?: TipoDocumentacion
+// ): Promise<AlertaVencimiento[]> => {
+//     const url = tipo ? `${BASE_URL}/alertas?tipo=${tipo}` : `${BASE_URL}/alertas`;
+//     const res = await fetch(url);
+//     if (!res.ok) throw new Error('Error al cargar las alertas de documentación');
+//     return res.json();
+// };
+
 export const getAlertasDocumentacion = async (
-    tipo?: TipoDocumentacion
+    tipo?: TipoDocumentacion,
+    empleadoId?: number,
+    fechaDesde?: string,
+    fechaHasta?: string
 ): Promise<AlertaVencimiento[]> => {
-    const url = tipo ? `${BASE_URL}/alertas?tipo=${tipo}` : `${BASE_URL}/alertas`;
+    const parametros = new URLSearchParams();
+
+    if (tipo !== undefined) parametros.append('tipo', tipo);
+    if (empleadoId !== undefined) parametros.append('empleado_id', String(empleadoId));
+    if (fechaDesde !== undefined && fechaDesde !== '') {
+        parametros.append('fecha_desde', fechaDesde);
+    }
+    if (fechaHasta !== undefined && fechaHasta !== '') {
+        parametros.append('fecha_hasta', fechaHasta);
+    }
+
+    const consulta = parametros.toString();
+    const url = consulta
+        ? `${BASE_URL}/alertas?${consulta}`
+        : `${BASE_URL}/alertas`;
+
     const res = await fetch(url);
-    if (!res.ok) throw new Error('Error al cargar las alertas de documentación');
+
+    if (!res.ok) {
+        throw new Error('Error al cargar las alertas de documentación');
+    }
+
     return res.json();
 };
 

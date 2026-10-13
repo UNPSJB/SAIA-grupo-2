@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List, Optional, TYPE_CHECKING
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Boolean, Date
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.asociaciones.plan_tareas import plan_tarea
@@ -19,6 +19,8 @@ class Plan(ModeloBase):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     titulo: Mapped[str] = mapped_column(index=True)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    fecha_desactivacion: Mapped[Optional[date]] = mapped_column(Date, nullable=True, default=None)
     fecha_inicio: Mapped[date] = mapped_column()
     fecha_fin: Mapped[Optional[date]] = mapped_column(default=None)
     sector_id: Mapped[int] = mapped_column(ForeignKey("sectores.id"))

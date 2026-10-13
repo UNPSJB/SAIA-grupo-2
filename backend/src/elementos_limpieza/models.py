@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from typing import Optional
 
+from sqlalchemy import Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.elementos_limpieza.constants import DIAS_AVISO_PREVIO, EstadoRecambio
@@ -12,6 +13,7 @@ class ElementoLimpieza(ModeloBase):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     nombre: Mapped[str] = mapped_column(index=True)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
     frecuencia_recambio_dias: Mapped[Optional[int]] = mapped_column(default=None)
     fecha_ultimo_recambio: Mapped[date] = mapped_column(default=date.today)
 

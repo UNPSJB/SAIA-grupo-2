@@ -15,6 +15,8 @@ class PlanBase(BaseModel):
     fecha_inicio: date
     fecha_fin: Optional[date] = None
     sector_id: int
+    activo: bool = True
+    fecha_desactivacion: Optional[date] = None
 
     @model_validator(mode="after")
     def validar_rango_de_fechas(self):
@@ -31,6 +33,8 @@ class PlanCreate(PlanBase):
 class PlanUpdate(PlanBase):
     equipos_ids: List[int]
     tareas_ids: List[int]
+    activo: bool = True
+    fecha_desactivacion: Optional[date] = None
 
 
 class Plan(PlanBase):
