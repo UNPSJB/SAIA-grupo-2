@@ -25,7 +25,7 @@ const ETIQUETA_ESTADO: Record<EstadoVencimiento, string> = {
 const ETIQUETA_CATEGORIA: Record<CategoriaVencimiento, string> = {
     personal: 'Personal',
     documentos: 'Documentación',
-    equipos: 'Elementos / Equipamiento',
+    equipos: 'Elementos de Limpieza',
     calibracion: 'Calibración / Mantenimiento',
 };
 
@@ -177,7 +177,7 @@ export default function VencimientosList() {
                             <option value="">Todas las categorías</option>
                             <option value="personal">Personal / Libretas</option>
                             <option value="documentos">Documentación General</option>
-                            <option value="equipos">Elementos y Equipamiento</option>
+                            <option value="equipos">Elementos de Limpieza</option>
                             <option value="calibracion">Calibración y Mantenimiento</option>
                         </select>
                     </div>

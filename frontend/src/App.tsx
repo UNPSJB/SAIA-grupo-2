@@ -79,6 +79,7 @@ function RutasProtegidas() {
     <>
       <nav className="nav">
         <Link to="/" className="navLink">Inicio</Link>
+        {isAdmin && <Link to="/vencimientos" className="navLink">Vencimientos</Link>}
         
         {isAdmin && (
           <div className="dropdown">
@@ -107,7 +108,6 @@ function RutasProtegidas() {
             <span className="navLink">Equipamiento ▾</span>
             <div className="dropdownContent">
               <Link to="/equipos">Inventario de Equipos</Link>
-              <Link to="/vencimientos">Control de Vencimientos</Link>
             </div>
           </div>
         )}

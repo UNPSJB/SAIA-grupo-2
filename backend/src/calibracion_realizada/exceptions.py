@@ -18,3 +18,9 @@ class CertificacionRequerida(BadRequest):
 
 class CalibracionDuplicada(BadRequest):
     DETAIL = ErrorCode.CALIBRACION_DUPLICADA
+
+class CertificacionFormatoInvalido(BadRequest):
+    DETAIL = ErrorCode.CERTIFICACION_FORMATO_INVALIDO
+
+class CertificacionDemasiadoGrande(BadRequest):
+    DETAIL = ErrorCode.CERTIFICACION_DEMASIADO_GRANDE

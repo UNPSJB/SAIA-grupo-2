@@ -11,7 +11,7 @@ import styles from '../../styles/shared.module.css';
 
 export default function EquipoDetail() {
     const [equipo, setEquipo] = useState<Equipo | null>(null);
-    const [calibraciones, setCalibraciones] = useState<CalibracionRealizada[] | null>([]);
+    const [calibraciones, setCalibraciones] = useState<CalibracionRealizada[]>([]);
     const [certificacionAbierta, setCertificacionAbierta] = useState<CalibracionRealizada | null>(null);
     const [modalCalibracionAbierto, setModalCalibracionAbierto] = useState(false);
     const { id } = useParams();
@@ -69,7 +69,7 @@ export default function EquipoDetail() {
                     
                     <p style={{marginBottom: '20px'}}><strong>Último mantenimiento:</strong> {equipo.fecha_ultimo_mantenimiento}</p>
 
-                    {calibraciones?.length > 0 ? (
+                    {calibraciones.length > 0 ? (
                         <div className={styles.accordion}>
                             <details className={styles.accordionItem} open>
                                 <summary className={styles.accordionHeader}>

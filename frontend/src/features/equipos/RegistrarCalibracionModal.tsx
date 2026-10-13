@@ -18,6 +18,9 @@ interface RegistrarCalibracionModalProps {
     onSuccess: () => void;
 }
 
+const TAMANIO_MAXIMO_MB = 25;
+const TAMANIO_MAXIMO_BYTES = TAMANIO_MAXIMO_MB * 1024 * 1024;
+
 const obtenerFechaLocal = () => {
     const fecha = new Date();
     const mes = String(fecha.getMonth() + 1).padStart(2, '0');
@@ -54,9 +57,14 @@ export default function RegistrarCalibracionModal({
         required: 'La certificación es obligatoria',
         validate: (archivos) => {
             const archivo = archivos?.[0];
-            return !archivo || archivo.type.startsWith('image/') || archivo.type === 'application/pdf'
-                ? true
-                : 'Seleccione una imagen o un archivo PDF.';
+            if (!archivo) return true;
+            if (!archivo.type.startsWith('image/') && archivo.type !== 'application/pdf') {
+                return 'Seleccione una imagen o un archivo PDF.';
+            }
+            if (archivo.size > TAMANIO_MAXIMO_BYTES) {
+                return `El archivo no puede superar los ${TAMANIO_MAXIMO_MB} MB.`;
+            }
+            return true;
         },
         onChange: handleFileChange
     });
@@ -77,6 +85,18 @@ export default function RegistrarCalibracionModal({
                 isOpen: true,
                 titulo: 'Archivo no válido',
                 mensaje: 'Seleccione una imagen o un archivo PDF.'
+            });
+            return;
+        }
+
+        if (archivo.size > TAMANIO_MAXIMO_BYTES) {
+            input.value = '';
+            resetField('certificacion_url');
+            setVistaPreviaCertificacion(null);
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Archivo demasiado grande',
+                mensaje: `El archivo pesa ${(archivo.size / 1024 / 1024).toFixed(1)} MB y el máximo permitido es ${TAMANIO_MAXIMO_MB} MB.`
             });
             return;
         }
@@ -192,7 +212,7 @@ export default function RegistrarCalibracionModal({
                                 }}
                                 style={{ width: '100%', padding: '10px', fontSize: '1rem', borderRadius: '8px', border: '1px dashed var(--border)', backgroundColor: '#f9fafb', color: '#1f2937' }} 
                             />
-                            <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '5px' }}>Permite la subida de imágenes y documentos PDF</small>
+                            <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '5px' }}>Permite la subida de imágenes y documentos PDF (máximo {TAMANIO_MAXIMO_MB} MB)</small>
                             {leyendoCertificacion && (
                                 <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '5px' }}>
                                     Cargando vista previa...
