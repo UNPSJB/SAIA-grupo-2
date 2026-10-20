@@ -9,6 +9,10 @@ import ModalAlerta from '../../components/alerta';
 import Boton from '../../components/Boton';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';
+import BuscadorTexto from '../../components/BuscadorTexto';
+import { filtrarPorTexto } from '../../utils/texto';
+
+import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 
 interface FormValues {
     empleado_id: string;
@@ -31,6 +35,7 @@ export default function ChecklistList() {
     const [productosList, setProductosList] = useState<any[]>([]);
     const [cargando, setCargando] = useState(true);
     const [sectorFiltro, setSectorFiltro] = useState<string>('todos');
+    const [busqueda, setBusqueda] = useState('');
 
     const [modalAbierto, setModalAbierto] = useState(false);
     const [tareaActiva, setTareaActiva] = useState<number | null>(null);
@@ -181,13 +186,73 @@ export default function ChecklistList() {
 
     const sectoresUnicos = Array.from(new Set(checklist.map(item => item.sector_nombre).filter(Boolean)));
 
-    const checklistFiltrado = checklist.filter(t => sectorFiltro === 'todos' || t.sector_nombre === sectorFiltro);
+    const checklistPorSector = checklist.filter(t => sectorFiltro === 'todos' || t.sector_nombre === sectorFiltro);
+    const checklistFiltrado = filtrarPorTexto(checklistPorSector, busqueda);
+
+
+    const misColumnas: Columna<ChecklistItem>[] = [
+        {
+            key: 'titulo_tarea',
+            encabezado: 'Tarea',
+            ordenable: true,
+            variant: 'titulo', // Elimina el font-weight inline
+            render: (tarea) => <span style={{ fontSize: '1.05rem' }}>{tarea.titulo_tarea}</span>
+        },
+        {
+            key: 'ubicacion',
+            encabezado: 'Ubicación',
+            ordenable: false, 
+            variant: 'celdaBase', 
+            render: (tarea) => (
+                <>
+                    <div><strong>Planes:</strong> {tarea.plan_titulo}</div>
+                    <div><strong>Sectores:</strong> {tarea.sector_nombre}</div>
+                </>
+            )
+        },
+        {
+            key: 'frecuencia',
+            encabezado: 'Frecuencia',
+            ordenable: true,
+            variant: 'celdaBase',
+            render: (tarea) => <span style={{ textTransform: 'capitalize' }}>{tarea.frecuencia}</span>
+        },
+        {
+            key: 'estado',
+            encabezado: 'Estado',
+            ordenable: true,
+            variant: (tarea) => `${tarea.estado}`,
+            render: (tarea) => tarea.estado.toUpperCase()
+        },
+        {
+            key: 'acciones',
+            encabezado: 'Acción',
+            variant: 'acciones', // Inyecta flex y gap automáticamente
+            render: (tarea) => (
+                tarea.estado === 'pendiente' ? (
+                    <Boton variant="guardar" onClick={() => abrirModal(tarea.tarea_id, tarea.plan_id)}>
+                        Completar
+                    </Boton>
+                ) : (
+                    <Boton variant="ver" onClick={() => abrirDetalleTarea(tarea.tarea_id, tarea.plan_id)}>
+                        Ver Detalle
+                    </Boton>
+                )
+            )
+        }
+    ];
+
+
 
     if (cargando) return <div className={styles.contenedorPrincipal}>Cargando tareas del día...</div>;
 
     return (
         <div className={styles.contenedorPrincipal}>
             <h2>Checklist del Día</h2>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar tarea, plan o sector..." />
+            </div>
             <p style={{ color: 'var(--text-muted)', marginBottom: '15px', fontSize: '1.1rem' }}>
                 {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
@@ -208,57 +273,16 @@ export default function ChecklistList() {
                 </div>
             )}
 
-            <div className={styles.contenedorTabla}>
-                <div className={styles.filaHeader} style={{ gridTemplateColumns: '2.5fr 2.5fr 1fr 1fr 1.2fr', textAlign: 'center' }}>
-                    <div style={{ textAlign: 'left' }}>Tarea</div>
-                    <div style={{ textAlign: 'left' }}>Ubicación</div>
-                    <div>Frecuencia</div>
-                    <div>Estado</div>
-                    <div>Acción</div>
-                </div>
 
-                {checklistFiltrado.length === 0 ? (
-                    <div className={styles.emptyMensaje}>No hay tareas programadas para hoy en el sector seleccionado.</div>
-                ) : (
-                    checklistFiltrado.map(tarea => (
-                        <div key={`${tarea.tarea_id}-${tarea.plan_id}`} className={styles.filaItem} style={{ gridTemplateColumns: '2.5fr 2.5fr 1fr 1fr 1.2fr', alignItems: 'center', textAlign: 'center' }}>
-                            <div style={{ fontWeight: '600', textAlign: 'left', fontSize: '1.05rem' }}>
-                                {tarea.titulo_tarea}
-                            </div>
-                            
-                            <div style={{ fontSize: '0.85rem', textAlign: 'left', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-                                <strong>Planes:</strong> {tarea.plan_titulo} <br/>
-                                <strong>Sectores:</strong> {tarea.sector_nombre}
-                            </div>
-                            
-                            <div style={{ textTransform: 'capitalize' }}>
-                                {tarea.frecuencia}
-                            </div>
-                            
-                            <div>
-                                <span style={{ 
-                                    fontSize: '0.85rem', fontWeight: 'bold',
-                                    color: tarea.estado === 'realizada' ? '#166534' : '#991b1b'
-                                }}>
-                                    {tarea.estado.toUpperCase()}
-                                </span>
-                            </div>
-                            
-                            <div>
-                                {tarea.estado === 'pendiente' ? (
-                                    <Boton variant="guardar" onClick={() => abrirModal(tarea.tarea_id, tarea.plan_id)}>
-                                        Completar
-                                    </Boton>
-                                ) : (
-                                    <Boton variant="ver" onClick={() => abrirDetalleTarea(tarea.tarea_id, tarea.plan_id)}>
-                                        Ver Detalle
-                                    </Boton>
-                                )}
-                            </div>
-                        </div>
-                    ))
-                )}
-            </div>
+            <TablaPaginada
+                datos={checklistFiltrado}
+                columnas={misColumnas}
+                gridTemplateColumns="2.5fr 2.5fr 1fr 1fr 1.2fr"
+                itemsPorPagina={15} 
+                mensajeVacio="No hay tareas programadas para hoy en el sector seleccionado."
+                columnaOrdenInicial="estado" 
+            />
+
 
             {/* MODAL COMPLETAR TAREA */}
             {modalAbierto && (
@@ -529,7 +553,7 @@ export default function ChecklistList() {
                                 </div>
                             </div>
                         ) : (
-                            <p style={{ color: 'var(--text-danger)' }}>No se encontraron detalles para esta tarea.</p>
+                            <p style={{ color: 'var(--rojo-texto)' }}>No se encontraron detalles para esta tarea.</p>
                         )}
                     </div>
                 </div>

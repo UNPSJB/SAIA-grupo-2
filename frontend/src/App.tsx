@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import styles from './styles/shared.module.css'
 import Login from './features/auth/Login';
 
 import EmpleadosList from './features/empleados/EmpleadosList';
@@ -62,10 +63,17 @@ function RutaAdmin({ children }: { children: React.ReactElement }) {
   return children;
 }
 
+const ETIQUETA_ROL: Record<'admin' | 'operario', string> = {
+  admin: 'Administrador',
+  operario: 'Operario',
+};
+
 function RutasProtegidas() {
   const { isAuthenticated, logout, usuario } = useAuth();
-  
+
   const isAdmin = usuario?.rol === 'admin';
+
+  const iniciales = `${usuario?.nombre?.charAt(0) ?? ''}${usuario?.apellido?.charAt(0) ?? ''}`.toUpperCase();
 
   if (!isAuthenticated) {
     return (
@@ -77,129 +85,163 @@ function RutasProtegidas() {
 
   return (
     <>
-      <nav className="nav">
-        <Link to="/" className="navLink">Inicio</Link>
-        {isAdmin && <Link to="/vencimientos" className="navLink">Vencimientos</Link>}
+      <div className="appLayout">
+        <aside className="sidebar">
+          <NavLink to="/" className="marca">
+            <i className="bi bi-house-door-fill"></i>
+            <span>SAIA</span>
+          </NavLink>
+
+          <nav className="navegacion">
+          {isAdmin && <NavLink to="/vencimientos" className={styles.sidebarTituloAcordeon}><strong>Vencimientos</strong></NavLink>}
+
+
+          {isAdmin && (
+            <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
+              <summary className={styles.sidebarTituloAcordeon}>
+                Recursos Humanos 
+              </summary>
+
+              <div className={styles.sidebarOpcionesAcordeon}>
+                <NavLink to="/empleados" className={styles.sidebarItemAcordeon}>Directorio de Empleados</NavLink>
+                <NavLink to="/capacidades" className={styles.sidebarItemAcordeon}>Gestión de Capacidades</NavLink>
+                <NavLink to="/sectores" className={styles.sidebarItemAcordeon}>Gestión de Sectores</NavLink>
+                <NavLink to="/vencimientos-documentacion" className={styles.sidebarItemAcordeon}>Vencimientos de Personal</NavLink>
+              </div>
+            </details>
+          )}
+
+          {isAdmin && (
+            <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
+              <summary className={styles.sidebarTituloAcordeon}>
+                Gestión de Insumos 
+              </summary>
+
+              <div className={styles.sidebarOpcionesAcordeon}>
+                <NavLink to="/insumos" className={styles.sidebarItemAcordeon}>Inventario de Insumos</NavLink>
+                <NavLink to="/unidadesMedida" className={styles.sidebarItemAcordeon}>Unidades de Medida</NavLink>
+              </div>
+            </details>
+          )}
+
+          {isAdmin && (
+            <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
+              <summary className={styles.sidebarTituloAcordeon}>
+                Equipamiento 
+              </summary>
+
+              <div className={styles.sidebarOpcionesAcordeon}>
+                <NavLink to="/equipos" className={styles.sidebarItemAcordeon}>Inventario de Equipos</NavLink>
+              </div>
+            </details>
+          )}
+          
+          <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
+              <summary className={styles.sidebarTituloAcordeon}>
+                Limpieza y Planes 
+              </summary>
+
+            <div className={styles.sidebarOpcionesAcordeon}>
+              {isAdmin && <NavLink to="/productos_limpieza" className={styles.sidebarItemAcordeon}>Productos de Limpieza</NavLink>}
+              {isAdmin && <NavLink to="/elementosLimpieza" end className={styles.sidebarItemAcordeon}>Elementos de Limpieza</NavLink>}
+              <NavLink to="/elementosLimpieza/alertas" className={styles.sidebarItemAcordeon}>Alertas de Recambio</NavLink>
+              <NavLink to="/tareas" className={styles.sidebarItemAcordeon}>Tareas de Limpieza</NavLink>
+              {isAdmin && <NavLink to="/planes" className={styles.sidebarItemAcordeon}>Planes de Limpieza</NavLink>}
+              <NavLink to="/checklists/hoy" className={styles.sidebarItemAcordeon}>Checklist del Día</NavLink>
+              {isAdmin && <NavLink to="/checklists/historial" className={styles.sidebarItemAcordeon}>Historial de Checklists</NavLink>}
+            </div>
+          </details>
+          </nav>
+
+          <div className="userSection">
+            <div className="avatar">{iniciales}</div>
+            <div className="userInfo">
+              <span className="userNombre">{usuario?.nombre} {usuario?.apellido}</span>
+              <span className="userRol">{usuario ? ETIQUETA_ROL[usuario.rol] : ''}</span>
+            </div>
+            <button onClick={logout} className="logoutBtn" title="Cerrar sesión" aria-label="Cerrar sesión">
+              <i className="bi bi-box-arrow-right"></i>
+            </button>
+          </div>
+        </aside>
+
+        <main className="mainContent">
+          <Routes>
+            <Route path="/" element={<h1>SAIA - Grupo 2</h1>} />
+            
+            <Route path="/empleados" element={<RutaAdmin><EmpleadosList /></RutaAdmin>} />
+            <Route path="/empleados/nuevo" element={<RutaAdmin><EmpleadoForm /></RutaAdmin>} />
+            <Route path="/empleados/editar/:id" element={<RutaAdmin><EmpleadoForm /></RutaAdmin>} />
+            <Route path="/empleados/eliminar/:id" element={<RutaAdmin><EmpleadoDelete /></RutaAdmin>} />
+            <Route path="/empleados/:id" element={<EmpleadoDetail />} />
+            <Route path="/empleados/:empleadoId/documentacion" element={<RutaAdmin><DocumentacionEmpleado /></RutaAdmin>} />
+            <Route path="/empleados/:empleadoId/documentacion/nuevo" element={<RutaAdmin><DocumentacionForm /></RutaAdmin>} />
+            <Route path="/empleados/:empleadoId/documentacion/editar/:id" element={<RutaAdmin><DocumentacionForm /></RutaAdmin>} />
+            
+            <Route path="/capacidades" element={<RutaAdmin><CapacidadesList /></RutaAdmin>} />
+            <Route path="/capacidades/nuevo" element={<RutaAdmin><CapacidadForm /></RutaAdmin>} />
+            
+            <Route path="/insumos" element={<RutaAdmin><InsumosList /></RutaAdmin>} />
+            <Route path="/insumos/nuevo" element={<RutaAdmin><InsumoForm /></RutaAdmin>} />
+            <Route path="/insumos/editar/:id" element={<RutaAdmin><InsumoForm /></RutaAdmin>} />
+            <Route path="/insumos/eliminar/:id" element={<RutaAdmin><InsumoDelete /></RutaAdmin>} />
+            <Route path="/insumos/:id" element={<InsumoDetail />} />
+
+            <Route path="/unidadesMedida" element={<RutaAdmin><UnidadesMedidaList /></RutaAdmin>} />
+
+            <Route path="/equipos" element={<RutaAdmin><EquiposList /></RutaAdmin>} />
+            <Route path="/equipos/nuevo" element={<RutaAdmin><EquipoForm /></RutaAdmin>} />
+            <Route path="/equipos/:id" element={<EquipoDetail />} />
+            <Route path="/equipos/editar/:id" element={<RutaAdmin><EquipoForm /></RutaAdmin>} />
+            <Route path="/equipos/eliminar/:id" element={<RutaAdmin><EquipoDelete /></RutaAdmin>} />
+            <Route path="/vencimientos" element={<RutaAdmin><VencimientosList /></RutaAdmin>} />
+
+            <Route path="/sectores" element={<RutaAdmin><SectoresList /></RutaAdmin>} />
+            <Route path="/sectores/nuevo" element={<RutaAdmin><SectorForm /></RutaAdmin>} />
+            <Route path="/sectores/editar/:id" element={<RutaAdmin><SectorForm /></RutaAdmin>} />
+            <Route path="/sectores/:id" element={<SectorDetail />} /> 
+
+            <Route path="/productos_limpieza" element={<RutaAdmin><ProductosList /></RutaAdmin>} />
+            <Route path="/productos_limpieza/nuevo" element={<RutaAdmin><ProductoForm /></RutaAdmin>} />
+            <Route path="/productos_limpieza/editar/:id" element={<RutaAdmin><ProductoForm /></RutaAdmin>} />
+            <Route path="/productos_limpieza/eliminar/:id" element={<RutaAdmin><ProductoDelete /></RutaAdmin>} />
+
+            <Route path="/elementosLimpieza" element={<RutaAdmin><ElementosLimpiezaList /></RutaAdmin>} />
+            <Route path="/elementosLimpieza/nuevo" element={<RutaAdmin><ElementoLimpiezaForm /></RutaAdmin>} />
+            <Route path="/elementosLimpieza/alertas" element={<AlertasRecambio />} />
+            <Route path="/elementosLimpieza/editar/:id" element={<RutaAdmin><ElementoLimpiezaForm /></RutaAdmin>} />
+            <Route path="/elementosLimpieza/eliminar/:id" element={<RutaAdmin><ElementoLimpiezaDelete /></RutaAdmin>} />
+            <Route path="/elementosLimpieza/:id" element={<ElementoLimpiezaDetail />} />
+
+            <Route path="/tareas" element={<TareasList />} />
+            <Route path="/tareas/nueva" element={<RutaAdmin><TareaForm /></RutaAdmin>} />
+            <Route path="/tareas/editar/:id" element={<RutaAdmin><TareaForm /></RutaAdmin>} />
+            <Route path="/tareas/eliminar/:id" element={<RutaAdmin><TareaDelete /></RutaAdmin>} />
+
+            <Route path="/planes" element={<RutaAdmin><PlanesList /></RutaAdmin>} />
+            <Route path="/planes/nuevo" element={<RutaAdmin><PlanForm /></RutaAdmin>} />
+            <Route path="/planes/editar/:id" element={<RutaAdmin><PlanForm /></RutaAdmin>} />
+            <Route path="/planes/eliminar/:id" element={<RutaAdmin><PlanDelete /></RutaAdmin>} />
+            <Route path="/planes/:id" element={<PlanDetail />} />
+
+            <Route path="/checklists/hoy" element={<ChecklistList />} />
+            <Route path="/checklists/historial" element={<RutaAdmin><HistorialChecklistList /></RutaAdmin>} />
+
+            <Route path="/vencimientos-documentacion" element={<RutaAdmin><VencimientosDocumentacionList /></RutaAdmin>}/>
+          </Routes>
+        </main>
         
-        {isAdmin && (
-          <div className="dropdown">
-            <span className="navLink">Recursos Humanos ▾</span>
-            <div className="dropdownContent">
-              <Link to="/empleados">Directorio de Empleados</Link>
-              <Link to="/capacidades">Gestión de Capacidades</Link>
-              <Link to="/sectores">Gestión de Sectores</Link>
-              <Link to="/vencimientos-documentacion">Vencimientos de Personal</Link>
-            </div>
-          </div>
-        )}
+        
 
-        {isAdmin && (
-          <div className="dropdown">
-            <span className="navLink">Gestión de Insumos ▾</span>
-            <div className="dropdownContent">
-              <Link to="/insumos">Inventario de Insumos</Link>
-              <Link to="/unidadesMedida">Unidades de Medida</Link>
-            </div>
-          </div>
-        )}
+        
 
-        {isAdmin && (
-          <div className="dropdown">
-            <span className="navLink">Equipamiento ▾</span>
-            <div className="dropdownContent">
-              <Link to="/equipos">Inventario de Equipos</Link>
-            </div>
-          </div>
-        )}
+        
 
-        <div className="dropdown">
-          <span className="navLink">Limpieza y Planes ▾</span>
-          <div className="dropdownContent">
-            {isAdmin && <Link to="/productos_limpieza">Productos de Limpieza</Link>}
-            {isAdmin && <Link to="/elementosLimpieza">Elementos de Limpieza</Link>}
-            <Link to="/elementosLimpieza/alertas">Alertas de Recambio</Link>
-            <Link to="/tareas">Tareas de Limpieza</Link>
-            {isAdmin && <Link to="/planes">Planes de Limpieza</Link>}
-            <Link to="/checklists/hoy">Checklist del Día</Link>
-            {isAdmin && <Link to="/checklists/historial">Historial de Checklists</Link>}
-          </div>
-        </div>
+        
 
-        <div className="userSection">
-          <span className="userInfo">
-            {usuario?.nombre} {usuario?.apellido} ({usuario?.rol})
-          </span>
-          <button onClick={logout} className="logoutBtn">
-            Salir
-          </button>
-        </div>
-      </nav>
-
-      <div>
-        <Routes>
-          <Route path="/" element={<h1>SAIA - Grupo 2</h1>} />
-          
-          <Route path="/empleados" element={<RutaAdmin><EmpleadosList /></RutaAdmin>} />
-          <Route path="/empleados/nuevo" element={<RutaAdmin><EmpleadoForm /></RutaAdmin>} />
-          <Route path="/empleados/editar/:id" element={<RutaAdmin><EmpleadoForm /></RutaAdmin>} />
-          <Route path="/empleados/eliminar/:id" element={<RutaAdmin><EmpleadoDelete /></RutaAdmin>} />
-          <Route path="/empleados/:id" element={<EmpleadoDetail />} />
-          <Route path="/empleados/:empleadoId/documentacion" element={<RutaAdmin><DocumentacionEmpleado /></RutaAdmin>} />
-          <Route path="/empleados/:empleadoId/documentacion/nuevo" element={<RutaAdmin><DocumentacionForm /></RutaAdmin>} />
-          <Route path="/empleados/:empleadoId/documentacion/editar/:id" element={<RutaAdmin><DocumentacionForm /></RutaAdmin>} />
-          
-          <Route path="/capacidades" element={<RutaAdmin><CapacidadesList /></RutaAdmin>} />
-          <Route path="/capacidades/nuevo" element={<RutaAdmin><CapacidadForm /></RutaAdmin>} />
-          
-          <Route path="/insumos" element={<RutaAdmin><InsumosList /></RutaAdmin>} />
-          <Route path="/insumos/nuevo" element={<RutaAdmin><InsumoForm /></RutaAdmin>} />
-          <Route path="/insumos/editar/:id" element={<RutaAdmin><InsumoForm /></RutaAdmin>} />
-          <Route path="/insumos/eliminar/:id" element={<RutaAdmin><InsumoDelete /></RutaAdmin>} />
-          <Route path="/insumos/:id" element={<InsumoDetail />} />
-
-          <Route path="/unidadesMedida" element={<RutaAdmin><UnidadesMedidaList /></RutaAdmin>} />
-
-          <Route path="/equipos" element={<RutaAdmin><EquiposList /></RutaAdmin>} />
-          <Route path="/equipos/nuevo" element={<RutaAdmin><EquipoForm /></RutaAdmin>} />
-          <Route path="/equipos/:id" element={<EquipoDetail />} />
-          <Route path="/equipos/editar/:id" element={<RutaAdmin><EquipoForm /></RutaAdmin>} />
-          <Route path="/equipos/eliminar/:id" element={<RutaAdmin><EquipoDelete /></RutaAdmin>} />
-          <Route path="/vencimientos" element={<RutaAdmin><VencimientosList /></RutaAdmin>} />
-
-          <Route path="/sectores" element={<RutaAdmin><SectoresList /></RutaAdmin>} />
-          <Route path="/sectores/nuevo" element={<RutaAdmin><SectorForm /></RutaAdmin>} />
-          <Route path="/sectores/editar/:id" element={<RutaAdmin><SectorForm /></RutaAdmin>} />
-          <Route path="/sectores/:id" element={<SectorDetail />} /> 
-
-          <Route path="/productos_limpieza" element={<RutaAdmin><ProductosList /></RutaAdmin>} />
-          <Route path="/productos_limpieza/nuevo" element={<RutaAdmin><ProductoForm /></RutaAdmin>} />
-          <Route path="/productos_limpieza/editar/:id" element={<RutaAdmin><ProductoForm /></RutaAdmin>} />
-          <Route path="/productos_limpieza/eliminar/:id" element={<RutaAdmin><ProductoDelete /></RutaAdmin>} />
-
-          <Route path="/elementosLimpieza" element={<RutaAdmin><ElementosLimpiezaList /></RutaAdmin>} />
-          <Route path="/elementosLimpieza/nuevo" element={<RutaAdmin><ElementoLimpiezaForm /></RutaAdmin>} />
-          <Route path="/elementosLimpieza/alertas" element={<AlertasRecambio />} />
-          <Route path="/elementosLimpieza/editar/:id" element={<RutaAdmin><ElementoLimpiezaForm /></RutaAdmin>} />
-          <Route path="/elementosLimpieza/eliminar/:id" element={<RutaAdmin><ElementoLimpiezaDelete /></RutaAdmin>} />
-          <Route path="/elementosLimpieza/:id" element={<ElementoLimpiezaDetail />} />
-
-          <Route path="/tareas" element={<TareasList />} />
-          <Route path="/tareas/nueva" element={<RutaAdmin><TareaForm /></RutaAdmin>} />
-          <Route path="/tareas/editar/:id" element={<RutaAdmin><TareaForm /></RutaAdmin>} />
-          <Route path="/tareas/eliminar/:id" element={<RutaAdmin><TareaDelete /></RutaAdmin>} />
-
-          <Route path="/planes" element={<RutaAdmin><PlanesList /></RutaAdmin>} />
-          <Route path="/planes/nuevo" element={<RutaAdmin><PlanForm /></RutaAdmin>} />
-          <Route path="/planes/editar/:id" element={<RutaAdmin><PlanForm /></RutaAdmin>} />
-          <Route path="/planes/eliminar/:id" element={<RutaAdmin><PlanDelete /></RutaAdmin>} />
-          <Route path="/planes/:id" element={<PlanDetail />} />
-
-          <Route path="/checklists/hoy" element={<ChecklistList />} />
-          <Route path="/checklists/historial" element={<RutaAdmin><HistorialChecklistList /></RutaAdmin>} />
-
-          <Route path="/vencimientos-documentacion" element={<RutaAdmin><VencimientosDocumentacionList /></RutaAdmin>}/>
-        </Routes>
+        
       </div>
+
     </>
   );
 }

@@ -12,8 +12,3 @@ class ErrorCode:
 
     CERTIFICACION_FORMATO_INVALIDO="La certificación debe ser una imagen o un archivo PDF"
     CERTIFICACION_DEMASIADO_GRANDE="La certificación no puede superar los 25 MB"
-
-
-TAMANIO_MAXIMO_MB = 25
-
-PREFIJOS_CERTIFICACION_VALIDOS = ("data:image/", "data:application/pdf")

@@ -1,5 +1,5 @@
 .base {
-    color: rgb(245, 255, 255);
+    color: var(--texto-sobre-acento);
     border: none;
     padding: 10px 15px;
     border-radius: 10px;
@@ -21,20 +21,24 @@
     cursor: not-allowed;
 }
 
-.crear, 
-.editar, 
-.ver, 
-.guardar, 
+.crear,
+.guardar{
+    background-color:var(--verde-estandar);
+}
+.editar,
 .volver, 
 .siguiente,
+.buscar{
+    background-color: var(--azul-estandar);
+} 
+.ver{
+    background-color: var(--gris-estandar);
+}  
 .documentos {
-    background-color: #1a6a4a;
-}
-.buscar {
-    background-color: #1a6a4a;
+    background-color: var(--celeste-estandar);
 }
 
-/* Color Rojo */
-.eliminar {
-    background-color: #ec1313;
+.eliminar, 
+.limpiar{
+    background-color: var(--rojo-estandar);
 }

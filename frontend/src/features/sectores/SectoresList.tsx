@@ -8,9 +8,15 @@ import ModalAlerta from '../../components/alerta';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';
 
+import BuscadorTexto from '../../components/BuscadorTexto';
+import { filtrarPorTexto } from '../../utils/texto';
+
+import TablaPaginada, {type Columna } from '../../components/TablaPaginada';
+
 export default function SectoresList() {
     const { usuario } = useAuth();
     const [sectores, setSectores] = useState<Sector[]>([]);
+    const [busqueda, setBusqueda] = useState('');
     const [paginaActual, setPaginaActual] = useState(1);
     const sectoresPorPagina = 10;
 
@@ -55,42 +61,36 @@ export default function SectoresList() {
             });
         }
     };
+    const sectoresFiltrados = filtrarPorTexto(sectores, busqueda, (c) => [c.nombre, c.responsable?.nombre, c.responsable?.apellido]);
 
     const indiceUltimo = paginaActual * sectoresPorPagina;
     const indicePrimer = indiceUltimo - sectoresPorPagina;
-    const sectoresActuales = sectores.slice(indicePrimer, indiceUltimo);
-    const totalPaginas = Math.ceil(sectores.length / sectoresPorPagina);
+    const sectoresActuales = sectoresFiltrados.slice(indicePrimer, indiceUltimo);
+    const totalPaginas = Math.ceil(sectoresFiltrados.length / sectoresPorPagina);
 
-    return (
-        <div className={styles.contenedorPrincipal}>
-            <h2>Gestión de Sectores</h2>
-            
-            {usuario?.rol === 'admin' && (
-                <Link to="/sectores/nuevo" className={styles.linkCrear}>
-                    <Boton variant="crear">
-                        Registrar Sector
-                    </Boton>
-                </Link>
-            )}
 
-            <div className={styles.contenedorTabla} style={{ maxWidth: '900px' }}>
-                <div className={styles.filaHeader} style={{ gridTemplateColumns: '2fr 2fr 1.5fr' }}>
-                    <div>Nombre del Sector</div>
-                    <div>Responsable / Encargado</div>
-                    <div>Acciones</div>
-                </div>
-
-                {sectoresActuales.map((sec) => (
-                    <div key={sec.id} className={styles.filaItem} style={{ gridTemplateColumns: '2fr 2fr 1.5fr' }}>
-                        <div style={{ fontWeight: '500', color: 'var(--text-h)', justifyContent: 'flex-start', paddingLeft: '20px' }}>
-                            {sec.nombre}
-                        </div>
-                        
-                        <div style={{ color: 'var(--text)', justifyContent: 'flex-start', paddingLeft: '10px' }}>
-                            {sec.responsable ? `${sec.responsable.nombre} ${sec.responsable.apellido}` : 'Sin asignar'}
-                        </div>
-                        
-                        <div className={styles.grupoBotonesTabla}>
+    const misColumnas: Columna<Sector>[] = [
+        {
+            key:'nombre',
+            encabezado: 'Nombre del Sector',
+            ordenable: true,
+            variant: 'titulo',
+            render: (sec) => sec.nombre
+        },
+        {
+            key:'responsable',
+            encabezado: 'Responsable/Encargado',
+            ordenable: true,
+            variant: 'badge',
+            valorOrdenamiento: (sec) => sec.responsable ? `${sec.responsable.nombre} ${sec.responsable.apellido}` : 'ZZZ',
+            render: (sec) => sec.responsable ? `${sec.responsable.nombre} ${sec.responsable.apellido}` : 'Sin asignar'
+        },
+        {
+            key:'acciones',
+            encabezado:'Acciones',
+            ordenable:false,
+            render: (sec)=> (
+                <div className={styles.grupoBotonesTabla}>
                             <Link to={`/sectores/${sec.id}`} title="Ver detalle">
                                 <Boton variant="ver" style={{ padding: '8px 12px' }}></Boton>
                             </Link>
@@ -109,39 +109,42 @@ export default function SectoresList() {
                                 </span>
                             )}
                         </div>
-                    </div>
-                ))}
+            )
+        }
 
-                {sectoresActuales.length === 0 && (
-                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text)' }}>
-                        No hay sectores registrados.
-                    </div>
-                )}
+    ]
+
+
+
+    return (
+        <div className={styles.contenedorPrincipal}>
+            <h2>Gestión de Sectores</h2>
+            
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar sector o responsable..." />
+            </div>
+            {usuario?.rol === 'admin' && (
+                <Link to="/sectores/nuevo" className={styles.linkCrear}>
+                    <Boton variant="crear">
+                        Registrar Sector
+                    </Boton>
+                </Link>
+            )}
+
+            <div style={{ maxWidth: '1100px', width: '100%' }}>
+                 <TablaPaginada
+                     datos={sectoresFiltrados}
+                     columnas={misColumnas}
+                     gridTemplateColumns="1.5fr 1fr 1fr "
+                     itemsPorPagina={5}
+                     mensajeVacio="No se encontraron capacidades con los filtros actuales."
+                     columnaOrdenInicial="nombre" 
+                     ordenAscInicial={true}
+                 />
             </div>
 
-            {totalPaginas > 1 && (
-                <div className={styles.filaBotones} style={{ alignItems: 'center', marginTop: '30px', justifyContent: 'center' }}>
-                    <Boton 
-                        variant="volver" 
-                        onClick={() => setPaginaActual(p => p - 1)} 
-                        disabled={paginaActual === 1}
-                    >
-                        Anterior
-                    </Boton>
-                    
-                    <span style={{ color: 'var(--text-h)', fontWeight: 'bold', margin: '0 15px' }}>
-                        Página {paginaActual} de {totalPaginas}
-                    </span>
-                    
-                    <Boton 
-                        variant="siguiente" 
-                        onClick={() => setPaginaActual(p => p + 1)} 
-                        disabled={paginaActual === totalPaginas}
-                    >
-                        Siguiente
-                    </Boton>
-                </div>
-            )}
+            
 
             <ModalConfirmacion
                 isOpen={modalConfirmacion.isOpen}

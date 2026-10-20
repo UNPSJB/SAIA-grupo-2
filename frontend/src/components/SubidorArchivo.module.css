@@ -1,0 +1,59 @@
+.contenedor {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.campo {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background-color: var(--input-bg);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.campo::file-selector-button {
+    margin-right: 10px;
+    padding: 5px 12px;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--gris-estandar);
+    color: var(--texto-sobre-acento);
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.ayuda {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+.error {
+    color: var(--rojo-texto);
+    font-size: 0.8rem;
+}
+
+.quitar {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background-color: transparent;
+    color: var(--rojo-texto);
+    font-family: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.quitar:hover {
+    background-color: var(--accent-bg);
+}

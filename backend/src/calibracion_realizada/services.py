@@ -7,22 +7,16 @@ from sqlalchemy.orm import Session, selectinload
 from src.equipos.models import Equipo
 from src.calibracion_realizada.models import CalibracionRealizada
 from src.calibracion_realizada import schemas, exceptions
-from src.calibracion_realizada.constants import (
-    PREFIJOS_CERTIFICACION_VALIDOS,
-    TAMANIO_MAXIMO_MB,
-)
+from src.archivos.constants import CARACTERES_MAXIMOS, PREFIJOS_VALIDOS
 
 logger = logging.getLogger(__name__)
 
-BYTES_POR_MB = 1024 * 1024
-CARACTERES_MAXIMOS_CERTIFICACION = int(TAMANIO_MAXIMO_MB * BYTES_POR_MB * 4 / 3) + 1024
-
 
 def validar_certificacion(certificacion_url: str) -> None:
-    if not certificacion_url.startswith(PREFIJOS_CERTIFICACION_VALIDOS):
+    if not certificacion_url.startswith(PREFIJOS_VALIDOS):
         raise exceptions.CertificacionFormatoInvalido()
 
-    if len(certificacion_url) > CARACTERES_MAXIMOS_CERTIFICACION:
+    if len(certificacion_url) > CARACTERES_MAXIMOS:
         raise exceptions.CertificacionDemasiadoGrande()
 
 def buscar_equipo(db: Session, equipo_id: int) -> Optional[Equipo]:

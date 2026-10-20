@@ -4,6 +4,7 @@ import type { CalibracionRealizadaPayload } from '../../types/calibracionRealiza
 import type { Equipo } from '../../types/equipos';
 import { registrarCalibracion } from '../../services/calibracionRealizadaServices';
 import Boton from '../../components/Boton';
+import VisorArchivo from '../../components/VisorArchivo';
 import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
@@ -34,6 +35,7 @@ export default function RegistrarCalibracionModal({
     onSuccess,
 }: RegistrarCalibracionModalProps) {
     const [vistaPreviaCertificacion, setVistaPreviaCertificacion] = useState<string | null>(null);
+    const [nombreCertificacion, setNombreCertificacion] = useState<string | null>(null);
     const [leyendoCertificacion, setLeyendoCertificacion] = useState(false);
     const [modalAlerta, setModalAlerta] = useState({
         isOpen: false,
@@ -74,6 +76,7 @@ export default function RegistrarCalibracionModal({
         const archivo = input.files?.[0];
         if (!archivo) {
             setVistaPreviaCertificacion(null);
+            setNombreCertificacion(null);
             return;
         }
 
@@ -81,6 +84,7 @@ export default function RegistrarCalibracionModal({
             input.value = '';
             resetField('certificacion_url');
             setVistaPreviaCertificacion(null);
+            setNombreCertificacion(null);
             setModalAlerta({
                 isOpen: true,
                 titulo: 'Archivo no válido',
@@ -93,6 +97,7 @@ export default function RegistrarCalibracionModal({
             input.value = '';
             resetField('certificacion_url');
             setVistaPreviaCertificacion(null);
+            setNombreCertificacion(null);
             setModalAlerta({
                 isOpen: true,
                 titulo: 'Archivo demasiado grande',
@@ -106,6 +111,7 @@ export default function RegistrarCalibracionModal({
         lector.onload = () => {
             if (typeof lector.result === 'string') {
                 setVistaPreviaCertificacion(lector.result);
+                setNombreCertificacion(archivo.name);
             } else {
                 setModalAlerta({
                     isOpen: true,
@@ -119,6 +125,7 @@ export default function RegistrarCalibracionModal({
             input.value = '';
             resetField('certificacion_url');
             setVistaPreviaCertificacion(null);
+            setNombreCertificacion(null);
             setLeyendoCertificacion(false);
             setModalAlerta({
                 isOpen: true,
@@ -131,6 +138,7 @@ export default function RegistrarCalibracionModal({
 
     const quitarCertificacion = () => {
         setVistaPreviaCertificacion(null);
+        setNombreCertificacion(null);
         resetField('certificacion_url');
         if (inputCertificacionRef.current) inputCertificacionRef.current.value = '';
     };
@@ -178,23 +186,24 @@ export default function RegistrarCalibracionModal({
     const cerrarModal = () => {
         reset({ fecha: obtenerFechaLocal() });
         setVistaPreviaCertificacion(null);
+        setNombreCertificacion(null);
         onClose();
     };
 
     return (
         <>
         <div className={styles.modalOverlay}>
-            <div style={{ backgroundColor: 'var(--bg)', width: '95%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '12px', padding: '30px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            <div style={{ backgroundColor: 'var(--bg)', width: '95%', maxWidth: '1000px', maxHeight: '92vh', overflowY: 'auto', borderRadius: '12px', padding: '30px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
                 <h2 style={{ marginTop: 0, borderBottom: '1px solid var(--border)', paddingBottom: '15px' }}>Registrar Calibración</h2>
 
-                <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta} style={{ boxShadow: 'none', padding: 0, border: 'none' }}>
+                <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta} style={{ boxShadow: 'none', padding: 0, border: 'none', maxWidth: '100%' }}>
                         <div className={styles.formGroup} style={{ marginBottom: '20px' }}>
                             <label style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Equipo a calibrar:</label>
                             <select
                                 value={equipo.id}
                                 disabled
                                 aria-label="Equipo a calibrar"
-                                style={{ width: '100%', padding: '12px', fontSize: '1rem', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: '#e5e7eb', color: '#4b5563' }}
+                                style={{ width: '100%', padding: '12px', fontSize: '1rem', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: 'var(--blocked-input-bg)', color: 'var(--text-muted)' }}
                             >
                                 <option value={equipo.id}>{equipo.nombre}</option>
                             </select>
@@ -210,7 +219,7 @@ export default function RegistrarCalibracionModal({
                                     campoCertificacion.ref(element);
                                     inputCertificacionRef.current = element;
                                 }}
-                                style={{ width: '100%', padding: '10px', fontSize: '1rem', borderRadius: '8px', border: '1px dashed var(--border)', backgroundColor: '#f9fafb', color: '#1f2937' }} 
+                                style={{ width: '100%', padding: '10px', fontSize: '1rem', borderRadius: '8px', border: '1px dashed var(--border)', backgroundColor: 'var(--input-bg)', color: 'var(--text)' }} 
                             />
                             <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '5px' }}>Permite la subida de imágenes y documentos PDF (máximo {TAMANIO_MAXIMO_MB} MB)</small>
                             {leyendoCertificacion && (
@@ -219,52 +228,42 @@ export default function RegistrarCalibracionModal({
                                 </small>
                             )}
                             {errors.certificacion_url && (
-                                <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>
+                                <span style={{ color: 'var(--rojo-texto)', fontSize: '0.8rem', marginTop: '5px' }}>
                                     {errors.certificacion_url.message}
                                 </span>
                             )}
 
                             {vistaPreviaCertificacion && (
-                                <div style={{ position: 'relative', marginTop: '12px', textAlign: 'center', backgroundColor: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                        <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-h)' }}>Vista previa de la certificación:</p>
-                                        <button
-                                            type="button"
-                                            onClick={quitarCertificacion}
-                                            title="Quitar foto"
-                                            style={{
-                                                background: '#fee2e2',
-                                                color: '#dc2626',
-                                                border: '1px solid #fca5a5',
-                                                borderRadius: '50%',
-                                                width: '26px',
-                                                height: '26px',
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                cursor: 'pointer',
-                                                fontWeight: 'bold',
-                                                fontSize: '1rem',
-                                                lineHeight: 1,
-                                                padding: 0
-                                            }}
-                                        >
-                                            &times;
-                                        </button>
-                                    </div>
-                                    {vistaPreviaCertificacion.startsWith('data:image/') ? (
-                                        <img
-                                            src={vistaPreviaCertificacion}
-                                            alt="Vista previa de la certificación"
-                                            style={{ maxWidth: '100%', maxHeight: '220px', borderRadius: '6px', objectFit: 'contain' }}
-                                        />
-                                    ) : (
-                                        <iframe
-                                            src={vistaPreviaCertificacion}
-                                            title="Vista previa de la certificación PDF"
-                                            style={{ width: '100%', height: '320px', border: 0 }}
-                                        />
-                                    )}
+                                <div style={{ width: '100%', boxSizing: 'border-box', marginTop: '12px', backgroundColor: 'var(--card-bg)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                    <VisorArchivo
+                                        url={vistaPreviaCertificacion}
+                                        nombre={nombreCertificacion ?? 'Vista previa de la certificación'}
+                                        alto="55vh"
+                                        acciones={
+                                            <button
+                                                type="button"
+                                                onClick={quitarCertificacion}
+                                                title="Quitar archivo"
+                                                aria-label="Quitar archivo"
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    padding: '6px 12px',
+                                                    border: '1px solid var(--border)',
+                                                    borderRadius: '8px',
+                                                    background: 'transparent',
+                                                    color: 'var(--rojo-texto)',
+                                                    fontFamily: 'inherit',
+                                                    fontSize: '0.82rem',
+                                                    cursor: 'pointer',
+                                                }}
+                                            >
+                                                <i className="bi bi-trash"></i>
+                                                Quitar
+                                            </button>
+                                        }
+                                    />
                                 </div>
                             )}
                         </div>
@@ -277,10 +276,10 @@ export default function RegistrarCalibracionModal({
                                     required: 'La fecha es obligatoria',
                                     max: { value: fechaMaxima, message: 'La fecha no puede ser futura' }
                                 })}
-                                style={errors.fecha ? { borderColor: '#ef4444' } : {}}
+                                style={errors.fecha ? { borderColor: 'var(--rojo-texto)' } : {}}
                             />
                             {errors.fecha && (
-                                <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>
+                                <span style={{ color: 'var(--rojo-texto)', fontSize: '0.8rem', marginTop: '5px' }}>
                                     {errors.fecha.message}
                                 </span>
                             )}
