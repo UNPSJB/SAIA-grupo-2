@@ -52,7 +52,7 @@ export default function TareaDelete() {
                     <p><strong>Frecuencia:</strong> {tarea.frecuencia}</p>
                     <p><strong>Planes Involucrados:</strong> {tarea.planes?.length || 0}</p>
                     
-                    <div className={styles.filaBotones} style={{ marginTop: '30px' }}>
+                    <div className={styles.filaBotones}>
                         <Link to="/tareas">
                             <Boton variant="volver">Cancelar</Boton>
                         </Link>

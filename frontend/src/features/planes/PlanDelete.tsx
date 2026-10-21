@@ -53,7 +53,7 @@ export default function PlanDelete() {
                     <p><strong>Fecha de Inicio:</strong> {plan.fecha_inicio}</p>
                     <p><strong>Equipos Involucrados:</strong> {plan.equipos?.length || 0}</p>
                     
-                    <div className={styles.filaBotones} style={{ marginTop: '30px' }}>
+                    <div className={styles.filaBotones}>
                         <Link to="/planes">
                             <Boton variant="volver">Cancelar</Boton>
                         </Link>

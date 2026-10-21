@@ -58,7 +58,7 @@ export default function ElementosLimpiezaList() {
                 </p>
             )}
 
-            <div className={styles.filaBotones} style={{ justifyContent: 'center', marginBottom: '20px' }}>
+            <div className={styles.filaBotones}>
                 <Link to="/elementosLimpieza/nuevo">
                     <Boton variant="crear">Registrar Elemento</Boton>
                 </Link>
@@ -135,7 +135,7 @@ export default function ElementosLimpiezaList() {
             </div>
 
             {totalPaginas > 1 && (
-                <div className={styles.filaBotones} style={{ alignItems: 'center', marginTop: '30px', justifyContent: 'center' }}>
+                <div className={styles.filaBotones}>
                     <Boton variant="volver" onClick={() => setPaginaActual(p => p - 1)} disabled={paginaActual === 1}>
                         Anterior
                     </Boton>

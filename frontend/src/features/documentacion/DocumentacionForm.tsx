@@ -210,6 +210,7 @@ export default function DocumentacionForm() {
                         <label>Fecha de vencimiento:</label>
                         <input
                             type="date"
+                            className={styles.filtroFecha}
                             value={fechaVencimiento}
                             onChange={(e) => setFechaVencimiento(e.target.value)}
                             style={errores.fecha_vencimiento ? estiloError : {}}
@@ -310,9 +311,9 @@ export default function DocumentacionForm() {
                     )}
                 </div>
 
-                <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
+                <div className={styles.filaBotones}>
                     <Boton type="submit" variant="guardar" disabled={guardando}>
-                        {guardando ? 'Guardando...' : editando ? 'Actualizar Cambios' : 'Guardar'}
+                        {guardando ? 'Guardando...' : editando ? 'Actualizar' : 'Guardar'}
                     </Boton>
                     <Link to={`/empleados/${empleadoId}/documentacion`}>
                         <Boton variant="volver">Cancelar</Boton>

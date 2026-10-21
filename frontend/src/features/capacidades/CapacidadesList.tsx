@@ -105,7 +105,7 @@ export default function CapacidadesList() {
             </div>
 
             {totalPaginas > 1 && (
-                <div className={styles.filaBotones} style={{ alignItems: 'center', marginTop: '30px', justifyContent: 'center' }}>
+                <div className={styles.filaBotones}>
                     <Boton 
                         variant="volver" 
                         onClick={() => setPaginaActual(p => p - 1)} 

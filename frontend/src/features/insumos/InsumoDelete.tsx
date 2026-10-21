@@ -58,7 +58,7 @@ export default function InsumoDelete() {
                     <h3 style={{ color: 'var(--text-h)' }}>{insumo.nombre}</h3>
                     <p>Unidad de Medida: {insumo.unidad_medida.nombre}</p>
                     
-                    <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
+                    <div className={styles.filaBotones}>
                         <Link to="/insumos">
                             <Boton variant="volver">
                                 Cancelar

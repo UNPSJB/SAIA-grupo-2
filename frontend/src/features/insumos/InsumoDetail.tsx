@@ -33,7 +33,7 @@ export default function InsumoDetail() {
 
                     <div className={styles.bloqueDetalle} style={{ textAlign: 'center', marginTop: '20px' }}>
                         <Link to="/insumos">
-                            <Boton variant="volver">Volver a la lista</Boton>
+                            <Boton variant="volver">Volver</Boton>
                         </Link>
                     </div>
                 </div>

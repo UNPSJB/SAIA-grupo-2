@@ -111,9 +111,9 @@ export default function SectorDetail() {
                         )}
                     </div>
 
-                    <div className={styles.filaBotones} style={{ marginTop: '30px', justifyContent: 'center' }}>
+                    <div className={styles.filaBotones}>
                         <Link to="/sectores">
-                            <Boton variant="volver">Volver a Sectores</Boton>
+                            <Boton variant="volver">Volver</Boton>
                         </Link>
                     </div>
                 </div>

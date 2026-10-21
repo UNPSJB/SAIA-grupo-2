@@ -202,12 +202,12 @@ export default function EquipoForm() {
                     </div>
                 </div>
 
-                <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
+                <div className={styles.filaBotones}>
                     <Boton type="submit" variant="guardar">
-                        {editando ? 'Actualizar Cambios' : 'Guardar'}
+                        {editando ? 'Actualizar' : 'Guardar'}
                     </Boton>
                     <Link to="/equipos">
-                        <Boton variant="eliminar">
+                        <Boton variant="volver">
                             Cancelar
                         </Boton>
                     </Link>

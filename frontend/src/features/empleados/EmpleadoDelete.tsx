@@ -104,7 +104,7 @@ export default function EmpleadoDelete() {
                         </div>
                     </div>
                     
-                    <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
+                    <div className={styles.filaBotones}>
                         <Link to="/empleados">
                             <Boton variant="volver">
                                 Cancelar

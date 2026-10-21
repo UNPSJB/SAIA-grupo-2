@@ -42,16 +42,8 @@ export default function EmpleadosList() {
     return (
         <div className={styles.contenedorPrincipal}>
             <h2>Directorio de Personal</h2>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '1100px', marginBottom: '20px' }}>
-                {usuario?.rol === 'admin' ? (
-                    <Link to="/empleados/nuevo">
-                        <Boton variant="crear">
-                            Registrar Empleado
-                        </Boton>
-                    </Link>
-                ) : <div />}
 
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '20px' }}>
                 <label className={styles.labelCheckbox} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                     <input
                         type="checkbox"
@@ -64,6 +56,16 @@ export default function EmpleadosList() {
                     />
                     <span>Mostrar empleados dados de baja</span>
                 </label>
+
+                {usuario?.rol === 'admin' && (
+                    <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+                        <Link to="/empleados/nuevo">
+                            <Boton variant="crear">
+                                Registrar Empleado
+                            </Boton>
+                        </Link>
+                    </div>
+                )}
             </div>
 
             <div className={styles.contenedorTabla}>

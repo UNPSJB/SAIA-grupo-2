@@ -322,7 +322,7 @@ export default function HistorialChecklistList() {
 
             {/* PAGINACIÓN */}
             {totalPaginas > 1 && (
-                <div className={styles.filaBotones} style={{ alignItems: 'center', marginTop: '30px', justifyContent: 'center' }}>
+                <div className={styles.filaBotones}>
                     <Boton
                         variant="volver"
                         onClick={() => setPaginaActual(p => p - 1)}
@@ -420,7 +420,7 @@ export default function HistorialChecklistList() {
                                     )}
                                 </div>
 
-                                <div className={styles.filaBotones} style={{ marginTop: '20px', justifyContent: 'flex-end' }}>
+                                <div className={styles.filaBotones}>
                                     <Boton variant="volver" onClick={() => setModalDetalleAbierto(false)}>Cerrar</Boton>
                                 </div>
                             </div>

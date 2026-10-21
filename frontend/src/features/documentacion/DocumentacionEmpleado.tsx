@@ -125,12 +125,12 @@ export default function DocumentacionEmpleado() {
                 </p>
             )}
 
-            <div className={styles.filaBotones} style={{ marginBottom: '20px' }}>
+            <div className={styles.filaBotones}>
                 <Link to={`/empleados/${empleadoId}/documentacion/nuevo`}>
                     <Boton variant="crear">Cargar Documento</Boton>
                 </Link>
                 <Boton variant="volver" onClick={() => navigate(-1)} style={{ marginLeft: '10px' }}>
-                    Volver atrás
+                    Volver
                 </Boton>
             </div>
 

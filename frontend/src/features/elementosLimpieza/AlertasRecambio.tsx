@@ -62,7 +62,7 @@ export default function AlertasRecambio() {
             {esAdmin && (
                 <Link to="/elementosLimpieza" className={styles.linkCrear}>
                     <Boton variant="volver">
-                        Ver todos los elementos
+                        Volver
                     </Boton>
                 </Link>
             )}

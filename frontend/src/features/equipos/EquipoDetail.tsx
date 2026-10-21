@@ -106,7 +106,7 @@ export default function EquipoDetail() {
 
                     <div className={styles.bloqueDetalle} style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                         <Link to="/equipos">
-                            <Boton variant="volver">Volver a la lista</Boton>
+                            <Boton variant="volver">Volver</Boton>
                         </Link>
                         <Boton variant="crear" onClick={() => setModalCalibracionAbierto(true)}>
                             Registrar calibración

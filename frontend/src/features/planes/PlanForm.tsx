@@ -322,9 +322,9 @@ export default function PlanForm() {
                     </div>
                 </div>
 
-                <div className={styles.filaBotones} style={{ marginTop: '40px', justifyContent: 'center' }}>
+                <div className={styles.filaBotones}>
                     <Boton type="submit" variant="guardar">
-                        {editando ? 'Actualizar Plan' : 'Guardar Plan'}
+                        {editando ? 'Actualizar' : 'Guardar'}
                     </Boton>
                     <Link to="/planes">
                         <Boton variant="volver">Cancelar</Boton>
@@ -350,7 +350,7 @@ export default function PlanForm() {
                             ))}
                         </div>
                         
-                        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+                        <div className={styles.filaBotones}>
                             <Boton type="button" variant="guardar" onClick={() => setModalEquipos(false)}>Listo</Boton>
                         </div>
                     </div>
@@ -376,8 +376,8 @@ export default function PlanForm() {
                             ))}
                         </div>
                         
-                        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
-                            <Boton type="button" style={{ backgroundColor: '#0369a1' }} variant="guardar" onClick={() => setModalTareas(false)}>Listo</Boton>
+                        <div className={styles.filaBotones}>
+                            <Boton type="button" variant="guardar" onClick={() => setModalTareas(false)}>Listo</Boton>
                         </div>
                     </div>
                 </div>

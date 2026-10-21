@@ -62,12 +62,12 @@ export default function CapacidadForm() {
                     </div>
                 </div>
 
-                <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
+                <div className={styles.filaBotones}>
                     <Boton type="submit" variant="guardar">
                         Guardar
                     </Boton>
                     <Link to="/capacidades">
-                        <Boton variant="eliminar">
+                        <Boton variant="volver">
                             Cancelar
                         </Boton>
                     </Link>

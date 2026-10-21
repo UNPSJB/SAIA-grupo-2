@@ -62,7 +62,7 @@ export default function ElementoLimpiezaDelete() {
                             : 'Sin frecuencia de recambio definida'}
                     </p>
 
-                    <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
+                    <div className={styles.filaBotones}>
                         <Link to="/elementosLimpieza">
                             <Boton variant="volver">
                                 Cancelar

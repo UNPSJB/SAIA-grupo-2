@@ -108,12 +108,17 @@ export default function SectorForm() {
                     )}
                 </div>
 
-                <div className={styles.filaBotones} style={{ justifyContent: 'space-between' }}>
-                    <Boton variant="volver" type="button" onClick={() => navigate('/sectores')}>
-                        Cancelar
+                <div className={styles.filaBotones}>
+                    <Boton type="submit" variant="guardar">
+                        {esEdicion ? 'Actualizar' : 'Guardar'}
                     </Boton>
-                    <Boton variant="guardar" type="submit">
-                        {esEdicion ? 'Actualizar Sector' : 'Guardar Sector'}
+
+                    <Boton
+                        variant="volver"
+                        type="button"
+                        onClick={() => navigate('/sectores')}
+                    >
+                        Cancelar
                     </Boton>
                 </div>
             </form>

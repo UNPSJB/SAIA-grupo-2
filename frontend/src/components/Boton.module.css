@@ -1,40 +1,91 @@
 .base {
-    color: rgb(245, 255, 255);
-    border: none;
-    padding: 10px 15px;
-    border-radius: 10px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 9px 16px;
+    border: 1px solid transparent;
+    border-radius: 8px;
     font-family: inherit;
-    font-size: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.4;
+    text-align: center;
+    white-space: nowrap;
     cursor: pointer;
-    transition: filter 0.2s ease;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .base:hover:not(:disabled) {
-    filter: brightness(1.15);
+    filter: brightness(0.94);
+}
+
+.base:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.3);
+    outline-offset: 2px;
 }
 
 .base:disabled {
-    opacity: 0.5;
+    opacity: 0.55;
     cursor: not-allowed;
 }
 
-.crear, 
-.editar, 
-.ver, 
-.guardar, 
-.volver, 
-.siguiente,
-.documentos {
-    background-color: #1a6a4a;
-}
-.buscar {
-    background-color: #1a6a4a;
+.guardar {
+    color: #ffffff;
+    background-color: #2563eb;
+    border-color: #2563eb;
 }
 
-/* Color Rojo */
-.eliminar {
-    background-color: #ec1313;
+.crear {
+    color: #ffffff;
+    background-color: #15803d;
+    border-color: #15803d;
 }
+
+.eliminar {
+    color: #ffffff;
+    background-color: #dc2626;
+    border-color: #dc2626;
+}
+
+.volver {
+    color: #ffffff;
+    background-color: #334155;
+    border-color: #cbd5e1;
+}
+
+.volver:hover:not(:disabled) {
+    background-color: #94a3b8;
+    border-color: #94a3b8;
+    filter: none;
+}
+
+.editar {
+    color: #ffffff;
+    background-color: #15803d;
+    border-color: #15803d;
+}
+
+.ver {
+    color: #ffffff;
+    background-color: #3498bd;
+    border-color: #3498bd;
+}
+
+.documentos {
+    color: #ffffff;
+    background-color: #0f766e;
+    border-color: #0f766e;
+}
+
+.buscar,
+.siguiente {
+    color: #ffffff;
+    background-color: #1d4ed8;
+    border-color: #1d4ed8;
+} 

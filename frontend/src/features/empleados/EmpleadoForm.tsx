@@ -267,9 +267,9 @@ export default function EmpleadoForm() {
                     {errorSector && <span className={styles.textDanger} style={{ marginTop: '10px' }}>{errorSector}</span>}
                 </div>
 
-                <div className={styles.filaBotones} style={{ marginTop: '25px' }}>
+                <div className={styles.filaBotones}>
                     <Boton type="submit" variant="guardar">{editando ? 'Actualizar' : 'Guardar'}</Boton>
-                    <Link to="/empleados"><Boton variant="eliminar">Cancelar</Boton></Link>
+                    <Link to="/empleados"><Boton variant="volver">Cancelar</Boton></Link>
                 </div>
             </form>
 

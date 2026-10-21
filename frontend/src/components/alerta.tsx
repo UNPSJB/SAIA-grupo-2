@@ -17,7 +17,7 @@ export default function ModalAlerta({ isOpen, titulo, mensaje, onClose }: ModalA
                 <h3>{titulo}</h3>
                 <p>{mensaje}</p>
                 
-                <div className={styles.filaBotones} style={{ justifyContent: 'center' }}>
+                <div className={styles.filaBotones}>
                     <Boton variant="volver" onClick={onClose}>
                         Aceptar
                     </Boton>

@@ -305,9 +305,7 @@ export default function VencimientosList() {
 
             {totalPaginas > 1 && (
                 <div
-                    className={styles.filaBotones}
-                    style={{ alignItems: 'center', marginTop: '25px', justifyContent: 'center' }}
-                >
+                    className={styles.filaBotones}>
                     <Boton
                         variant="volver"
                         onClick={() => setPaginaActual((p) => p - 1)}

@@ -56,7 +56,7 @@ export default function EquipoDelete() {
                     <p><strong>Ubicación / Sector:</strong> {equipo.sector?.nombre}</p>
                     <p><strong>Condición Física:</strong> {equipo.estado === 'bueno' ? 'Operativo (Bueno)' : 'Dañado'}</p>
                     
-                    <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
+                    <div className={styles.filaBotones}>
                         <Link to="/equipos">
                             <Boton variant="volver">Cancelar</Boton>
                         </Link>

@@ -287,10 +287,16 @@ export default function RegistrarCalibracionModal({
                         </div>
                         
                         <hr style={{ margin: '30px 0', borderColor: 'var(--border)' }} />
-                        <div className={styles.filaBotones} style={{ marginTop: '30px', justifyContent: 'flex-end', gap: '15px' }}>
-                            <Boton type="button" variant="volver" onClick={cerrarModal}>Cancelar</Boton>
+                        <div className={styles.filaBotones}>
                             <Boton type="submit" variant="guardar" disabled={isSubmitting || leyendoCertificacion}>
-                                {isSubmitting ? 'Guardando...' : leyendoCertificacion ? 'Leyendo archivo...' : 'Registrar calibración'}
+                                {isSubmitting
+                                    ? 'Guardando...'
+                                    : leyendoCertificacion
+                                        ? 'Leyendo archivo...'
+                                        : 'Registrar calibración'}
+                            </Boton>
+                            <Boton type="button" variant="volver" onClick={cerrarModal}>
+                                Cancelar
                             </Boton>
                         </div>
                 </form>

@@ -52,7 +52,7 @@ export default function ProductoDelete() {
                     <p><strong>Categoría:</strong> <span style={{ textTransform: 'capitalize' }}>{producto.tipo}</span></p>
                     <p><strong>Stock Actual:</strong> {producto.stock}</p>
                     
-                    <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
+                    <div className={styles.filaBotones}>
                         <Link to="/productos_limpieza">
                             <Boton variant="volver">Cancelar</Boton>
                         </Link>

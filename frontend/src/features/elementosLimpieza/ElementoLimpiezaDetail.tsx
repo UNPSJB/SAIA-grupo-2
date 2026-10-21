@@ -79,7 +79,7 @@ export default function ElementoLimpiezaDetail() {
                         {elemento.fecha_proximo_recambio && ` (${textoRecambio(elemento)})`}
                     </p>
 
-                    <div className={styles.filaBotones} style={{ marginTop: '20px', justifyContent: 'center' }}>
+                    <div className={styles.filaBotones}>
                         {esAdmin && elemento.frecuencia_recambio_dias !== null && (
                             <Boton variant="guardar" onClick={handleRecambio}>
                                 Registrar recambio

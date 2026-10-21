@@ -216,12 +216,12 @@ export default function ProductoForm() {
                     </div>
                 </div>
 
-                <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
+                <div className={styles.filaBotones}>
                     <Boton type="submit" variant="guardar" disabled={guardando}>
                         {guardando
                             ? 'Guardando...'
                             : editando
-                                ? 'Actualizar Cambios'
+                                ? 'Actualizar'
                                 : 'Guardar'}
                     </Boton>
                     <Link to="/productos_limpieza">

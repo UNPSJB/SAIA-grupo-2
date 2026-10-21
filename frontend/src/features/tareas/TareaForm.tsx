@@ -274,9 +274,9 @@ export default function TareaForm() {
                     </div>
                 )}
 
-                <div className={styles.filaBotones} style={{ marginTop: '40px', justifyContent: 'center' }}>
+                <div className={styles.filaBotones}>
                     <Boton type="submit" variant="guardar">
-                        {editando ? 'Actualizar Tarea' : 'Guardar Tarea'}
+                        {editando ? 'Actualizar' : 'Guardar'}
                     </Boton>
                     <Link to="/tareas">
                         <Boton variant="volver">Cancelar</Boton>
@@ -319,7 +319,7 @@ export default function TareaForm() {
                             })}
                         </div>
                         
-                        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+                        <div className={styles.filaBotones}>
                             <Boton type="button" variant="guardar" onClick={() => setModalPlanes(false)}>Listo</Boton>
                         </div>
                     </div>
