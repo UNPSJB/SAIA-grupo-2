@@ -12,14 +12,10 @@ import BuscadorTexto from '../../components/BuscadorTexto';
 import TablaPaginada, {type Columna } from '../../components/TablaPaginada';
 import { filtrarPorTexto } from '../../utils/texto';
 
-
-
 export default function CapacidadesList() {
     const { usuario } = useAuth();
     const [capacidades, setCapacidades] = useState<Capacidad[]>([]);
     const [busqueda, setBusqueda] = useState('');
-    const [paginaActual, setPaginaActual] = useState(1);
-    const capacidadesPorPagina = 10;
 
     const [modalConfirmacion, setModalConfirmacion] = useState({ isOpen: false, idSeleccionado: 0 });
     const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
@@ -64,12 +60,6 @@ export default function CapacidadesList() {
     };
     const capacidadesFiltradas = filtrarPorTexto(capacidades, busqueda, (c) => [c.nombre]);
 
-    const indiceUltimo = paginaActual * capacidadesPorPagina;
-    const indicePrimer = indiceUltimo - capacidadesPorPagina;
-    const capacidadesActuales = capacidadesFiltradas.slice(indicePrimer, indiceUltimo);
-    const totalPaginas = Math.ceil(capacidadesFiltradas.length / capacidadesPorPagina);
-
-
     const misColumnas: Columna<Capacidad>[]=[
         {
             key: 'nombre',
@@ -96,9 +86,7 @@ export default function CapacidadesList() {
             )
         }
 
-
     ]
-
 
     return (
         <div className={styles.contenedorPrincipal}>
@@ -116,7 +104,6 @@ export default function CapacidadesList() {
                 </Link>
             )}
 
-
                        <div style={{ maxWidth: '1100px', width: '100%' }}>
                             <TablaPaginada
                                 datos={capacidadesFiltradas}
@@ -128,7 +115,6 @@ export default function CapacidadesList() {
                                 ordenAscInicial={true}
                             />
                         </div>
-
 
             <ModalConfirmacion
                 isOpen={modalConfirmacion.isOpen}

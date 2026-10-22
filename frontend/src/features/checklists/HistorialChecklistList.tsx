@@ -34,8 +34,6 @@ export default function HistorialChecklistList() {
     const [historial, setHistorial] = useState<HistorialChecklistResumen | null>(null);
     const [cargando, setCargando] = useState(true);
 
-    const [paginaActual, setPaginaActual] = useState(1);
-    const registrosPorPagina = 5;
     const [busqueda, setBusqueda] = useState('');
 
     const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
@@ -60,7 +58,6 @@ export default function HistorialChecklistList() {
         try {
             const data = await getHistorialChecklists(fechaInicio, fechaFin, sectorFiltro);
             setHistorial(data);
-            setPaginaActual(1);
         } catch (error) {
             console.error("Error al cargar historial:", error);
         } finally {
@@ -193,8 +190,6 @@ export default function HistorialChecklistList() {
         }
     ];
 
-
-
     return (
         <div className={styles.contenedorPrincipal}>
             <h2>Historial y Auditoría de Checklists</h2>
@@ -326,8 +321,6 @@ export default function HistorialChecklistList() {
                     </div>
                 </div>
             )}
-
-
 
             {cargando ? (
                 <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
