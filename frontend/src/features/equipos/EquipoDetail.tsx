@@ -6,6 +6,7 @@ import { getEquipoById } from '../../services/equiposServices';
 import { getCalibracionesByEquipoId } from '../../services/calibracionRealizadaServices';
 import { COLOR_ESTADO, ETIQUETA_ESTADO, textoMantenimiento } from './estadoMantenimiento';
 import Boton from '../../components/Boton';
+import VisorArchivo from '../../components/VisorArchivo';
 import RegistrarCalibracionModal from './RegistrarCalibracionModal';
 import styles from '../../styles/shared.module.css';
 
@@ -149,26 +150,10 @@ export default function EquipoDetail() {
                             </Boton>
                         </div>
 
-                        {certificacionAbierta.certificacion_url.startsWith('data:image/') ||
-                        /\.(png|jpe?g|gif|webp|svg)(?:[?#]|$)/i.test(certificacionAbierta.certificacion_url) ? (
-                            <img
-                                src={certificacionAbierta.certificacion_url}
-                                alt={`Certificación del ${certificacionAbierta.fecha}`}
-                                style={{ display: 'block', maxWidth: '100%', maxHeight: '75vh', margin: '0 auto', objectFit: 'contain' }}
-                            />
-                        ) : certificacionAbierta.certificacion_url.startsWith('data:application/pdf') ||
-                          /\.pdf(?:[?#]|$)/i.test(certificacionAbierta.certificacion_url) ||
-                          certificacionAbierta.certificacion_url.startsWith('http') ? (
-                            <iframe
-                                src={certificacionAbierta.certificacion_url}
-                                title={`Certificación del ${certificacionAbierta.fecha}`}
-                                style={{ display: 'block', width: '100%', height: '75vh', border: 0, backgroundColor: '#fff' }}
-                            />
-                        ) : (
-                            <p style={{ color: 'var(--text-muted)' }}>
-                                No se puede previsualizar este formato de certificación.
-                            </p>
-                        )}
+                        <VisorArchivo
+                            url={certificacionAbierta.certificacion_url}
+                            alto="72vh"
+                        />
                     </section>
                 </div>
             )}

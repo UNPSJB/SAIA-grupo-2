@@ -8,9 +8,16 @@ import ModalAlerta from '../../components/alerta';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';
 
+import BuscadorTexto from '../../components/BuscadorTexto';
+import TablaPaginada, {type Columna } from '../../components/TablaPaginada';
+import { filtrarPorTexto } from '../../utils/texto';
+
+
+
 export default function CapacidadesList() {
     const { usuario } = useAuth();
     const [capacidades, setCapacidades] = useState<Capacidad[]>([]);
+    const [busqueda, setBusqueda] = useState('');
     const [paginaActual, setPaginaActual] = useState(1);
     const capacidadesPorPagina = 10;
 
@@ -55,16 +62,52 @@ export default function CapacidadesList() {
             });
         }
     };
+    const capacidadesFiltradas = filtrarPorTexto(capacidades, busqueda, (c) => [c.nombre]);
 
     const indiceUltimo = paginaActual * capacidadesPorPagina;
     const indicePrimer = indiceUltimo - capacidadesPorPagina;
-    const capacidadesActuales = capacidades.slice(indicePrimer, indiceUltimo);
-    const totalPaginas = Math.ceil(capacidades.length / capacidadesPorPagina);
+    const capacidadesActuales = capacidadesFiltradas.slice(indicePrimer, indiceUltimo);
+    const totalPaginas = Math.ceil(capacidadesFiltradas.length / capacidadesPorPagina);
+
+
+    const misColumnas: Columna<Capacidad>[]=[
+        {
+            key: 'nombre',
+            encabezado: 'Nombre del Rol / Capacidad',
+            ordenable: true,
+            variant: 'titulo', // <--- Usamos el prop variant
+            render: (capacidad)=> capacidad.nombre
+        },
+
+        {
+            key: 'acciones',
+            encabezado: 'Acciones',
+            ordenable: false,
+            render: (capacidad) => (
+                <div className={styles.grupoBotonesTabla}>
+                            {usuario?.rol === 'admin' && (
+                                <Boton
+                                    variant="eliminar"
+                                    onClick={() => solicitarEliminacion(capacidad.id)}
+                                    style={{ padding: '8px 12px' }}
+                                ></Boton>
+                            )}
+                        </div>
+            )
+        }
+
+
+    ]
+
 
     return (
         <div className={styles.contenedorPrincipal}>
             <h2>Gestión de Capacidades y Roles</h2>
             
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar capacidad..." />
+            </div>
             {usuario?.rol === 'admin' && (
                 <Link to="/capacidades/nuevo" className={styles.linkCrear}>
                     <Boton variant="crear">
@@ -73,60 +116,19 @@ export default function CapacidadesList() {
                 </Link>
             )}
 
-            <div className={styles.contenedorTabla} style={{ maxWidth: '800px' }}>
-                <div className={styles.filaHeader} style={{ gridTemplateColumns: '3fr 1fr' }}>
-                    <div>Nombre del Rol / Capacidad</div>
-                    <div>Acciones</div>
-                </div>
 
-                {capacidadesActuales.map((cap) => (
-                    <div key={cap.id} className={styles.filaItem} style={{ gridTemplateColumns: '3fr 1fr' }}>
-                        <div style={{ fontWeight: '500', color: 'var(--text-h)', justifyContent: 'flex-start', paddingLeft: '20px' }}>
-                            {cap.nombre}
+                       <div style={{ maxWidth: '1100px', width: '100%' }}>
+                            <TablaPaginada
+                                datos={capacidadesFiltradas}
+                                columnas={misColumnas}
+                                gridTemplateColumns="1.5fr 1fr"
+                                itemsPorPagina={5}
+                                mensajeVacio="No se encontraron capacidades con los filtros actuales."
+                                columnaOrdenInicial="nombre" 
+                                ordenAscInicial={true}
+                            />
                         </div>
-                        
-                        <div className={styles.grupoBotonesTabla}>
-                            {usuario?.rol === 'admin' && (
-                                <Boton
-                                    variant="eliminar"
-                                    onClick={() => solicitarEliminacion(cap.id)}
-                                    style={{ padding: '8px 12px' }}
-                                ></Boton>
-                            )}
-                        </div>
-                    </div>
-                ))}
 
-                {capacidadesActuales.length === 0 && (
-                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text)' }}>
-                        No hay capacidades registradas.
-                    </div>
-                )}
-            </div>
-
-            {totalPaginas > 1 && (
-                <div className={styles.filaBotones} style={{ alignItems: 'center', marginTop: '30px', justifyContent: 'center' }}>
-                    <Boton 
-                        variant="volver" 
-                        onClick={() => setPaginaActual(p => p - 1)} 
-                        disabled={paginaActual === 1}
-                    >
-                        Anterior
-                    </Boton>
-                    
-                    <span style={{ color: 'var(--text-h)', fontWeight: 'bold', margin: '0 15px' }}>
-                        Página {paginaActual} de {totalPaginas}
-                    </span>
-                    
-                    <Boton 
-                        variant="siguiente" 
-                        onClick={() => setPaginaActual(p => p + 1)} 
-                        disabled={paginaActual === totalPaginas}
-                    >
-                        Siguiente
-                    </Boton>
-                </div>
-            )}
 
             <ModalConfirmacion
                 isOpen={modalConfirmacion.isOpen}

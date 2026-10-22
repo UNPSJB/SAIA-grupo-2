@@ -1,0 +1,66 @@
+/* frontend/src/components/TablaPaginada.module.css */
+
+.badge > span {
+    font-size: 0.85rem;
+    color: var(--text-h);
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+
+.titulo {
+    color: var(--text-h);
+    font-weight: 600;
+}
+
+.celdaBase {
+    font-size: 0.85rem;
+}
+
+/* Automáticamente el segundo div dentro de la celda toma el estilo de referencia */
+.celdaBase > div:nth-child(2) {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: 2px;
+}
+
+.fecha {
+    font-size: 0.9rem;
+}
+
+/* ... tus estilos anteriores (badge, titulo, celdaBase, etc) ... */
+
+/* Variantes dinámicas para la columna ESTADO */
+.estado_vencido,
+.plazo_vencido,  
+.pendiente{ font-size: 0.85rem; font-weight: bold; color: #ef4444; }
+
+.estado_proximo,
+.plazo_proximo  { font-size: 0.85rem; font-weight: bold; color: #f59e0b; }
+
+.estado_vigente,
+.plazo_vigente,
+.realizada{ font-size: 0.85rem; font-weight: bold; color: #22c55e; }
+
+
+
+/* Badges agrupados (usado en Sectores/Roles) */
+.badgeGrupo {
+    display: flex; 
+    gap: 6px; 
+    flex-wrap: wrap; 
+    justify-content: center;
+}
+
+/* Badge especial para roles de administrador */
+.badgeAdmin {
+    background-color: var(--rojo-estandar);
+    color: white !important; /* Fuerza el color blanco sobre el color por defecto */
+}
+
+/* Grupo de botones para la columna de acciones */
+.acciones {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-start;
+}

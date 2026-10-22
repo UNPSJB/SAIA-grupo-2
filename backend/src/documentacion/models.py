@@ -1,7 +1,7 @@
 from datetime import date
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Boolean, Date, Enum, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Date, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.documentacion.constants import TipoDocumentacion
@@ -21,6 +21,8 @@ class Documentacion(ModeloBase, ControlDeVencimiento):
     tipo: Mapped[TipoDocumentacion] = mapped_column(
         Enum(TipoDocumentacion, values_callable=lambda x: [e.value for e in x])
     )
+    archivo_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    archivo_nombre: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
 
     empleado: Mapped["Empleado"] = relationship("Empleado", back_populates="documentacion")
 

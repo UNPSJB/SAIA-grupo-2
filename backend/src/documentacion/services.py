@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
+from src.archivos import validar_archivo_opcional
 from src.documentacion import exceptions, models, schemas
 from src.documentacion.constants import DIAS_AVISO_POR_DEFECTO, TipoDocumentacion
 from src.empleados import services as empleados_services
@@ -41,6 +42,7 @@ def crear_documentacion(
     db: Session, documento: schemas.DocumentacionCreate
 ) -> schemas.Documentacion:
     empleados_services.leer_empleado(db, documento.empleado_id)
+    validar_archivo_opcional(documento.archivo_url)
 
     modelo = MODELO_POR_TIPO[documento.tipo]
     db_documento = modelo(**documento.model_dump())
@@ -155,6 +157,7 @@ def modificar_documentacion(
     db: Session, documentacion_id: int, documento: schemas.DocumentacionUpdate
 ) -> schemas.Documentacion:
     db_documento = leer_documentacion(db, documentacion_id)
+    validar_archivo_opcional(documento.archivo_url)
 
     campos = documento.model_dump(exclude_unset=True)
     for campo, valor in campos.items():

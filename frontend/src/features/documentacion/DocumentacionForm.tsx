@@ -14,6 +14,8 @@ import {
 import { getEmpleadoById } from '../../services/empleadosServices';
 import { ETIQUETA_TIPO, TIPOS_DOCUMENTACION } from './estadoVencimiento';
 import Boton from '../../components/Boton';
+import SubidorArchivo from '../../components/SubidorArchivo';
+import type { ArchivoAdjunto } from '../../components/SubidorArchivo';
 import styles from '../../styles/shared.module.css';
 
 interface Errores {
@@ -40,6 +42,7 @@ export default function DocumentacionForm() {
     const [observaciones, setObservaciones] = useState('');
     const [nombreMedico, setNombreMedico] = useState('');
     const [matricula, setMatricula] = useState('');
+    const [archivo, setArchivo] = useState<ArchivoAdjunto | null>(null);
 
     const [errores, setErrores] = useState<Errores>({});
     const [errorCarga, setErrorCarga] = useState<string | null>(null);
@@ -68,6 +71,12 @@ export default function DocumentacionForm() {
                     setObservaciones(documento.observaciones ?? '');
                     setNombreMedico(documento.nombre_medico ?? '');
                     setMatricula(documento.matricula ?? '');
+                    if (documento.archivo_url) {
+                        setArchivo({
+                            url: documento.archivo_url,
+                            nombre: documento.archivo_nombre ?? 'Archivo adjunto',
+                        });
+                    }
                 }
             } catch (error) {
                 console.error('Error al cargar los datos del formulario:', error);
@@ -147,6 +156,8 @@ export default function DocumentacionForm() {
             if (editando && id) {
                 const datos: DocumentacionUpdatePayload = {
                     fecha_vencimiento: fechaVencimiento,
+                    archivo_url: archivo ? archivo.url : null,
+                    archivo_nombre: archivo ? archivo.nombre : null,
                     ...camposDelTipo(),
                 };
                 exito = await updateDocumentacion(id, datos);
@@ -155,6 +166,8 @@ export default function DocumentacionForm() {
                     tipo: tipo as TipoDocumentacion,
                     empleado_id: Number(empleadoId),
                     fecha_vencimiento: fechaVencimiento,
+                    archivo_url: archivo ? archivo.url : null,
+                    archivo_nombre: archivo ? archivo.nombre : null,
                     ...camposDelTipo(),
                 };
                 exito = await createDocumentacion(datos);
@@ -186,7 +199,7 @@ export default function DocumentacionForm() {
 
             {errorCarga && <p style={{ color: '#ef4444' }}>{errorCarga}</p>}
 
-            <form onSubmit={handleSubmit} className={styles.formularioTarjeta} style={{ maxWidth: '700px' }}>
+            <form onSubmit={handleSubmit} className={styles.formularioTarjeta} style={{ maxWidth: '780px' }}>
                 <div className={styles.formGrid}>
                     <div className={styles.formGroup}>
                         <label>Tipo de documento:</label>
@@ -308,6 +321,16 @@ export default function DocumentacionForm() {
                             </div>
                         </>
                     )}
+
+                    <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+                        <label>Archivo adjunto (opcional):</label>
+                        <SubidorArchivo
+                            archivo={archivo}
+                            onCambio={setArchivo}
+                            textoAyuda="Escaneo o foto del documento. Imágenes o PDF, hasta 25 MB."
+                            altoVistaPrevia="62vh"
+                        />
+                    </div>
                 </div>
 
                 <div className={styles.filaBotones} style={{ marginTop: '20px' }}>

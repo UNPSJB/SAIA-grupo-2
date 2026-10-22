@@ -10,9 +10,14 @@ TextoCorto = Annotated[str, Field(min_length=2, max_length=50, strip_whitespace=
 TextoLargo = Annotated[str, Field(min_length=2, max_length=150, strip_whitespace=True)]
 
 
+NombreArchivo = Annotated[str, Field(max_length=200, strip_whitespace=True)]
+
+
 class DocumentacionBase(BaseModel):
     empleado_id: int
     fecha_vencimiento: date
+    archivo_url: Optional[str] = None
+    archivo_nombre: Optional[NombreArchivo] = None
 
 
 class LibretaSanitariaCreate(DocumentacionBase):
@@ -41,6 +46,8 @@ DocumentacionCreate = Annotated[
 
 class DocumentacionUpdate(BaseModel):
     fecha_vencimiento: date
+    archivo_url: Optional[str] = None
+    archivo_nombre: Optional[NombreArchivo] = None
     numero_carnet: Optional[TextoCorto] = None
     autoridad_emisora: Optional[TextoLargo] = None
     titulo: Optional[TextoLargo] = None
@@ -67,6 +74,8 @@ class Documentacion(BaseModel):
     estado: EstadoVencimiento
     dias_aviso_previo: int
     empleado: EmpleadoResumen
+    archivo_url: Optional[str] = None
+    archivo_nombre: Optional[str] = None
 
     numero_carnet: Optional[str] = None
     autoridad_emisora: Optional[str] = None

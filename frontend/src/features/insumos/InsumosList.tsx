@@ -6,9 +6,15 @@ import Boton from '../../components/Boton';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';
 
+import BuscadorTexto from '../../components/BuscadorTexto';
+import { filtrarPorTexto } from '../../utils/texto';
+import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
+
+
 export default function InsumosList() {
     const { usuario } = useAuth();
     const [insumos, setInsumos] = useState<Insumo[]>([]);
+    const [busqueda, setBusqueda] = useState('');
     const [paginaActual, setPaginaActual] = useState(1);
     const insumosPorPagina = 10;
 
@@ -23,44 +29,32 @@ export default function InsumosList() {
         };
         cargarDatos();
     }, []);
+    const insumosFiltrados = filtrarPorTexto(insumos, busqueda, (c) => [c.nombre, c.unidad_medida?.nombre]);
 
     const indiceUltimo = paginaActual * insumosPorPagina;
     const indicePrimer = indiceUltimo - insumosPorPagina;
-    const insumosActuales = insumos.slice(indicePrimer, indiceUltimo);
-    const totalPaginas = Math.ceil(insumos.length / insumosPorPagina);
+    const insumosActuales = insumosFiltrados.slice(indicePrimer, indiceUltimo);
+    const totalPaginas = Math.ceil(insumosFiltrados.length / insumosPorPagina);
 
-    return (
-        <div className={styles.contenedorPrincipal}>
-            <h2>Inventario de Insumos</h2>
-            
-            {usuario?.rol === 'admin' && (
-                <Link to="/insumos/nuevo" className={styles.linkCrear}>
-                    <Boton variant="crear">
-                        Registrar Insumo
-                    </Boton>
-                </Link>
-            )}
-
-            <div className={styles.contenedorTabla} style={{ maxWidth: '900px' }}>
-                <div className={styles.filaHeader} style={{ gridTemplateColumns: '2fr 2fr 1.5fr' }}>
-                    <div>Nombre del Insumo</div>
-                    <div>Unidad de Medida</div>
-                    <div>Acciones</div>
-                </div>
-
-                {insumosActuales.map((ins) => (
-                    <div key={ins.id} className={styles.filaItem} style={{ gridTemplateColumns: '2fr 2fr 1.5fr' }}>
-                        <div style={{ fontWeight: '500', color: 'var(--text-h)' }}>
-                            {ins.nombre}
-                        </div>
-                        
-                        <div>
-                            <span style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-muted)' }}>
-                                {ins.unidad_medida.nombre}
-                            </span>
-                        </div>
-                        
-                        <div className={styles.grupoBotonesTabla}>
+    const misColumnas: Columna<Insumo>[]=[
+        {
+            key:'nombre',
+            encabezado: 'Nombre del Insumo',
+            ordenable: true,
+            render: (ins) => ins.nombre
+        },
+        {
+            key:'unidad_medida.nombre',
+            encabezado: 'Unidad de Medida',
+            ordenable: true,
+            render: (ins) => ins.unidad_medida.nombre
+        },
+         {
+            key:'acciones',
+            encabezado: 'Acciones',
+            ordenable: false,
+            render: (ins) => (
+                 <div className={styles.grupoBotonesTabla}>
                             {usuario?.rol === 'admin' && (
                                 <Link to={`/insumos/editar/${ins.id}`} title="Editar insumo">
                                     <Boton variant="editar" style={{ padding: '8px 12px' }}></Boton>
@@ -75,39 +69,42 @@ export default function InsumosList() {
                                 </Link>
                             )}
                         </div>
-                    </div>
-                ))}
+            )
+        }
+    ]
 
-                {insumosActuales.length === 0 && (
-                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text)' }}>
-                        No hay insumos registrados.
-                    </div>
-                )}
+
+
+    return (
+        <div className={styles.contenedorPrincipal}>
+            <h2>Inventario de Insumos</h2>
+            
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar insumo..." />
             </div>
-
-            {totalPaginas > 1 && (
-                <div className={styles.filaBotones} style={{ alignItems: 'center', marginTop: '30px', justifyContent: 'center' }}>
-                    <Boton 
-                        variant="volver" 
-                        onClick={() => setPaginaActual(p => p - 1)} 
-                        disabled={paginaActual === 1}
-                    >
-                        Anterior
+            {usuario?.rol === 'admin' && (
+                <Link to="/insumos/nuevo" className={styles.linkCrear}>
+                    <Boton variant="crear">
+                        Registrar Insumo
                     </Boton>
-                    
-                    <span style={{ color: 'var(--text-h)', fontWeight: 'bold', margin: '0 15px' }}>
-                        Página {paginaActual} de {totalPaginas}
-                    </span>
-                    
-                    <Boton 
-                        variant="siguiente" 
-                        onClick={() => setPaginaActual(p => p + 1)} 
-                        disabled={paginaActual === totalPaginas}
-                    >
-                        Siguiente
-                    </Boton>
-                </div>
+                </Link>
             )}
+
+
+                       <div style={{ maxWidth: '1100px', width: '100%' }}>
+                            <TablaPaginada
+                                datos={insumosFiltrados}
+                                columnas={misColumnas}
+                                gridTemplateColumns="1fr 2fr 1.5fr"
+                                itemsPorPagina={5}
+                                mensajeVacio="No se encontraron Insumos con los filtros actuales."
+                                columnaOrdenInicial="nombre" 
+                                ordenAscInicial={true}
+                            />
+                        </div>
+
+
         </div>
     );
 }

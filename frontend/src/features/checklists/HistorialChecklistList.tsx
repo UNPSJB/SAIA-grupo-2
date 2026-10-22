@@ -6,6 +6,10 @@ import { getSectores } from '../../services/sectoresServices';
 import { getProductos } from '../../services/productosLimpiezaServices';
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
+import BuscadorTexto from '../../components/BuscadorTexto';
+import { filtrarPorTexto } from '../../utils/texto';
+
+import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 
 export default function HistorialChecklistList() {
     const now = new Date();
@@ -32,6 +36,7 @@ export default function HistorialChecklistList() {
 
     const [paginaActual, setPaginaActual] = useState(1);
     const registrosPorPagina = 5;
+    const [busqueda, setBusqueda] = useState('');
 
     const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
     const [detalleTarea, setDetalleTarea] = useState<RegistroChecklistDetalle | null>(null);
@@ -117,17 +122,86 @@ export default function HistorialChecklistList() {
     };
 
     const registros = historial?.registros || [];
-    const indiceUltimo = paginaActual * registrosPorPagina;
-    const indicePrimer = indiceUltimo - registrosPorPagina;
-    const registrosActuales = registros.slice(indicePrimer, indiceUltimo);
-    const totalPaginas = Math.ceil(registros.length / registrosPorPagina);
+    const registrosFiltrados = filtrarPorTexto(registros, busqueda);
 
     const pct = historial?.porcentaje_cumplimiento ?? 100;
     const colorPct = pct >= 80 ? '#16a34a' : pct >= 50 ? '#d97706' : '#dc2626';
 
+    const columnas: Columna<any>[] = [
+        {
+            key: 'fecha_programada',
+            encabezado: 'Fecha',
+            ordenable: true,
+            variant: 'fecha',
+            render: (reg) => reg.fecha_programada.split('-').reverse().join('/')
+        },
+        {
+            key: 'titulo_tarea',
+            encabezado: 'Tarea',
+            ordenable: true,
+            variant: 'titulo',
+            render: (reg) => <span style={{ fontSize: '1rem' }}>{reg.titulo_tarea}</span>
+        },
+        {
+            key: 'ubicacion',
+            encabezado: 'Ubicación',
+            ordenable: false,
+            variant: 'celdaBase', // Estiliza el segundo div automáticamente (Sector)
+            render: (reg) => (
+                <>
+                    <div><strong>Plan:</strong> {reg.plan_titulo}</div>
+                    <div><strong>Sector:</strong> {reg.sector_nombre}</div>
+                </>
+            )
+        },
+        {
+            key: 'frecuencia',
+            encabezado: 'Frecuencia',
+            ordenable: true,
+            variant: 'celdaBase',
+            render: (reg) => <span style={{ textTransform: 'capitalize' }}>{reg.frecuencia}</span>
+        },
+        {
+            key: 'estado',
+            encabezado: 'Estado',
+            ordenable: true,
+            valorOrdenamiento: (reg)=> reg.realizada,
+            variant: (reg) => reg.realizada ? 'realizada' : 'estado_vencido', 
+            render: (reg) => reg.realizada ? 'REALIZADA' : 'INCUMPLIDA'
+        },
+        {
+            key: 'nombre_empleado',
+            encabezado: 'Ejecutado Por',
+            ordenable: true,
+            variant: 'celdaBase',
+            valorOrdenamiento: (reg) => reg.nombre_empleado? reg.nombre_empleado : `zzz`, 
+            render: (reg) => reg.nombre_empleado || <span style={{ opacity: 0.6 }}>-</span>
+        },
+        {
+            key: 'acciones',
+            encabezado: 'Acción',
+            variant: 'acciones',
+            render: (reg) => (
+                reg.realizada ? (
+                    <Boton variant="ver" onClick={() => abrirDetalleTarea(reg.tarea_id, reg.plan_id)}>
+                        Detalle
+                    </Boton>
+                ) : (
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Sin ejec.</span>
+                )
+            )
+        }
+    ];
+
+
+
     return (
         <div className={styles.contenedorPrincipal}>
             <h2>Historial y Auditoría de Checklists</h2>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar tarea, plan, sector o responsable..." />
+            </div>
             <p className={styles.textMuted} style={{ marginBottom: '20px' }}>
                 Consulta histórica de cumplimiento
             </p>
@@ -253,96 +327,21 @@ export default function HistorialChecklistList() {
                 </div>
             )}
 
-            {/* TABLA DE AUDITORÍA Y EJECUCIONES HISTÓRICAS */}
-            <div className={styles.contenedorTabla}>
-                <div className={styles.filaHeader} style={{ gridTemplateColumns: '1.2fr 2.5fr 2.5fr 1fr 1.2fr 1.8fr 1fr', textAlign: 'center' }}>
-                    <div style={{ textAlign: 'left' }}>Fecha</div>
-                    <div style={{ textAlign: 'left' }}>Tarea</div>
-                    <div style={{ textAlign: 'left' }}>Ubicación</div>
-                    <div>Frecuencia</div>
-                    <div>Estado</div>
-                    <div style={{ textAlign: 'left' }}>Ejecutado Por</div>
-                    <div>Acción</div>
+
+
+            {cargando ? (
+                <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    Cargando historial de checklists...
                 </div>
-
-                {cargando ? (
-                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                        Cargando historial de checklists...
-                    </div>
-                ) : registrosActuales.length === 0 ? (
-                    <div className={styles.emptyMensaje}>
-                        No se encontraron registros de checklists para el rango de fechas seleccionado.
-                    </div>
-                ) : (
-                    registrosActuales.map((reg, idx) => (
-                        <div key={`${reg.tarea_id}-${reg.plan_id}-${reg.fecha_programada}-${idx}`} className={styles.filaItem} style={{ gridTemplateColumns: '1.2fr 2.5fr 2.5fr 1fr 1.2fr 1.8fr 1fr', alignItems: 'center', textAlign: 'center' }}>
-                            <div style={{ fontWeight: '500', textAlign: 'left', fontSize: '0.95rem' }}>
-                                {reg.fecha_programada.split('-').reverse().join('/')}
-                            </div>
-
-                            <div style={{ fontWeight: '600', textAlign: 'left', fontSize: '1rem', color: 'var(--text-h)' }}>
-                                {reg.titulo_tarea}
-                            </div>
-
-                            <div style={{ fontSize: '0.85rem', textAlign: 'left', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-                                <strong>Plan:</strong> {reg.plan_titulo} <br/>
-                                <strong>Sector:</strong> {reg.sector_nombre}
-                            </div>
-
-                            <div style={{ textTransform: 'capitalize', fontSize: '0.9rem' }}>
-                                {reg.frecuencia}
-                            </div>
-
-                            <div>
-                                <span style={{
-                                    fontSize: '0.85rem', fontWeight: 'bold',
-                                    color: reg.realizada ? '#166534' : '#991b1b'
-                                }}>
-                                    {reg.realizada ? 'REALIZADA' : 'INCUMPLIDA'}
-                                </span>
-                            </div>
-
-                            <div style={{ textAlign: 'left', fontSize: '0.85rem', color: reg.nombre_empleado ? 'var(--text-h)' : 'var(--text-muted)' }}>
-                                {reg.nombre_empleado || '-'}
-                            </div>
-
-                            <div>
-                                {reg.realizada ? (
-                                    <Boton variant="ver" onClick={() => abrirDetalleTarea(reg.tarea_id, reg.plan_id)}>
-                                        Detalle
-                                    </Boton>
-                                ) : (
-                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Sin ejec.</span>
-                                )}
-                            </div>
-                        </div>
-                    ))
-                )}
-            </div>
-
-            {/* PAGINACIÓN */}
-            {totalPaginas > 1 && (
-                <div className={styles.filaBotones} style={{ alignItems: 'center', marginTop: '30px', justifyContent: 'center' }}>
-                    <Boton
-                        variant="volver"
-                        onClick={() => setPaginaActual(p => p - 1)}
-                        disabled={paginaActual === 1}
-                    >
-                        Anterior
-                    </Boton>
-
-                    <span style={{ color: 'var(--text-h)', fontWeight: 'bold', margin: '0 15px' }}>
-                        Página {paginaActual} de {totalPaginas}
-                    </span>
-
-                    <Boton
-                        variant="siguiente"
-                        onClick={() => setPaginaActual(p => p + 1)}
-                        disabled={paginaActual === totalPaginas}
-                    >
-                        Siguiente
-                    </Boton>
-                </div>
+            ) : (<TablaPaginada
+                    datos={registrosFiltrados}
+                    columnas={columnas}
+                    gridTemplateColumns="1.2fr 2.5fr 2.5fr 1fr 1.2fr 1.8fr 1fr"
+                    itemsPorPagina={15}
+                    mensajeVacio="No se encontraron registros de checklists para el rango de fechas seleccionado."
+                    columnaOrdenInicial="fecha_programada"
+                    ordenAscInicial={false} // Mostrar los registros más recientes primero
+                />
             )}
 
             {/* MODAL VER DETALLE DE TAREA REALIZADA (SOLO LECTURA) */}
@@ -425,7 +424,7 @@ export default function HistorialChecklistList() {
                                 </div>
                             </div>
                         ) : (
-                            <p style={{ color: 'var(--text-danger)' }}>No se encontraron detalles para esta tarea.</p>
+                            <p style={{ color: 'var(--rojo-texto)' }}>No se encontraron detalles para esta tarea.</p>
                         )}
                     </div>
                 </div>

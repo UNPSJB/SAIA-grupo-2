@@ -22,6 +22,8 @@ export interface Documentacion {
     estado: EstadoVencimiento;
     dias_aviso_previo: number;
     empleado: EmpleadoResumen;
+    archivo_url: string | null;
+    archivo_nombre: string | null;
     numero_carnet: string | null;
     autoridad_emisora: string | null;
     titulo: string | null;
@@ -34,6 +36,8 @@ export interface DocumentacionPayload {
     tipo: TipoDocumentacion;
     empleado_id: number;
     fecha_vencimiento: string;
+    archivo_url?: string | null;
+    archivo_nombre?: string | null;
     numero_carnet?: string;
     autoridad_emisora?: string;
     titulo?: string;
@@ -44,6 +48,8 @@ export interface DocumentacionPayload {
 
 export interface DocumentacionUpdatePayload {
     fecha_vencimiento: string;
+    archivo_url?: string | null;
+    archivo_nombre?: string | null;
     numero_carnet?: string;
     autoridad_emisora?: string;
     titulo?: string;

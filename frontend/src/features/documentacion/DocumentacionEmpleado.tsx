@@ -17,6 +17,9 @@ import {
     textoVencimiento,
 } from './estadoVencimiento';
 import Boton from '../../components/Boton';
+import BuscadorTexto from '../../components/BuscadorTexto';
+import { filtrarPorTexto } from '../../utils/texto';
+import { abrirArchivoEnPestania } from '../../utils/archivos';
 import styles from '../../styles/shared.module.css';
 
 export default function DocumentacionEmpleado() {
@@ -24,6 +27,7 @@ export default function DocumentacionEmpleado() {
 
     const [empleado, setEmpleado] = useState<Empleado | null>(null);
     const [documentos, setDocumentos] = useState<Documentacion[]>([]);
+    const [busqueda, setBusqueda] = useState('');
     const [cumplimiento, setCumplimiento] = useState<CumplimientoEmpleado | null>(null);
     const [cargando, setCargando] = useState(true);
     const navigate = useNavigate(); 
@@ -83,6 +87,17 @@ export default function DocumentacionEmpleado() {
         );
     }
 
+    const documentosFiltrados = filtrarPorTexto(documentos, busqueda, (c) => [
+        ETIQUETA_TIPO[c.tipo],
+        c.numero_carnet,
+        c.autoridad_emisora,
+        c.titulo,
+        c.observaciones,
+        c.nombre_medico,
+        c.matricula,
+        c.archivo_nombre,
+    ]);
+
     return (
         <div className={styles.contenedorPrincipal}>
             <h2>Documentación del Empleado</h2>
@@ -134,21 +149,26 @@ export default function DocumentacionEmpleado() {
                 </Boton>
             </div>
 
+            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1000px', marginBottom: '16px' }}>
+                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar documento..." />
+            </div>
+
             <div className={styles.contenedorTabla} style={{ maxWidth: '1000px' }}>
-                <div className={styles.filaHeader} style={{ gridTemplateColumns: '1.5fr 2fr 1.2fr 1.4fr 1.3fr 1.2fr' }}>
+                <div className={styles.filaHeader} style={{ gridTemplateColumns: '1.5fr 2fr 1.2fr 1.4fr 1.3fr 0.8fr 1.2fr' }}>
                     <div>Tipo</div>
                     <div>Detalle</div>
                     <div>Vencimiento</div>
                     <div>Estado</div>
                     <div>Plazo</div>
+                    <div>Archivo</div>
                     <div>Acciones</div>
                 </div>
 
-                {documentos.map((documento) => (
+                {documentosFiltrados.map((documento) => (
                     <div
                         key={documento.id}
                         className={styles.filaItem}
-                        style={{ gridTemplateColumns: '1.5fr 2fr 1.2fr 1.4fr 1.3fr 1.2fr' }}
+                        style={{ gridTemplateColumns: '1.5fr 2fr 1.2fr 1.4fr 1.3fr 0.8fr 1.2fr' }}
                     >
                         <div style={{ fontWeight: '500', color: 'var(--text-h)' }}>
                             {ETIQUETA_TIPO[documento.tipo]}
@@ -173,6 +193,22 @@ export default function DocumentacionEmpleado() {
 
                         <div style={{ fontSize: '0.85rem' }}>
                             {textoVencimiento(documento.dias_restantes)}
+                        </div>
+
+                        <div>
+                            {documento.archivo_url ? (
+                                <button
+                                    type="button"
+                                    onClick={() => abrirArchivoEnPestania(documento.archivo_url!, documento.archivo_nombre)}
+                                    title={documento.archivo_nombre ?? 'Ver archivo adjunto'}
+                                    aria-label={documento.archivo_nombre ?? 'Ver archivo adjunto'}
+                                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--azul-texto)', fontSize: '1.1rem' }}
+                                >
+                                    <i className="bi bi-paperclip"></i>
+                                </button>
+                            ) : (
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>—</span>
+                            )}
                         </div>
 
                         <div className={styles.grupoBotonesTabla}>

@@ -1,3 +1,166 @@
+/* ESTILOS PARA SIDEBAR */
+.sidebarAcordeon{
+    display:block;
+    align-items: center;
+    justify-content:center;
+    width: 100%;
+    cursor:pointer;
+}
+
+.sidebarTituloAcordeon{
+    text-decoration: none;
+    color: var(--text-h);
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    display:flex;
+    justify-content: space-between;
+    user-select: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+.sidebarTituloAcordeon:hover,.sidebarItemAcordeon:hover{
+    background-color: var(--accent-bg);
+}
+
+.sidebarAcordeon[open] > .sidebarTituloAcordeon,.sidebarItemAcordeon[aria-current="page"]{
+    background-color: var(--azul-estandar);
+    color: var(--texto-sobre-acento);
+}
+
+.sidebarAcordeon >.sidebarTituloAcordeon::after{
+    content: "▾";
+}
+.sidebarAcordeon[open] > .sidebarTituloAcordeon::after{
+    content: "▴";
+}
+
+.sidebarOpcionesAcordeon{
+    display: flex;
+    padding-left: 24px;
+    align-items:flex-start;
+    flex-direction: column;
+    width: 100%;
+    cursor:pointer;
+}
+
+.sidebarItemAcordeon{
+    padding: 8px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 300;
+}
+
+
+/* ESTILOS PARA MODAL*/
+.modalFormulario{ 
+    background-color: var(--bg); 
+    width: 95%; 
+    max-width: 700px;
+    max-height: 90vh; 
+    overflow-y: auto; 
+    border-radius: 12px; 
+    padding: 30px; 
+}
+
+.modalTitulo{ 
+    margin-top: 0; 
+    border-bottom: 1px solid var(--border); 
+    padding-bottom: 15px 
+}
+
+.modalCargando{ 
+    text-align: center; 
+    padding: 40px 0; 
+    font-size: 1.2rem; 
+    color: var(--text-muted) 
+}
+
+.modalTituloCampo{ 
+    font-size: 1.1rem; 
+    font-weight: bold 
+}
+
+.modalSelector{ 
+    width: 100%; 
+    padding: 12px; 
+    font-size: 1rem; 
+    border-radius: 8px; 
+    border: 1px solid var(--border);
+    background-color:  var(--input-bg);
+    color: var(--text) 
+}
+
+.modalSelectorBloqueado{
+    background-color: var(--blocked-input-bg);
+}
+
+.modalArchivo{ 
+    width: 100%; 
+    padding: 10px; 
+    font-size: 1rem; 
+    border-radius: 8px; 
+    border: 1px dashed var(--border); 
+    background-color: var(--input-bg); 
+    color: var(--text);
+    box-sizing: border-box
+}
+
+.modalTextoAdicional{ 
+    color: var(--text-muted); 
+    display: block; 
+    margin-top: 5px 
+}
+
+.modalVistaPrevia{ 
+    position: relative; 
+    margin-top: 12px; 
+    text-align: center; 
+    background-color: var(--input-bg); 
+    padding: 12px; 
+    border-radius: 8px; 
+    border: 1px solid var(--border) 
+}
+
+.modalTextoVistaPrevia{ 
+    margin: 0; 
+    font-size: 0.85rem;
+    font-weight: bold; 
+    color: var(--text-h)
+}
+
+.modalBotonQuitar{
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0
+}
+
+.modalAreaDeTexto{ 
+    width: 100%; 
+    padding: 14px; 
+    font-size: 1rem; 
+    border-radius: 8px;
+    border: 1px solid var(--border); 
+    background-color: var(--input-bg);
+    color: #1f2937;
+    font-family: inherit;
+    resize: vertical;
+    box-sizing: border-box;
+    outline: none
+}
+
 .contenedorPrincipal {
     display: flex;
     flex-direction: column;
@@ -458,7 +621,7 @@ p {
 
 .filtroFecha:focus {
     outline: none;
-    border-color: var(--primary);
+    border-color: var(--azul-texto);
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
 }
 
@@ -468,7 +631,7 @@ p {
 }
 
 input[type="date"].filtroFecha {
-    color-scheme: light;
+    color-scheme: dark;
     padding-right: 8px;
 }
 

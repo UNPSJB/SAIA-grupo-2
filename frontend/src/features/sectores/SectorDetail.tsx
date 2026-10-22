@@ -32,7 +32,7 @@ export default function SectorDetail() {
                     
                     {/* ENCABEZADO DEL SECTOR */}
                     <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '15px', marginBottom: '20px' }}>
-                        <h3 style={{ color: 'var(--primary)', fontSize: '1.5rem', marginBottom: '10px' }}>
+                        <h3 style={{ color: 'var(--azul-texto)', fontSize: '1.5rem', marginBottom: '10px' }}>
                             {sector.nombre}
                         </h3>
                         <p style={{ color: 'var(--text-h)', fontSize: '1.1rem' }}>
