@@ -1,0 +1,85 @@
+import logging
+from typing import List, Optional
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from src.archivos import validar_archivo_opcional
+from src.empleados import services as empleados_services
+from src.incidentes import exceptions, models, schemas
+from src.incidentes.constants import EstadoIncidente, TipoIncidente
+
+logger = logging.getLogger(__name__)
+
+
+def crear_incidente(db: Session, incidente: schemas.IncidenteCreate) -> models.Incidente:
+    empleados_services.leer_empleado(db, incidente.empleado_id)
+    validar_archivo_opcional(incidente.archivo_url)
+
+    db_incidente = models.Incidente(**incidente.model_dump())
+
+    db.add(db_incidente)
+    db.commit()
+    db.refresh(db_incidente)
+    return db_incidente
+
+
+def listar_incidentes(
+    db: Session,
+    estado: Optional[EstadoIncidente] = None,
+    tipo: Optional[TipoIncidente] = None,
+    empleado_id: Optional[int] = None,
+) -> List[models.Incidente]:
+    logger.info("Consultando la lista de incidentes desde services")
+    consulta = select(models.Incidente)
+
+    if estado is not None:
+        consulta = consulta.where(models.Incidente.estado == estado)
+    if tipo is not None:
+        consulta = consulta.where(models.Incidente.tipo == tipo)
+    if empleado_id is not None:
+        consulta = consulta.where(models.Incidente.empleado_id == empleado_id)
+
+    consulta = consulta.order_by(models.Incidente.fecha_hora_reporte.desc())
+    return list(db.scalars(consulta).unique().all())
+
+
+def listar_abiertos(db: Session) -> List[models.Incidente]:
+    """Mas antiguos primero, para la HU de incidentes abiertos."""
+    consulta = (
+        select(models.Incidente)
+        .where(models.Incidente.estado == EstadoIncidente.ABIERTO)
+        .order_by(models.Incidente.fecha_hora_reporte.asc())
+    )
+    return list(db.scalars(consulta).unique().all())
+
+
+def leer_incidente(db: Session, incidente_id: int) -> models.Incidente:
+    db_incidente = db.scalar(
+        select(models.Incidente).where(models.Incidente.id == incidente_id)
+    )
+    if db_incidente is None:
+        raise exceptions.IncidenteNoEncontrado()
+    return db_incidente
+
+
+def adjuntar_foto(
+    db: Session, incidente_id: int, foto: schemas.FotoIncidente
+) -> models.Incidente:
+    """Permite completar la foto que no se cargo al registrar, sin tocar el resto."""
+    db_incidente = leer_incidente(db, incidente_id)
+
+    if db_incidente.archivo_url:
+        raise exceptions.FotoYaCargada()
+
+    if not foto.archivo_url:
+        raise exceptions.FotoRequerida()
+
+    validar_archivo_opcional(foto.archivo_url)
+
+    db_incidente.archivo_url = foto.archivo_url
+    db_incidente.archivo_nombre = foto.archivo_nombre
+
+    db.commit()
+    db.refresh(db_incidente)
+    return db_incidente

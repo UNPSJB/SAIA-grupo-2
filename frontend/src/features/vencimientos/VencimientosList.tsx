@@ -13,7 +13,6 @@ import TablaPaginada, {type Columna } from '../../components/TablaPaginada';
 import TarjetasFiltro, { type Metrica } from '../../components/TarjetasFiltro';
 import BarraFiltros from '../../components/BarraFiltros'; // <-- Importamos la barra
 import { filtrarPorTexto } from '../../utils/texto';
-import { Link } from 'react-router-dom';
 
 
 const COLOR_ESTADO: Record<EstadoVencimiento, string> = {

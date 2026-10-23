@@ -3,7 +3,6 @@ import type { AlertaVencimiento } from '../../types/documentacion';
 import type { Empleado } from '../../types/empleados';
 import { getAlertasDocumentacion } from '../../services/documentacionServices';
 import { getEmpleados } from '../../services/empleadosServices';
-import Boton from '../../components/Boton';
 import {
     COLOR_ESTADO,
     ETIQUETA_ESTADO,

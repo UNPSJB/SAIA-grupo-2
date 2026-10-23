@@ -11,7 +11,6 @@ import RegistrarCalibracionModal from './RegistrarCalibracionModal';
 import BuscadorTexto from '../../components/BuscadorTexto';
 import { filtrarPorTexto } from '../../utils/texto';
 
-
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 
 export default function EquiposList() {
@@ -20,9 +19,6 @@ export default function EquiposList() {
     const [busqueda, setBusqueda] = useState('');
     const { usuario } = useAuth();
     const [equipos, setEquipos] = useState<Equipo[]>([]);
-
-    const [paginaActual, setPaginaActual] = useState(1);
-    const equiposPorPagina = 5;
 
     const cargarDatos = async () => {
         try {
@@ -41,12 +37,6 @@ export default function EquiposList() {
         cargarDatos();
     }, []);
     const equiposFiltrados = filtrarPorTexto(equipos, busqueda, (c) => [c.nombre, c.sector?.nombre, c.tipo?.nombre]);
-
-    const indiceUltimo = paginaActual * equiposPorPagina;
-    const indicePrimer = indiceUltimo - equiposPorPagina;
-    const equiposActuales = equiposFiltrados.slice(indicePrimer, indiceUltimo);
-    const totalPaginas = Math.ceil(equiposFiltrados.length / equiposPorPagina);
-
 
     //casi todos estos estilos no tendrian que estar aca y se tendria que usar las variantes
     //para corregir a futuro
@@ -143,14 +133,9 @@ export default function EquiposList() {
         }
     ];
 
-
-
-
-
     return (
         <div className={styles.contenedorPrincipal}>
             <h2>Inventario de Equipamiento</h2>
-
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar equipo, sector o tipo..." />
@@ -174,7 +159,6 @@ export default function EquiposList() {
                 columnaOrdenInicial="activo"
                 ordenAscInicial={false} // Inicializa con los Activos (true) primero
             />
-
 
             {equipoParaCalibrar && (
                 <RegistrarCalibracionModal

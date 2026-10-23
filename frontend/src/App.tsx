@@ -53,6 +53,10 @@ import AlertasRecambio from './features/elementosLimpieza/AlertasRecambio';
 import VencimientosList from './features/vencimientos/VencimientosList'; 
 import VencimientosDocumentacionList from './features/vencimientosDocumentacion/VencimientosDocumentacionList';
 
+import IncidentesList from './features/incidentes/IncidentesList';
+import IncidenteForm from './features/incidentes/IncidenteForm';
+import IncidenteDetail from './features/incidentes/IncidenteDetail';
+
 import './App.css';
 
 function RutaAdmin({ children }: { children: React.ReactElement }) {
@@ -151,6 +155,17 @@ function RutasProtegidas() {
               {isAdmin && <NavLink to="/checklists/historial" className={styles.sidebarItemAcordeon}>Historial de Checklists</NavLink>}
             </div>
           </details>
+
+          <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
+              <summary className={styles.sidebarTituloAcordeon}>
+                No Conformidades 
+              </summary>
+
+            <div className={styles.sidebarOpcionesAcordeon}>
+              <NavLink to="/incidentes/nuevo" className={styles.sidebarItemAcordeon}>Registrar Incidente</NavLink>
+              {isAdmin && <NavLink to="/incidentes" end className={styles.sidebarItemAcordeon}>Incidentes Reportados</NavLink>}
+            </div>
+          </details>
           </nav>
 
           <div className="userSection">
@@ -228,6 +243,10 @@ function RutasProtegidas() {
             <Route path="/checklists/historial" element={<RutaAdmin><HistorialChecklistList /></RutaAdmin>} />
 
             <Route path="/vencimientos-documentacion" element={<RutaAdmin><VencimientosDocumentacionList /></RutaAdmin>}/>
+
+            <Route path="/incidentes/nuevo" element={<IncidenteForm />} />
+            <Route path="/incidentes" element={<RutaAdmin><IncidentesList /></RutaAdmin>} />
+            <Route path="/incidentes/:id" element={<RutaAdmin><IncidenteDetail /></RutaAdmin>} />
           </Routes>
         </main>
         
