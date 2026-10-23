@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 import type {
     CategoriaVencimiento,
@@ -8,10 +9,9 @@ import type {
 } from '../../types/vencimientos';
 import { getVencimientosConsolidados } from '../../services/vencimientosServices';
 import styles from '../../styles/shared.module.css';
-import localStyles from './VencimientosList.module.css';
 import TablaPaginada, {type Columna } from '../../components/TablaPaginada';
 import TarjetasFiltro, { type Metrica } from '../../components/TarjetasFiltro';
-import BarraFiltros from '../../components/BarraFiltros'; // <-- Importamos la barra
+import BarraFiltros from '../../components/BarraFiltros'; 
 import { filtrarPorTexto } from '../../utils/texto';
 
 
@@ -129,11 +129,13 @@ export default function VencimientosList() {
             key: 'titulo',
             encabezado: 'Vencimiento / Título',
             ordenable: true,
-            variant: 'titulo', // <--- Usamos el prop variant
+            variant: 'titulo',
             render: (item) => {
                 const destino = rutaDetalle(item);
                 return destino
-                    ? <Link to={destino} className={localStyles.link}>{item.titulo}</Link>
+                    ? <Link to={destino} className={styles.link}>
+                        {item.titulo}
+                      </Link>
                     : item.titulo;
             }
         },
