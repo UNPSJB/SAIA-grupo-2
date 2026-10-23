@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from src.insumos.models import Insumo
 from src.insumos import schemas, exceptions
 
-# Creamos un logger para este módulo específico[cite: 6].
 logger = logging.getLogger(__name__)
 
 def crear_insumo(db: Session, insumo: schemas.InsumoCreate) -> schemas.Insumo:
@@ -36,6 +35,13 @@ def modificar_insumo(
     db: Session, insumo_id: int, insumo: schemas.InsumoUpdate
 ) -> Insumo:
     db_insumo = leer_insumo(db, insumo_id)
+    if insumo.nombre == "":
+        raise exceptions.NombreVacio()
+    existente = db.scalar(
+        select(Insumo).where(Insumo.nombre == insumo.nombre, Insumo.id != insumo_id)
+    )
+    if existente is not None:
+        raise exceptions.NombreDuplicado()
     db.execute(
         update(Insumo).where(Insumo.id == insumo_id).values(**insumo.model_dump())
     )

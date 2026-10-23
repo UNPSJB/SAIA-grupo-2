@@ -9,10 +9,7 @@ from src.asociaciones.empleado_capacidad import empleado_capacidad
 from src.capacidades.models import Capacidad
 from src.capacidades import schemas, exceptions
 
-# Creacion de logger para modulo
 logger = logging.getLogger(__name__)
-
-# CRUD
 
 def crear_capacidad(db: Session, capacidad:schemas.CapacidadCreate) -> schemas.Capacidad:
     CAPACIDAD_EXISTE = db.scalar(
@@ -28,7 +25,6 @@ def crear_capacidad(db: Session, capacidad:schemas.CapacidadCreate) -> schemas.C
         db.refresh(_capacidad)
         return _capacidad
     except IntegrityError:
-        # Hacemos rollback para que no se tranque la base de datos y lanzamos nuestro error
         db.rollback()
         raise exceptions.NombreDuplicado()
 
@@ -46,23 +42,30 @@ def modificar_capacidad(
     db: Session, capacidad_id: int, capacidad: schemas.CapacidadUpdate
 ) -> Capacidad:
     db_capacidad = leer_capacidad(db, capacidad_id)
-    db.execute(
-        update(Capacidad).where(Capacidad.id == capacidad_id).values(**capacidad.model_dump())
+
+    existente = db.scalar(
+        select(Capacidad)
+        .where(Capacidad.nombre == capacidad.nombre)
+        .where(Capacidad.id != capacidad_id)
     )
-    
+    if existente is not None:
+        raise exceptions.NombreDuplicado()
+
     try:
+        db.execute(
+            update(Capacidad).where(Capacidad.id == capacidad_id).values(**capacidad.model_dump())
+        )
         db.commit()
         db.refresh(db_capacidad)
         return db_capacidad
     except IntegrityError:
-        # También protegemos la edición por si intentan renombrar a una capacidad que ya existe
         db.rollback()
         raise exceptions.NombreDuplicado()
 
 def eliminar_capacidad(db: Session, capacidad_id: int) -> schemas.Capacidad:
     db_capacidad = db.scalar(
         select(Capacidad)
-        .options(selectinload(Capacidad.empleados)) # Evita que explote por "No estar vinculado a una sesion"
+        .options(selectinload(Capacidad.empleados))
         .where(Capacidad.id == capacidad_id)
     )
 

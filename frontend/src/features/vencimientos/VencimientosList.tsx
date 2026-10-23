@@ -7,8 +7,8 @@ import type {
     ResumenVencimientos,
 } from '../../types/vencimientos';
 import { getVencimientosConsolidados } from '../../services/vencimientosServices';
-import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
+import localStyles from './VencimientosList.module.css';
 import TablaPaginada, {type Columna } from '../../components/TablaPaginada';
 import TarjetasFiltro, { type Metrica } from '../../components/TarjetasFiltro';
 import BarraFiltros from '../../components/BarraFiltros'; // <-- Importamos la barra
@@ -47,6 +47,22 @@ function formatearFecha(fecha: string): string {
     const [anio, mes, dia] = fecha.split('-');
     if (!anio || !mes || !dia) return fecha;
     return `${dia}/${mes}/${anio}`;
+}
+
+function rutaDetalle(item: ItemVencimientoConsolidado): string | null {
+    const id = item.id.slice(item.id.indexOf('-') + 1);
+
+    switch (item.categoria) {
+        case 'personal':
+        case 'documentos':
+            return item.empleado_id == null
+                ? null
+                : `/empleados/${item.empleado_id}/documentacion/editar/${id}`;
+        case 'equipos':
+            return `/elementosLimpieza/${id}`;
+        case 'calibracion':
+            return `/equipos/${id}`;
+    }
 }
 
 export default function VencimientosList() {
@@ -115,10 +131,12 @@ export default function VencimientosList() {
             encabezado: 'Vencimiento / Título',
             ordenable: true,
             variant: 'titulo', // <--- Usamos el prop variant
-            render: (item) => item.titulo
-
-            // render: (item) => <Link to={`/${item.categoria}/${item.id.split('-').at(1)}`}> {item.titulo} </Link> 
-            // esto funciona para equipos por que justo la url con la vista detalle creo, guardado para despues
+            render: (item) => {
+                const destino = rutaDetalle(item);
+                return destino
+                    ? <Link to={destino} className={localStyles.link}>{item.titulo}</Link>
+                    : item.titulo;
+            }
         },
         {
             key: 'detalle',

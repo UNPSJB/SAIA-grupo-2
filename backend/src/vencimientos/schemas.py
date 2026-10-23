@@ -16,6 +16,7 @@ class CategoriaVencimiento(str, Enum):
 class ItemVencimientoConsolidado(BaseModel):
     id: str
     categoria: CategoriaVencimiento
+    empleado_id: Optional[int] = None
     categoria_label: str
     titulo: str
     detalle: str

@@ -32,6 +32,13 @@ def modificar_unidad_medida(
     db: Session, unidad_id: int, unidad: schemas.UnidadMedidaUpdate
 ) -> UnidadMedida:
     db_unidad = leer_unidad_medida(db, unidad_id)
+    if unidad.nombre == "":
+        raise exceptions.NombreVacio()
+    existente = db.scalar(
+        select(UnidadMedida).where(UnidadMedida.nombre == unidad.nombre, UnidadMedida.id != unidad_id)
+    )
+    if existente is not None:
+        raise exceptions.UnidadMedidaDuplicada()
     db.execute(
         update(UnidadMedida).where(UnidadMedida.id == unidad_id).values(**unidad.model_dump())
     )

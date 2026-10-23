@@ -9,6 +9,7 @@ export type EstadoVencimiento = 'vencido' | 'proximo' | 'vigente';
 export interface ItemVencimientoConsolidado {
     id: string;
     categoria: CategoriaVencimiento;
+    empleado_id?: number | null;
     categoria_label: string;
     titulo: string;
     detalle: string;

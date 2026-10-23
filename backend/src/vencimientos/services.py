@@ -78,6 +78,7 @@ def obtener_vencimientos_consolidados(
             ItemVencimientoConsolidado(
                 id=f"doc-{d.id}",
                 categoria=cat,
+                empleado_id=d.empleado_id,
                 categoria_label=cat_label,
                 titulo=TITULOS_TIPO_DOC.get(d.tipo, "Documento"),
                 detalle=_descripcion_documento(d),

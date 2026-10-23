@@ -644,3 +644,8 @@ input[type="date"].filtroFecha::-webkit-calendar-picker-indicator {
     height: 18px;
     margin-left: 6px;
 }
+
+.link {
+    color: #fff;
+    text-decoration: underline;
+}

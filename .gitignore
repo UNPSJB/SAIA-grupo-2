@@ -327,4 +327,21 @@ sketch
 Arrancar Backend.bat
 Arrancar Frontend.bat
 
+# Bases de datos SQLite
+*.sqlite
+*.sqlite3
+*.db
+*.sqlite-journal
+*.sqlite3-journal
+*.db-journal
+
+# IDEs y Editores
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
 # End of https://www.toptal.com/developers/gitignore/api/react,node,python
