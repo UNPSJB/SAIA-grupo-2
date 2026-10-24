@@ -178,8 +178,6 @@ export default function VencimientosDocumentacionList() {
     ];
 
 
-
-
     return (
         <div className={styles.contenedorPrincipal}>
             <h2>Vencimientos de Personal</h2>

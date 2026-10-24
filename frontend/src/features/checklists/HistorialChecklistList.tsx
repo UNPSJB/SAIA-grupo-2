@@ -413,7 +413,7 @@ export default function HistorialChecklistList() {
                                 </div>
 
                                 <div className={styles.filaBotones} style={{ marginTop: '20px', justifyContent: 'flex-end' }}>
-                                    <Boton variant="volver" onClick={() => setModalDetalleAbierto(false)}>Cerrar</Boton>
+                                    <Boton variant="volver" onClick={() => setModalDetalleAbierto(false)}>Volver</Boton>
                                 </div>
                             </div>
                         ) : (
