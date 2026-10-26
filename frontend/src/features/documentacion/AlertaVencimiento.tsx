@@ -1,22 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import type { AlertaVencimiento } from '../../types/documentacion';
+import type { AlertaVencimiento, AlertasPorEmpleado } from '../../types/documentacion';
 import { getAlertasDocumentacion } from '../../services/documentacionServices';
 import { COLOR_ESTADO, ETIQUETA_ESTADO, ETIQUETA_TIPO, textoVencimiento } from './estadoVencimiento';
 import Boton from '../../components/Boton';
 import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
-interface alertasPorEmpleado{
-    empleado:{
-        id: number;
-        legajo: string;
-        nombre: string;
-        apellido: string;
-    };
-    documentos: AlertaVencimiento[];
-}
 
 
 export default function AlertasDocumentacion(){
@@ -43,7 +34,7 @@ export default function AlertasDocumentacion(){
     }, []);
 
 
-    const alertasAgrupadas: alertasPorEmpleado[] = Object.values(
+    const alertasAgrupadas: AlertasPorEmpleado[] = Object.values(
         alertas.reduce((acc, current) => {
             const empId = current.empleado.id;
             if (!acc[empId]) {
@@ -54,7 +45,7 @@ export default function AlertasDocumentacion(){
             }
             acc[empId].documentos.push(current);
             return acc;
-        },  {} as Record<number, alertasPorEmpleado>)
+        },  {} as Record<number, AlertasPorEmpleado>)
     );
     const vencidos = alertas.filter(a => a.estado === 'vencido').length;
     const proximos = alertas.filter(a => a.estado === 'proximo').length;

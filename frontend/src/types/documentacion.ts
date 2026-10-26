@@ -80,3 +80,8 @@ export interface CumplimientoEmpleado {
     faltantes: TipoDocumentacion[];
     vencidos: TipoDocumentacion[];
 }
+
+export interface AlertasPorEmpleado{
+    empleado: EmpleadoResumen;
+    documentos: AlertaVencimiento[];
+}

@@ -105,7 +105,8 @@ function RutasProtegidas() {
               </summary>
 
               <div className={styles.sidebarOpcionesAcordeon}>
-                <NavLink to="/empleados" className={styles.sidebarItemAcordeon}>Directorio de Empleados</NavLink>
+                <NavLink to="/empleados" end className={styles.sidebarItemAcordeon}>Directorio de Empleados</NavLink>
+                <NavLink to="/empleados/alertas" className={styles.sidebarItemAcordeon}>Alertas de Vencimiento</NavLink>
                 <NavLink to="/capacidades" className={styles.sidebarItemAcordeon}>Gestión de Capacidades</NavLink>
                 <NavLink to="/sectores" className={styles.sidebarItemAcordeon}>Gestión de Sectores</NavLink>
                 <NavLink to="/vencimientos-documentacion" className={styles.sidebarItemAcordeon}>Vencimientos de Personal</NavLink>
@@ -172,6 +173,7 @@ function RutasProtegidas() {
             <Route path="/" element={<h1>SAIA - Grupo 2</h1>} />
             
             <Route path="/empleados" element={<RutaAdmin><EmpleadosList /></RutaAdmin>} />
+            <Route path="/empleados/alertas" element={<RutaAdmin><AlertasDocumentacion /></RutaAdmin>} />
             <Route path="/empleados/nuevo" element={<RutaAdmin><EmpleadoForm /></RutaAdmin>} />
             <Route path="/empleados/editar/:id" element={<RutaAdmin><EmpleadoForm /></RutaAdmin>} />
             <Route path="/empleados/eliminar/:id" element={<RutaAdmin><EmpleadoDelete /></RutaAdmin>} />
