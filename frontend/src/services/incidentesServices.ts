@@ -88,6 +88,31 @@ export const reabrirIncidente = async (
 
 export const getResumenIncidentes = async (): Promise<ResumenIncidentes> => {
     const res = await fetch(`${BASE_URL}/resumen`);
-    if (!res.ok) throw new Error('Error al cargar el resumen de incidentes');
+
+    if (!res.ok) {throw new Error('Error al cargar el resumen de incidentes');}
+
+    return res.json();
+};
+
+export interface EstadisticaIncidente {
+    tipo: TipoIncidente;
+    cantidad: number;
+};
+
+export const getEstadisticasIncidentes = async (
+    fechaDesde: string,
+    fechaHasta: string
+): Promise<EstadisticaIncidente[]> => {
+    const parametros = new URLSearchParams({
+        fecha_desde: fechaDesde,
+        fecha_hasta: fechaHasta,
+    });
+
+    const res = await fetch(`${BASE_URL}/estadisticas?${parametros}`);
+
+    if (!res.ok) {
+        throw new Error('Error al cargar las estadísticas de incidentes');
+    }
+
     return res.json();
 };
