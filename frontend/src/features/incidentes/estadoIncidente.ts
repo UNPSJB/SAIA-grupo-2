@@ -1,4 +1,4 @@
-import type { EstadoIncidente, TipoIncidente } from '../../types/incidentes';
+import type { EstadoIncidente, TipoIncidente, TipoMovimiento } from '../../types/incidentes';
 
 export const DIAS_PARA_DESTACAR_ANTIGUEDAD = 15;
 
@@ -25,6 +25,21 @@ export const TIPOS_INCIDENTE: TipoIncidente[] = [
     'devolucion_cliente',
     'otro',
 ];
+
+export const ETIQUETA_MOVIMIENTO: Record<TipoMovimiento, string> = {
+    cierre: 'Cierre',
+    reapertura: 'Reapertura',
+};
+
+export const ICONO_MOVIMIENTO: Record<TipoMovimiento, string> = {
+    cierre: 'bi-check-circle-fill',
+    reapertura: 'bi-arrow-counterclockwise',
+};
+
+export const COLOR_MOVIMIENTO: Record<TipoMovimiento, string> = {
+    cierre: 'var(--verde-texto)',
+    reapertura: 'var(--rojo-texto)',
+};
 
 export const ESTADOS_INCIDENTE: EstadoIncidente[] = ['abierto', 'cerrado'];
 

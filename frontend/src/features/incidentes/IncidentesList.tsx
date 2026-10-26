@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import type { EstadoIncidente, Incidente } from '../../types/incidentes';
-import { getIncidentes } from '../../services/incidentesServices';
+import type { EstadoIncidente, Incidente, ResumenIncidentes } from '../../types/incidentes';
+import {
+    getIncidentes,
+    getIncidentesAbiertos,
+    getResumenIncidentes,
+} from '../../services/incidentesServices';
 import Boton from '../../components/Boton';
 import BuscadorTexto from '../../components/BuscadorTexto';
 import { filtrarPorTexto } from '../../utils/texto';
@@ -28,8 +32,14 @@ const CELDA_SIN_CORTE: React.CSSProperties = {
     textOverflow: 'ellipsis',
 };
 
-export default function IncidentesList() {
+interface IncidentesListProps {
+    /** Pantalla de incidentes abiertos: filtra sola y ordena del mas viejo al mas nuevo. */
+    soloAbiertos?: boolean;
+}
+
+export default function IncidentesList({ soloAbiertos = false }: IncidentesListProps) {
     const [incidentes, setIncidentes] = useState<Incidente[]>([]);
+    const [resumen, setResumen] = useState<ResumenIncidentes | null>(null);
     const [filtroEstado, setFiltroEstado] = useState<EstadoIncidente | ''>('');
     const [busqueda, setBusqueda] = useState('');
     const [cargando, setCargando] = useState(true);
@@ -40,8 +50,17 @@ export default function IncidentesList() {
             try {
                 setCargando(true);
                 setError(null);
-                const datos = await getIncidentes(filtroEstado === '' ? undefined : filtroEstado);
-                setIncidentes(datos);
+
+                if (soloAbiertos) {
+                    const [datos, conteos] = await Promise.all([
+                        getIncidentesAbiertos(),
+                        getResumenIncidentes(),
+                    ]);
+                    setIncidentes(datos);
+                    setResumen(conteos);
+                } else {
+                    setIncidentes(await getIncidentes(filtroEstado === '' ? undefined : filtroEstado));
+                }
             } catch (problema) {
                 console.error('Error al cargar los incidentes:', problema);
                 setError('No se pudo cargar el listado de incidentes.');
@@ -51,7 +70,7 @@ export default function IncidentesList() {
         };
 
         cargarDatos();
-    }, [filtroEstado]);
+    }, [filtroEstado, soloAbiertos]);
 
     const incidentesFiltrados = filtrarPorTexto(incidentes, busqueda, (item) => [
         ETIQUETA_TIPO[item.tipo],
@@ -63,12 +82,48 @@ export default function IncidentesList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Incidentes Reportados</h2>
-            <p style={{ marginTop: '-10px', marginBottom: '20px', color: 'var(--text-muted)' }}>
-                {abiertos > 0
-                    ? `${abiertos} ${abiertos === 1 ? 'incidente abierto' : 'incidentes abiertos'} esperando resolución.`
-                    : 'No hay incidentes abiertos.'}
+            <h2>{soloAbiertos ? 'Incidentes Abiertos' : 'Incidentes Reportados'}</h2>
+            <p style={{ marginTop: '-10px', marginBottom: soloAbiertos ? '14px' : '20px', color: 'var(--text-muted)' }}>
+                {soloAbiertos
+                    ? incidentes.length > 0
+                        ? `${incidentes.length} ${incidentes.length === 1 ? 'incidente sigue' : 'incidentes siguen'} sin resolver, del más antiguo al más reciente.`
+                        : 'No queda ningún incidente sin resolver.'
+                    : abiertos > 0
+                      ? `${abiertos} ${abiertos === 1 ? 'incidente abierto' : 'incidentes abiertos'} esperando resolución.`
+                      : 'No hay incidentes abiertos.'}
             </p>
+
+            {soloAbiertos && resumen && resumen.abiertos > 0 && (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '10px',
+                        width: '100%',
+                        maxWidth: '1280px',
+                        marginBottom: '18px',
+                    }}
+                >
+                    {resumen.abiertos_por_tipo
+                        .filter((conteo) => conteo.cantidad > 0)
+                        .map((conteo) => (
+                            <span
+                                key={conteo.tipo}
+                                style={{
+                                    padding: '6px 12px',
+                                    borderRadius: '999px',
+                                    border: '1px solid var(--border)',
+                                    backgroundColor: 'var(--card-bg)',
+                                    color: 'var(--text)',
+                                    fontSize: '0.82rem',
+                                }}
+                            >
+                                {ETIQUETA_TIPO[conteo.tipo]}:{' '}
+                                <strong style={{ color: 'var(--text-h)' }}>{conteo.cantidad}</strong>
+                            </span>
+                        ))}
+                </div>
+            )}
 
             <div
                 style={{
@@ -87,21 +142,23 @@ export default function IncidentesList() {
                 </Link>
 
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>Estado:</span>
-                        <select
-                            value={filtroEstado}
-                            onChange={(evento) => setFiltroEstado(evento.target.value as EstadoIncidente | '')}
-                            style={{ padding: '8px 10px' }}
-                        >
-                            <option value="">Todos</option>
-                            {ESTADOS_INCIDENTE.map((estado) => (
-                                <option key={estado} value={estado}>
-                                    {ETIQUETA_ESTADO[estado]}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
+                    {!soloAbiertos && (
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>Estado:</span>
+                            <select
+                                value={filtroEstado}
+                                onChange={(evento) => setFiltroEstado(evento.target.value as EstadoIncidente | '')}
+                                style={{ padding: '8px 10px' }}
+                            >
+                                <option value="">Todos</option>
+                                {ESTADOS_INCIDENTE.map((estado) => (
+                                    <option key={estado} value={estado}>
+                                        {ETIQUETA_ESTADO[estado]}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                    )}
 
                     <BuscadorTexto
                         valor={busqueda}
@@ -133,7 +190,9 @@ export default function IncidentesList() {
                     <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
                         {busqueda
                             ? `No hay resultados para "${busqueda}".`
-                            : 'No se registraron incidentes con ese filtro.'}
+                            : soloAbiertos
+                              ? 'No queda ningún incidente sin resolver.'
+                              : 'No se registraron incidentes con ese filtro.'}
                     </div>
                 ) : (
                     incidentesFiltrados.map((incidente) => {
@@ -146,7 +205,16 @@ export default function IncidentesList() {
                             <div
                                 key={incidente.id}
                                 className={styles.filaItem}
-                                style={{ gridTemplateColumns: GRILLA, alignItems: 'center' }}
+                                style={{
+                                    gridTemplateColumns: GRILLA,
+                                    alignItems: 'center',
+                                    ...(soloAbiertos && esViejo
+                                        ? {
+                                              borderLeft: '3px solid var(--rojo-texto)',
+                                              backgroundColor: 'color-mix(in srgb, var(--rojo-texto) 7%, transparent)',
+                                          }
+                                        : {}),
+                                }}
                             >
                                 <div style={{ ...CELDA_SIN_CORTE, lineHeight: 1.35 }}>
                                     <div>{fecha}</div>
