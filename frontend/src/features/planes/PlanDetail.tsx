@@ -84,7 +84,7 @@ export default function PlanDetail() {
 
                     <div className={styles.filaBotones} style={{ marginTop: '30px', justifyContent: 'center' }}>
                         <Link to="/planes">
-                            <Boton variant="volver">Volver a la Lista</Boton>
+                            <Boton variant="volver">Volver a la lista</Boton>
                         </Link>
                     </div>
                 </div>
