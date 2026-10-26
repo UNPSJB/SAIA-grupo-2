@@ -1,8 +1,11 @@
 import type {
+    CierrePayload,
     EstadoIncidente,
     Incidente,
     FotoIncidentePayload,
     IncidentePayload,
+    ReaperturaPayload,
+    ResumenIncidentes,
     TipoIncidente,
 } from '../types/incidentes';
 
@@ -57,4 +60,34 @@ export const adjuntarFoto = async (
         body: JSON.stringify(datos),
     });
     return res.ok;
+};
+
+export const cerrarIncidente = async (
+    id: string | number,
+    datos: CierrePayload
+): Promise<boolean> => {
+    const res = await fetch(`${BASE_URL}/${id}/cierre`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos),
+    });
+    return res.ok;
+};
+
+export const reabrirIncidente = async (
+    id: string | number,
+    datos: ReaperturaPayload
+): Promise<boolean> => {
+    const res = await fetch(`${BASE_URL}/${id}/reapertura`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos),
+    });
+    return res.ok;
+};
+
+export const getResumenIncidentes = async (): Promise<ResumenIncidentes> => {
+    const res = await fetch(`${BASE_URL}/resumen`);
+    if (!res.ok) throw new Error('Error al cargar el resumen de incidentes');
+    return res.json();
 };

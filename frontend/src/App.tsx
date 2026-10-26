@@ -164,6 +164,7 @@ function RutasProtegidas() {
             <div className={styles.sidebarOpcionesAcordeon}>
               <NavLink to="/incidentes/nuevo" className={styles.sidebarItemAcordeon}>Registrar Incidente</NavLink>
               {isAdmin && <NavLink to="/incidentes" end className={styles.sidebarItemAcordeon}>Incidentes Reportados</NavLink>}
+              {isAdmin && <NavLink to="/incidentes/abiertos" className={styles.sidebarItemAcordeon}>Incidentes Abiertos</NavLink>}
             </div>
           </details>
           </nav>
@@ -246,6 +247,7 @@ function RutasProtegidas() {
 
             <Route path="/incidentes/nuevo" element={<IncidenteForm />} />
             <Route path="/incidentes" element={<RutaAdmin><IncidentesList /></RutaAdmin>} />
+            <Route path="/incidentes/abiertos" element={<RutaAdmin><IncidentesList soloAbiertos /></RutaAdmin>} />
             <Route path="/incidentes/:id" element={<RutaAdmin><IncidenteDetail /></RutaAdmin>} />
           </Routes>
         </main>

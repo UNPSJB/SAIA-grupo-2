@@ -269,7 +269,7 @@ export default function IncidenteForm() {
                     </Boton>
                     {esAdmin && (
                         <Link to="/incidentes">
-                            <Boton variant="volver">Cancelar</Boton>
+                            <Boton variant="eliminar">Cancelar</Boton>
                         </Link>
                     )}
                 </div>

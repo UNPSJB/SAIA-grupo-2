@@ -1,13 +1,13 @@
 import logging
 from typing import List, Optional
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from src.archivos import validar_archivo_opcional
 from src.empleados import services as empleados_services
 from src.incidentes import exceptions, models, schemas
-from src.incidentes.constants import EstadoIncidente, TipoIncidente
+from src.incidentes.constants import EstadoIncidente, TipoIncidente, TipoMovimiento
 
 logger = logging.getLogger(__name__)
 
@@ -83,3 +83,106 @@ def adjuntar_foto(
     db.commit()
     db.refresh(db_incidente)
     return db_incidente
+
+
+def _registrar_movimiento(
+    db: Session,
+    db_incidente: models.Incidente,
+    tipo: TipoMovimiento,
+    descripcion: str,
+    empleado_id: int,
+) -> None:
+    db.add(
+        models.MovimientoIncidente(
+            incidente_id=db_incidente.id,
+            tipo=tipo,
+            descripcion=descripcion,
+            empleado_id=empleado_id,
+            fecha_hora=models.ahora(),
+        )
+    )
+
+
+def cerrar_incidente(
+    db: Session, incidente_id: int, cierre: schemas.CierreIncidente
+) -> models.Incidente:
+    """Registra la accion correctiva y deja el incidente cerrado."""
+    db_incidente = leer_incidente(db, incidente_id)
+
+    if db_incidente.estado == EstadoIncidente.CERRADO:
+        raise exceptions.IncidenteYaCerrado()
+
+    if not cierre.accion_correctiva.strip():
+        raise exceptions.AccionCorrectivaRequerida()
+
+    empleados_services.leer_empleado(db, cierre.responsable_id)
+
+    db_incidente.accion_correctiva = cierre.accion_correctiva
+    db_incidente.fecha_cierre = models.ahora()
+    db_incidente.responsable_cierre_id = cierre.responsable_id
+    db_incidente.estado = EstadoIncidente.CERRADO
+
+    _registrar_movimiento(
+        db,
+        db_incidente,
+        TipoMovimiento.CIERRE,
+        cierre.accion_correctiva,
+        cierre.responsable_id,
+    )
+
+    db.commit()
+    db.refresh(db_incidente)
+    return db_incidente
+
+
+def reabrir_incidente(
+    db: Session, incidente_id: int, reapertura: schemas.ReaperturaIncidente
+) -> models.Incidente:
+    """Vuelve a abrir el incidente. La accion correctiva anterior queda en el historial."""
+    db_incidente = leer_incidente(db, incidente_id)
+
+    if db_incidente.estado != EstadoIncidente.CERRADO:
+        raise exceptions.IncidenteNoCerrado()
+
+    if not reapertura.motivo.strip():
+        raise exceptions.MotivoReaperturaRequerido()
+
+    empleados_services.leer_empleado(db, reapertura.responsable_id)
+
+    _registrar_movimiento(
+        db,
+        db_incidente,
+        TipoMovimiento.REAPERTURA,
+        reapertura.motivo,
+        reapertura.responsable_id,
+    )
+
+    db_incidente.accion_correctiva = None
+    db_incidente.fecha_cierre = None
+    db_incidente.responsable_cierre_id = None
+    db_incidente.estado = EstadoIncidente.ABIERTO
+
+    db.commit()
+    db.refresh(db_incidente)
+    return db_incidente
+
+
+def resumen_incidentes(db: Session) -> schemas.ResumenIncidentes:
+    """Conteos para el tablero: cuantos hay abiertos y de que tipo."""
+    abiertos = listar_abiertos(db)
+
+    por_tipo = {tipo: 0 for tipo in TipoIncidente}
+    for incidente in abiertos:
+        por_tipo[incidente.tipo] += 1
+
+    total = db.scalar(select(func.count()).select_from(models.Incidente)) or 0
+
+    return schemas.ResumenIncidentes(
+        abiertos=len(abiertos),
+        cerrados=total - len(abiertos),
+        total=total,
+        abiertos_por_tipo=[
+            schemas.ConteoPorTipo(tipo=tipo, cantidad=cantidad)
+            for tipo, cantidad in por_tipo.items()
+        ],
+    )
