@@ -55,14 +55,16 @@ export default function EquiposList() {
             key: 'nombre',
             encabezado: 'Nombre del Equipo',
             ordenable: true,
-            render: (eq) => <span style={{ fontWeight: '500', color: 'var(--text-h)' }}>{eq.nombre}</span>
+            variant: 'titulo',
+            render: (eq) => eq.nombre
         },
         {
             key: 'tipo',
             encabezado: 'Categoría',
             ordenable: true,
+            variant: 'badge',
             valorOrdenamiento: (eq) => eq.tipo?.nombre,
-            render: (eq) => <span style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-h)' }}>{eq.tipo.nombre}</span>
+            render: (eq) => eq.tipo.nombre
         },
         {
             key: 'sector',
@@ -75,46 +77,32 @@ export default function EquiposList() {
             key: 'activo',
             encabezado: 'Sistema',
             ordenable: true,
-            render: (eq) => eq.activo ? (
-                <span style={{ color: '#16a34a', fontWeight: '500' }}>Activo</span>
-            ) : (
-                <span style={{ color: '#6b7280', fontWeight: '500' }}>Inactivo</span>
-            )
+            variant: (eq) => eq.activo? 'activo': 'inactivo', 
+            render: (eq) => eq.activo ? `Activo` : `Inactivo`
         },
         {
             key: 'estado',
             encabezado: 'Condición',
             ordenable: true,
-            render: (eq) => eq.estado === 'bueno' ? (
-                <span style={{ color: '#16a34a', fontWeight: 'bold' }}>Bueno</span>
-            ) : (
-                <span style={{ color: '#dc2626', fontWeight: 'bold' }}>Dañado</span>
-            )
+            variant: (eq)=> eq.estado === 'bueno' ? 'activo': 'inactivo',
+            render: (eq) => eq.estado === 'bueno' ? `Bueno`:`Dañado`
         },
         {
             key: 'estado_mantenimiento',
             encabezado: 'Mantenimiento',
             ordenable: true,
+            variant: (eq) =>  `estado_${eq.estado_mantenimiento}`,
             valorOrdenamiento: (eq) => ETIQUETA_ESTADO[eq.estado_mantenimiento]=== 'Sin control'? 'zzz':ETIQUETA_ESTADO[eq.estado_mantenimiento],
-            render: (eq) => (
-                <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: COLOR_ESTADO[eq.estado_mantenimiento] }}>
-                    {ETIQUETA_ESTADO[eq.estado_mantenimiento]}
-                </span>
-            )
+            render: (eq) => ETIQUETA_ESTADO[eq.estado_mantenimiento]
         },
         {
             key: 'frecuencia_mantenimiento_dias',
             encabezado: 'Frecuencia',
             ordenable: true,
+            variant: (eq)=> eq.frecuencia_mantenimiento_dias ? 'badge':'muted',
             //aca no funciono lo de poner una "a" como en elementos de limpieza no se por que
             valorOrdenamiento: (eq)=> eq.frecuencia_mantenimiento_dias? eq.frecuencia_mantenimiento_dias: 99999, 
-            render: (eq) => (
-                <span style={{ fontSize: '0.85rem' }}>
-                    {eq.frecuencia_mantenimiento_dias
-                        ? `Cada ${eq.frecuencia_mantenimiento_dias} días`
-                        : <span style={{ opacity: 0.6 }}>No definido</span>}
-                </span>
-            )
+            render: (eq) => eq.frecuencia_mantenimiento_dias ? `Cada ${eq.frecuencia_mantenimiento_dias} días` : `No definido`
         },
         {
             key: 'acciones',

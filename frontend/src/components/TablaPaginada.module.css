@@ -11,6 +11,10 @@
     color: var(--text-h);
     font-weight: 600;
 }
+.muted {
+    color: var(--text-muted);
+    font-weight: 600;
+}
 
 .celdaBase {
     font-size: 0.85rem;
@@ -27,19 +31,18 @@
     font-size: 0.9rem;
 }
 
-/* ... tus estilos anteriores (badge, titulo, celdaBase, etc) ... */
-
-/* Variantes dinámicas para la columna ESTADO */
 .estado_vencido,
 .plazo_vencido,  
-.pendiente{ font-size: 0.85rem; font-weight: bold; color: #ef4444; }
+.pendiente,
+.inactivo{ font-size: 0.9rem; font-weight: bold; color: #ef4444; }
 
 .estado_proximo,
-.plazo_proximo  { font-size: 0.85rem; font-weight: bold; color: #f59e0b; }
+.plazo_proximo  { font-size: 0.9rem; font-weight: bold; color: #f59e0b; }
 
 .estado_vigente,
 .plazo_vigente,
-.realizada{ font-size: 0.85rem; font-weight: bold; color: #22c55e; }
+.realizada,
+.activo{ font-size: 0.9rem; font-weight: bold; color: #22c55e; }
 
 
 
