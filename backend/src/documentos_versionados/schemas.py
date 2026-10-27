@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from src.documentos_versionados.constants import TipoDocumentoVersionado
+from src.asociaciones.version_documento import EstadoVersionDocumento
 
 class VersionDocumentoBase(BaseModel):
     documentos_versionados_id: int
@@ -9,6 +10,7 @@ class VersionDocumentoCreate(VersionDocumentoBase):
     pass
 class VersionDocumento(VersionDocumentoBase):
     version: int
+    estado:EstadoVersionDocumento
     model_config = ConfigDict(from_attributes=True)
 
 
