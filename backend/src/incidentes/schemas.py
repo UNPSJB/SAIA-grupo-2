@@ -105,3 +105,8 @@ class IncidenteDelete(BaseModel):
     msg: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class EstadisticaIncidente(BaseModel):
+    tipo: TipoIncidente
+    cantidad: int

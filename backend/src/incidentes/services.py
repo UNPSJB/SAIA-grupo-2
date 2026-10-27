@@ -1,4 +1,5 @@
 import logging
+from datetime import date, datetime, time, timedelta, timezone
 from typing import List, Optional
 
 from sqlalchemy import func, select
@@ -186,3 +187,36 @@ def resumen_incidentes(db: Session) -> schemas.ResumenIncidentes:
             for tipo, cantidad in por_tipo.items()
         ],
     )
+def obtener_estadisticas_por_tipo(
+    db: Session,
+    fecha_desde: date,
+    fecha_hasta: date,
+) -> list[dict]:
+    desde = datetime.combine(
+        fecha_desde, time.min, tzinfo=timezone.utc
+    )
+    hasta_exclusiva = datetime.combine(
+        fecha_hasta + timedelta(days=1),
+        time.min,
+        tzinfo=timezone.utc,
+    )
+
+    consulta = (
+        select(
+            models.Incidente.tipo,
+            func.count(models.Incidente.id).label("cantidad"),
+        )
+        .where(
+            models.Incidente.fecha_hora_reporte >= desde,
+            models.Incidente.fecha_hora_reporte < hasta_exclusiva,
+        )
+        .group_by(models.Incidente.tipo)
+        .order_by(models.Incidente.tipo)
+    )
+
+    resultados = db.execute(consulta).all()
+
+    return [
+        {"tipo": tipo, "cantidad": cantidad}
+        for tipo, cantidad in resultados
+    ]
