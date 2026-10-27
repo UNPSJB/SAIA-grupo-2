@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import DateTime, Enum, ForeignKey, String, Text
@@ -74,10 +74,6 @@ class Incidente(ModeloBase):
         if reportado.tzinfo is None:
             reportado = reportado.replace(tzinfo=timezone.utc)
         return (ahora() - reportado).days
-
-    @property
-    def fecha_reporte(self) -> date:
-        return self.fecha_hora_reporte.date()
 
 
 class MovimientoIncidente(ModeloBase):
