@@ -111,6 +111,7 @@ def historial_de_versiones_documento_versionado(db: Session, documentos_versiona
             version_documento.c.documentos_versionados_id,
             version_documento.c.version,
             version_documento.c.version_documento_url,
+            version_documento.c.estado,
         ).where(
             version_documento.c.documentos_versionados_id == documentos_versionados_id
         ).order_by(
@@ -146,6 +147,7 @@ def subir_nueva_version_documento(db:Session, nueva_version_documento: schemas.V
     return schemas.VersionDocumento(
         documentos_versionados_id=nueva_version_documento.documentos_versionados_id,
         version=nueva_version,
+        estado=EstadoVersionDocumento.ACTIVO,
         version_documento_url=nueva_version_documento.version_documento_url,
     )
 
