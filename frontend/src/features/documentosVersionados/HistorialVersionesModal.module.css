@@ -1,0 +1,135 @@
+/* =========================================================================================
+   CAMBIO REALIZADO:
+   Estilos específicos para el modal de Historial de Versiones de Documentos.
+   POR QUÉ: Asegura una presentación prolija, adaptada al tema visual del sistema (variables CSS),
+   con scroll interno si hay muchas versiones y diseño de solo lectura.
+   ========================================================================================= */
+
+.modalContenedor {
+    background-color: var(--card-bg, #ffffff);
+    width: 95%;
+    max-width: 950px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 12px;
+    padding: 28px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--border);
+    animation: fadeInModal 0.2s ease-out;
+}
+
+@keyframes fadeInModal {
+    from {
+        opacity: 0;
+        transform: scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.encabezadoModal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+}
+
+.tituloPrincipal {
+    margin: 0;
+    font-size: 1.4rem;
+    color: var(--text-h);
+    
+}
+
+.subtitulo {
+    margin: 4px 0 0 0;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+
+
+
+.badgeActivo {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background-color: #dcfce7;
+    color: #15803d;
+    margin-left: 6px;
+}
+
+.badgeArchivado {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background-color: #f3f4f6;
+    color: #4b5563;
+    margin-left: 6px;
+}
+
+
+.btnAccion {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background-color: var(--bg, #ffffff);
+    color: var(--text);
+    text-decoration: none;
+    transition: all 0.15s ease-in-out;
+}
+
+.btnAccion:hover {
+    background-color: var(--card-bg-hover, #f3f4f6);
+    border-color: #9ca3af;
+}
+
+.btnVisualizar {
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+    background-color: #eff6ff;
+}
+
+.btnVisualizar:hover {
+    background-color: #dbeafe;
+    border-color: #93c5fd;
+}
+
+
+
+.mensajeEstado {
+    text-align: center;
+    padding: 40px 16px;
+    color: var(--text-muted);
+}
+
+.mensajeError {
+    padding: 14px 18px;
+    border-radius: 8px;
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+    margin-bottom: 16px;
+}
+
+.pieModal {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}

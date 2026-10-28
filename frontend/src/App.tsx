@@ -58,6 +58,8 @@ import IncidenteForm from './features/incidentes/IncidenteForm';
 import IncidenteDetail from './features/incidentes/IncidenteDetail';
 import EstadisticaIncidentes from './features/incidentes/EstadisticaIncidentes';
 
+import DocumentosVersionadosList from './features/documentosVersionados/DocumentosVersionadosList';
+
 import './App.css';
 
 function RutaAdmin({ children }: { children: React.ReactElement }) {
@@ -137,6 +139,19 @@ function RutasProtegidas() {
 
               <div className={styles.sidebarOpcionesAcordeon}>
                 <NavLink to="/equipos" className={styles.sidebarItemAcordeon}>Inventario de Equipos</NavLink>
+              </div>
+            </details>
+          )}
+
+            {isAdmin && (
+            <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
+              <summary className={styles.sidebarTituloAcordeon}>
+                Documentación del Sistema
+              </summary>
+              <div className={styles.sidebarOpcionesAcordeon}>
+                <NavLink to="/documentos-versionados" className={styles.sidebarItemAcordeon}>
+                  Documentos Versionados (Testing)
+                </NavLink>
               </div>
             </details>
           )}
@@ -252,6 +267,9 @@ function RutasProtegidas() {
             <Route path="/incidentes/abiertos" element={<RutaAdmin><IncidentesList soloAbiertos /></RutaAdmin>} />
             <Route path="/incidentes/:id" element={<RutaAdmin><IncidenteDetail /></RutaAdmin>} />
             <Route path="/incidentes/estadisticas" element={<RutaAdmin><EstadisticaIncidentes /></RutaAdmin>} />
+
+            <Route path="/documentos-versionados" element={<RutaAdmin><DocumentosVersionadosList /></RutaAdmin>} />
+            
           </Routes>
         </main>
         

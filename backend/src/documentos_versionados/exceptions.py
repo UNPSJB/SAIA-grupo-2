@@ -1,5 +1,9 @@
 from src.documentos_versionados.constants import ErrorCode
-from src.exceptions import NotFound, BadRequest
+from src.exceptions import NotFound, BadRequest,PermissionDenied
+
+
+class PermisoDenegadoAdmin(PermissionDenied):
+    DETAIL = "Acceso denegado: Se requiere rol de administrador"
 
 class DocumentoVersionadoNoEncontrado(NotFound):
     DETAIL = ErrorCode.DOCUMENTO_VERSIONADO_NO_ENCONTRADO
