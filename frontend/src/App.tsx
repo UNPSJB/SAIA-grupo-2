@@ -46,6 +46,7 @@ import PlanDetail from './features/planes/PlanDetail';
 
 import ChecklistList from './features/checklists/ChecklistList';
 import HistorialChecklistList from './features/checklists/HistorialChecklistList';
+import GraficoCumplimiento from './features/tablero/GraficoCumplimiento';
 
 import ElementosLimpiezaList from './features/elementosLimpieza/ElementosLimpiezaList';
 import ElementoLimpiezaForm from './features/elementosLimpieza/ElementoLimpiezaForm';
@@ -152,6 +153,7 @@ function RutasProtegidas() {
               {isAdmin && <NavLink to="/planes" className={styles.sidebarItemAcordeon}>Planes de Limpieza</NavLink>}
               <NavLink to="/checklists/hoy" className={styles.sidebarItemAcordeon}>Checklist del Día</NavLink>
               {isAdmin && <NavLink to="/checklists/historial" className={styles.sidebarItemAcordeon}>Historial de Checklists</NavLink>}
+              {isAdmin && <NavLink to="/checklists/cumplimiento" className={styles.sidebarItemAcordeon}>Cumplimiento de Limpieza</NavLink>}
             </div>
           </details>
           </nav>
@@ -230,6 +232,7 @@ function RutasProtegidas() {
 
             <Route path="/checklists/hoy" element={<ChecklistList />} />
             <Route path="/checklists/historial" element={<RutaAdmin><HistorialChecklistList /></RutaAdmin>} />
+            <Route path="/checklists/cumplimiento" element={<RutaAdmin><GraficoCumplimiento /></RutaAdmin>} />
 
             <Route path="/vencimientos-documentacion" element={<RutaAdmin><VencimientosDocumentacionList /></RutaAdmin>}/>
           </Routes>

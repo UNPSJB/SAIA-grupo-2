@@ -98,3 +98,21 @@ class HistorialChecklistResumen(BaseModel):
     registros: List[RegistroHistorialItem] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+#---------------------------------------
+
+class GraficoCumplimientoItem(BaseModel):
+    periodo: str
+    porcentaje: float
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GraficoCumplimientoResumen(BaseModel):
+    fecha_desde: date
+    fecha_hasta: date
+    granularidad: str 
+    serie: List[GraficoCumplimientoItem] = []
+
+    model_config = ConfigDict(from_attributes=True)

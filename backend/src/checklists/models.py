@@ -31,7 +31,7 @@ class Checklist(ModeloBase):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     tarea_id: Mapped[int] = mapped_column(ForeignKey("tareas.id", ondelete="CASCADE"))
     plan_id: Mapped[Optional[int]] = mapped_column(ForeignKey("planes.id", ondelete="CASCADE"), nullable=True)
-    fecha_programada: Mapped[date] = mapped_column(Date, default=date.today)
+    fecha_programada: Mapped[date] = mapped_column(Date, default=date.today, index=True)
     realizada: Mapped[bool] = mapped_column(Boolean, default=False)
     fecha_hora_completada: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, default=None)
     empleado_id: Mapped[Optional[int]] = mapped_column(ForeignKey("empleados.id"), nullable=True)

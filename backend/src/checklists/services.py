@@ -1,7 +1,7 @@
 import logging
 from datetime import date, datetime, timedelta
 from typing import List, Optional
-from sqlalchemy import select
+from sqlalchemy import select, case, func
 from sqlalchemy.orm import Session, selectinload
 
 from src.checklists.models import Checklist, ConsumoReal
@@ -333,4 +333,66 @@ def obtener_historial_checklists(
         total_incumplidas=total_incumplidas,
         tareas_incumplidas_resumen=tareas_incumplidas_list,
         registros=registros
+    )
+
+
+#-----------------------------------
+
+def obtener_grafico_cumplimiento(
+        db: Session,
+        fecha_desde: date,
+        fecha_hasta: date,
+        granularidad: str
+) -> schemas.GraficoCumplimientoResumen:
+    if granularidad == "dia":
+        label_periodo = func.date(Checklist.fecha_programada).label("periodo")
+    else:
+        label_periodo = func.strftime("%Y-%m-%d", Checklist.fecha_programada, "weekday 1", "-6 days").label("periodo")
+
+    resultados = db.execute(
+        select(
+            label_periodo,
+            func.count(Checklist.id).label("total"),
+            func.sum(case((Checklist.realizada == True, 1), else_=0)).label("realizadas")
+        )
+        .where(
+            Checklist.fecha_programada >= fecha_desde,
+            Checklist.fecha_programada <= fecha_hasta
+        )
+        .group_by(label_periodo)
+        .order_by(label_periodo.asc())
+    ).all()
+
+    mapa_datos = {str(r.periodo): (r.realizadas if r.realizadas is not None else 0, r.total) for r in resultados}
+
+    serie_completa = []
+    fecha_actual = fecha_desde
+
+    while fecha_actual <= fecha_hasta:
+        if granularidad == "dia":
+            clave = fecha_actual.strftime("%Y-%m-%d")
+            fecha_actual += timedelta(days=1)
+        else:
+            lunes_semana = fecha_actual - timedelta(days=fecha_actual.weekday())
+            clave = lunes_semana.strftime("%Y-%m-%d")
+            fecha_actual = lunes_semana + timedelta(weeks=1)
+
+        if serie_completa and serie_completa[-1].periodo == clave:
+            continue
+
+        if clave in mapa_datos:
+            realizadas, total = mapa_datos[clave]
+            porcentaje = round((realizadas/total) * 100, 1) if total > 0 else 0.0
+        else:
+            porcentaje = 0.0
+
+        serie_completa.append(
+            schemas.GraficoCumplimientoItem(periodo=clave, porcentaje=porcentaje)
+        )
+
+    return schemas.GraficoCumplimientoResumen(
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
+        granularidad=granularidad,
+        serie=serie_completa
     )

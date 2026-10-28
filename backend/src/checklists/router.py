@@ -1,7 +1,7 @@
 import logging
 from datetime import date
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Query, Header
+from fastapi import APIRouter, Depends, Query, Header, HTTPException
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select
 
@@ -58,3 +58,20 @@ def obtener_historial_checklists(
     db: Session = Depends(get_db)
 ):
     return services.obtener_historial_checklists(db, fecha_inicio, fecha_fin, sector_id)
+
+
+#------------------------------
+
+@router.get("/cumplimiento", response_model=schemas.GraficoCumplimientoResumen)
+def obtener_grafico_cumplimiento(
+    fecha_desde: date = Query(...),
+    fecha_hasta: date = Query(...),
+    granularidad: str = Query("dia", pattern="^(dia|semana)$"),
+    db: Session = Depends(get_db)
+): 
+    if fecha_desde > fecha_hasta:
+        raise HTTPException(
+            status_code=400,
+            detail="La fecha desde no puede ser posterior a la fecha hasta"
+        )
+    return services.obtener_grafico_cumplimiento(db, fecha_desde, fecha_hasta, granularidad)
