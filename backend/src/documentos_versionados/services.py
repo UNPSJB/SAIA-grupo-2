@@ -223,7 +223,11 @@ def subir_nueva_version_documento(db:Session, nueva_version_documento: schemas.V
     return schemas.VersionDocumento(
         documentos_versionados_id=nueva_version_documento.documentos_versionados_id,
         version=nueva_version,
+<<<<<<< HEAD
         estado="activo",
+=======
+        estado=EstadoVersionDocumento.ACTIVO,
+>>>>>>> origin/dev
         version_documento_url=nueva_version_documento.version_documento_url,
         fecha_vigencia=fecha_v,
         fecha_subida=fecha_s,

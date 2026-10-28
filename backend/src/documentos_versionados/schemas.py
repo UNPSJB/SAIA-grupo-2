@@ -2,6 +2,7 @@ from pydantic import BaseModel, ConfigDict
 from datetime import date, datetime
 from typing import Optional
 from src.documentos_versionados.constants import TipoDocumentoVersionado
+from src.asociaciones.version_documento import EstadoVersionDocumento
 
 class EmpleadoResumen(BaseModel):
     id: int
@@ -23,11 +24,15 @@ class VersionDocumentoCreate(VersionDocumentoBase):
 
 class VersionDocumento(VersionDocumentoBase):
     version: int
+<<<<<<< HEAD
     estado: str = "activo"
     fecha_vigencia: Optional[date] = None
     fecha_subida: Optional[datetime] = None
     subido_por_id: Optional[int] = None
     subido_por: Optional[EmpleadoResumen] = None
+=======
+    estado:EstadoVersionDocumento
+>>>>>>> origin/dev
     model_config = ConfigDict(from_attributes=True)
  
 
