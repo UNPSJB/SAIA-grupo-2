@@ -276,10 +276,10 @@ export default function TareaForm() {
 
                 <div className={styles.filaBotones} style={{ marginTop: '40px', justifyContent: 'center' }}>
                     <Boton type="submit" variant="guardar">
-                        {editando ? 'Actualizar Tarea' : 'Guardar Tarea'}
+                        {editando ? 'Actualizar' : 'Guardar'}
                     </Boton>
                     <Link to="/tareas">
-                        <Boton variant="volver">Cancelar</Boton>
+                        <Boton variant="eliminar">Cancelar</Boton>
                     </Link>
                 </div>
             </form>

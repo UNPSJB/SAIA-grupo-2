@@ -56,6 +56,11 @@ import AlertasRecambio from './features/elementosLimpieza/AlertasRecambio';
 import VencimientosList from './features/vencimientos/VencimientosList'; 
 import VencimientosDocumentacionList from './features/vencimientosDocumentacion/VencimientosDocumentacionList';
 
+import IncidentesList from './features/incidentes/IncidentesList';
+import IncidenteForm from './features/incidentes/IncidenteForm';
+import IncidenteDetail from './features/incidentes/IncidenteDetail';
+import EstadisticaIncidentes from './features/incidentes/EstadisticaIncidentes';
+
 import './App.css';
 
 function RutaAdmin({ children }: { children: React.ReactElement }) {
@@ -156,6 +161,19 @@ function RutasProtegidas() {
               {isAdmin && <NavLink to="/checklists/cumplimiento" className={styles.sidebarItemAcordeon}>Cumplimiento de Limpieza</NavLink>}
             </div>
           </details>
+
+          <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
+              <summary className={styles.sidebarTituloAcordeon}>
+                No Conformidades 
+              </summary>
+
+            <div className={styles.sidebarOpcionesAcordeon}>
+              <NavLink to="/incidentes/nuevo" className={styles.sidebarItemAcordeon}>Registrar Incidente</NavLink>
+              {isAdmin && <NavLink to="/incidentes" end className={styles.sidebarItemAcordeon}>Incidentes Reportados</NavLink>}
+              {isAdmin && <NavLink to="/incidentes/abiertos" className={styles.sidebarItemAcordeon}>Incidentes Abiertos</NavLink>}
+              {isAdmin && (<NavLink to="/incidentes/estadisticas" className={styles.sidebarItemAcordeon}>Estadísticas de Incidentes</NavLink>)}
+            </div>
+          </details>
           </nav>
 
           <div className="userSection">
@@ -235,17 +253,14 @@ function RutasProtegidas() {
             <Route path="/checklists/cumplimiento" element={<RutaAdmin><GraficoCumplimiento /></RutaAdmin>} />
 
             <Route path="/vencimientos-documentacion" element={<RutaAdmin><VencimientosDocumentacionList /></RutaAdmin>}/>
+
+            <Route path="/incidentes/nuevo" element={<IncidenteForm />} />
+            <Route path="/incidentes" element={<RutaAdmin><IncidentesList /></RutaAdmin>} />
+            <Route path="/incidentes/abiertos" element={<RutaAdmin><IncidentesList soloAbiertos /></RutaAdmin>} />
+            <Route path="/incidentes/:id" element={<RutaAdmin><IncidenteDetail /></RutaAdmin>} />
+            <Route path="/incidentes/estadisticas" element={<RutaAdmin><EstadisticaIncidentes /></RutaAdmin>} />
           </Routes>
         </main>
-        
-        
-
-        
-
-        
-
-        
-
         
       </div>
 
