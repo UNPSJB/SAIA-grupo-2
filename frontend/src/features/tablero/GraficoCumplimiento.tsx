@@ -76,8 +76,12 @@ function RenderizadorGrafico({ items }: { items: GraficoCumplimientoItem[] }) {
                             },
                             ticks: {
                                 autoSkip: false,
-                                maxRotation: 0,
-                                minRotation: 0,
+                                maxTicksLimit: 20,
+                                maxRotation: 45,
+                                minRotation: 45,
+                                font:{
+                                    size: 10,
+                                }
                             }
                         }
                     },
