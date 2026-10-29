@@ -1,6 +1,6 @@
 import type { GraficoCumplimientoResumen } from "../types/tablero";
 
-const BASE_URL = 'http://127.0.0.1:8000/tablero';
+const BASE_URL = 'http://127.0.0.1:8000/checklists';
 
 export const getGraficoCumplimiento = async (fechaDesde: string, 
     fechaHasta: string, 

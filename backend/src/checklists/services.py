@@ -344,26 +344,25 @@ def obtener_grafico_cumplimiento(
         fecha_hasta: date,
         granularidad: str
 ) -> schemas.GraficoCumplimientoResumen:
-    if granularidad == "dia":
-        label_periodo = func.date(Checklist.fecha_programada).label("periodo")
-    else:
-        label_periodo = func.strftime("%Y-%m-%d", Checklist.fecha_programada, "weekday 1", "-6 days").label("periodo")
 
-    resultados = db.execute(
-        select(
-            label_periodo,
-            func.count(Checklist.id).label("total"),
-            func.sum(case((Checklist.realizada == True, 1), else_=0)).label("realizadas")
-        )
-        .where(
-            Checklist.fecha_programada >= fecha_desde,
-            Checklist.fecha_programada <= fecha_hasta
-        )
-        .group_by(label_periodo)
-        .order_by(label_periodo.asc())
-    ).all()
+    historial = obtener_historial_checklists(db, fecha_inicio=fecha_desde, fecha_fin=fecha_hasta)
+    agrupado = {}
 
-    mapa_datos = {str(r.periodo): (r.realizadas if r.realizadas is not None else 0, r.total) for r in resultados}
+    for registro in historial.registros:
+        fecha = registro.fecha_programada
+
+        if granularidad == "dia":
+            clave = fecha.strftime("%Y-%m-%d")
+        else:
+            lunes_semana = fecha - timedelta(days=fecha.weekday())
+            clave = lunes_semana.strftime("%Y-%m-%d")
+
+        if clave not in agrupado:
+            agrupado[clave] = {"esperadas": 0, "realizadas": 0}
+
+        agrupado[clave]["esperadas"] += 1
+        if registro.realizada:
+            agrupado[clave]["realizadas"] +=1
 
     serie_completa = []
     fecha_actual = fecha_desde
@@ -377,12 +376,13 @@ def obtener_grafico_cumplimiento(
             clave = lunes_semana.strftime("%Y-%m-%d")
             fecha_actual = lunes_semana + timedelta(weeks=1)
 
-        if serie_completa and serie_completa[-1].periodo == clave:
+        if any(item.periodo == clave for item in serie_completa):
             continue
 
-        if clave in mapa_datos:
-            realizadas, total = mapa_datos[clave]
-            porcentaje = round((realizadas/total) * 100, 1) if total > 0 else 0.0
+        if clave in agrupado:
+            esp = agrupado[clave]["esperadas"]
+            real = agrupado[clave]["realizadas"]
+            porcentaje = round((real/esp) * 100, 1) if esp > 0 else 0.0
         else:
             porcentaje = 0.0
 

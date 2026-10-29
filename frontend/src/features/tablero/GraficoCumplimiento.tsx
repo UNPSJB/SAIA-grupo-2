@@ -34,7 +34,10 @@ function hoyLocal(): string {
 
 function RenderizadorGrafico({ items }: { items: GraficoCumplimientoItem[] }) {
     const datosGrafico = {
-        labels: items.map((item) => item.periodo),
+        labels: items.map((item) => {
+            const partes = item.periodo.split('-');
+            return partes.length === 3 ? `${partes[2]}-${partes[1]}-${partes[0]}` : item.periodo;
+        }),
         datasets: [
             {
                 label: 'Porcentaje de cumplimiento',
@@ -66,6 +69,17 @@ function RenderizadorGrafico({ items }: { items: GraficoCumplimientoItem[] }) {
                             max: 100,
                             ticks: {callback: (value) => `${value}%` },
                         },
+                        
+                        x: {
+                            grid: {
+                                offset: true
+                            },
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 0,
+                                minRotation: 0,
+                            }
+                        }
                     },
                 }}
             />    
@@ -79,6 +93,17 @@ export default function GraficoCumplimiento() {
     const [datos, setDatos] = useState<GraficoCumplimientoItem[]>([]);
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    function configurarRangoSemanal(fechaBase: Date) {
+        const diaSemana = fechaBase.getDay();
+        const dia = diaSemana === 0 ? 7 : diaSemana;
+        const diferenciaLunes = 1 - dia;
+        const lunes = new Date(fechaBase);
+        lunes.setDate(fechaBase.getDate() + diferenciaLunes);
+
+        setFechaDesde(fechaLocal(lunes));
+        setFechaHasta(fechaLocal(fechaBase));
+    }
 
     useEffect(() => {
         let cancelado = false;
@@ -147,45 +172,73 @@ export default function GraficoCumplimiento() {
             >
                 <label>
                     <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
-                        Desde
-                    </span>
-                    <input
-                        type="date"
-                        className={styles.filtroFecha}
-                        value={fechaDesde}
-                        max={fechaHasta || hoyLocal()}
-                        onChange={(evento) => setFechaDesde(evento.target.value)}
-                    />
-                </label>
-
-                <label>
-                    <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px'}}>
-                        Hasta
-                    </span>
-                    <input
-                        type="date"
-                        className={styles.filtroFecha}
-                        value={fechaHasta}
-                        min={fechaDesde || undefined}
-                        max={hoyLocal()}
-                        onChange={(evento) => setFechaHasta(evento.target.value)}
-                    />
-                </label>
-
-                <label>
-                    <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px'}}>
                         Visualizar por
                     </span>
                     <select
                         className={styles.filtroFecha}
-                        style={{ background: 'var(--bg-principal, #fff)', cursor: 'pointer'}}
+                        style={{ cursor: 'pointer'}}
                         value={granularidad}
-                        onChange={(evento) => setGranularidad(evento.target.value as 'dia' | 'semana')}
+                        onChange={(evento) => {
+                            const nuevaGranularidad = evento.target.value as 'dia' | 'semana';
+                            setGranularidad(nuevaGranularidad);
+
+                            if (nuevaGranularidad === 'semana') {
+                                configurarRangoSemanal(new Date(fechaHasta));
+                            }
+                        }}
                     >
                         <option value="dia">Día</option>
                         <option value="semana">Semana</option>
                     </select>
                 </label>
+                {granularidad === 'dia' ? (
+                    <>
+                        <label>
+                            <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px'}}>
+                                Desde
+                            </span>
+                            <input
+                                type="date"
+                                className={styles.filtroFecha}
+                                value={fechaDesde}
+                                max={fechaHasta || hoyLocal()}
+                                onChange={(evento) => setFechaDesde(evento.target.value)}
+                            />
+                        </label>
+                        
+                        <label>
+                            <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px'}}>
+                                Hasta
+                            </span>
+                            <input
+                                type="date"
+                                className={styles.filtroFecha}
+                                value={fechaHasta}
+                                min={fechaDesde || undefined}
+                                max={hoyLocal()}
+                                onChange={(evento) => setFechaHasta(evento.target.value)}
+                            />
+                        </label>
+                    </>
+                ) : (
+                    <label>
+                        <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px'}}>
+                            Seleccionar fecha
+                        </span>
+                        <input
+                            type="date"
+                            className={styles.filtroFecha}
+                            value={fechaHasta}
+                            max={hoyLocal()}
+                            onChange={(evento) => {
+                                if(evento.target.value){
+                                    const fechaSeleccionada = new Date(evento.target.value + 'T00:00:00');
+                                    configurarRangoSemanal(fechaSeleccionada);
+                                }
+                            }}
+                        />
+                    </label>
+                )}       
             </div>
 
             {error && (
