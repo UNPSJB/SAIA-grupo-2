@@ -12,8 +12,11 @@ export interface VersionDocumento {
     estado?: 'activo' | 'archivado' | string;
     fecha_vigencia?: string | null;
     fecha_subida?: string | null;
+    fecha_modificacion?: string | null;
     subido_por_id?: number | null;
     subido_por?: EmpleadoResumen | null;
+    modificado_por_id?: number | null;
+    modificado_por?: EmpleadoResumen | null;
     archivo_nombre?: string | null;
 }
 export interface DocumentoVersionado {

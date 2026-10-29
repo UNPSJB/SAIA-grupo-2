@@ -8,6 +8,7 @@ interface BotonHistorialVersionesProps {
     documentoNombre?: string;
     texto?: string;
     style?: React.CSSProperties;
+    onVersionVigenteCambiada?: () => void;
 }
 
 export default function BotonHistorialVersiones({
@@ -15,11 +16,12 @@ export default function BotonHistorialVersiones({
     documentoNombre,
     texto = 'Historial de versiones',
     style,
+    onVersionVigenteCambiada,
 }: BotonHistorialVersionesProps) {
     const { usuario } = useAuth();
     const [modalAbierto, setModalAbierto] = useState(false);
 
-    // Si el usuario no es administrador, no se muestra el botón (regla de seguridad de la HU)
+    
     if (usuario?.rol !== 'admin') {
         return null;
     }
@@ -40,6 +42,7 @@ export default function BotonHistorialVersiones({
                     documentoId={documentoId}
                     documentoNombre={documentoNombre}
                     onClose={() => setModalAbierto(false)}
+                    onVersionVigenteCambiada={onVersionVigenteCambiada}
                 />
             )}
         </>

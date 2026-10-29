@@ -4,6 +4,7 @@ from typing import Optional
 from src.documentos_versionados.constants import TipoDocumentoVersionado
 from src.asociaciones.version_documento import EstadoVersionDocumento
 
+
 class EmpleadoResumen(BaseModel):
     id: int
     legajo: str
@@ -11,43 +12,50 @@ class EmpleadoResumen(BaseModel):
     apellido: str
     model_config = ConfigDict(from_attributes=True)
 
+
+# --- Versiones de Documento ---
+
 class VersionDocumentoBase(BaseModel):
-    documentos_versionados_id: int
     version_documento_url: str
     archivo_nombre: Optional[str] = None
     fecha_vigencia: Optional[date] = None
 
+
 class VersionDocumentoCreate(VersionDocumentoBase):
+    # Opcional en el body si se toma desde la URL de la ruta
+    documentos_versionados_id: Optional[int] = None
     subido_por_id: Optional[int] = None
-    #pass
 
 
 class VersionDocumento(VersionDocumentoBase):
+    documentos_versionados_id: int
     version: int
-<<<<<<< HEAD
-    estado: str = "activo"
-    fecha_vigencia: Optional[date] = None
+    estado: EstadoVersionDocumento  
     fecha_subida: Optional[datetime] = None
+    fecha_modificacion: Optional[datetime] = None  
     subido_por_id: Optional[int] = None
     subido_por: Optional[EmpleadoResumen] = None
-=======
-    estado:EstadoVersionDocumento
->>>>>>> origin/dev
+    modificado_por_id: Optional[int] = None        
+    modificado_por: Optional[EmpleadoResumen] = None
     model_config = ConfigDict(from_attributes=True)
- 
+
+
+# --- Documentos Versionados ---
 
 class DocumentoVersionadoBase(BaseModel):
-    nombre:str
+    nombre: str
     tipo: TipoDocumentoVersionado
-    
+
 
 class DocumentoVersionadoCreate(DocumentoVersionadoBase):
-    version_inicial_url: str
+    # Se unifica usando el nombre canónico: version_documento_url
+    version_documento_url: str
     archivo_nombre: Optional[str] = None
     subido_por_id: Optional[int] = None
     fecha_vigencia: Optional[date] = None
-    
+
+
 class DocumentoVersionado(DocumentoVersionadoBase):
-    id:int
+    id: int
     version_vigente: Optional[VersionDocumento] = None
-    model_config=ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)

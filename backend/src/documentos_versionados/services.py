@@ -33,9 +33,15 @@ def obtener_version_vigente(db:Session, documento_versionado_id: int):
 
     if not fila:
         return None
+    
     subido_por = None
     if fila.get("subido_por_id"):
         subido_por = db.scalar(select(Empleado).where(Empleado.id == fila["subido_por_id"]))
+
+    modificado_por = None
+    if fila.get("modificado_por_id"):
+        modificado_por = db.scalar(select(Empleado).where(Empleado.id == fila["modificado_por_id"]))
+    
     return schemas.VersionDocumento(
         documentos_versionados_id=fila["documentos_versionados_id"],
         version_documento_url=fila["version_documento_url"],
@@ -45,6 +51,8 @@ def obtener_version_vigente(db:Session, documento_versionado_id: int):
         fecha_subida=fila.get("fecha_subida"),
         subido_por_id=fila.get("subido_por_id"),
         subido_por=schemas.EmpleadoResumen.model_validate(subido_por) if subido_por else None,
+        modificado_por_id=fila.get("modificado_por_id"),
+        modificado_por=schemas.EmpleadoResumen.model_validate(modificado_por) if modificado_por else None,
         archivo_nombre=fila.get("archivo_nombre"),
     )
 
@@ -100,7 +108,7 @@ def listar_documentos_versionados(db: Session) -> List [schemas.DocumentoVersion
                 id=d.id,
                 nombre=d.nombre,
                 tipo=d.tipo,
-                #version_vigente=vigente,
+                version_vigente=vigente,
             )
         )
     return resultado
@@ -223,11 +231,7 @@ def subir_nueva_version_documento(db:Session, nueva_version_documento: schemas.V
     return schemas.VersionDocumento(
         documentos_versionados_id=nueva_version_documento.documentos_versionados_id,
         version=nueva_version,
-<<<<<<< HEAD
-        estado="activo",
-=======
         estado=EstadoVersionDocumento.ACTIVO,
->>>>>>> origin/dev
         version_documento_url=nueva_version_documento.version_documento_url,
         fecha_vigencia=fecha_v,
         fecha_subida=fecha_s,
@@ -236,4 +240,43 @@ def subir_nueva_version_documento(db:Session, nueva_version_documento: schemas.V
         archivo_nombre=nueva_version_documento.archivo_nombre,
     )
 
+
+def marcar_version_vigente(
+    db: Session,
+    documentos_versionados_id: int,
+    version: int,
+    modificado_por_id: Optional[int] = None,
+) -> schemas.VersionDocumento:
+    #  validar la existiencia
+    doc = buscar_documento_versionado_id(db, documentos_versionados_id)
+    if doc is None:
+        raise exceptions.DocumentoVersionadoNoEncontrado()
+    # validar la version a poner como activa
+    ver_existente = db.execute(
+        select(version_documento).where(
+            version_documento.c.documentos_versionados_id == documentos_versionados_id,
+            version_documento.c.version == version,
+        )
+    ).mappings().first()
+    if ver_existente is None:
+        raise exceptions.VersionDocumentoNoEncontrada()
+    
+    # archivo la version activa 
+    archivar_version_activa(db, documentos_versionados_id)
+    # activo la otra version agregando la informacion de modificacion
+    db.execute(
+        update(version_documento)
+        .where(
+            version_documento.c.documentos_versionados_id == documentos_versionados_id,
+            version_documento.c.version == version,
+        )
+        .values(
+            estado=EstadoVersionDocumento.ACTIVO,
+            fecha_modificacion=datetime.now(),
+            fecha_vigencia=date.today(), # creo que esta bien modificar la fecha de vigencia si es una version antigua
+            modificado_por_id=modificado_por_id,
+        )
+    )
+    db.commit()
+    return obtener_version_vigente(db, documentos_versionados_id)
     

@@ -37,6 +37,27 @@ def subir_nueva_version_documento(
 ):
     return services.subir_nueva_version_documento(db, version_documento)
 
+
+@router_documentos.put("/{id}/versiones/{version_id}/vigencia",response_model=schemas.VersionDocumento,
+    dependencies=[Depends(verificar_rol_admin)],
+    summary="Marcar versión como vigente (Solo Administrador)",
+)
+def marcar_version_vigente(
+    id: int,
+    version_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
+):
+    modificado_por_id = int(x_user_id) if x_user_id and x_user_id.isdigit() else None
+    return services.marcar_version_vigente(
+        db=db,
+        documentos_versionados_id=id,
+        version=version_id,
+        modificado_por_id=modificado_por_id,
+    )
+
+
+
 # Consultar historial de versiones 
 
 @router_documentos.get(

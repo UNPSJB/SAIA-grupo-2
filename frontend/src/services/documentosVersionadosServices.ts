@@ -97,3 +97,24 @@ export const subirNuevaVersionDocumento = async (
     if (!res.ok) throw new Error('Error al subir nueva versión del documento');
     return res.json();
 };
+
+
+export const marcarVersionVigente = async (
+    documentoId: number | string,
+    versionId: number | string
+): Promise<VersionDocumento> => {
+    const res = await fetch(`${BASE_URL_DOCUMENTOS}/${documentoId}/versiones/${versionId}/vigencia`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            ...obtenerCabecerasUsuario(),
+        },
+    });
+    if (!res.ok) {
+        if (res.status === 403) {
+            throw new Error('Acceso denegado: Se requiere rol de administrador.');
+        }
+        throw new Error('Error al establecer la versión como vigente.');
+    }
+    return res.json();
+};

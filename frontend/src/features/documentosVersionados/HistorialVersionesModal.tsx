@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import type { VersionDocumento } from '../../types/documentosVersionados';
-import { getHistorialVersiones } from '../../services/documentosVersionadosServices';
+import { getHistorialVersiones, marcarVersionVigente } from '../../services/documentosVersionadosServices';
 import { abrirArchivoEnPestania } from '../../utils/archivos';
+import { useAuth } from '../../context/AuthContext';
 import Boton from '../../components/Boton';
 import sharedStyles from '../../styles/shared.module.css';
 import localStyles from './HistorialVersionesModal.module.css';
@@ -12,53 +13,64 @@ interface HistorialVersionesModalProps {
     documentoId: number;
     documentoNombre?: string;
     onClose: () => void;
+    onVersionVigenteCambiada?: () => void;
 }
-
 export default function HistorialVersionesModal({
     documentoId,
     documentoNombre,
     onClose,
+    onVersionVigenteCambiada,
 }: HistorialVersionesModalProps) {
+    const { usuario } = useAuth();
+    const isAdmin = usuario?.rol === 'admin';
     const [versiones, setVersiones] = useState<VersionDocumento[]>([]);
     const [cargando, setCargando] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-
-
+    // Estado del diálogo de confirmación
+    const [versionAConfirmar, setVersionAConfirmar] = useState<VersionDocumento | null>(null);
+    const [guardando, setGuardando] = useState<boolean>(false);
+    const cargarVersiones = async () => {
+        setCargando(true);
+        setError(null);
+        try {
+            const data = await getHistorialVersiones(documentoId);
+            setVersiones(data);
+        } catch (err: any) {
+            setError(err?.message || 'Error al cargar el historial de versiones.');
+        } finally {
+            setCargando(false);
+        }
+    };
 
     useEffect(() => {
-        let montado = true;
-
-        const cargarVersiones = async () => {
-            setCargando(true);
-            setError(null);
-            try {
-                const data = await getHistorialVersiones(documentoId);
-                if (montado) {
-                    setVersiones(data);
-                }
-            } catch (err: any) {
-                if (montado) {
-                    setError(err?.message || 'Error al cargar el historial de versiones.');
-                }
-            } finally {
-                if (montado) {
-                    setCargando(false);
-                }
-            }
-        };
-
         cargarVersiones();
-
-        return () => {
-            montado = false;
-        };
     }, [documentoId]);
-
 
     const handleVisualizar = (version: VersionDocumento) => {
         if (!version.version_documento_url) return;
         abrirArchivoEnPestania(version.version_documento_url, version.archivo_nombre);
     };
+
+    //cambio de version vigente
+    const handleConfirmarVigencia = async () => {
+        if (!versionAConfirmar) return;
+        setGuardando(true);
+        try {
+            await marcarVersionVigente(documentoId, versionAConfirmar.version);
+            setVersionAConfirmar(null);
+            await cargarVersiones(); // Refresca la tabla del modal
+            if (onVersionVigenteCambiada) {
+                onVersionVigenteCambiada(); // Refresca la tabla principal
+            }
+        } catch (err: any) {
+            setError(err?.message || 'Error al cambiar la versión vigente.');
+            setVersionAConfirmar(null);
+        } finally {
+            setGuardando(false);
+        }
+    };
+
+
 
     // Formateo legible de fecha
     const formatearFecha = (fechaStr?: string | null): string => {
@@ -123,19 +135,35 @@ export default function HistorialVersionesModal({
             key: 'acciones',
             encabezado: 'Acciones',
             variant: 'acciones', 
-            render: (v) => (
-                <>
+            
+            render: (v) => {
+                const esActiva = v.estado === 'activo';
+                return(
+                <div className={sharedStyles.grupoBotonesTabla}>
                     <button
                         type="button"
                         className={`${localStyles.btnAccion} ${localStyles.btnVisualizar}`}
                         onClick={() => handleVisualizar(v)}
                         title="Visualizar documento en una pestaña nueva"
                     >
-                        <i className={`bi bi-eye ${localStyles.iconoBtn}`}></i>
+                        <i className="bi bi-eye"></i>
                         Visualizar
                     </button>
-                </>
-            )
+
+                    {isAdmin && !esActiva && (
+                            <button
+                                type="button"
+                                className={`${localStyles.btnAccion} ${localStyles.btnVigente}`}
+                                onClick={() => setVersionAConfirmar(v)}
+                                title="Establecer esta versión como vigente"
+                            >
+                                <i className="bi bi-check2-circle"></i>
+                                Establecer como vigente
+                            </button>
+                        )}
+                </div>
+                )
+            }
         }
     ];
 
@@ -206,6 +234,41 @@ export default function HistorialVersionesModal({
                     </Boton>
                 </div>
             </div>
+
+
+           {versionAConfirmar && (
+                <div className={sharedStyles.modalOverlay} onClick={() => setVersionAConfirmar(null)}>
+                    <div className={sharedStyles.modalContent} onClick={(e) => e.stopPropagation()}>
+                        <h3>Confirmar Cambio de Vigencia</h3>
+                        <p>
+                            ¿Desea establecer la <strong>versión v{versionAConfirmar.version}</strong> como la versión vigente de este documento?
+                            La versión que estaba activa dejará de mostrarse como vigente.
+                        </p>
+                        <div className={sharedStyles.filaBotones}>
+                            <Boton
+                                variant="volver"
+                                onClick={() => setVersionAConfirmar(null)}
+                                disabled={guardando}
+                            >
+                                Cancelar
+                            </Boton>
+                            <Boton
+                                variant="guardar"
+                                onClick={handleConfirmarVigencia}
+                                disabled={guardando}
+                            >
+                                {guardando ? 'Guardando...' : 'Confirmar'}
+                            </Boton>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
+
         </div>
+
+     
+
     );
 }

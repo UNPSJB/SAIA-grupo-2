@@ -25,3 +25,5 @@ class VersionDocumentoFormatoInvalido(BadRequest):
 class VersionDocumentoDemasiadoGrande(BadRequest):
     DETAIL = ErrorCode.VERSION_DOCUMENTO_DEMASIADO_GRANDE
 
+class VersionDocumentoNoEncontrada(NotFound):
+    DETAIL = ErrorCode.VERSION_DOCUMENTO_NO_ENCONTRADA
