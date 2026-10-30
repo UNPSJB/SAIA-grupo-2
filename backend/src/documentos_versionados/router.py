@@ -17,6 +17,11 @@ def verificar_rol_admin(x_user_role: Optional[str] = Header(None, alias="X-User-
     if not x_user_role or x_user_role.lower() != "admin":
         raise PermisoDenegadoAdmin()
 
+def verificar_acceso_operario_o_admin(x_user_role: Optional[str] = Header(None, alias="X-User-Role")):
+    """Permite el acceso a roles operario y admin para lectura de documentos vigentes."""
+    if not x_user_role or x_user_role.lower() not in ("operario", "admin"):
+        raise PermisoDenegadoAdmin()
+
     
 # --- Gestión general de documentos versionados (CRUD básico) ---
 @router.get("/", response_model=list[schemas.DocumentoVersionado])
@@ -71,3 +76,17 @@ def read_versiones_documento(
     db: Annotated[Session, Depends(get_db)],
 ):
     return services.historial_de_versiones_documento_versionado(db, id)
+
+# documentos vigentes
+@router_documentos.get(
+    "/vigentes",
+    response_model=list[schemas.DocumentoVersionado],
+    dependencies=[Depends(verificar_acceso_operario_o_admin)],
+    summary="Listar documentos vigentes (Operarios y Administradores)",
+)
+def read_documentos_vigentes(
+    db: Annotated[Session, Depends(get_db)],
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
+):
+    empleado_id = int(x_user_id) if x_user_id and x_user_id.isdigit() else None
+    return services.listar_documentos_versionados_vigentes(db, empleado_id=empleado_id)

@@ -118,3 +118,17 @@ export const marcarVersionVigente = async (
     }
     return res.json();
 };
+
+
+export const getDocumentosVigentes = async (): Promise<DocumentoVersionado[]> => {
+    const res = await fetch(`${BASE_URL_DOCUMENTOS}/vigentes`, {
+        headers: obtenerCabecerasUsuario(),
+    });
+    if (!res.ok) {
+        if (res.status === 403) {
+            throw new Error('No tienes permisos para consultar los documentos vigentes.');
+        }
+        throw new Error('Error al cargar los documentos vigentes.');
+    }
+    return res.json();
+};

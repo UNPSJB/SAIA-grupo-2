@@ -9,7 +9,7 @@ from src.documentos_versionados.models import DocumentoVersionado
 from src.asociaciones.version_documento import version_documento, EstadoVersionDocumento
 from src.documentos_versionados.constants import TipoDocumentoVersionado
 from src.documentos_versionados import schemas, exceptions
-from src.empleados.models import Empleado
+from src.empleados.models import Empleado #, RolEmpleado
 from src.archivos.constants import CARACTERES_MAXIMOS, PREFIJOS_VALIDOS
 
 logger = logging.getLogger(__name__)
@@ -112,6 +112,53 @@ def listar_documentos_versionados(db: Session) -> List [schemas.DocumentoVersion
             )
         )
     return resultado
+
+
+#igual que la de arriba pero le aplica el filtro de que esten activos
+#no quise modificar la otra por si acaso
+def listar_documentos_versionados_vigentes(
+    db: Session,
+    empleado_id: Optional[int] = None,
+) -> List[schemas.DocumentoVersionado]:
+    logger.info("Listando documentos vigentes desde services")
+    docs = db.scalars(select(DocumentoVersionado)).all()
+
+
+
+    # creo que puede ser que se requiera que el operario solo vea
+    #los documentos de los sectores de los cuales esta encargado, por que si no
+    #medio quilombo si hay muchos documentos
+    #si es asi descomentar esta parte. hay otra parte a descomentar en DocumentosVigentesList.tsx en el features
+    #
+    # if empleado_id:
+    #     empleado = db.scalar(
+    #         select(Empleado)
+    #         .options(selectinload(Empleado.sectores))
+    #         .where(Empleado.id == empleado_id)
+    #     )
+    #     if empleado and empleado.rol == RolEmpleado.OPERARIO:
+    #          sectores_operario = {s.id for s in empleado.sectores}
+    #          docs = [d for d in docs if getattr(d, "sector_id", None) in sectores_operario]
+
+    resultado = []
+    for d in docs:
+        vigente = obtener_version_vigente(db, d.id)
+        # Filtro estricto: solo se agrega si tiene una versión vigente activa
+        if vigente is not None:
+            resultado.append(
+                schemas.DocumentoVersionado(
+                    id=d.id,
+                    nombre=d.nombre,
+                    tipo=d.tipo,
+                    version_vigente=vigente,
+                )
+            )
+    return resultado
+
+
+
+
+
 
 def crear_documento_versionado(db: Session, documento_versionado: schemas.DocumentoVersionadoCreate,
     subido_por_id: Optional[int] = None,) -> schemas.DocumentoVersionado:
