@@ -20,3 +20,19 @@ class FotoYaCargada(BadRequest):
 
 class FotoRequerida(BadRequest):
     DETAIL = ErrorCode.FOTO_REQUERIDA
+
+
+class AccionCorrectivaRequerida(BadRequest):
+    DETAIL = ErrorCode.ACCION_CORRECTIVA_REQUERIDA
+
+
+class MotivoReaperturaRequerido(BadRequest):
+    DETAIL = ErrorCode.MOTIVO_REAPERTURA_REQUERIDO
+
+
+class IncidenteYaCerrado(BadRequest):
+    DETAIL = ErrorCode.INCIDENTE_YA_CERRADO
+
+
+class IncidenteNoCerrado(BadRequest):
+    DETAIL = ErrorCode.INCIDENTE_NO_CERRADO

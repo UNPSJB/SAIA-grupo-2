@@ -56,6 +56,10 @@ import VencimientosDocumentacionList from './features/vencimientosDocumentacion/
 import IncidentesList from './features/incidentes/IncidentesList';
 import IncidenteForm from './features/incidentes/IncidenteForm';
 import IncidenteDetail from './features/incidentes/IncidenteDetail';
+import EstadisticaIncidentes from './features/incidentes/EstadisticaIncidentes';
+
+import DocumentosVigentesList from './features/documentosVersionados/DocumentosVigentesList';
+
 
 import './App.css';
 
@@ -139,6 +143,25 @@ function RutasProtegidas() {
               </div>
             </details>
           )}
+
+
+          {/* Accesible para Operarios y Administradores */}
+          <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
+            <summary className={styles.sidebarTituloAcordeon}>
+              Procedimientos y Manuales
+            </summary>
+            <div className={styles.sidebarOpcionesAcordeon}>
+              {/* Visible para todos */}
+              <NavLink to="/documentos/vigentes" className={styles.sidebarItemAcordeon}>
+                Documentos Vigentes
+              </NavLink>
+            </div>
+          </details>
+
+
+
+
+
           
           <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
               <summary className={styles.sidebarTituloAcordeon}>
@@ -164,6 +187,8 @@ function RutasProtegidas() {
             <div className={styles.sidebarOpcionesAcordeon}>
               <NavLink to="/incidentes/nuevo" className={styles.sidebarItemAcordeon}>Registrar Incidente</NavLink>
               {isAdmin && <NavLink to="/incidentes" end className={styles.sidebarItemAcordeon}>Incidentes Reportados</NavLink>}
+              {isAdmin && <NavLink to="/incidentes/abiertos" className={styles.sidebarItemAcordeon}>Incidentes Abiertos</NavLink>}
+              {isAdmin && (<NavLink to="/incidentes/estadisticas" className={styles.sidebarItemAcordeon}>Estadísticas de Incidentes</NavLink>)}
             </div>
           </details>
           </nav>
@@ -246,18 +271,15 @@ function RutasProtegidas() {
 
             <Route path="/incidentes/nuevo" element={<IncidenteForm />} />
             <Route path="/incidentes" element={<RutaAdmin><IncidentesList /></RutaAdmin>} />
+            <Route path="/incidentes/abiertos" element={<RutaAdmin><IncidentesList soloAbiertos /></RutaAdmin>} />
             <Route path="/incidentes/:id" element={<RutaAdmin><IncidenteDetail /></RutaAdmin>} />
+            <Route path="/incidentes/estadisticas" element={<RutaAdmin><EstadisticaIncidentes /></RutaAdmin>} />
+
+            <Route path="/documentos/vigentes" element={<DocumentosVigentesList />} />
+
+            
           </Routes>
         </main>
-        
-        
-
-        
-
-        
-
-        
-
         
       </div>
 

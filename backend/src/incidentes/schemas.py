@@ -7,6 +7,7 @@ from src.incidentes.constants import (
     LARGO_MAXIMO_DESCRIPCION,
     EstadoIncidente,
     TipoIncidente,
+    TipoMovimiento,
 )
 
 Descripcion = Annotated[
@@ -35,6 +36,30 @@ class IncidenteCreate(BaseModel):
     archivo_nombre: Optional[NombreArchivo] = None
 
 
+class CierreIncidente(BaseModel):
+    """Accion correctiva tomada y quien la resuelve."""
+
+    accion_correctiva: Descripcion
+    responsable_id: int
+
+
+class ReaperturaIncidente(BaseModel):
+    """Motivo por el que se vuelve a abrir y quien lo reabre."""
+
+    motivo: Descripcion
+    responsable_id: int
+
+
+class MovimientoIncidente(BaseModel):
+    id: int
+    tipo: TipoMovimiento
+    descripcion: str
+    fecha_hora: datetime
+    empleado: EmpleadoResumen
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class FotoIncidente(BaseModel):
     """Unica modificacion permitida: adjuntar la foto que no se cargo al registrar."""
 
@@ -56,8 +81,23 @@ class Incidente(BaseModel):
     accion_correctiva: Optional[str] = None
     fecha_cierre: Optional[datetime] = None
     responsable_cierre: Optional[EmpleadoResumen] = None
+    movimientos: list[MovimientoIncidente] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ConteoPorTipo(BaseModel):
+    tipo: TipoIncidente
+    cantidad: int
+
+
+class ResumenIncidentes(BaseModel):
+    """Base del indicador de incidentes por tipo del tablero (E7)."""
+
+    abiertos: int
+    cerrados: int
+    total: int
+    abiertos_por_tipo: list[ConteoPorTipo]
 
 
 class IncidenteDelete(BaseModel):
@@ -65,3 +105,8 @@ class IncidenteDelete(BaseModel):
     msg: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class EstadisticaIncidente(BaseModel):
+    tipo: TipoIncidente
+    cantidad: int

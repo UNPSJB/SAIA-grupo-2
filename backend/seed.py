@@ -1,5 +1,7 @@
 from datetime import date, datetime, timedelta, timezone
 from sqlalchemy.orm import Session
+from sqlalchemy import  insert
+
 from src.database import SessionLocal, engine
 from src.models import Base
 from src.capacidades.models import Capacidad
@@ -18,8 +20,14 @@ from src.documentacion.constants import TipoDocumentacion
 from src.documentacion.models import Documentacion, LibretaSanitaria, Capacitacion, CertificadoAptitudFisica, RequisitoDocumentacion
 from src.planes.models import Plan
 from src.checklists.models import Checklist, ConsumoReal
-from src.incidentes.models import Incidente
-from src.incidentes.constants import EstadoIncidente, TipoIncidente
+from src.incidentes.models import Incidente, MovimientoIncidente
+from src.incidentes.constants import EstadoIncidente, TipoIncidente, TipoMovimiento
+
+
+from src.documentos_versionados.models import DocumentoVersionado
+from src.documentos_versionados.constants import TipoDocumentoVersionado
+from src.asociaciones.version_documento import version_documento, EstadoVersionDocumento
+
 
 def seed_database():
     Base.metadata.create_all(bind=engine)
@@ -462,6 +470,7 @@ def seed_database():
             ahora_inc = datetime.now(timezone.utc)
             datos_incidentes = [
                 ("Se rompio el burlete de la puerta de la camara 2", TipoIncidente.ROTURA, 18),
+                ("Presencia de plagas en materia prima", TipoIncidente.PLAGA, 11),
                 ("Cliente devolvio un lote por envase mal sellado", TipoIncidente.DEVOLUCION_CLIENTE, 6),
                 ("Se encontro agua acumulada en el piso del sector de lavado", TipoIncidente.OTRO, 2),
                 ("Termometro de la camara 1 marcando valores inconsistentes", TipoIncidente.ROTURA, 1),
@@ -480,7 +489,101 @@ def seed_database():
                 )
             db.add_all(incidentes)
             db.commit()
-            print(f"Incidentes creados ({len(incidentes)}).")
+
+            resuelto = Incidente(
+                descripcion="Luminaria del sector de envasado sin proteccion plastica",
+                tipo=TipoIncidente.OTRO,
+                estado=EstadoIncidente.CERRADO,
+                empleado_id=empleados_inc[1 % len(empleados_inc)].id,
+                fecha_hora_reporte=ahora_inc - timedelta(days=25),
+                accion_correctiva="Se coloco tubo protector y se agrego la revision al checklist mensual",
+                fecha_cierre=ahora_inc - timedelta(days=22),
+                responsable_cierre_id=empleados_inc[0].id,
+            )
+            db.add(resuelto)
+            db.commit()
+            db.add(
+                MovimientoIncidente(
+                    incidente_id=resuelto.id,
+                    tipo=TipoMovimiento.CIERRE,
+                    descripcion=resuelto.accion_correctiva,
+                    empleado_id=empleados_inc[0].id,
+                    fecha_hora=ahora_inc - timedelta(days=22),
+                )
+            )
+            db.commit()
+            print(f"Incidentes creados ({len(incidentes) + 1}).")
+
+
+        if db.query(DocumentoVersionado).count() == 0:
+            carlos_admin = db.query(Empleado).filter_by(legajo="EMP-1000").first()
+            admin_id = carlos_admin.id if carlos_admin else None
+            doc_bpm = DocumentoVersionado(
+                nombre="Manual de Buenas Prácticas de Manufactura (BPM)",
+                tipo=TipoDocumentoVersionado.MANUAL_BPM,
+            )
+            doc_poes = DocumentoVersionado(
+                nombre="POES - Sanitización de Equipos y Superficies",
+                tipo=TipoDocumentoVersionado.PROCEDIMIENTO,
+            )
+            doc_ficha = DocumentoVersionado(
+                nombre="Ficha Técnica - Harina de Trigo 000",
+                tipo=TipoDocumentoVersionado.FICHA_TECNICA,
+            )
+            db.add_all([doc_bpm, doc_poes, doc_ficha])
+            db.commit()
+            db.refresh(doc_bpm)
+            db.refresh(doc_poes)
+            db.refresh(doc_ficha)
+            pdf_base = "data:application/pdf;base64,JVBERi0xLjQKJcTl8uXrp/Og0MTGCjEgMCBvYmoKPDwKL1R5cGUgL0NhdGFsb2cKL1BhZ2VzIDIgMCBSCj4+CmVuZG9iag=="
+            hoy_d = date.today()
+            # Doc BPM con 2 versiones para probar historial
+            db.execute(
+                insert(version_documento).values([
+                    {
+                        "documentos_versionados_id": doc_bpm.id,
+                        "version": 1,
+                        "estado": EstadoVersionDocumento.ARCHIVADO,
+                        "version_documento_url": pdf_base,
+                        "fecha_vigencia": hoy_d - timedelta(days=60),
+                        "fecha_subida": datetime.utcnow() - timedelta(days=60),
+                        "subido_por_id": admin_id,
+                        "archivo_nombre": "manual_bpm_v1.pdf",
+                    },
+                    {
+                        "documentos_versionados_id": doc_bpm.id,
+                        "version": 2,
+                        "estado": EstadoVersionDocumento.ACTIVO,
+                        "version_documento_url": pdf_base,
+                        "fecha_vigencia": hoy_d,
+                        "fecha_subida": datetime.utcnow(),
+                        "subido_por_id": admin_id,
+                        "archivo_nombre": "manual_bpm_v2.pdf",
+                    },
+                    {
+                        "documentos_versionados_id": doc_poes.id,
+                        "version": 1,
+                        "estado": EstadoVersionDocumento.ACTIVO,
+                        "version_documento_url": pdf_base,
+                        "fecha_vigencia": hoy_d - timedelta(days=15),
+                        "fecha_subida": datetime.utcnow() - timedelta(days=15),
+                        "subido_por_id": admin_id,
+                        "archivo_nombre": "poes_sanitizacion_v1.pdf",
+                    },
+                    {
+                        "documentos_versionados_id": doc_ficha.id,
+                        "version": 1,
+                        "estado": EstadoVersionDocumento.ACTIVO,
+                        "version_documento_url": pdf_base,
+                        "fecha_vigencia": hoy_d,
+                        "fecha_subida": datetime.utcnow(),
+                        "subido_por_id": admin_id,
+                        "archivo_nombre": "ficha_harina_000.pdf",
+                    },
+                ])
+            )
+            db.commit()
+            print("Documentos Versionados y Versiones Históricas creados (3 documentos, 4 versiones).")
 
 
         print("Base de datos poblada exitosamente con datos de prueba para Inocuidad Alimentaria!")

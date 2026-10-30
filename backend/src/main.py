@@ -35,6 +35,10 @@ from src.elementos_limpieza.router import router as elementos_limpieza_router
 from src.documentacion.router import router as documentacion_router
 from src.vencimientos.router import router as vencimientos_router
 from src.incidentes.router import router as incidentes_router
+from src.documentos_versionados.router import (
+    router as documentos_versionados_router,
+    router_documentos,
+)
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -83,3 +87,5 @@ app.include_router(elementos_limpieza_router)
 app.include_router(documentacion_router)
 app.include_router(vencimientos_router)
 app.include_router(incidentes_router)
+app.include_router(documentos_versionados_router)
+app.include_router(router_documentos)

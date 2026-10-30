@@ -464,8 +464,8 @@ export default function ChecklistList() {
                                 </div>
 
                                 <div className={styles.filaBotones} style={{ marginTop: '30px', justifyContent: 'flex-end', gap: '15px' }}>
-                                    <Boton type="button" variant="volver" onClick={() => setModalAbierto(false)}>Cancelar</Boton>
-                                    <Boton type="submit" variant="guardar">Completar Tarea</Boton>
+                                    <Boton type="submit" variant="guardar">Guardar</Boton>
+                                    <Boton type="button" variant="eliminar" onClick={() => setModalAbierto(false)}>Cancelar</Boton>
                                 </div>
                             </form>
                         )}
@@ -549,7 +549,7 @@ export default function ChecklistList() {
                                 </div>
 
                                 <div className={styles.filaBotones} style={{ marginTop: '20px', justifyContent: 'flex-end' }}>
-                                    <Boton variant="volver" onClick={() => setModalDetalleAbierto(false)}>Cerrar</Boton>
+                                    <Boton variant="volver" onClick={() => setModalDetalleAbierto(false)}>Volver</Boton>
                                 </div>
                             </div>
                         ) : (

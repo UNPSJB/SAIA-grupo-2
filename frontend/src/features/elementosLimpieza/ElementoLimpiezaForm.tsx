@@ -115,10 +115,10 @@ export default function ElementoLimpiezaForm() {
 
                 <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
                     <Boton type="submit" variant="guardar">
-                        {editando ? 'Actualizar Cambios' : 'Guardar'}
+                        {editando ? 'Actualizar' : 'Guardar'}
                     </Boton>
                     <Link to="/elementosLimpieza">
-                        <Boton variant="volver">
+                        <Boton variant="eliminar">
                             Cancelar
                         </Boton>
                     </Link>
