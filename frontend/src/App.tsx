@@ -53,6 +53,17 @@ import AlertasRecambio from './features/elementosLimpieza/AlertasRecambio';
 import VencimientosList from './features/vencimientos/VencimientosList'; 
 import VencimientosDocumentacionList from './features/vencimientosDocumentacion/VencimientosDocumentacionList';
 
+import IncidentesList from './features/incidentes/IncidentesList';
+import IncidenteForm from './features/incidentes/IncidenteForm';
+import IncidenteDetail from './features/incidentes/IncidenteDetail';
+import EstadisticaIncidentes from './features/incidentes/EstadisticaIncidentes';
+
+import DocumentosVersionadosList from './features/documentosVersionados/DocumentosVersionadosList';
+import DocumentoVersionadoForm from './features/documentosVersionados/DocumentoVersionadoForm';
+
+import DocumentosVigentesList from './features/documentosVersionados/DocumentosVigentesList';
+
+
 import './App.css';
 
 function RutaAdmin({ children }: { children: React.ReactElement }) {
@@ -135,6 +146,29 @@ function RutasProtegidas() {
               </div>
             </details>
           )}
+
+
+          {/* Accesible para Operarios y Administradores */}
+          <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
+            <summary className={styles.sidebarTituloAcordeon}>
+              Procedimientos y Manuales
+            </summary>
+            <div className={styles.sidebarOpcionesAcordeon}>
+              {isAdmin && (
+                <NavLink to="/documentos" end className={styles.sidebarItemAcordeon}>
+                  Documentos Versionados
+                </NavLink>
+              )}
+              <NavLink to="/documentos/vigentes" className={styles.sidebarItemAcordeon}>
+                Documentos Vigentes
+              </NavLink>
+            </div>
+          </details>
+
+
+
+
+
           
           <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
               <summary className={styles.sidebarTituloAcordeon}>
@@ -228,6 +262,17 @@ function RutasProtegidas() {
             <Route path="/checklists/historial" element={<RutaAdmin><HistorialChecklistList /></RutaAdmin>} />
 
             <Route path="/vencimientos-documentacion" element={<RutaAdmin><VencimientosDocumentacionList /></RutaAdmin>}/>
+
+            <Route path="/incidentes/nuevo" element={<IncidenteForm />} />
+            <Route path="/incidentes" element={<RutaAdmin><IncidentesList /></RutaAdmin>} />
+            <Route path="/incidentes/abiertos" element={<RutaAdmin><IncidentesList soloAbiertos /></RutaAdmin>} />
+            <Route path="/incidentes/:id" element={<RutaAdmin><IncidenteDetail /></RutaAdmin>} />
+            <Route path="/incidentes/estadisticas" element={<RutaAdmin><EstadisticaIncidentes /></RutaAdmin>} />
+            <Route path="/documentos" element={<RutaAdmin><DocumentosVersionadosList /></RutaAdmin>} />
+            <Route path="/documentos/nuevo" element={<RutaAdmin><DocumentoVersionadoForm /></RutaAdmin>} />
+            <Route path="/documentos/vigentes" element={<DocumentosVigentesList />} />
+
+            
           </Routes>
         </main>
         

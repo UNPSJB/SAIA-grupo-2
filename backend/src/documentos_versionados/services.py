@@ -70,8 +70,50 @@ def listar_documentos_versionados(db: Session) -> List [schemas.DocumentoVersion
     logger.info ("Listando documentos versionados desde services")
     return db.scalars(select(DocumentoVersionado)).all()
 
-def crear_documento_versionado(db: Session, documento_versionado: schemas.DocumentoVersionadoCreate) -> schemas.DocumentoVersionado:
-    _documentoversionado = DocumentoVersionado(**documento_versionado.model_dump(exclude={"version_inicial_url"}))
+
+
+    # creo que puede ser que se requiera que el operario solo vea
+    #los documentos de los sectores de los cuales esta encargado, por que si no
+    #medio quilombo si hay muchos documentos
+    #si es asi descomentar esta parte. hay otra parte a descomentar en DocumentosVigentesList.tsx en el features
+    #
+    # if empleado_id:
+    #     empleado = db.scalar(
+    #         select(Empleado)
+    #         .options(selectinload(Empleado.sectores))
+    #         .where(Empleado.id == empleado_id)
+    #     )
+    #     if empleado and empleado.rol == RolEmpleado.OPERARIO:
+    #          sectores_operario = {s.id for s in empleado.sectores}
+    #          docs = [d for d in docs if getattr(d, "sector_id", None) in sectores_operario]
+
+    resultado = []
+    for d in docs:
+        vigente = obtener_version_vigente(db, d.id)
+        # Filtro estricto: solo se agrega si tiene una versión vigente activa
+        if vigente is not None:
+            resultado.append(
+                schemas.DocumentoVersionado(
+                    id=d.id,
+                    nombre=d.nombre,
+                    tipo=d.tipo,
+                    version_vigente=vigente,
+                )
+            )
+    return resultado
+
+
+
+
+
+
+def crear_documento_versionado(db: Session, documento_versionado: schemas.DocumentoVersionadoCreate,
+    subido_por_id: Optional[int] = None,) -> schemas.DocumentoVersionado:
+    _documentoversionado = DocumentoVersionado(
+        **documento_versionado.model_dump(
+            exclude={"version_documento_url", "archivo_nombre", "subido_por_id", "fecha_vigencia"}
+        )
+    )
 
     if _documentoversionado.tipo is None:
         raise exceptions.TipoRequerido()
@@ -85,7 +127,7 @@ def crear_documento_versionado(db: Session, documento_versionado: schemas.Docume
     if DOCUMENTO_VERSIONADO_DUPLICADO is not None:
         raise exceptions.DocumentoVersionadoDuplicado()
 
-    validar_version_documento(documento_versionado.version_inicial_url)    
+    validar_version_documento(documento_versionado.version_documento_url)
     db.add(_documentoversionado)
     db.flush() # Con esto obtengo temporalmente el ID del doc sin tener que hacer un commit
     db.execute( # Al ser tabla, solo puedo agregar mediante inserts (en vez de add con variable _versioninicial)
@@ -93,7 +135,11 @@ def crear_documento_versionado(db: Session, documento_versionado: schemas.Docume
             documentos_versionados_id=_documentoversionado.id,
             version=1,
             estado=EstadoVersionDocumento.ACTIVO,
-            version_documento_url=documento_versionado.version_inicial_url
+            version_documento_url=documento_versionado.version_documento_url,
+            fecha_vigencia=fecha_v,
+            fecha_subida=fecha_s,
+            subido_por_id=id_autor,
+            archivo_nombre=documento_versionado.archivo_nombre,
         )
     )
     db.commit()
