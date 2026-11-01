@@ -79,7 +79,7 @@ export default function TareasList() {
         {
             key: 'acciones',
             encabezado: 'Acciones',
-            variant: 'acciones', // Inyecta el display: flex y el gap automáticamente sin necesidad de un div extra
+            variant: 'acciones', 
             render: (tarea) => (
                 <>
                     {usuario?.rol === 'admin' && (

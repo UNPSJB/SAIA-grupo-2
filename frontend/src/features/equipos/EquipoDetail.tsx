@@ -146,7 +146,7 @@ export default function EquipoDetail() {
                                 Certificación - {certificacionAbierta.fecha}
                             </h2>
                             <Boton variant="volver" onClick={() => setCertificacionAbierta(null)}>
-                                Cerrar
+                                Volver
                             </Boton>
                         </div>
 

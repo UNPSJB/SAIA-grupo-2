@@ -46,9 +46,6 @@ export default function ElementosLimpiezaList() {
     };
     const elementosFiltrados = filtrarPorTexto(elementos, busqueda, (c) => [c.nombre]);
 
-    const indiceUltimo = paginaActual * elementosPorPagina;
-    const indicePrimer = indiceUltimo - elementosPorPagina;
-    const elementosActuales = elementosFiltrados.slice(indicePrimer, indiceUltimo);
     const totalPaginas = Math.ceil(elementosFiltrados.length / elementosPorPagina);
 
     const conAlerta = elementos.filter(
@@ -118,11 +115,9 @@ export default function ElementosLimpiezaList() {
         }
     ];
 
-
     return (
         <div className={styles.contenedorPrincipal}>
             <h2>Elementos de Limpieza</h2>
-
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar elemento..." />
@@ -142,7 +137,6 @@ export default function ElementosLimpiezaList() {
                 </Link>
             </div>
 
-
             <div style={{ maxWidth: '1000px', width: '100%' }}>
                 <TablaPaginada
                     datos={elementosFiltrados}
@@ -153,7 +147,6 @@ export default function ElementosLimpiezaList() {
                     columnaOrdenInicial="nombre"
                 />
             </div>
-
 
             {totalPaginas > 1 && (
                 <div className={styles.filaBotones} style={{ alignItems: 'center', marginTop: '30px', justifyContent: 'center' }}>

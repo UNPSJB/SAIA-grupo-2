@@ -338,7 +338,7 @@ export default function DocumentacionForm() {
                         {guardando ? 'Guardando...' : editando ? 'Actualizar Cambios' : 'Guardar'}
                     </Boton>
                     <Link to={`/empleados/${empleadoId}/documentacion`}>
-                        <Boton variant="volver">Cancelar</Boton>
+                        <Boton variant="eliminar">Cancelar</Boton>
                     </Link>
                 </div>
             </form>

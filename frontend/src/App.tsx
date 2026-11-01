@@ -185,6 +185,19 @@ function RutasProtegidas() {
               {isAdmin && <NavLink to="/checklists/historial" className={styles.sidebarItemAcordeon}>Historial de Checklists</NavLink>}
             </div>
           </details>
+
+          <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
+              <summary className={styles.sidebarTituloAcordeon}>
+                No Conformidades 
+              </summary>
+
+            <div className={styles.sidebarOpcionesAcordeon}>
+              <NavLink to="/incidentes/nuevo" className={styles.sidebarItemAcordeon}>Registrar Incidente</NavLink>
+              {isAdmin && <NavLink to="/incidentes" end className={styles.sidebarItemAcordeon}>Incidentes Reportados</NavLink>}
+              {isAdmin && <NavLink to="/incidentes/abiertos" className={styles.sidebarItemAcordeon}>Incidentes Abiertos</NavLink>}
+              {isAdmin && (<NavLink to="/incidentes/estadisticas" className={styles.sidebarItemAcordeon}>Estadísticas de Incidentes</NavLink>)}
+            </div>
+          </details>
           </nav>
 
           <div className="userSection">
@@ -275,15 +288,6 @@ function RutasProtegidas() {
             
           </Routes>
         </main>
-        
-        
-
-        
-
-        
-
-        
-
         
       </div>
 

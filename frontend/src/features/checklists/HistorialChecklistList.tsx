@@ -34,8 +34,6 @@ export default function HistorialChecklistList() {
     const [historial, setHistorial] = useState<HistorialChecklistResumen | null>(null);
     const [cargando, setCargando] = useState(true);
 
-    const [paginaActual, setPaginaActual] = useState(1);
-    const registrosPorPagina = 5;
     const [busqueda, setBusqueda] = useState('');
 
     const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
@@ -60,7 +58,6 @@ export default function HistorialChecklistList() {
         try {
             const data = await getHistorialChecklists(fechaInicio, fechaFin, sectorFiltro);
             setHistorial(data);
-            setPaginaActual(1);
         } catch (error) {
             console.error("Error al cargar historial:", error);
         } finally {
@@ -192,8 +189,6 @@ export default function HistorialChecklistList() {
             )
         }
     ];
-
-
 
     return (
         <div className={styles.contenedorPrincipal}>
@@ -327,8 +322,6 @@ export default function HistorialChecklistList() {
                 </div>
             )}
 
-
-
             {cargando ? (
                 <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
                     Cargando historial de checklists...
@@ -420,7 +413,7 @@ export default function HistorialChecklistList() {
                                 </div>
 
                                 <div className={styles.filaBotones} style={{ marginTop: '20px', justifyContent: 'flex-end' }}>
-                                    <Boton variant="volver" onClick={() => setModalDetalleAbierto(false)}>Cerrar</Boton>
+                                    <Boton variant="volver" onClick={() => setModalDetalleAbierto(false)}>Volver</Boton>
                                 </div>
                             </div>
                         ) : (

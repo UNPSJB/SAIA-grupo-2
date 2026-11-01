@@ -10,13 +10,10 @@ import BuscadorTexto from '../../components/BuscadorTexto';
 import { filtrarPorTexto } from '../../utils/texto';
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 
-
 export default function InsumosList() {
     const { usuario } = useAuth();
     const [insumos, setInsumos] = useState<Insumo[]>([]);
     const [busqueda, setBusqueda] = useState('');
-    const [paginaActual, setPaginaActual] = useState(1);
-    const insumosPorPagina = 10;
 
     useEffect(() => {
         const cargarDatos = async () => {
@@ -30,11 +27,6 @@ export default function InsumosList() {
         cargarDatos();
     }, []);
     const insumosFiltrados = filtrarPorTexto(insumos, busqueda, (c) => [c.nombre, c.unidad_medida?.nombre]);
-
-    const indiceUltimo = paginaActual * insumosPorPagina;
-    const indicePrimer = indiceUltimo - insumosPorPagina;
-    const insumosActuales = insumosFiltrados.slice(indicePrimer, indiceUltimo);
-    const totalPaginas = Math.ceil(insumosFiltrados.length / insumosPorPagina);
 
     const misColumnas: Columna<Insumo>[]=[
         {
@@ -73,8 +65,6 @@ export default function InsumosList() {
         }
     ]
 
-
-
     return (
         <div className={styles.contenedorPrincipal}>
             <h2>Inventario de Insumos</h2>
@@ -91,7 +81,6 @@ export default function InsumosList() {
                 </Link>
             )}
 
-
                        <div style={{ maxWidth: '1100px', width: '100%' }}>
                             <TablaPaginada
                                 datos={insumosFiltrados}
@@ -103,7 +92,6 @@ export default function InsumosList() {
                                 ordenAscInicial={true}
                             />
                         </div>
-
 
         </div>
     );

@@ -17,8 +17,6 @@ export default function SectoresList() {
     const { usuario } = useAuth();
     const [sectores, setSectores] = useState<Sector[]>([]);
     const [busqueda, setBusqueda] = useState('');
-    const [paginaActual, setPaginaActual] = useState(1);
-    const sectoresPorPagina = 10;
 
     const [modalConfirmacion, setModalConfirmacion] = useState({ isOpen: false, idSeleccionado: 0 });
     const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
@@ -62,12 +60,6 @@ export default function SectoresList() {
         }
     };
     const sectoresFiltrados = filtrarPorTexto(sectores, busqueda, (c) => [c.nombre, c.responsable?.nombre, c.responsable?.apellido]);
-
-    const indiceUltimo = paginaActual * sectoresPorPagina;
-    const indicePrimer = indiceUltimo - sectoresPorPagina;
-    const sectoresActuales = sectoresFiltrados.slice(indicePrimer, indiceUltimo);
-    const totalPaginas = Math.ceil(sectoresFiltrados.length / sectoresPorPagina);
-
 
     const misColumnas: Columna<Sector>[] = [
         {
@@ -113,8 +105,6 @@ export default function SectoresList() {
         }
 
     ]
-
-
 
     return (
         <div className={styles.contenedorPrincipal}>

@@ -1,6 +1,6 @@
 import Boton from './Boton';
 import BuscadorTexto from './BuscadorTexto';
-
+import styles from '../styles/shared.module.css';
 
 // Definimos los tipos de filtros que soporta la barra
 export interface FiltroConfig {
@@ -73,16 +73,18 @@ export default function BarraFiltros({
                                 type="date"
                                 value={filtro.value}
                                 onChange={(e) => filtro.onChange(e.target.value)}
-                                style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '0.9rem' }}
+                                className={styles.filtroFecha}
                             />
                         ) : (
                             <select
                                 value={filtro.value}
                                 onChange={(e) => filtro.onChange(e.target.value)}
-                                style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '0.9rem' }}
+                                className={styles.filtroFecha}
                             >
                                 {filtro.opciones?.map((op, i) => (
-                                    <option key={i} value={op.value}>{op.label}</option>
+                                    <option key={i} value={op.value}>
+                                        {op.label}
+                                    </option>
                                 ))}
                             </select>
                         )}

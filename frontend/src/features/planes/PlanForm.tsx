@@ -133,20 +133,6 @@ export default function PlanForm() {
         );
     }
 
-    const dateInputStyle = {
-        width: '100%',
-        padding: '10px 12px',
-        borderRadius: '6px',
-        backgroundColor: '#ffffff',
-        color: '#374151',
-        colorScheme: 'light' as const,
-        fontSize: '1rem',
-        fontFamily: 'inherit',
-        boxSizing: 'border-box' as const,
-        cursor: 'pointer'
-    };
-
-
     const fechaAmigable = hoyLocal.split('-').reverse().join('/');
 
     const fechaInicioReg = register('fecha_inicio', {
@@ -200,10 +186,13 @@ export default function PlanForm() {
 
                     <div className={styles.formGroup} style={{ margin: 0 }}>
                         <label>Fecha de Inicio:</label>
-                        <input 
-                            type="date" 
-                            min={hoyLocal} 
+                        <input
+                            type="date"
+                            min={hoyLocal}
                             {...fechaInicioReg}
+                            className={`${styles.filtroFecha} ${
+                                errors.fecha_inicio ? styles.filtroFechaError : ''
+                            }`}
                             onChange={(e) => {
                                 setInicioInvalida(e.target.validity.badInput);
                                 fechaInicioReg.onChange(e);
@@ -212,17 +201,27 @@ export default function PlanForm() {
                                 setInicioInvalida(e.target.validity.badInput);
                                 fechaInicioReg.onBlur(e);
                             }}
-                            style={{ ...dateInputStyle, border: errors.fecha_inicio ? '1px solid #ef4444' : '1px solid var(--border)', outline: 'none' }}
                         />
-                        {errors.fecha_inicio && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.fecha_inicio.message}</span>}
+                        {errors.fecha_inicio && (
+                            <span style={{
+                                color: '#ef4444',
+                                fontSize: '0.8rem',
+                                marginTop: '5px'
+                            }}>
+                                {errors.fecha_inicio.message}
+                            </span>
+                        )}
                     </div>
 
                     <div className={styles.formGroup} style={{ margin: 0 }}>
                         <label>Fecha de Fin (Opcional):</label>
-                        <input 
-                            type="date" 
-                            min={hoyLocal} 
+                        <input
+                            type="date"
+                            min={hoyLocal}
                             {...fechaFinReg}
+                            className={`${styles.filtroFecha} ${
+                                errors.fecha_fin ? styles.filtroFechaError : ''
+                            }`}
                             onChange={(e) => {
                                 setFinInvalida(e.target.validity.badInput);
                                 fechaFinReg.onChange(e);
@@ -231,9 +230,16 @@ export default function PlanForm() {
                                 setFinInvalida(e.target.validity.badInput);
                                 fechaFinReg.onBlur(e);
                             }}
-                            style={{ ...dateInputStyle, border: errors.fecha_fin ? '1px solid #ef4444' : '1px solid var(--border)', outline: 'none' }}
                         />
-                        {errors.fecha_fin && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.fecha_fin.message}</span>}
+                        {errors.fecha_fin && (
+                            <span style={{
+                                color: '#ef4444',
+                                fontSize: '0.8rem',
+                                marginTop: '5px'
+                            }}>
+                                {errors.fecha_fin.message}
+                            </span>
+                        )}
                     </div>
                 </div>
 
@@ -324,10 +330,10 @@ export default function PlanForm() {
 
                 <div className={styles.filaBotones} style={{ marginTop: '40px', justifyContent: 'center' }}>
                     <Boton type="submit" variant="guardar">
-                        {editando ? 'Actualizar Plan' : 'Guardar Plan'}
+                        {editando ? 'Actualizar' : 'Guardar'}
                     </Boton>
                     <Link to="/planes">
-                        <Boton variant="volver">Cancelar</Boton>
+                        <Boton variant="eliminar">Cancelar</Boton>
                     </Link>
                 </div>
             </form>

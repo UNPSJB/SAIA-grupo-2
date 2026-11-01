@@ -221,11 +221,11 @@ export default function ProductoForm() {
                         {guardando
                             ? 'Guardando...'
                             : editando
-                                ? 'Actualizar Cambios'
+                                ? 'Actualizar'
                                 : 'Guardar'}
                     </Boton>
                     <Link to="/productos_limpieza">
-                        <Boton variant="volver">Cancelar</Boton>
+                        <Boton variant="eliminar">Cancelar</Boton>
                     </Link>
                 </div>
             </form>
