@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Bar } from 'react-chartjs-2';
+import { Bar, Pie } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
     CategoryScale,
     LinearScale,
     BarElement,
+    ArcElement,
     Tooltip,
     Legend,
 } from 'chart.js';
@@ -18,7 +19,7 @@ import { ETIQUETA_TIPO, formatearFechaHora } from './estadoIncidente';
 import type { EstadisticaIncidente } from '../../services/incidentesServices';
 import styles from '../../styles/shared.module.css';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
 const TIPOS: TipoIncidente[] = [
     'rotura',
@@ -47,12 +48,12 @@ export default function EstadisticaIncidentes() {
     const [fechaDesde, setFechaDesde] = useState(primerDiaDelMes);
     const [fechaHasta, setFechaHasta] = useState(hoyLocal);
     const [estadisticas, setEstadisticas] = useState<EstadisticaIncidente[]>([]);
-    const [tipoSeleccionado, setTipoSeleccionado] =
-        useState<TipoIncidente | null>(null);
+    const [tipoSeleccionado, setTipoSeleccionado] = useState<TipoIncidente | null>(null);
     const [detalle, setDetalle] = useState<Incidente[]>([]);
     const [cargando, setCargando] = useState(false);
     const [cargandoDetalle, setCargandoDetalle] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [tipoGrafico, setTipoGrafico] = useState<'barras' | 'torta' | 'horizontal'>('barras');
 
     useEffect(() => {
         let cancelado = false;
@@ -185,7 +186,7 @@ export default function EstadisticaIncidentes() {
                 Cantidad de incidentes reportados por categoría durante un período.
             </p>
 
-            <div
+            {/* <div
                 style={{
                     display: 'flex',
                     flexWrap: 'wrap',
@@ -228,7 +229,106 @@ export default function EstadisticaIncidentes() {
             {error && (
                 <p style={{ color: 'var(--rojo-texto)' }}>{error}</p>
             )}
+            <div style={{display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                marginBottom: '20px',
+                flexWrap: 'wrap'
+            }}>
+                <label htmlFor="tipoGrafico"> Tipo de gráfico: </label>
 
+                <select
+                    id="tipoGrafico"
+                    value={tipoGrafico}
+                    onChange={(e) =>
+                        setTipoGrafico(
+                            e.target.value as 'barras' | 'torta' | 'horizontal'
+                        )
+                    }
+                >
+                    <option value="barras">Barras verticales</option>
+                    <option value="torta">Torta</option>
+                    <option value="horizontal">Barras horizontales</option>
+                </select>
+            </div> */}
+            <div
+                style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '16px',
+                    alignItems: 'end',
+                    marginBottom: '24px',
+                    width: '100%',
+                    maxWidth: '900px',
+                    boxSizing: 'border-box'
+                }}
+            >
+                <label style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minWidth: '140px',
+                    flexGrow: 1
+                }}>
+                    <span style={{ fontWeight: 'bold', marginBottom: '6px' }}>
+                        Desde
+                    </span>
+                    <input
+                        type="date"
+                        className={styles.filtroFecha}
+                        value={fechaDesde}
+                        max={fechaHasta || hoyLocal()}
+                        onChange={(evento) => setFechaDesde(evento.target.value)}
+                    />
+                </label>
+
+                <label style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minWidth: '140px',
+                    flexGrow: 1
+                }}>
+                    <span style={{ fontWeight: 'bold', marginBottom: '6px' }}>
+                        Hasta
+                    </span>
+                    <input
+                        type="date"
+                        className={styles.filtroFecha}
+                        value={fechaHasta}
+                        min={fechaDesde || undefined}
+                        max={hoyLocal()}
+                        onChange={(evento) => setFechaHasta(evento.target.value)}
+                    />
+                </label>
+
+                <label style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minWidth: '140px',
+                    flexGrow: 1
+                }}>
+                    <span style={{ fontWeight: 'bold', marginBottom: '6px' }}>
+                        Tipo de gráfico
+                    </span>
+                    <select
+                        id="tipoGrafico"
+                        value={tipoGrafico}
+                        onChange={(evento) =>
+                            setTipoGrafico(
+                                evento.target.value as 'barras' | 'torta' | 'horizontal'
+                            )
+                        }
+                        className={styles.filtroFecha}
+                    >
+                        <option value="barras">Barras verticales</option>
+                        <option value="torta">Torta</option>
+                        <option value="horizontal">Barras horizontales</option>
+                    </select>
+                </label>
+            </div>
+
+            {error && (
+                <p style={{ color: 'var(--rojo-texto)' }}>{error}</p>
+            )}
             <section
                 className={styles.tarjetaEstatica}
                 style={{
@@ -247,15 +347,14 @@ export default function EstadisticaIncidentes() {
                     </p>
                 ) : (
                     <div style={{ width: '100%', minHeight: '260px', position: 'relative' }}>
+                        {tipoGrafico === 'barras' && (
                         <Bar
                             data={datosGrafico}
                             options={{
                                 responsive: true,
                                 maintainAspectRatio: false,
                                 plugins: {
-                                    legend: {
-                                        display: false,
-                                    },
+                                    legend: { display: false },
                                     tooltip: {
                                         callbacks: {
                                             label: (context) =>
@@ -266,19 +365,81 @@ export default function EstadisticaIncidentes() {
                                 scales: {
                                     y: {
                                         beginAtZero: true,
-                                        ticks: {
-                                            precision: 0,
+                                        ticks: { precision: 0 },
+                                    },
+                                },
+                                onClick: (_evento, elementos) => {
+                                    if (elementos.length > 0) {
+                                        setTipoSeleccionado(
+                                            TIPOS[elementos[0].index]
+                                        );
+                                    }
+                                },
+                            }}
+                        />
+                    )}
+
+                    {tipoGrafico === 'torta' && (
+                        <Pie
+                            data={datosGrafico}
+                            options={{
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        display: true,
+                                        position: 'bottom',
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: (context) =>
+                                                ` ${context.label}: ${context.raw} incidente(s)`,
                                         },
                                     },
                                 },
                                 onClick: (_evento, elementos) => {
                                     if (elementos.length > 0) {
-                                        const indice = elementos[0].index;
-                                        setTipoSeleccionado(TIPOS[indice]);
+                                        setTipoSeleccionado(
+                                            TIPOS[elementos[0].index]
+                                        );
                                     }
                                 },
                             }}
                         />
+                    )}
+
+                    {tipoGrafico === 'horizontal' && (
+                        <Bar
+                            data={datosGrafico}
+                            options={{
+                                indexAxis: 'y',
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: (context) =>
+                                                ` ${context.parsed.x} incidente(s)`,
+                                        },
+                                    },
+                                },
+                                scales: {
+                                    x: {
+                                        beginAtZero: true,
+                                        ticks: { precision: 0 },
+                                    },
+                                },
+                                onClick: (_evento, elementos) => {
+                                    if (elementos.length > 0) {
+                                        setTipoSeleccionado(
+                                            TIPOS[elementos[0].index]
+                                        );
+                                    }
+                                },
+                            }}
+                        />
+                    )}
                     </div>
                 )}
 
