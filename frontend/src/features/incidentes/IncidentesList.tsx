@@ -170,8 +170,8 @@ export default function IncidentesList({ soloAbiertos = false }: IncidentesListP
 
             {error && <p style={{ color: 'var(--rojo-texto)' }}>{error}</p>}
 
-            <div className={styles.contenedorTabla} style={{ maxWidth: '1280px' }}>
-                <div className={styles.filaHeader} style={{ gridTemplateColumns: GRILLA }}>
+            <div className={styles.contenedorTabla} style={{ maxWidth: '100%', width: '100%' }}>
+                <div className={styles.filaHeader} style={{ gridTemplateColumns: GRILLA, minWidth: '820px' }}>
                     <div>Fecha</div>
                     <div>Descripción</div>
                     <div>Tipo</div>
@@ -208,6 +208,7 @@ export default function IncidentesList({ soloAbiertos = false }: IncidentesListP
                                 style={{
                                     gridTemplateColumns: GRILLA,
                                     alignItems: 'center',
+                                    minWidth: '820px',
                                     ...(soloAbiertos && esViejo
                                         ? {
                                               borderLeft: '3px solid var(--rojo-texto)',

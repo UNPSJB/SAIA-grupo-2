@@ -287,17 +287,21 @@ export default function ChecklistList() {
             {/* MODAL COMPLETAR TAREA */}
             {modalAbierto && (
                 <div className={styles.modalOverlay}>
-                    <div style={{ backgroundColor: 'var(--bg)', width: '95%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '12px', padding: '30px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
-                        <h2 style={{ marginTop: 0, borderBottom: '1px solid var(--border)', paddingBottom: '15px' }}>Registrar Tarea</h2>
+                    <div className={styles.modalFormulario}>
+                        <h2 className={styles.modalTitulo}>Registrar Tarea</h2>
                         
                         {cargandoModal ? (
-                            <p style={{ textAlign: 'center', padding: '40px 0', fontSize: '1.2rem', color: 'var(--text-muted)' }}>Cargando detalles de la tarea...</p>
+                            <p className={styles.modalCargando}>Cargando detalles de la tarea...</p>
                         ) : (
                             <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta} style={{ boxShadow: 'none', padding: 0, border: 'none' }}>
                                 
                                 <div className={styles.formGroup} style={{ marginBottom: '20px' }}>
-                                    <label style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Empleado a cargo:</label>
-                                    <select {...register('empleado_id', { required: true })} disabled={usuario?.rol !== 'admin'} style={{ width: '100%', padding: '12px', fontSize: '1rem', borderRadius: '8px', border: '1px solid var(--border)',backgroundColor: usuario?.rol === 'admin' ? '#fff' : '#f3f4f6', color: '#1f2937' }}>
+                                    <label className={styles.modalTituloCampo}>Empleado a cargo:</label>
+                                    <select
+                                        {...register('empleado_id', { required: true })}
+                                        disabled={usuario?.rol !== 'admin'}
+                                        className={`${styles.modalSelector} ${usuario?.rol !== 'admin' ? styles.modalSelectorBloqueado : ''}`}
+                                    >
                                         <option value="">-- Seleccionar empleado --</option>
                                         {empleados.map(e => (
                                             <option key={e.id} value={e.id}>{e.nombre} {e.apellido}</option>
@@ -306,7 +310,7 @@ export default function ChecklistList() {
                                 </div>
 
                                 <div className={styles.formGroup} style={{ marginBottom: '20px' }}>
-                                    <label style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Evidencia Fotográfica (Opcional):</label>
+                                    <label className={styles.modalTituloCampo}>Evidencia Fotográfica (Opcional):</label>
                                     <input 
                                         type="file" 
                                         accept="image/*" 
@@ -314,34 +318,19 @@ export default function ChecklistList() {
                                         {...register('evidencia', {
                                             onChange: handleFileChange
                                         })}
-                                        style={{ width: '100%', padding: '10px', fontSize: '1rem', borderRadius: '8px', border: '1px dashed var(--border)', backgroundColor: '#f9fafb', color: '#1f2937' }} 
+                                        className={styles.modalArchivo}
                                     />
-                                    <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '5px' }}>Desde el celular, esto abrirá la cámara directamente.</small>
+                                    <small className={styles.modalTextoAdicional}>Desde el celular, esto abrirá la cámara directamente.</small>
 
                                     {vistaPreviaEvidencia && (
-                                        <div style={{ position: 'relative', marginTop: '12px', textAlign: 'center', backgroundColor: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                        <div className={styles.modalVistaPrevia}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                                <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-h)' }}>Vista previa de la evidencia:</p>
+                                                <p className={styles.modalTextoVistaPrevia}>Vista previa de la evidencia:</p>
                                                 <button
                                                     type="button"
                                                     onClick={quitarEvidencia}
                                                     title="Quitar foto"
-                                                    style={{
-                                                        background: '#fee2e2',
-                                                        color: '#dc2626',
-                                                        border: '1px solid #fca5a5',
-                                                        borderRadius: '50%',
-                                                        width: '26px',
-                                                        height: '26px',
-                                                        display: 'inline-flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        cursor: 'pointer',
-                                                        fontWeight: 'bold',
-                                                        fontSize: '1rem',
-                                                        lineHeight: 1,
-                                                        padding: 0
-                                                    }}
+                                                    className={styles.modalBotonQuitar}
                                                 >
                                                     &times;
                                                 </button>
@@ -356,28 +345,16 @@ export default function ChecklistList() {
                                 </div>
 
                                 <div className={styles.formGroup} style={{ marginBottom: '25px' }}>
-                                    <label style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Observaciones (Opcional):</label>
+                                    <label className={styles.modalTituloCampo}>Observaciones (Opcional):</label>
                                     <textarea 
                                         {...register('observaciones')} 
                                         rows={3} 
                                         placeholder="Ej: Quedó una mancha que no salió, se rompió un trapo, etc."
-                                        style={{ 
-                                            width: '100%', 
-                                            padding: '14px', 
-                                            fontSize: '1rem', 
-                                            borderRadius: '8px', 
-                                            border: '1px solid var(--border)', 
-                                            backgroundColor: '#ffffff',
-                                            color: '#1f2937',
-                                            fontFamily: 'inherit',
-                                            resize: 'vertical',
-                                            boxSizing: 'border-box',
-                                            outline: 'none'
-                                        }}
+                                        className={styles.modalAreaDeTexto}
                                     ></textarea>
                                 </div>
 
-                                <hr style={{ margin: '30px 0', borderColor: 'var(--border)' }} />
+                                <hr style={{ margin: '25px 0', borderColor: 'var(--border)' }} />
 
                                 <div style={{ marginBottom: '20px' }}>
                                     <h3 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>Consumo de Insumos</h3>
@@ -394,26 +371,27 @@ export default function ChecklistList() {
                                                         style={{
                                                             display: 'flex',
                                                             flexDirection: 'column',
-                                                            padding: '15px',
-                                                            backgroundColor: errCant ? '#fef2f2' : '#f0fdf4',
-                                                            border: errCant ? '1px solid #fca5a5' : '1px solid #bbf7d0',
+                                                            padding: '14px',
+                                                            backgroundColor: errCant ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                                                            border: errCant ? '1px solid #ef4444' : '1px solid var(--border)',
                                                             borderRadius: '8px',
-                                                            gap: '8px'
+                                                            gap: '8px',
+                                                            boxSizing: 'border-box'
                                                         }}
                                                     >
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                                <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: errCant ? '#991b1b' : '#166534' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', minWidth: '180px', flex: 1 }}>
+                                                                <span style={{ fontWeight: 'bold', fontSize: '1rem', color: 'var(--text-h)' }}>
                                                                     {item.nombre_producto}
                                                                 </span>
                                                                 
-                                                                <span style={{ fontSize: '0.85rem', color: errCant ? '#b91c1c' : '#15803d' }}>
+                                                                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                                                                     Estimado: {item.cantidad_estimada} {item.unidad_medida || ''} | Stock disponible: {item.stock_disponible} {item.unidad_medida || ''}
                                                                 </span>
                                                             </div>
 
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                                <label style={{ fontSize: '0.9rem', fontWeight: 'bold', color: errCant ? '#991b1b' : '#166534' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                <label style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-h)', margin: 0 }}>
                                                                     Usado:
                                                                 </label>
                                                                 <input
@@ -432,19 +410,19 @@ export default function ChecklistList() {
                                                                         }
                                                                     })}
                                                                     style={{
-                                                                        width: '110px',
-                                                                        padding: '10px',
-                                                                        fontSize: '1.1rem',
+                                                                        width: '90px',
+                                                                        padding: '8px',
+                                                                        fontSize: '1rem',
                                                                         borderRadius: '6px',
-                                                                        border: errCant ? '2px solid #ef4444' : '1px solid #16a34a',
+                                                                        border: errCant ? '2px solid #ef4444' : '1px solid var(--border)',
                                                                         textAlign: 'center',
-                                                                        backgroundColor: '#fff',
-                                                                        color: '#1f2937',
+                                                                        backgroundColor: 'var(--bg)',
+                                                                        color: 'var(--text-h)',
                                                                         outline: 'none'
                                                                     }}
                                                                 />
                                                                 {item.unidad_medida && (
-                                                                    <span style={{ fontSize: '0.9rem', color: errCant ? '#991b1b' : '#166534', fontWeight: '500' }}>
+                                                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '500' }}>
                                                                         {item.unidad_medida}
                                                                     </span>
                                                                 )}
@@ -463,7 +441,7 @@ export default function ChecklistList() {
                                     )}
                                 </div>
 
-                                <div className={styles.filaBotones} style={{ marginTop: '30px', justifyContent: 'flex-end', gap: '15px' }}>
+                                <div className={styles.filaBotones} style={{ marginTop: '25px', justifyContent: 'flex-end', gap: '12px' }}>
                                     <Boton type="submit" variant="guardar">Guardar</Boton>
                                     <Boton type="button" variant="eliminar" onClick={() => setModalAbierto(false)}>Cancelar</Boton>
                                 </div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
 import type { Equipo } from '../../types/equipos';
 import { getEquipos } from '../../services/equiposServices';
-import { COLOR_ESTADO, ETIQUETA_ESTADO } from './estadoMantenimiento';
+import { ETIQUETA_ESTADO } from './estadoMantenimiento';
 import Boton from '../../components/Boton';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';

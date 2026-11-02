@@ -9,9 +9,7 @@ import Boton from '../../components/Boton';
 import sharedStyles from '../../styles/shared.module.css';
 
 
- import BotonHistorialVersiones from './BotonHistorialVersiones';
-
-import { useAuth } from '../../context/AuthContext';
+import BotonHistorialVersiones from './BotonHistorialVersiones';
 
 const ETIQUETAS_TIPO: Record<string, string> = {
     manual_bpm: 'Manual de BPM',

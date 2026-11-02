@@ -175,6 +175,9 @@ export default function DocumentoVersionadoForm() {
                             id="documento-fecha-vigencia"
                             type="date"
                             value={fechaVigencia}
+                            className={`${styles.filtroFecha} ${
+                                errores.fechaVigencia ? styles.filtroFechaError : ''
+                            }`}
                             onChange={(evento) => {
                                 setFechaVigencia(evento.target.value);
                                 if (errores.fechaVigencia) {
@@ -182,7 +185,6 @@ export default function DocumentoVersionadoForm() {
                                 }
                             }}
                             aria-invalid={Boolean(errores.fechaVigencia)}
-                            style={errores.fechaVigencia ? estiloError : {}}
                         />
                         {errores.fechaVigencia && <span style={estiloMensaje}>{errores.fechaVigencia}</span>}
                     </div>

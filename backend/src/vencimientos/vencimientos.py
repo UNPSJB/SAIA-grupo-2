@@ -1,5 +1,6 @@
 from datetime import date
 from enum import Enum
+from src.config import DIAS_AVISO_PREVIO
 
 
 class EstadoVencimiento(str, Enum):
@@ -9,7 +10,7 @@ class EstadoVencimiento(str, Enum):
 
 
 class ControlDeVencimiento:
-    DIAS_AVISO_PREVIO = 15
+    DIAS_AVISO_PREVIO = DIAS_AVISO_PREVIO
 
     @property
     def dias_aviso_previo(self) -> int:

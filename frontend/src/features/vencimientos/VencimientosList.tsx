@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 import type {
     CategoriaVencimiento,
@@ -8,11 +9,11 @@ import type {
 } from '../../types/vencimientos';
 import { getVencimientosConsolidados } from '../../services/vencimientosServices';
 import styles from '../../styles/shared.module.css';
-import TablaPaginada, {type Columna } from '../../components/TablaPaginada';
+import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 import TarjetasFiltro, { type Metrica } from '../../components/TarjetasFiltro';
 import BarraFiltros from '../../components/BarraFiltros'; // <-- Importamos la barra
 import { filtrarPorTexto } from '../../utils/texto';
-
+import { DIAS_AVISO_PREVIO } from '../../constants/config';
 
 const COLOR_ESTADO: Record<EstadoVencimiento, string> = {
     vencido: '#ef4444',
@@ -70,13 +71,9 @@ export default function VencimientosList() {
         }
     };
 
-
-
     useEffect(() => {
         cargarDatos();
     }, [filtroCategoria]);
-
-    
 
     const itemsBaseMetricas = filtrarPorTexto(resumen?.items || [], busqueda);
 
@@ -85,9 +82,7 @@ export default function VencimientosList() {
         filtroEstado === '' || item.estado === filtroEstado
     );
 
-
-
-// 4. MÉTRICAS DINÁMICAS: Calculamos los números leyendo de `itemsBaseMetricas`
+    // 4. MÉTRICAS DINÁMICAS: Calculamos los números leyendo de `itemsBaseMetricas`
     const vencidos = itemsBaseMetricas.filter(i => i.estado === 'vencido').length;
     const proximos = itemsBaseMetricas.filter(i => i.estado === 'proximo').length;
     const vigentes = itemsBaseMetricas.filter(i => i.estado === 'vigente').length;
@@ -98,7 +93,6 @@ export default function VencimientosList() {
         { id: 'vigente', titulo: 'VIGENTES', valor: vigentes, color: COLOR_ESTADO.vigente },
         { id: '', titulo: 'TOTAL CONTROLADOS', valor: itemsBaseMetricas.length, color: '#3b82f6' } 
     ];
-
 
     const misColumnas: Columna<ItemVencimientoConsolidado>[] = [
         {
@@ -112,11 +106,21 @@ export default function VencimientosList() {
             key: 'titulo',
             encabezado: 'Vencimiento / Título',
             ordenable: true,
-            variant: 'titulo', // <--- Usamos el prop variant
-            render: (item) => item.titulo
+            variant: 'titulo',
+            render: (item) => {
+                const id = item.id.split('-').slice(1).join('-');
+                const ruta = (item.categoria === 'personal' || item.categoria === 'documentos')
+                    ? `/empleados/${id}`
+                    : item.categoria === 'equipos'
+                    ? `/elementosLimpieza/${id}`
+                    : `/equipos/${id}`;
 
-            // render: (item) => <Link to={`/${item.categoria}/${item.id.split('-').at(1)}`}> {item.titulo} </Link> 
-            // esto funciona para equipos por que justo la url con la vista detalle creo, guardado para despues
+                return (
+                    <Link to={ruta} className={styles.linkTituloTabla}>
+                        {item.titulo}
+                    </Link>
+                );
+            }
         },
         {
             key: 'detalle',
@@ -137,7 +141,6 @@ export default function VencimientosList() {
             variant: 'fecha', // <--- Usamos el prop variant
             render: (item) => formatearFecha(item.fecha_vencimiento)
         },
-
         {
             key: 'estado',
             encabezado: 'Estado',
@@ -157,7 +160,6 @@ export default function VencimientosList() {
         }
     ];
 
-
     // Armamos la configuración de nuestros selectores adicionales
     const misFiltros = [
         {
@@ -174,7 +176,6 @@ export default function VencimientosList() {
         }
     ];
 
-
     const limpiarFiltros = () => {
         setFiltroCategoria('');
         setFiltroEstado('');
@@ -186,7 +187,7 @@ export default function VencimientosList() {
             <h2>Vista Consolidada de Vencimientos</h2>
 
             <p style={{ marginTop: '-10px', marginBottom: '20px', color: 'var(--text-muted)' }}>
-                Monitoreo unificado de vencimientos de personal, documentos, elementos de limpieza y calibraciones de la planta.
+                Monitoreo unificado de vencimientos de personal, documentos, elementos de limpieza y calibraciones (alerta de aviso previo: {DIAS_AVISO_PREVIO} días).
             </p>
 
             {/* Tarjeta rectangular única que engloba las 4 métricas globales */}
@@ -197,7 +198,7 @@ export default function VencimientosList() {
                     onFiltroChange={(estado) => setFiltroEstado(estado as EstadoVencimiento | '')}
                 />
             )}
-                <BarraFiltros
+            <BarraFiltros
                 busqueda={busqueda}
                 onBusquedaChange={setBusqueda}
                 placeholderBusqueda="Buscar por título o detalle..."

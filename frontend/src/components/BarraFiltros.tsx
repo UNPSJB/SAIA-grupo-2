@@ -2,12 +2,11 @@ import Boton from './Boton';
 import BuscadorTexto from './BuscadorTexto';
 import styles from '../styles/shared.module.css';
 
-// Definimos los tipos de filtros que soporta la barra
 export interface FiltroConfig {
     label: string;
     value: string;
     onChange: (valor: string) => void;
-    type?: 'select' | 'date'; // <--- NUEVO: Permite elegir el tipo de control
+    type?: 'select' | 'date';
     opciones?: { value: string; label: string }[];
 }
 
@@ -43,12 +42,13 @@ export default function BarraFiltros({
                 backgroundColor: 'var(--card-bg, #444444)',
                 borderRadius: '8px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                boxSizing: 'border-box',
             }}
         >
-            <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-end', flexGrow: 1 }}>
+            <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-end', flexGrow: 1, width: '100%', maxWidth: '100%' }}>
                 
-                    {onBusquedaChange && (
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {onBusquedaChange && (
+                    <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: '200px' }}>
                         <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
                             Buscar:
                         </label>
@@ -56,14 +56,13 @@ export default function BarraFiltros({
                             valor={busqueda || ''} 
                             onCambio={onBusquedaChange} 
                             placeholder={placeholderBusqueda} 
-                            ancho="250px" 
+                            ancho="100%"
                         />
                     </div>
                 )}
 
-                {/* 2. Dibuja Selects o Dates automáticamente */}
                 {filtros.map((filtro, index) => (
-                    <div key={index} style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div key={index} style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: '150px' }}>
                         <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
                             {filtro.label}
                         </label>
@@ -92,14 +91,15 @@ export default function BarraFiltros({
                 ))}
             </div>
 
-            {/* 3. Botón de Limpiar */}
-            <Boton 
-                variant="limpiar" 
-                onClick={onLimpiar} 
-                disabled={!mostrarBotonLimpiar}
-            >
-                Limpiar Filtros
-            </Boton>
+            <div style={{ alignSelf: 'flex-end', marginTop: '10px' }}>
+                <Boton
+                    variant="limpiar"
+                    onClick={onLimpiar}
+                    disabled={!mostrarBotonLimpiar}
+                >
+                    Limpiar Filtros
+                </Boton>
+            </div>
         </div>
     );
 }

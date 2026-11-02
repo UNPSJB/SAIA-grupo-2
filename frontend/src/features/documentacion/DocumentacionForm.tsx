@@ -224,8 +224,10 @@ export default function DocumentacionForm() {
                         <input
                             type="date"
                             value={fechaVencimiento}
+                            className={`${styles.filtroFecha} ${
+                                errores.fecha_vencimiento ? styles.filtroFechaError : ''
+                            }`}
                             onChange={(e) => setFechaVencimiento(e.target.value)}
-                            style={errores.fecha_vencimiento ? estiloError : {}}
                         />
                         {errores.fecha_vencimiento && (
                             <span style={estiloMensaje}>{errores.fecha_vencimiento}</span>

@@ -26,10 +26,11 @@ export default function TarjetasFiltro({
                 maxWidth: '1100px',
                 marginBottom: '25px',
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
                 padding: '10px',
                 textAlign: 'center',
                 alignItems: 'center',
+                boxSizing: 'border-box',
             }}
         >
             {metricas.map((metrica) => {
@@ -44,7 +45,7 @@ export default function TarjetasFiltro({
                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colorHover}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = filtroActual === metrica.id ? colorActivo : 'transparent'}
                         style={{ 
-                            padding: '10px 15px', 
+                            padding: '10px 12px',
                             cursor: 'pointer',
                             borderRadius: '8px',
                             backgroundColor: filtroActual === metrica.id ? colorActivo : 'transparent',
@@ -54,7 +55,7 @@ export default function TarjetasFiltro({
                         <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>
                             {metrica.titulo}
                         </span>
-                        <h3 style={{ fontSize: '1.8rem', margin: '5px 0 0 0', color: metrica.color }}>
+                        <h3 style={{ fontSize: '1.6rem', margin: '5px 0 0 0', color: metrica.color }}>
                             {metrica.valor}
                         </h3>
                     </div>

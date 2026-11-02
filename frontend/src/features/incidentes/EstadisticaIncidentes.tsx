@@ -192,9 +192,12 @@ export default function EstadisticaIncidentes() {
                     gap: '16px',
                     alignItems: 'end',
                     marginBottom: '24px',
+                    width: '100%',
+                    maxWidth: '900px',
+                    boxSizing: 'border-box'
                 }}
             >
-                <label>
+                <label style={{ display: 'flex', flexDirection: 'column', minWidth: '140px', flexGrow: 1 }}>
                     <span style={{ fontWeight: 'bold', marginBottom: '6px' }}>
                         Desde
                     </span>
@@ -207,7 +210,7 @@ export default function EstadisticaIncidentes() {
                     />
                 </label>
 
-                <label>
+                <label style={{ display: 'flex', flexDirection: 'column', minWidth: '140px', flexGrow: 1 }}>
                     <span style={{ fontWeight: 'bold', marginBottom: '6px' }}>
                         Hasta
                     </span>
@@ -243,7 +246,7 @@ export default function EstadisticaIncidentes() {
                         Cargando estadísticas...
                     </p>
                 ) : (
-                    <div style={{ width: '100%', minHeight: '280px' }}>
+                    <div style={{ width: '100%', minHeight: '260px', position: 'relative' }}>
                         <Bar
                             data={datosGrafico}
                             options={{
@@ -331,6 +334,7 @@ export default function EstadisticaIncidentes() {
                                 className={styles.filaHeader}
                                 style={{
                                     gridTemplateColumns: '1.2fr 2fr 1fr',
+                                    minWidth: '480px',
                                 }}
                             >
                                 <div>Fecha</div>
@@ -345,6 +349,7 @@ export default function EstadisticaIncidentes() {
                                     style={{
                                         gridTemplateColumns: '1.2fr 2fr 1fr',
                                         alignItems: 'center',
+                                        minWidth: '480px',
                                     }}
                                 >
                                     <div>

@@ -138,18 +138,9 @@ export default function NuevaVersionModal({
                             id="fecha-vigencia-nueva-version"
                             type="date"
                             value={fechaVigencia}
+                            className={sharedStyles.filtroFecha}
                             onChange={(event) => setFechaVigencia(event.target.value)}
                             disabled={guardando}
-                            style={{
-                                boxSizing: 'border-box',
-                                width: '100%',
-                                padding: '12px',
-                                marginTop: '8px',
-                                borderRadius: '8px',
-                                border: '1px solid var(--border)',
-                                backgroundColor: 'var(--input-bg)',
-                                color: 'var(--text)',
-                            }}
                         />
                     </div>
 

@@ -40,6 +40,10 @@ export default function TablaPaginada<T>({
     const [columnaOrden, setColumnaOrden] = useState<string>(columnaOrdenInicial);
     const [ordenAsc, setOrdenAsc] = useState<boolean>(ordenAscInicial);
     
+    const minWidthFila = useMemo(() => {
+        return `${Math.max(450, columnas.length * 100)}px`;
+    }, [columnas.length]);
+
     // 1. Manejo del Ordenamiento
     const handleSort = (columnaKey: string) => {
         if (columnaOrden === columnaKey) {
@@ -82,7 +86,7 @@ export default function TablaPaginada<T>({
         <>
             <div className={sharedStyles.contenedorTabla}>
                 {/* Cabecera */}
-                <div className={sharedStyles.filaHeader} style={{ gridTemplateColumns }}>
+                <div className={sharedStyles.filaHeader} style={{ gridTemplateColumns, minWidth: minWidthFila }}>
                     {columnas.map((col) => (
                         <div 
                             key={col.key} 
@@ -101,7 +105,7 @@ export default function TablaPaginada<T>({
                     </div>
                 ) : (
                     itemsPaginados.map((item, index) => (
-                        <div key={index} className={sharedStyles.filaItem} style={{ gridTemplateColumns }}>
+                        <div key={index} className={sharedStyles.filaItem} style={{ gridTemplateColumns, minWidth: minWidthFila }}>
                             {columnas.map((col) => {
                                 // Evaluamos si la variante es una función (y le pasamos el item) o un string fijo
                                 const nombreVariante = typeof col.variant === 'function' ? col.variant(item) : col.variant;
@@ -123,7 +127,7 @@ export default function TablaPaginada<T>({
                     <Boton variant="volver" onClick={() => setPaginaActual(p => p - 1)} disabled={paginaActual === 1}>
                         Anterior
                     </Boton>
-                    <span style={{ color: 'var(--text-h)', fontWeight: 'bold', margin: '0 15px' }}>
+                    <span style={{ color: 'var(--text-h)', fontWeight: 'bold', margin: '0 10px' }}>
                         Página {paginaActual} de {totalPaginas}
                     </span>
                     <Boton variant="siguiente" onClick={() => setPaginaActual(p => p + 1)} disabled={paginaActual === totalPaginas}>

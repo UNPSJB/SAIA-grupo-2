@@ -1,164 +1,173 @@
 /* ESTILOS PARA SIDEBAR */
-.sidebarAcordeon{
-    display:block;
+.sidebarAcordeon {
+    display: block;
     align-items: center;
-    justify-content:center;
+    justify-content: center;
     width: 100%;
-    cursor:pointer;
+    cursor: pointer;
 }
 
-.sidebarTituloAcordeon{
+.sidebarTituloAcordeon {
     text-decoration: none;
     color: var(--text-h);
     font-weight: 500;
     padding: 8px 12px;
     border-radius: 5px;
     cursor: pointer;
-    display:flex;
+    display: flex;
     justify-content: space-between;
     user-select: none;
     transition: background-color 0.3s ease, color 0.3s ease;
+    font-size: 0.95rem;
 }
-.sidebarTituloAcordeon:hover,.sidebarItemAcordeon:hover{
+
+.sidebarTituloAcordeon:hover, .sidebarItemAcordeon:hover {
     background-color: var(--accent-bg);
 }
 
-.sidebarAcordeon[open] > .sidebarTituloAcordeon,.sidebarItemAcordeon[aria-current="page"]{
+.sidebarAcordeon[open] > .sidebarTituloAcordeon, .sidebarItemAcordeon[aria-current="page"] {
     background-color: var(--azul-estandar);
     color: var(--texto-sobre-acento);
 }
 
-.sidebarAcordeon >.sidebarTituloAcordeon::after{
+.sidebarAcordeon > .sidebarTituloAcordeon::after {
     content: "▾";
 }
-.sidebarAcordeon[open] > .sidebarTituloAcordeon::after{
+
+.sidebarAcordeon[open] > .sidebarTituloAcordeon::after {
     content: "▴";
 }
 
-.sidebarOpcionesAcordeon{
+.sidebarOpcionesAcordeon {
     display: flex;
-    padding-left: 24px;
-    align-items:flex-start;
+    padding-left: 20px;
+    align-items: flex-start;
     flex-direction: column;
     width: 100%;
-    cursor:pointer;
+    cursor: pointer;
 }
 
-.sidebarItemAcordeon{
-    padding: 8px;
-    border-radius: 8px;
+.sidebarItemAcordeon {
+    padding: 6px 8px;
+    border-radius: 6px;
     text-decoration: none;
     color: var(--text);
     font-weight: 300;
+    font-size: 0.9rem;
 }
 
-
-/* ESTILOS PARA MODAL*/
-.modalFormulario{ 
+/* ESTILOS PARA MODAL */
+.modalFormulario {
     background-color: var(--bg); 
     width: 95%; 
-    max-width: 700px;
+    max-width: 720px;
     max-height: 90vh; 
     overflow-y: auto; 
-    border-radius: 12px; 
-    padding: 30px; 
+    border-radius: 10px;
+    padding: 28px;
+    box-sizing: border-box;
 }
 
-.modalTitulo{ 
+.modalTitulo {
     margin-top: 0; 
     border-bottom: 1px solid var(--border); 
-    padding-bottom: 15px 
+    padding-bottom: 14px;
+    font-size: 1.25rem;
 }
 
-.modalCargando{ 
+.modalCargando {
     text-align: center; 
-    padding: 40px 0; 
-    font-size: 1.2rem; 
-    color: var(--text-muted) 
+    padding: 30px 0;
+    font-size: 1.1rem;
+    color: var(--text-muted);
 }
 
-.modalTituloCampo{ 
-    font-size: 1.1rem; 
-    font-weight: bold 
+.modalTituloCampo {
+    font-size: 0.92rem;
+    font-weight: 600;
 }
 
-.modalSelector{ 
+.modalSelector {
     width: 100%; 
-    padding: 12px; 
-    font-size: 1rem; 
-    border-radius: 8px; 
+    padding: 10px 12px;
+    font-size: 0.92rem;
+    border-radius: 6px;
     border: 1px solid var(--border);
-    background-color:  var(--input-bg);
-    color: var(--text) 
+    background-color: var(--input-bg);
+    color: var(--text-h);
+    box-sizing: border-box;
 }
 
-.modalSelectorBloqueado{
+.modalSelectorBloqueado {
     background-color: var(--blocked-input-bg);
+    color: var(--text-muted);
 }
 
-.modalArchivo{ 
+.modalArchivo {
     width: 100%; 
-    padding: 10px; 
-    font-size: 1rem; 
-    border-radius: 8px; 
+    padding: 10px 12px;
+    font-size: 0.92rem;
+    border-radius: 6px;
     border: 1px dashed var(--border); 
     background-color: var(--input-bg); 
-    color: var(--text);
-    box-sizing: border-box
+    color: var(--text-h);
+    box-sizing: border-box;
 }
 
-.modalTextoAdicional{ 
+.modalTextoAdicional {
     color: var(--text-muted); 
     display: block; 
-    margin-top: 5px 
+    margin-top: 4px;
+    font-size: 0.82rem;
 }
 
-.modalVistaPrevia{ 
+.modalVistaPrevia {
     position: relative; 
-    margin-top: 12px; 
+    margin-top: 12px;
     text-align: center; 
     background-color: var(--input-bg); 
-    padding: 12px; 
-    border-radius: 8px; 
-    border: 1px solid var(--border) 
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    box-sizing: border-box;
 }
 
-.modalTextoVistaPrevia{ 
+.modalTextoVistaPrevia {
     margin: 0; 
     font-size: 0.85rem;
-    font-weight: bold; 
-    color: var(--text-h)
+    font-weight: 600;
+    color: var(--text-h);
 }
 
-.modalBotonQuitar{
+.modalBotonQuitar {
     background: #fee2e2;
     color: #dc2626;
     border: 1px solid #fca5a5;
     border-radius: 50%;
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     font-weight: bold;
-    font-size: 1rem;
+    font-size: 0.9rem;
     line-height: 1;
-    padding: 0
+    padding: 0;
 }
 
-.modalAreaDeTexto{ 
+.modalAreaDeTexto {
     width: 100%; 
-    padding: 14px; 
-    font-size: 1rem; 
-    border-radius: 8px;
+    padding: 12px;
+    font-size: 0.92rem;
+    border-radius: 6px;
     border: 1px solid var(--border); 
     background-color: var(--input-bg);
-    color: #1f2937;
+    color: var(--text-h);
     font-family: inherit;
     resize: vertical;
     box-sizing: border-box;
-    outline: none
+    outline: none;
 }
 
 .contenedorPrincipal {
@@ -166,31 +175,38 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    padding-top: 40px;
+    padding-top: 20px;
     min-height: 85vh;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .linkCrear {
     display: inline-block;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 .grupoBotones {
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
 }
 
 .filaBotones {
     display: flex;
     flex-direction: row;
-    gap: 15px;
+    gap: 12px;
     justify-content: center;
-    margin-top: 15px;
+    align-items: center;
+    margin-top: 18px;
     width: 100%;
+    flex-wrap: wrap;
 }
 
 .bloqueDetalle {
     margin-top: 20px;
+    width: 100%;
 }
 
 .accordion {
@@ -208,6 +224,7 @@
     width: 100%;
     cursor: pointer;
     list-style: none;
+    font-size: 0.95rem;
 }
 
 .accordionHeader::-webkit-details-marker {
@@ -241,20 +258,22 @@ form {
     flex-direction: column;
     align-items: stretch; 
     background-color: var(--card-bg);
-    padding: 30px;
-    border-radius: 12px;
+    padding: 28px;
+    border-radius: 10px;
     box-shadow: var(--shadow);
     border: 1px solid var(--border);
     max-width: 800px;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .formGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 20px;
     width: 100%;
     margin-bottom: 20px;
+    box-sizing: border-box;
 }
 
 .formGroup {
@@ -262,6 +281,7 @@ form {
     flex-direction: column;
     align-items: flex-start;
     width: 100%;
+    box-sizing: border-box;
 }
 
 label {
@@ -269,7 +289,7 @@ label {
     margin-bottom: 6px;
     color: var(--text-h);
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     text-align: left;
 }
 
@@ -280,13 +300,14 @@ select {
     background-color: var(--bg);
     color: var(--text-h);
     border: 1px solid var(--border);
-    padding: 12px;
-    border-radius: 8px;
+    padding: 10px 12px;
+    border-radius: 6px;
     margin-bottom: 0; 
     width: 100%; 
     box-sizing: border-box;
     transition: all 0.2s ease;
     font-family: inherit;
+    font-size: 0.92rem;
 }
 
 input:focus, select:focus {
@@ -315,9 +336,10 @@ input:focus, select:focus {
     justify-content: flex-start;
     gap: 12px;
     background-color: var(--card-bg);
-    padding: 10px 15px;
-    border-radius: 8px;
+    padding: 10px 14px;
+    border-radius: 6px;
     border: 1px solid var(--border);
+    box-sizing: border-box;
 }
 
 .checkbox {
@@ -334,54 +356,56 @@ input:focus, select:focus {
     margin-bottom: 0;
     cursor: pointer;
     color: var(--text-h);
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     user-select: none;
 }
 
 p {
     color: var(--text);
-    font-size: 16px;
+    font-size: 0.95rem;
     margin-bottom: 10px;
-    line-height: 1.6;
+    line-height: 1.5;
 }
 
 .gridTarjetas {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
     margin-top: 10px;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .tarjeta {
     background-color: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
+    border-radius: 10px;
+    padding: 22px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     box-shadow: var(--shadow);
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     text-align: left;
+    box-sizing: border-box;
 }
 
 .tarjeta:hover {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     border-color: var(--accent);
-    box-shadow: 0 10px 20px -5px rgba(2, 132, 199, 0.15);
+    box-shadow: 0 8px 16px -4px rgba(2, 132, 199, 0.15);
 }
 
 .tarjetaHeader h3 {
-    margin: 0 0 10px 0;
+    margin: 0 0 8px 0;
     color: var(--text-h);
-    font-size: 1.25rem;
+    font-size: 1.15rem;
 }
 
 .tarjetaBody p {
-    margin: 6px 0;
+    margin: 5px 0;
     color: var(--text);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
 }
 
 .badge {
@@ -404,35 +428,41 @@ p {
 .contenedorTabla {
     width: 100%;
     max-width: 1100px;
+    margin: 15px auto 0;
     background-color: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 10px;
     box-shadow: var(--shadow);
-    overflow: hidden;
-    margin-top: 15px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
 }
 
 .filaHeader {
     display: grid;
-    grid-template-columns: 2fr 1fr 2.5fr 1fr 1.5fr;
-    padding: 16px 20px;
+    grid-template-columns: 2fr 1fr 2fr 1fr 1.5fr;
+    padding: 12px 16px;
     background-color: var(--bg);
     border-bottom: 2px solid var(--border);
     font-weight: 600;
-    color: var(--text-h);
-    font-size: 0.95rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     align-items: center;
+    box-sizing: border-box;
 }
 
 .filaItem {
     display: grid;
-    grid-template-columns: 2fr 1fr 2.5fr 1fr 1.5fr;
-    padding: 16px 20px;
+    grid-template-columns: 2fr 1fr 2fr 1fr 1.5fr;
+    padding: 12px 16px;
     align-items: center;
     border-bottom: 1px solid var(--border);
     transition: background-color 0.2s ease;
     color: var(--text);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    box-sizing: border-box;
 }
 
 .filaItem:last-child {
@@ -446,25 +476,28 @@ p {
 .grupoBotonesTabla {
     display: flex;
     gap: 8px;
+    align-items: center;
     justify-content: flex-end;
+    flex-wrap: wrap;
 }
 
 .tarjetaEstatica {
     background-color: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
+    border-radius: 10px;
+    padding: 22px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     box-shadow: var(--shadow);
     text-align: left;
+    box-sizing: border-box;
 }
 
 .textDanger {
     color: #ef4444;
-    font-size: 0.8rem;
-    margin-top: 5px;
+    font-size: 0.82rem;
+    margin-top: 4px;
     display: block;
 }
 
@@ -483,9 +516,10 @@ p {
 }
 
 .emptyMensaje {
-    padding: 30px;
+    padding: 28px;
     text-align: center;
     color: var(--text);
+    font-size: 0.9rem;
 }
 
 .modalOverlay {
@@ -500,28 +534,33 @@ p {
     align-items: center;
     z-index: 99999; 
     backdrop-filter: blur(3px); 
+    padding: 12px;
+    box-sizing: border-box;
 }
 
 .modalContent {
     background-color: var(--card-bg);
-    padding: 30px;
-    border-radius: 12px;
+    padding: 28px;
+    border-radius: 10px;
     border: 1px solid var(--border);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
-    max-width: 450px;
+    max-width: 440px;
     width: 90%;
     text-align: center;
     animation: modalFadeIn 0.2s ease-out;
+    box-sizing: border-box;
 }
 
 .modalContent h3 {
     color: var(--text-h);
     margin-top: 0;
+    font-size: 1.15rem;
 }
 
 .modalContent p {
     color: var(--text);
-    margin-bottom: 25px;
+    margin-bottom: 22px;
+    font-size: 0.9rem;
 }
 
 @keyframes modalFadeIn {
@@ -535,44 +574,56 @@ p {
     }
 }
 
+.linkTituloTabla {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.linkTituloTabla:hover {
+    color: var(--text-h);
+    text-decoration: underline;
+}
+
 /* Filtros de vencimientos */
 .filtrosVencimientos {
     width: 100%;
-    max-width: 1000px;
-    margin: 0 auto 25px;
-    padding: 20px;
+    max-width: 1100px;
+    margin: 0 auto 24px;
+    padding: 18px;
     display: grid;
     grid-template-columns: 2fr 1.4fr 1.4fr auto;
-    gap: 18px;
+    gap: 16px;
     align-items: end;
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 8px;
     box-sizing: border-box;
 }
 
 .filtroVencimiento {
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 6px;
 }
 
 .filtroVencimiento label {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 500;
     color: var(--text-h);
 }
 
 .filtroVencimiento select {
     width: 100%;
-    height: 40px;
-    padding: 0 11px;
+    height: 38px;
+    padding: 0 10px;
     border: 1px solid var(--border);
     border-radius: 6px;
     background: var(--input-bg, white);
     color: var(--text);
     font-family: inherit;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     box-sizing: border-box;
     cursor: pointer;
 }
@@ -582,8 +633,8 @@ p {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 100px;
-    padding: 5px 10px;
+    min-width: 95px;
+    padding: 4px 10px;
     border-radius: 999px;
     font-size: 0.75rem;
     font-weight: 700;
@@ -592,21 +643,9 @@ p {
     white-space: nowrap;
 }
 
-@media (max-width: 800px) {
-    .filtrosVencimientos {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-@media (max-width: 550px) {
-    .filtrosVencimientos {
-        grid-template-columns: 1fr;
-    }
-}
-
 .filtroFecha {
     width: 100%;
-    height: 40px;
+    height: 38px;
     min-width: 0;
     padding: 0 10px;
     box-sizing: border-box;
@@ -615,7 +654,7 @@ p {
     background: var(--input-bg, white);
     color: var(--text);
     font-family: inherit;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     transition: all 0.2s ease;
 }
 
@@ -632,7 +671,7 @@ p {
 
 input[type="date"].filtroFecha {
     color-scheme: dark;
-    padding-right: 8px;
+    padding-right: 6px;
 }
 
 input[type="date"].filtroFecha::-webkit-calendar-picker-indicator {
@@ -640,7 +679,90 @@ input[type="date"].filtroFecha::-webkit-calendar-picker-indicator {
     opacity: 1;
     visibility: visible;
     cursor: pointer;
-    width: 18px;
-    height: 18px;
-    margin-left: 6px;
+    width: 16px;
+    height: 16px;
+    margin-left: 4px;
+}
+
+@media (max-width: 800px) {
+    .filtrosVencimientos {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .modalFormulario {
+        padding: 16px 12px;
+        width: 98%;
+        max-height: 94vh;
+    }
+
+    .modalContent {
+        padding: 18px 12px;
+        width: 95%;
+    }
+
+    form {
+        padding: 16px 12px;
+    }
+
+    .tarjeta {
+        padding: 14px;
+    }
+
+    .tarjetaEstatica {
+        padding: 14px;
+    }
+
+    .formGrid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .filaHeader {
+        padding: 8px 10px;
+        font-size: 0.78rem;
+    }
+
+    .filaItem {
+        padding: 8px 10px;
+        font-size: 0.82rem;
+    }
+
+    label, .modalTituloCampo {
+        font-size: 0.85rem;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    select {
+        padding: 8px 10px;
+        font-size: 0.85rem;
+    }
+
+    p {
+        font-size: 0.88rem;
+    }
+}
+
+@media (max-width: 550px) {
+    .filtrosVencimientos {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .gridTarjetas {
+        grid-template-columns: 1fr;
+    }
+
+    .filaBotones {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filaBotones > * {
+        width: 100%;
+    }
 }

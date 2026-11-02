@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import styles from './styles/shared.module.css'
@@ -81,6 +82,10 @@ const ETIQUETA_ROL: Record<'admin' | 'operario', string> = {
 
 function RutasProtegidas() {
   const { isAuthenticated, logout, usuario } = useAuth();
+  const [sidebarAbierto, setSidebarAbierto] = useState(false);
+
+  const toggleSidebar = () => setSidebarAbierto(!sidebarAbierto);
+  const cerrarSidebar = () => setSidebarAbierto(false);
 
   const isAdmin = usuario?.rol === 'admin';
 
@@ -97,15 +102,29 @@ function RutasProtegidas() {
   return (
     <>
       <div className="appLayout">
-        <aside className="sidebar">
-          <NavLink to="/" className="marca">
+        <header className="mobileHeader">
+          <NavLink to="/" className="mobileBrand" onClick={cerrarSidebar}>
+            <i className="bi bi-house-door-fill"></i>
+            <span>SAIA</span>
+          </NavLink>
+          <button className="mobileMenuBtn" onClick={toggleSidebar} aria-label="Abrir menú">
+            <i className={`bi ${sidebarAbierto ? 'bi-x-lg' : 'bi-list'}`}></i>
+          </button>
+        </header>
+
+        <div
+          className={`sidebarOverlay ${sidebarAbierto ? 'sidebarOverlayVisible' : ''}`}
+          onClick={cerrarSidebar}
+        />
+
+        <aside className={`sidebar ${sidebarAbierto ? 'sidebarOpen' : ''}`}>
+          <NavLink to="/" className="marca" onClick={cerrarSidebar}>
             <i className="bi bi-house-door-fill"></i>
             <span>SAIA</span>
           </NavLink>
 
           <nav className="navegacion">
-          {isAdmin && <NavLink to="/vencimientos" className={styles.sidebarTituloAcordeon}><strong>Vencimientos</strong></NavLink>}
-
+          {isAdmin && <NavLink to="/vencimientos" className={styles.sidebarTituloAcordeon} onClick={cerrarSidebar}><strong>Vencimientos</strong></NavLink>}
 
           {isAdmin && (
             <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
@@ -114,10 +133,10 @@ function RutasProtegidas() {
               </summary>
 
               <div className={styles.sidebarOpcionesAcordeon}>
-                <NavLink to="/empleados" className={styles.sidebarItemAcordeon}>Directorio de Empleados</NavLink>
-                <NavLink to="/capacidades" className={styles.sidebarItemAcordeon}>Gestión de Capacidades</NavLink>
-                <NavLink to="/sectores" className={styles.sidebarItemAcordeon}>Gestión de Sectores</NavLink>
-                <NavLink to="/vencimientos-documentacion" className={styles.sidebarItemAcordeon}>Vencimientos de Personal</NavLink>
+                <NavLink to="/empleados" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Directorio de Empleados</NavLink>
+                <NavLink to="/capacidades" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Gestión de Capacidades</NavLink>
+                <NavLink to="/sectores" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Gestión de Sectores</NavLink>
+                <NavLink to="/vencimientos-documentacion" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Vencimientos de Personal</NavLink>
               </div>
             </details>
           )}
@@ -129,8 +148,8 @@ function RutasProtegidas() {
               </summary>
 
               <div className={styles.sidebarOpcionesAcordeon}>
-                <NavLink to="/insumos" className={styles.sidebarItemAcordeon}>Inventario de Insumos</NavLink>
-                <NavLink to="/unidadesMedida" className={styles.sidebarItemAcordeon}>Unidades de Medida</NavLink>
+                <NavLink to="/insumos" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Inventario de Insumos</NavLink>
+                <NavLink to="/unidadesMedida" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Unidades de Medida</NavLink>
               </div>
             </details>
           )}
@@ -142,11 +161,10 @@ function RutasProtegidas() {
               </summary>
 
               <div className={styles.sidebarOpcionesAcordeon}>
-                <NavLink to="/equipos" className={styles.sidebarItemAcordeon}>Inventario de Equipos</NavLink>
+                <NavLink to="/equipos" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Inventario de Equipos</NavLink>
               </div>
             </details>
           )}
-
 
           {/* Accesible para Operarios y Administradores */}
           <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
@@ -155,34 +173,29 @@ function RutasProtegidas() {
             </summary>
             <div className={styles.sidebarOpcionesAcordeon}>
               {isAdmin && (
-                <NavLink to="/documentos" end className={styles.sidebarItemAcordeon}>
+                <NavLink to="/documentos" end className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>
                   Documentos Versionados
                 </NavLink>
               )}
-              <NavLink to="/documentos/vigentes" className={styles.sidebarItemAcordeon}>
+              <NavLink to="/documentos/vigentes" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>
                 Documentos Vigentes
               </NavLink>
             </div>
           </details>
 
-
-
-
-
-          
           <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
               <summary className={styles.sidebarTituloAcordeon}>
                 Limpieza y Planes 
               </summary>
 
             <div className={styles.sidebarOpcionesAcordeon}>
-              {isAdmin && <NavLink to="/productos_limpieza" className={styles.sidebarItemAcordeon}>Productos de Limpieza</NavLink>}
-              {isAdmin && <NavLink to="/elementosLimpieza" end className={styles.sidebarItemAcordeon}>Elementos de Limpieza</NavLink>}
-              <NavLink to="/elementosLimpieza/alertas" className={styles.sidebarItemAcordeon}>Alertas de Recambio</NavLink>
-              <NavLink to="/tareas" className={styles.sidebarItemAcordeon}>Tareas de Limpieza</NavLink>
-              {isAdmin && <NavLink to="/planes" className={styles.sidebarItemAcordeon}>Planes de Limpieza</NavLink>}
-              <NavLink to="/checklists/hoy" className={styles.sidebarItemAcordeon}>Checklist del Día</NavLink>
-              {isAdmin && <NavLink to="/checklists/historial" className={styles.sidebarItemAcordeon}>Historial de Checklists</NavLink>}
+              {isAdmin && <NavLink to="/productos_limpieza" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Productos de Limpieza</NavLink>}
+              {isAdmin && <NavLink to="/elementosLimpieza" end className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Elementos de Limpieza</NavLink>}
+              <NavLink to="/elementosLimpieza/alertas" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Alertas de Recambio</NavLink>
+              <NavLink to="/tareas" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Tareas de Limpieza</NavLink>
+              {isAdmin && <NavLink to="/planes" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Planes de Limpieza</NavLink>}
+              <NavLink to="/checklists/hoy" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Checklist del Día</NavLink>
+              {isAdmin && <NavLink to="/checklists/historial" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Historial de Checklists</NavLink>}
             </div>
           </details>
 
@@ -192,10 +205,10 @@ function RutasProtegidas() {
               </summary>
 
             <div className={styles.sidebarOpcionesAcordeon}>
-              <NavLink to="/incidentes/nuevo" className={styles.sidebarItemAcordeon}>Registrar Incidente</NavLink>
-              {isAdmin && <NavLink to="/incidentes" end className={styles.sidebarItemAcordeon}>Incidentes Reportados</NavLink>}
-              {isAdmin && <NavLink to="/incidentes/abiertos" className={styles.sidebarItemAcordeon}>Incidentes Abiertos</NavLink>}
-              {isAdmin && (<NavLink to="/incidentes/estadisticas" className={styles.sidebarItemAcordeon}>Estadísticas de Incidentes</NavLink>)}
+              <NavLink to="/incidentes/nuevo" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Registrar Incidente</NavLink>
+              {isAdmin && <NavLink to="/incidentes" end className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Incidentes Reportados</NavLink>}
+              {isAdmin && <NavLink to="/incidentes/abiertos" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Incidentes Abiertos</NavLink>}
+              {isAdmin && (<NavLink to="/incidentes/estadisticas" className={styles.sidebarItemAcordeon} onClick={cerrarSidebar}>Estadísticas de Incidentes</NavLink>)}
             </div>
           </details>
           </nav>
@@ -206,7 +219,7 @@ function RutasProtegidas() {
               <span className="userNombre">{usuario?.nombre} {usuario?.apellido}</span>
               <span className="userRol">{usuario ? ETIQUETA_ROL[usuario.rol] : ''}</span>
             </div>
-            <button onClick={logout} className="logoutBtn" title="Cerrar sesión" aria-label="Cerrar sesión">
+            <button onClick={() => { cerrarSidebar(); logout(); }} className="logoutBtn" title="Cerrar sesión" aria-label="Cerrar sesión">
               <i className="bi bi-box-arrow-right"></i>
             </button>
           </div>
