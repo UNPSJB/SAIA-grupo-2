@@ -32,16 +32,33 @@ def leer_insumo(db: Session, insumo_id: int) -> schemas.Insumo:
         raise exceptions.InsumoNoEncontrado()
     return db_insumo
 
+from sqlalchemy.exc import IntegrityError
+
 def modificar_insumo(
     db: Session, insumo_id: int, insumo: schemas.InsumoUpdate
 ) -> Insumo:
     db_insumo = leer_insumo(db, insumo_id)
-    db.execute(
-        update(Insumo).where(Insumo.id == insumo_id).values(**insumo.model_dump())
-    )
-    db.commit()
-    db.refresh(db_insumo)
-    return db_insumo
+
+    if insumo.nombre == "":
+        raise exceptions.NombreVacio()
+
+    if insumo.nombre:
+        existe = db.scalar(
+            select(Insumo).where(Insumo.nombre == insumo.nombre, Insumo.id != insumo_id)
+        )
+        if existe is not None:
+            raise exceptions.NombreDuplicado()
+
+    try:
+        db.execute(
+            update(Insumo).where(Insumo.id == insumo_id).values(**insumo.model_dump())
+        )
+        db.commit()
+        db.refresh(db_insumo)
+        return db_insumo
+    except IntegrityError:
+        db.rollback()
+        raise exceptions.NombreDuplicado()
 
 from fastapi import HTTPException
 

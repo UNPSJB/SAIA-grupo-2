@@ -46,16 +46,22 @@ def modificar_capacidad(
     db: Session, capacidad_id: int, capacidad: schemas.CapacidadUpdate
 ) -> Capacidad:
     db_capacidad = leer_capacidad(db, capacidad_id)
-    db.execute(
-        update(Capacidad).where(Capacidad.id == capacidad_id).values(**capacidad.model_dump())
-    )
-    
+
+    if capacidad.nombre:
+        existe = db.scalar(
+            select(Capacidad).where(Capacidad.nombre == capacidad.nombre, Capacidad.id != capacidad_id)
+        )
+        if existe is not None:
+            raise exceptions.NombreDuplicado()
+
     try:
+        db.execute(
+            update(Capacidad).where(Capacidad.id == capacidad_id).values(**capacidad.model_dump())
+        )
         db.commit()
         db.refresh(db_capacidad)
         return db_capacidad
     except IntegrityError:
-        # También protegemos la edición por si intentan renombrar a una capacidad que ya existe
         db.rollback()
         raise exceptions.NombreDuplicado()
 

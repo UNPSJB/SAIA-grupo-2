@@ -16,8 +16,8 @@ import { ETIQUETA_TIPO, TIPOS_DOCUMENTACION } from './estadoVencimiento';
 import Boton from '../../components/Boton';
 import SubidorArchivo from '../../components/SubidorArchivo';
 import type { ArchivoAdjunto } from '../../components/SubidorArchivo';
-import styles from '../../styles/shared.module.css';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
+import styles from '../../styles/shared.module.css';
 
 interface Errores {
     tipo?: string;
@@ -187,18 +187,16 @@ export default function DocumentacionForm() {
         }
     };
 
-    const estiloError = { borderColor: '#ef4444', outline: 'none' };
-    const estiloMensaje = { color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' };
+    const estiloError = { borderColor: 'var(--rojo-texto)', outline: 'none' };
 
     return (
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
                 titulo={editando ? 'Renovar o Editar Documento' : 'Cargar Documento'}
-                descripcion={nombreEmpleado}
-                ancho="780px"
+                descripcion={nombreEmpleado ? nombreEmpleado : undefined}
             />
 
-            {errorCarga && <p style={{ color: '#ef4444' }}>{errorCarga}</p>}
+            {errorCarga && <p className={styles.textDanger}>{errorCarga}</p>}
 
             <form onSubmit={handleSubmit} className={styles.formularioTarjeta} style={{ maxWidth: '780px' }}>
                 <div className={styles.formGrid}>
@@ -217,7 +215,7 @@ export default function DocumentacionForm() {
                                 </option>
                             ))}
                         </select>
-                        {errores.tipo && <span style={estiloMensaje}>{errores.tipo}</span>}
+                        {errores.tipo && <span className={styles.textDanger}>{errores.tipo}</span>}
                     </div>
 
                     <div className={styles.formGroup}>
@@ -225,13 +223,11 @@ export default function DocumentacionForm() {
                         <input
                             type="date"
                             value={fechaVencimiento}
-                            className={`${styles.filtroFecha} ${
-                                errores.fecha_vencimiento ? styles.filtroFechaError : ''
-                            }`}
                             onChange={(e) => setFechaVencimiento(e.target.value)}
+                            style={errores.fecha_vencimiento ? estiloError : {}}
                         />
                         {errores.fecha_vencimiento && (
-                            <span style={estiloMensaje}>{errores.fecha_vencimiento}</span>
+                            <span className={styles.textDanger}>{errores.fecha_vencimiento}</span>
                         )}
                     </div>
 
@@ -247,7 +243,7 @@ export default function DocumentacionForm() {
                                     style={errores.numero_carnet ? estiloError : {}}
                                 />
                                 {errores.numero_carnet && (
-                                    <span style={estiloMensaje}>{errores.numero_carnet}</span>
+                                    <span className={styles.textDanger}>{errores.numero_carnet}</span>
                                 )}
                             </div>
 
@@ -261,7 +257,7 @@ export default function DocumentacionForm() {
                                     style={errores.autoridad_emisora ? estiloError : {}}
                                 />
                                 {errores.autoridad_emisora && (
-                                    <span style={estiloMensaje}>{errores.autoridad_emisora}</span>
+                                    <span className={styles.textDanger}>{errores.autoridad_emisora}</span>
                                 )}
                             </div>
                         </>
@@ -278,7 +274,7 @@ export default function DocumentacionForm() {
                                     onChange={(e) => setTitulo(e.target.value)}
                                     style={errores.titulo ? estiloError : {}}
                                 />
-                                {errores.titulo && <span style={estiloMensaje}>{errores.titulo}</span>}
+                                {errores.titulo && <span className={styles.textDanger}>{errores.titulo}</span>}
                             </div>
 
                             <div className={styles.formGroup}>
@@ -305,7 +301,7 @@ export default function DocumentacionForm() {
                                     style={errores.nombre_medico ? estiloError : {}}
                                 />
                                 {errores.nombre_medico && (
-                                    <span style={estiloMensaje}>{errores.nombre_medico}</span>
+                                    <span className={styles.textDanger}>{errores.nombre_medico}</span>
                                 )}
                             </div>
 
@@ -319,7 +315,7 @@ export default function DocumentacionForm() {
                                     style={errores.matricula ? estiloError : {}}
                                 />
                                 {errores.matricula && (
-                                    <span style={estiloMensaje}>{errores.matricula}</span>
+                                    <span className={styles.textDanger}>{errores.matricula}</span>
                                 )}
                             </div>
                         </>
@@ -341,7 +337,7 @@ export default function DocumentacionForm() {
                         {guardando ? 'Guardando...' : editando ? 'Actualizar Cambios' : 'Guardar'}
                     </Boton>
                     <Link to={`/empleados/${empleadoId}/documentacion`}>
-                        <Boton variant="eliminar">Cancelar</Boton>
+                        <Boton variant="volver">Cancelar</Boton>
                     </Link>
                 </div>
             </form>
