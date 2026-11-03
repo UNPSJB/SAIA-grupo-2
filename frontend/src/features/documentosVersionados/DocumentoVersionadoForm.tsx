@@ -139,11 +139,12 @@ export default function DocumentoVersionadoForm() {
             <form onSubmit={handleSubmit} className={styles.formularioTarjeta} style={{ maxWidth: '780px' }}>
                 <div className={styles.formGrid}>
                     <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
-                        <label htmlFor="documento-nombre">Nombre del documento:</label>
+                        <label className={styles.modalTituloCampo} htmlFor="documento-nombre">Nombre del documento:</label>
                         <input
                             id="documento-nombre"
                             type="text"
                             value={nombre}
+                            className={styles.modalIngresoTexto}
                             onChange={(evento) => {
                                 setNombre(evento.target.value);
                                 if (errores.nombre) setErrores((actuales) => ({ ...actuales, nombre: undefined }));
@@ -157,10 +158,11 @@ export default function DocumentoVersionadoForm() {
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label htmlFor="documento-tipo">Tipo de documento:</label>
+                        <label className={styles.modalTituloCampo} htmlFor="documento-tipo">Tipo de documento:</label>
                         <select
                             id="documento-tipo"
                             value={tipo}
+                            className={styles.modalSelector}
                             onChange={(evento) => setTipo(evento.target.value as TipoDocumentoVersionado)}
                         >
                             {TIPOS_DOCUMENTO_VERSIONADO.map((valor) => (
@@ -172,7 +174,7 @@ export default function DocumentoVersionadoForm() {
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label htmlFor="documento-fecha-vigencia">Fecha de vigencia:</label>
+                        <label className={styles.modalTituloCampo} htmlFor="documento-fecha-vigencia">Fecha de vigencia:</label>
                         <input
                             id="documento-fecha-vigencia"
                             type="date"
@@ -192,7 +194,7 @@ export default function DocumentoVersionadoForm() {
                     </div>
 
                     <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
-                        <label>Archivo de la versión inicial:</label>
+                        <label className={styles.modalTituloCampo}>Archivo de la versión inicial:</label>
                         <SubidorArchivo
                             archivo={archivo}
                             onCambio={handleCambioArchivo}
@@ -203,11 +205,14 @@ export default function DocumentoVersionadoForm() {
                     </div>
 
                     <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
-                        <label htmlFor="documento-nombre-archivo">Nombre del archivo:</label>
+                        <label className={styles.modalTituloCampo} htmlFor="documento-nombre-archivo">
+                            Nombre del archivo:
+                        </label>
                         <input
                             id="documento-nombre-archivo"
                             type="text"
                             value={nombreArchivo}
+                            className={styles.modalIngresoTexto}
                             onChange={(evento) => {
                                 setNombreArchivo(evento.target.value);
                                 if (errores.nombreArchivo) {

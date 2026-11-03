@@ -111,9 +111,7 @@ export default function DocumentosVersionadosList(){
                             variant="ver"
                             onClick={() => handleVisualizar(doc)}
                             title="Visualizar documento en una pestaña nueva"
-                        >
-                            Visualizar
-                        </Boton>
+                        />
 
                         {usuario?.rol === 'admin' &&(
                             <BotonHistorialVersiones
@@ -133,7 +131,8 @@ export default function DocumentosVersionadosList(){
     return (
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
-                titulo="Documentos Versionados"
+                titulo="Gestión de Documentos Versionados"
+                descripcion="Administra los documentos versionados, incluyendo procedimientos, manuales y otros archivos importantes."
                 acciones={usuario?.rol === 'admin' && (
                     <Link to="/documentos/nuevo">
                         <Boton variant="crear">Registrar Documento Versionado</Boton>
@@ -141,7 +140,7 @@ export default function DocumentosVersionadosList(){
                 )}
             />
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar por nombre..." />
             </div>
             

@@ -83,6 +83,7 @@ export default function ProductosList() {
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
                 titulo="Gestión de Productos de Limpieza"
+                descripcion="Administra los productos de limpieza y consulta sus existencias."
                 acciones={usuario?.rol === 'admin' && (
                     <Link to="/productos_limpieza/nuevo">
                         <Boton variant="crear">Nuevo Producto</Boton>
@@ -91,7 +92,7 @@ export default function ProductosList() {
             />
             
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar producto..." />
             </div>
 

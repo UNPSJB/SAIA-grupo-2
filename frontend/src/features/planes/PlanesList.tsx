@@ -104,6 +104,7 @@ export default function PlanesList() {
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
                 titulo="Gestión de Planes de Limpieza"
+                descripcion="Consulta y administra los planes de limpieza y sus tareas asociadas."
                 acciones={usuario?.rol === 'admin' && (
                     <Link to="/planes/nuevo">
                         <Boton variant="crear">Crear Nuevo Plan</Boton>
@@ -112,7 +113,7 @@ export default function PlanesList() {
             />
             
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar plan o sector..." />
             </div>
 

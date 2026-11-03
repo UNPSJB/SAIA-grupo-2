@@ -103,6 +103,7 @@ export default function TareasList() {
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
                 titulo="Gestión de Tareas y Checklists"
+                descripcion="Administra las tareas de limpieza, sus frecuencias e insumos asociados."
                 acciones={usuario?.rol === 'admin' && (
                     <Link to="/tareas/nueva">
                         <Boton variant="crear">Nueva Tarea</Boton>
@@ -111,7 +112,7 @@ export default function TareasList() {
             />
             
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar tarea..." />
             </div>
 

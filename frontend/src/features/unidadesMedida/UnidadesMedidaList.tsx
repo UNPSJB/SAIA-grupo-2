@@ -51,10 +51,13 @@ export default function UnidadesMedidaList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <EncabezadoPagina titulo="Unidades de Medida" />
+            <EncabezadoPagina
+                titulo="Unidades de Medida"
+                descripcion="Tabla de unidades de medida, con posibilidad de búsqueda por nombre."
+            />
 
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar unidad..." />
             </div>
 

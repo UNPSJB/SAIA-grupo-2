@@ -120,6 +120,7 @@ export default function ElementosLimpiezaList() {
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
                 titulo="Elementos de Limpieza"
+                descripcion="Administra los elementos y consulta su estado y frecuencia de recambio."
                 ancho="1000px"
                 acciones={
                     <>
@@ -133,14 +134,14 @@ export default function ElementosLimpiezaList() {
                 }
             />
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1000px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores} style={{ maxWidth: '1000px' }}>
+                {conAlerta > 0 && (
+                    <p className={styles.infoFilaSuperior} style={{ color: COLOR_ESTADO.vencido, fontWeight: 'bold' }}>
+                        {conAlerta} {conAlerta === 1 ? 'elemento requiere' : 'elementos requieren'} atención
+                    </p>
+                )}
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar elemento..." />
             </div>
-            {conAlerta > 0 && (
-                <p style={{ marginTop: '-10px', marginBottom: '20px', color: COLOR_ESTADO.vencido, fontWeight: 'bold' }}>
-                    {conAlerta} {conAlerta === 1 ? 'elemento requiere' : 'elementos requieren'} atención
-                </p>
-            )}
 
             <div style={{ maxWidth: '1000px', width: '100%' }}>
                 <TablaPaginada

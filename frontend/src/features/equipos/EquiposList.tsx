@@ -126,6 +126,7 @@ export default function EquiposList() {
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
                 titulo="Inventario de Equipamiento"
+                descripcion="Consulta el equipamiento registrado, su estado y sus tareas de mantenimiento."
                 acciones={usuario?.rol === 'admin' && (
                     <Link to="/equipos/nuevo">
                         <Boton variant="crear">Registrar Equipo</Boton>
@@ -133,7 +134,7 @@ export default function EquiposList() {
                 )}
             />
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar equipo, sector o tipo..." />
             </div>
 

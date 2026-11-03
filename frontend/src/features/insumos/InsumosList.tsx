@@ -70,6 +70,7 @@ export default function InsumosList() {
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
                 titulo="Inventario de Insumos"
+                descripcion="Gestión y control de insumos disponibles, incluyendo detalles de cada insumo y su unidad de medida."
                 acciones={usuario?.rol === 'admin' && (
                     <Link to="/insumos/nuevo">
                         <Boton variant="crear">Registrar Insumo</Boton>
@@ -78,7 +79,7 @@ export default function InsumosList() {
             />
             
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar insumo..." />
             </div>
 

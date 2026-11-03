@@ -134,7 +134,7 @@ export default function DocumentosVigentesList() {
                 descripcion="Consulta de documentos oficiales vigentes para tareas de planta"
             />
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={sharedStyles.filaBotonesSuperiores}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar procedimiento..." />
             </div>
             
@@ -167,4 +167,4 @@ export default function DocumentosVigentesList() {
             
         </div>
     );
-}
+}

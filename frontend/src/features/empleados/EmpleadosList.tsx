@@ -201,7 +201,8 @@ export default function EmpleadosList() {
     return (
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
-                titulo="Directorio de Personal"
+                titulo="Directorio de Empleados"
+                descripcion="Listado completo del personal con sus roles, sectores y estado actual."
                 acciones={usuario?.rol === 'admin' && (
                     <Link to="/empleados/nuevo">
                         <Boton variant="crear">Registrar Empleado</Boton>

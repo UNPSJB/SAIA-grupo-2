@@ -229,10 +229,10 @@ export default function HistorialChecklistList() {
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
                 titulo="Historial y Auditoría de Checklists"
-                descripcion="Consulta histórica de cumplimiento"
+                descripcion="Consulta el historial de cumplimiento de las tareas de limpieza."
             />
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar tarea, plan, sector o responsable..." />
             </div>
 

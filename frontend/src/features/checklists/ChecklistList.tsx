@@ -186,6 +186,7 @@ export default function ChecklistList() {
     };
 
     const sectoresUnicos = Array.from(new Set(checklist.map(item => item.sector_nombre).filter(Boolean)));
+    const fechaDeHoy = new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
     const checklistPorSector = checklist.filter(t => sectorFiltro === 'todos' || t.sector_nombre === sectorFiltro);
     const checklistFiltrado = filtrarPorTexto(checklistPorSector, busqueda);
@@ -251,29 +252,27 @@ export default function ChecklistList() {
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
                 titulo="Checklist del Día"
-                descripcion={new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                descripcion={`${fechaDeHoy} · Consulta y registra el cumplimiento de las tareas de limpieza programadas para hoy.`}
             />
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
+                {sectoresUnicos.length > 0 && (
+                    <label className={styles.infoFilaSuperior} style={{ gap: '10px' }}>
+                        <span style={{ fontWeight: '500', color: 'var(--text-h)', whiteSpace: 'nowrap' }}>Filtrar por Sector:</span>
+                        <select
+                            value={sectorFiltro}
+                            onChange={(e) => setSectorFiltro(e.target.value)}
+                            style={{ width: 'auto', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', maxWidth: '250px', margin: 0 }}
+                        >
+                            <option value="todos">Todos los sectores</option>
+                            {sectoresUnicos.map(sec => (
+                                <option key={sec} value={sec}>{sec}</option>
+                            ))}
+                        </select>
+                    </label>
+                )}
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar tarea, plan o sector..." />
             </div>
-
-            {sectoresUnicos.length > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '15px', alignItems: 'center', gap: '10px' }}>
-                    <label style={{ fontWeight: '500', color: 'var(--text-h)' }}>Filtrar por Sector:</label>
-                    <select
-                        value={sectorFiltro}
-                        onChange={(e) => setSectorFiltro(e.target.value)}
-                        style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', maxWidth: '250px' }}
-                    >
-                        <option value="todos">Todos los sectores</option>
-                        {sectoresUnicos.map(sec => (
-                            <option key={sec} value={sec}>{sec}</option>
-                        ))}
-                    </select>
-                </div>
-            )}
-
 
             <TablaPaginada
                 datos={checklistFiltrado}
@@ -546,4 +545,4 @@ export default function ChecklistList() {
             />
         </div>
     );
-}
+}

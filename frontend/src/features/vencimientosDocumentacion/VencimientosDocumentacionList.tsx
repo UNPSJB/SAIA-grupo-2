@@ -181,7 +181,10 @@ export default function VencimientosDocumentacionList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <EncabezadoPagina titulo="Vencimientos de Personal" />
+            <EncabezadoPagina
+                titulo="Vencimientos de Personal"
+                descripcion="Monitoreo de vencimientos de documentación de personal, con alertas de aviso previo."
+            />
 
             {!cargando && (
                 <TarjetasFiltro 

@@ -93,6 +93,7 @@ export default function CapacidadesList() {
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
                 titulo="Gestión de Capacidades y Roles"
+                descripcion="Administra los roles y capacidades asignables a los empleados."
                 acciones={usuario?.rol === 'admin' && (
                     <Link to="/capacidades/nuevo">
                         <Boton variant="crear">Registrar Capacidad</Boton>
@@ -101,7 +102,7 @@ export default function CapacidadesList() {
             />
             
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar capacidad..." />
             </div>
 

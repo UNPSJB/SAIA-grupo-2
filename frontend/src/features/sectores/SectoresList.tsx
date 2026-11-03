@@ -111,6 +111,7 @@ export default function SectoresList() {
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
                 titulo="Gestión de Sectores"
+                descripcion="Administra los sectores de la organización, asignando responsables y gestionando su información."
                 acciones={usuario?.rol === 'admin' && (
                     <Link to="/sectores/nuevo">
                         <Boton variant="crear">Registrar Sector</Boton>
@@ -119,7 +120,7 @@ export default function SectoresList() {
             />
             
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar sector o responsable..." />
             </div>
 
