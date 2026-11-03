@@ -12,6 +12,7 @@ import BuscadorTexto from '../../components/BuscadorTexto';
 import { filtrarPorTexto } from '../../utils/texto';
 
 import TablaPaginada, {type Columna } from '../../components/TablaPaginada';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function SectoresList() {
     const { usuario } = useAuth();
@@ -108,19 +109,19 @@ export default function SectoresList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Gestión de Sectores</h2>
+            <EncabezadoPagina
+                titulo="Gestión de Sectores"
+                acciones={usuario?.rol === 'admin' && (
+                    <Link to="/sectores/nuevo">
+                        <Boton variant="crear">Registrar Sector</Boton>
+                    </Link>
+                )}
+            />
             
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar sector o responsable..." />
             </div>
-            {usuario?.rol === 'admin' && (
-                <Link to="/sectores/nuevo" className={styles.linkCrear}>
-                    <Boton variant="crear">
-                        Registrar Sector
-                    </Boton>
-                </Link>
-            )}
 
             <div style={{ maxWidth: '1100px', width: '100%' }}>
                  <TablaPaginada

@@ -7,6 +7,7 @@ from sqlalchemy import select
 
 from src.database import get_db
 from src.checklists import schemas, services
+from src.checklists.constants import GranularidadCumplimiento
 from src.empleados.models import Empleado
 
 logger = logging.getLogger(__name__)
@@ -58,3 +59,14 @@ def obtener_historial_checklists(
     db: Session = Depends(get_db)
 ):
     return services.obtener_historial_checklists(db, fecha_inicio, fecha_fin, sector_id)
+
+
+@router.get("/cumplimiento", response_model=schemas.GraficoCumplimientoResumen)
+def obtener_grafico_cumplimiento(
+    fecha_desde: date = Query(...),
+    fecha_hasta: date = Query(...),
+    granularidad: GranularidadCumplimiento = Query(GranularidadCumplimiento.DIA),
+    db: Session = Depends(get_db),
+):
+    logger.info("Calculando la serie de cumplimiento de limpieza desde endpoint...")
+    return services.obtener_grafico_cumplimiento(db, fecha_desde, fecha_hasta, granularidad)

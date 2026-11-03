@@ -10,6 +10,7 @@ import BuscadorTexto from '../../components/BuscadorTexto';
 import { filtrarPorTexto } from '../../utils/texto';
 
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function ProductosList() {
     const { usuario } = useAuth();
@@ -80,17 +81,19 @@ export default function ProductosList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Gestión de Productos de Limpieza</h2>
+            <EncabezadoPagina
+                titulo="Gestión de Productos de Limpieza"
+                acciones={usuario?.rol === 'admin' && (
+                    <Link to="/productos_limpieza/nuevo">
+                        <Boton variant="crear">Nuevo Producto</Boton>
+                    </Link>
+                )}
+            />
             
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar producto..." />
             </div>
-            {usuario?.rol === 'admin' && (
-                <Link to="/productos_limpieza/nuevo" className={styles.linkCrear}>
-                    <Boton variant="crear">Nuevo Producto</Boton>
-                </Link>
-            )}
 
 
             <TablaPaginada

@@ -9,6 +9,7 @@ import styles from '../../styles/shared.module.css';
 import BuscadorTexto from '../../components/BuscadorTexto';
 import { filtrarPorTexto } from '../../utils/texto';
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 
 export default function PlanesList() {
@@ -101,17 +102,19 @@ export default function PlanesList() {
     ];
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Gestión de Planes de Limpieza</h2>
+            <EncabezadoPagina
+                titulo="Gestión de Planes de Limpieza"
+                acciones={usuario?.rol === 'admin' && (
+                    <Link to="/planes/nuevo">
+                        <Boton variant="crear">Crear Nuevo Plan</Boton>
+                    </Link>
+                )}
+            />
             
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar plan o sector..." />
             </div>
-            {usuario?.rol === 'admin' && (
-                <Link to="/planes/nuevo" className={styles.linkCrear}>
-                    <Boton variant="crear">Crear Nuevo Plan</Boton>
-                </Link>
-            )}
 
             <TablaPaginada
                 datos={planesFiltrados}

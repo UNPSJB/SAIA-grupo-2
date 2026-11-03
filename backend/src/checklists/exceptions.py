@@ -12,3 +12,7 @@ class ProductoNoEncontrado(NotFound):
 
 class StockInsuficiente(BadRequest):
     DETAIL = ErrorCode.STOCK_INSUFICIENTE
+
+
+class RangoFechasInvalido(BadRequest):
+    DETAIL = ErrorCode.RANGO_FECHAS_INVALIDO

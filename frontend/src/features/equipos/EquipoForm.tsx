@@ -8,6 +8,7 @@ import { getSectores } from '../../services/sectoresServices';
 import Boton from '../../components/Boton';
 import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 interface FormValues {
     nombre: string;
@@ -108,7 +109,7 @@ export default function EquipoForm() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>{editando ? 'Editar Equipo' : 'Registrar Nuevo Equipo'}</h2>
+            <EncabezadoPagina titulo={editando ? 'Editar Equipo' : 'Registrar Nuevo Equipo'} ancho="800px" />
             
             <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta}>
                 

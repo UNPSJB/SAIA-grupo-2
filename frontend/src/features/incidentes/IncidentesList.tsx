@@ -9,6 +9,7 @@ import {
 } from '../../services/incidentesServices';
 import Boton from '../../components/Boton';
 import BuscadorTexto from '../../components/BuscadorTexto';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 import { filtrarPorTexto } from '../../utils/texto';
 import { abrirArchivoEnPestania } from '../../utils/archivos';
 import {
@@ -82,16 +83,24 @@ export default function IncidentesList({ soloAbiertos = false }: IncidentesListP
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>{soloAbiertos ? 'Incidentes Abiertos' : 'Incidentes Reportados'}</h2>
-            <p style={{ marginTop: '-10px', marginBottom: soloAbiertos ? '14px' : '20px', color: 'var(--text-muted)' }}>
-                {soloAbiertos
-                    ? incidentes.length > 0
-                        ? `${incidentes.length} ${incidentes.length === 1 ? 'incidente sigue' : 'incidentes siguen'} sin resolver, del más antiguo al más reciente.`
-                        : 'No queda ningún incidente sin resolver.'
-                    : abiertos > 0
-                      ? `${abiertos} ${abiertos === 1 ? 'incidente abierto' : 'incidentes abiertos'} esperando resolución.`
-                      : 'No hay incidentes abiertos.'}
-            </p>
+            <EncabezadoPagina
+                titulo={soloAbiertos ? 'Incidentes Abiertos' : 'Incidentes Reportados'}
+                ancho="1280px"
+                descripcion={
+                    soloAbiertos
+                        ? incidentes.length > 0
+                            ? `${incidentes.length} ${incidentes.length === 1 ? 'incidente sigue' : 'incidentes siguen'} sin resolver, del más antiguo al más reciente.`
+                            : 'No queda ningún incidente sin resolver.'
+                        : abiertos > 0
+                          ? `${abiertos} ${abiertos === 1 ? 'incidente abierto' : 'incidentes abiertos'} esperando resolución.`
+                          : 'No hay incidentes abiertos.'
+                }
+                acciones={
+                    <Link to="/incidentes/nuevo">
+                        <Boton variant="crear">Registrar Incidente</Boton>
+                    </Link>
+                }
+            />
 
             {soloAbiertos && resumen && resumen.abiertos > 0 && (
                 <div
@@ -131,16 +140,12 @@ export default function IncidentesList({ soloAbiertos = false }: IncidentesListP
                     flexWrap: 'wrap',
                     gap: '16px',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
+                    justifyContent: 'flex-end',
                     width: '100%',
                     maxWidth: '1280px',
                     marginBottom: '16px',
                 }}
             >
-                <Link to="/incidentes/nuevo">
-                    <Boton variant="crear">Registrar Incidente</Boton>
-                </Link>
-
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                     {!soloAbiertos && (
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>

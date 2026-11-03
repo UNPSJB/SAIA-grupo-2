@@ -9,6 +9,7 @@ import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 import TarjetasFiltro, { type Metrica } from '../../components/TarjetasFiltro'; // <-- Importamos el componente y el tipo
 import BarraFiltros, { type FiltroConfig } from '../../components/BarraFiltros'; // <-- Importamos la barra
 import { filtrarPorTexto } from '../../utils/texto';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 
 export default function EmpleadosList() {
@@ -199,16 +200,14 @@ export default function EmpleadosList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '1100px', marginBottom: '20px' }}>
-                <h2>Directorio de Personal</h2>
-                {usuario?.rol === 'admin' && (
+            <EncabezadoPagina
+                titulo="Directorio de Personal"
+                acciones={usuario?.rol === 'admin' && (
                     <Link to="/empleados/nuevo">
-                        <Boton variant="crear">
-                            Registrar Empleado
-                        </Boton>
+                        <Boton variant="crear">Registrar Empleado</Boton>
                     </Link>
                 )}
-            </div>
+            />
 
             {/* Inyectamos nuestras métricas al componente genérico */}
             {empleados.length > 0 && (

@@ -5,6 +5,7 @@ import { createCapacidad } from '../../services/capacidadesServices';
 import Boton from '../../components/Boton';
 import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 interface FormValues {
     nombre: string;
@@ -42,7 +43,7 @@ export default function CapacidadForm() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Registrar Nueva Capacidad</h2>
+            <EncabezadoPagina titulo="Registrar Nueva Capacidad" ancho="600px" />
             
             <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta} style={{ maxWidth: '600px' }}>
                 <div className={styles.formGrid} style={{ gridTemplateColumns: '1fr' }}>

@@ -443,3 +443,17 @@ def test_router_no_permite_eliminar_el_incidente(client: TestClient, db_session:
 
     respuesta = client.delete(f"/incidentes/{creado['id']}")
     assert respuesta.status_code == 405
+
+
+def test_router_las_fechas_salen_con_zona_horaria(client: TestClient, db_session: Session):
+    """Las fechas viajan marcadas como UTC para que el navegador las muestre en hora local."""
+    empleado = _crear_empleado(db_session)
+    creado = _registrar_incidente(client, empleado.id)
+    client.put(
+        f"/incidentes/{creado['id']}/cierre",
+        json={"accion_correctiva": "se reparo en el momento", "responsable_id": empleado.id},
+    )
+
+    data = client.get(f"/incidentes/{creado['id']}").json()
+    for fecha in (data["fecha_hora_reporte"], data["fecha_cierre"], data["movimientos"][0]["fecha_hora"]):
+        assert fecha.endswith("+00:00")

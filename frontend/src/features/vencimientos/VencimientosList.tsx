@@ -13,7 +13,9 @@ import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 import TarjetasFiltro, { type Metrica } from '../../components/TarjetasFiltro';
 import BarraFiltros from '../../components/BarraFiltros'; // <-- Importamos la barra
 import { filtrarPorTexto } from '../../utils/texto';
+import { rutaDeVencimiento } from '../../utils/vencimientos';
 import { DIAS_AVISO_PREVIO } from '../../constants/config';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 const COLOR_ESTADO: Record<EstadoVencimiento, string> = {
     vencido: '#ef4444',
@@ -108,15 +110,8 @@ export default function VencimientosList() {
             ordenable: true,
             variant: 'titulo',
             render: (item) => {
-                const id = item.id.split('-').slice(1).join('-');
-                const ruta = (item.categoria === 'personal' || item.categoria === 'documentos')
-                    ? `/empleados/${id}`
-                    : item.categoria === 'equipos'
-                    ? `/elementosLimpieza/${id}`
-                    : `/equipos/${id}`;
-
                 return (
-                    <Link to={ruta} className={styles.linkTituloTabla}>
+                    <Link to={rutaDeVencimiento(item)} className={styles.linkTituloTabla}>
                         {item.titulo}
                     </Link>
                 );
@@ -184,11 +179,10 @@ export default function VencimientosList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Vista Consolidada de Vencimientos</h2>
-
-            <p style={{ marginTop: '-10px', marginBottom: '20px', color: 'var(--text-muted)' }}>
-                Monitoreo unificado de vencimientos de personal, documentos, elementos de limpieza y calibraciones (alerta de aviso previo: {DIAS_AVISO_PREVIO} días).
-            </p>
+            <EncabezadoPagina
+                titulo="Vista Consolidada de Vencimientos"
+                descripcion={`Monitoreo unificado de vencimientos de personal, documentos, elementos de limpieza y calibraciones (alerta de aviso previo: ${DIAS_AVISO_PREVIO} días).`}
+            />
 
             {/* Tarjeta rectangular única que engloba las 4 métricas globales */}
             {resumen && (

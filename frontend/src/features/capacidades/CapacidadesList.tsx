@@ -11,6 +11,7 @@ import styles from '../../styles/shared.module.css';
 import BuscadorTexto from '../../components/BuscadorTexto';
 import TablaPaginada, {type Columna } from '../../components/TablaPaginada';
 import { filtrarPorTexto } from '../../utils/texto';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function CapacidadesList() {
     const { usuario } = useAuth();
@@ -90,19 +91,19 @@ export default function CapacidadesList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Gestión de Capacidades y Roles</h2>
+            <EncabezadoPagina
+                titulo="Gestión de Capacidades y Roles"
+                acciones={usuario?.rol === 'admin' && (
+                    <Link to="/capacidades/nuevo">
+                        <Boton variant="crear">Registrar Capacidad</Boton>
+                    </Link>
+                )}
+            />
             
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar capacidad..." />
             </div>
-            {usuario?.rol === 'admin' && (
-                <Link to="/capacidades/nuevo" className={styles.linkCrear}>
-                    <Boton variant="crear">
-                        Registrar Capacidad
-                    </Boton>
-                </Link>
-            )}
 
                        <div style={{ maxWidth: '1100px', width: '100%' }}>
                             <TablaPaginada

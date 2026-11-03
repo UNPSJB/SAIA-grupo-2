@@ -8,6 +8,7 @@ import SubidorArchivo, { type ArchivoAdjunto } from '../../components/SubidorArc
 import ModalAlerta from '../../components/alerta';
 import { ETIQUETAS_TIPO, TIPOS_DOCUMENTO_VERSIONADO } from './tipoDocumentoVersionado';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 interface Errores {
     nombre?: string;
@@ -129,10 +130,11 @@ export default function DocumentoVersionadoForm() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Registrar Documento Versionado</h2>
-            <p style={{ marginTop: '-10px', marginBottom: '20px', color: 'var(--text-muted)' }}>
-                Registrá el documento y cargá su versión inicial, que quedará vigente.
-            </p>
+            <EncabezadoPagina
+                titulo="Registrar Documento Versionado"
+                descripcion="Registrá el documento y cargá su versión inicial, que quedará vigente."
+                ancho="780px"
+            />
 
             <form onSubmit={handleSubmit} className={styles.formularioTarjeta} style={{ maxWidth: '780px' }}>
                 <div className={styles.formGrid}>

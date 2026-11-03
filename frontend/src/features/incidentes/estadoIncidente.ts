@@ -19,6 +19,15 @@ export const ETIQUETA_TIPO: Record<TipoIncidente, string> = {
     otro: 'Otro',
 };
 
+export const COLOR_TIPO: Record<TipoIncidente, string> = {
+    rotura: '#3987e5',
+    plaga: '#d55181',
+    devolucion_cliente: '#199e70',
+    otro: '#c98500',
+};
+
+export const TEXTO_SOBRE_COLOR_TIPO = '#111418';
+
 export const TIPOS_INCIDENTE: TipoIncidente[] = [
     'rotura',
     'plaga',

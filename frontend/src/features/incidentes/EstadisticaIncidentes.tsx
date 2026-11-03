@@ -1,32 +1,27 @@
 import { useEffect, useState } from 'react';
-import { Bar, Pie } from 'react-chartjs-2';
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    ArcElement,
-    Tooltip,
-    Legend,
-} from 'chart.js';
+import { Link } from 'react-router-dom';
 
 import type { Incidente, TipoIncidente } from '../../types/incidentes';
-import {
-    getEstadisticasIncidentes,
-    getIncidentes,
-} from '../../services/incidentesServices';
-import { ETIQUETA_TIPO, formatearFechaHora } from './estadoIncidente';
+import { getEstadisticasIncidentes, getIncidentes } from '../../services/incidentesServices';
 import type { EstadisticaIncidente } from '../../services/incidentesServices';
+import {
+    COLOR_ESTADO,
+    COLOR_TIPO,
+    ETIQUETA_ESTADO,
+    ETIQUETA_TIPO,
+    TEXTO_SOBRE_COLOR_TIPO,
+    TIPOS_INCIDENTE,
+    formatearFechaHora,
+} from './estadoIncidente';
+import GraficoBarrasHorizontales from '../../components/GraficoBarrasHorizontales';
+import GraficoTorta from '../../components/GraficoTorta';
+import IndicadoresResumen from '../../components/IndicadoresResumen';
+import Boton from '../../components/Boton';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
+import estilos from '../../components/Estadisticas.module.css';
 import styles from '../../styles/shared.module.css';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
-
-const TIPOS: TipoIncidente[] = [
-    'rotura',
-    'plaga',
-    'devolucion_cliente',
-    'otro',
-];
+const MS_POR_DIA = 24 * 60 * 60 * 1000;
 
 function fechaLocal(fecha: Date): string {
     const anio = fecha.getFullYear();
@@ -35,497 +30,318 @@ function fechaLocal(fecha: Date): string {
     return `${anio}-${mes}-${dia}`;
 }
 
-function primerDiaDelMes(): string {
+function haceDias(dias: number): string {
+    const fecha = new Date();
+    fecha.setDate(fecha.getDate() - dias);
+    return fechaLocal(fecha);
+}
+
+function inicioDelMes(): string {
     const hoy = new Date();
     return fechaLocal(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
 }
 
-function hoyLocal(): string {
-    return fechaLocal(new Date());
+function inicioDelAnio(): string {
+    return fechaLocal(new Date(new Date().getFullYear(), 0, 1));
+}
+
+function diasEntre(desde: string, hasta: string): number {
+    const inicio = new Date(`${desde}T00:00:00`).getTime();
+    const fin = new Date(`${hasta}T00:00:00`).getTime();
+    return Math.round((fin - inicio) / MS_POR_DIA) + 1;
+}
+
+const RANGOS = [
+    { etiqueta: 'Últimos 7 días', desde: () => haceDias(6) },
+    { etiqueta: 'Últimos 30 días', desde: () => haceDias(29) },
+    { etiqueta: 'Este mes', desde: inicioDelMes },
+    { etiqueta: 'Este año', desde: inicioDelAnio },
+];
+
+const unidadIncidentes = (valor: number) => `${valor} ${valor === 1 ? 'incidente' : 'incidentes'}`;
+
+interface Respuesta<T> {
+    clave: string;
+    datos: T;
+    error: boolean;
 }
 
 export default function EstadisticaIncidentes() {
-    const [fechaDesde, setFechaDesde] = useState(primerDiaDelMes);
-    const [fechaHasta, setFechaHasta] = useState(hoyLocal);
-    const [estadisticas, setEstadisticas] = useState<EstadisticaIncidente[]>([]);
+    const hoy = fechaLocal(new Date());
+    const [fechaDesde, setFechaDesde] = useState(() => haceDias(29));
+    const [fechaHasta, setFechaHasta] = useState(hoy);
     const [tipoSeleccionado, setTipoSeleccionado] = useState<TipoIncidente | null>(null);
-    const [detalle, setDetalle] = useState<Incidente[]>([]);
-    const [cargando, setCargando] = useState(false);
-    const [cargandoDetalle, setCargandoDetalle] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [tipoGrafico, setTipoGrafico] = useState<'barras' | 'torta' | 'horizontal'>('barras');
+    const [estadisticas, setEstadisticas] = useState<Respuesta<EstadisticaIncidente[]> | null>(null);
+    const [detalle, setDetalle] = useState<Respuesta<Incidente[]> | null>(null);
+
+    const rangoValido = Boolean(fechaDesde && fechaHasta && fechaDesde <= fechaHasta);
+    const claveRango = `${fechaDesde}|${fechaHasta}`;
+    const claveDetalle = `${claveRango}|${tipoSeleccionado ?? ''}`;
 
     useEffect(() => {
+        if (!rangoValido) return;
         let cancelado = false;
 
-        async function cargarEstadisticas() {
-            if (!fechaDesde || !fechaHasta || fechaDesde > fechaHasta) {
-                setEstadisticas([]);
-                setError('La fecha desde no puede ser posterior a la fecha hasta.');
-                return;
-            }
-
-            try {
-                setCargando(true);
-                setError(null);
-
-                const resultado = await getEstadisticasIncidentes(
-                    fechaDesde,
-                    fechaHasta,
-                );
-
-                if (!cancelado) {
-                    // Incluye también categorías que no tengan incidentes.
-                    setEstadisticas(
-                        TIPOS.map((tipo) => ({
-                            tipo,
-                            cantidad:
-                                resultado.find((item) => item.tipo === tipo)
-                                    ?.cantidad ?? 0,
-                        })),
-                    );
-                }
-            } catch (problema) {
+        getEstadisticasIncidentes(fechaDesde, fechaHasta)
+            .then((datos) => {
+                if (!cancelado) setEstadisticas({ clave: claveRango, datos, error: false });
+            })
+            .catch((problema) => {
                 console.error('Error al cargar estadísticas:', problema);
-                if (!cancelado) {
-                    setError('No se pudieron cargar las estadísticas.');
-                    setEstadisticas([]);
-                }
-            } finally {
-                if (!cancelado) setCargando(false);
-            }
-        }
-
-        void cargarEstadisticas();
+                if (!cancelado) setEstadisticas({ clave: claveRango, datos: [], error: true });
+            });
 
         return () => {
             cancelado = true;
         };
-    }, [fechaDesde, fechaHasta]);
+    }, [claveRango, fechaDesde, fechaHasta, rangoValido]);
 
     useEffect(() => {
+        if (!rangoValido || !tipoSeleccionado) return;
         let cancelado = false;
 
-        async function cargarDetalle() {
-            if (
-                !tipoSeleccionado ||
-                !fechaDesde ||
-                !fechaHasta ||
-                fechaDesde > fechaHasta
-            ) {
-                setDetalle([]);
-                return;
-            }
-
-            try {
-                setCargandoDetalle(true);
-
-                const incidentes = await getIncidentes(
-                    undefined,
-                    tipoSeleccionado,
-                );
-
-                if (!cancelado) {
-                    setDetalle(
-                        incidentes.filter((incidente) => {
-                            const fecha = new Date(
-                                incidente.fecha_hora_reporte,
-                            );
-                            const diaLocal = fechaLocal(fecha);
-                            return diaLocal >= fechaDesde && diaLocal <= fechaHasta;
-                        }),
-                    );
-                }
-            } catch (problema) {
+        getIncidentes(undefined, tipoSeleccionado)
+            .then((incidentes) => {
+                if (cancelado) return;
+                const enRango = incidentes.filter((incidente) => {
+                    const dia = fechaLocal(new Date(incidente.fecha_hora_reporte));
+                    return dia >= fechaDesde && dia <= fechaHasta;
+                });
+                setDetalle({ clave: claveDetalle, datos: enRango, error: false });
+            })
+            .catch((problema) => {
                 console.error('Error al cargar el detalle:', problema);
-                if (!cancelado) setDetalle([]);
-            } finally {
-                if (!cancelado) setCargandoDetalle(false);
-            }
-        }
-
-        void cargarDetalle();
+                if (!cancelado) setDetalle({ clave: claveDetalle, datos: [], error: true });
+            });
 
         return () => {
             cancelado = true;
         };
-    }, [tipoSeleccionado, fechaDesde, fechaHasta]);
+    }, [claveDetalle, fechaDesde, fechaHasta, rangoValido, tipoSeleccionado]);
 
-    const datosGrafico = {
-        labels: TIPOS.map((tipo) => ETIQUETA_TIPO[tipo]),
-        datasets: [
-            {
-                label: 'Cantidad de incidentes',
-                data: TIPOS.map(
-                    (tipo) =>
-                        estadisticas.find((item) => item.tipo === tipo)
-                            ?.cantidad ?? 0,
-                ),
-                backgroundColor: [
-                    '#4776a8',
-                    '#d49b37',
-                    '#4a9871',
-                    '#8b78b8',
-                ],
-                borderRadius: 5,
-            },
-        ],
+    const cargando = rangoValido && estadisticas?.clave !== claveRango;
+    const errorCarga = !cargando && estadisticas?.error === true;
+    const cargandoDetalle = tipoSeleccionado !== null && detalle?.clave !== claveDetalle;
+
+    const conteos = TIPOS_INCIDENTE.map((tipo) => ({
+        clave: tipo,
+        etiqueta: ETIQUETA_TIPO[tipo],
+        valor:
+            (estadisticas?.clave === claveRango
+                ? estadisticas.datos.find((item) => item.tipo === tipo)?.cantidad
+                : 0) ?? 0,
+    }));
+
+    const total = conteos.reduce((suma, item) => suma + item.valor, 0);
+    const maximo = Math.max(...conteos.map((item) => item.valor));
+    const masFrecuentes = conteos.filter((item) => maximo > 0 && item.valor === maximo);
+    const etiquetasMasFrecuentes = masFrecuentes.map((item) => item.etiqueta);
+    const nombresMasFrecuentes =
+        etiquetasMasFrecuentes.length > 1
+            ? `${etiquetasMasFrecuentes.slice(0, -1).join(', ')} y ${etiquetasMasFrecuentes[etiquetasMasFrecuentes.length - 1]}`
+            : (etiquetasMasFrecuentes[0] ?? '');
+    const dias = rangoValido ? diasEntre(fechaDesde, fechaHasta) : 0;
+    const semanas = Math.max(dias / 7, 1);
+    const promedioSemanal = total / semanas;
+
+    const aplicarRango = (desde: string) => {
+        setFechaDesde(desde);
+        setFechaHasta(hoy);
+    };
+
+    const alternarTipo = (clave: string) => {
+        const tipo = clave as TipoIncidente;
+        setTipoSeleccionado((actual) => (actual === tipo ? null : tipo));
     };
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Estadísticas de Incidentes</h2>
+            <div className={estilos.pagina}>
+                <EncabezadoPagina
+                    titulo="Estadísticas de Incidentes"
+                    descripcion="Cuántos incidentes se reportaron de cada tipo en el período elegido."
+                    ancho="100%"
+                />
 
-            <p
-                style={{
-                    marginTop: '-10px',
-                    marginBottom: '20px',
-                    color: 'var(--text-muted)',
-                }}
-            >
-                Cantidad de incidentes reportados por categoría durante un período.
-            </p>
-
-            {/* <div
-                style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '16px',
-                    alignItems: 'end',
-                    marginBottom: '24px',
-                    width: '100%',
-                    maxWidth: '900px',
-                    boxSizing: 'border-box'
-                }}
-            >
-                <label style={{ display: 'flex', flexDirection: 'column', minWidth: '140px', flexGrow: 1 }}>
-                    <span style={{ fontWeight: 'bold', marginBottom: '6px' }}>
+                <div className={estilos.filtros}>
+                    <label className={estilos.campoFecha}>
                         Desde
-                    </span>
-                    <input
-                        type="date"
-                        className={styles.filtroFecha}
-                        value={fechaDesde}
-                        max={fechaHasta || hoyLocal()}
-                        onChange={(evento) => setFechaDesde(evento.target.value)}
-                    />
-                </label>
-
-                <label style={{ display: 'flex', flexDirection: 'column', minWidth: '140px', flexGrow: 1 }}>
-                    <span style={{ fontWeight: 'bold', marginBottom: '6px' }}>
+                        <input
+                            type="date"
+                            className={styles.filtroFecha}
+                            value={fechaDesde}
+                            max={fechaHasta || hoy}
+                            onChange={(evento) => setFechaDesde(evento.target.value)}
+                        />
+                    </label>
+                    <label className={estilos.campoFecha}>
                         Hasta
-                    </span>
-                    <input
-                        type="date"
-                        className={styles.filtroFecha}
-                        value={fechaHasta}
-                        min={fechaDesde || undefined}
-                        max={hoyLocal()}
-                        onChange={(evento) => setFechaHasta(evento.target.value)}
-                    />
-                </label>
-            </div>
-
-            {error && (
-                <p style={{ color: 'var(--rojo-texto)' }}>{error}</p>
-            )}
-            <div style={{display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                marginBottom: '20px',
-                flexWrap: 'wrap'
-            }}>
-                <label htmlFor="tipoGrafico"> Tipo de gráfico: </label>
-
-                <select
-                    id="tipoGrafico"
-                    value={tipoGrafico}
-                    onChange={(e) =>
-                        setTipoGrafico(
-                            e.target.value as 'barras' | 'torta' | 'horizontal'
-                        )
-                    }
-                >
-                    <option value="barras">Barras verticales</option>
-                    <option value="torta">Torta</option>
-                    <option value="horizontal">Barras horizontales</option>
-                </select>
-            </div> */}
-            <div
-                style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '16px',
-                    alignItems: 'end',
-                    marginBottom: '24px',
-                    width: '100%',
-                    maxWidth: '900px',
-                    boxSizing: 'border-box'
-                }}
-            >
-                <label style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    minWidth: '140px',
-                    flexGrow: 1
-                }}>
-                    <span style={{ fontWeight: 'bold', marginBottom: '6px' }}>
-                        Desde
-                    </span>
-                    <input
-                        type="date"
-                        className={styles.filtroFecha}
-                        value={fechaDesde}
-                        max={fechaHasta || hoyLocal()}
-                        onChange={(evento) => setFechaDesde(evento.target.value)}
-                    />
-                </label>
-
-                <label style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    minWidth: '140px',
-                    flexGrow: 1
-                }}>
-                    <span style={{ fontWeight: 'bold', marginBottom: '6px' }}>
-                        Hasta
-                    </span>
-                    <input
-                        type="date"
-                        className={styles.filtroFecha}
-                        value={fechaHasta}
-                        min={fechaDesde || undefined}
-                        max={hoyLocal()}
-                        onChange={(evento) => setFechaHasta(evento.target.value)}
-                    />
-                </label>
-
-                <label style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    minWidth: '140px',
-                    flexGrow: 1
-                }}>
-                    <span style={{ fontWeight: 'bold', marginBottom: '6px' }}>
-                        Tipo de gráfico
-                    </span>
-                    <select
-                        id="tipoGrafico"
-                        value={tipoGrafico}
-                        onChange={(evento) =>
-                            setTipoGrafico(
-                                evento.target.value as 'barras' | 'torta' | 'horizontal'
-                            )
-                        }
-                        className={styles.filtroFecha}
-                    >
-                        <option value="barras">Barras verticales</option>
-                        <option value="torta">Torta</option>
-                        <option value="horizontal">Barras horizontales</option>
-                    </select>
-                </label>
-            </div>
-
-            {error && (
-                <p style={{ color: 'var(--rojo-texto)' }}>{error}</p>
-            )}
-            <section
-                className={styles.tarjetaEstatica}
-                style={{
-                    width: '100%',
-                    maxWidth: '900px',
-                    boxSizing: 'border-box',
-                    padding: '24px',
-                    textAlign: 'left',
-                }}
-            >
-                <h3 style={{ marginTop: 0 }}>Incidentes por tipo</h3>
-
-                {cargando ? (
-                    <p style={{ color: 'var(--text-muted)' }}>
-                        Cargando estadísticas...
-                    </p>
-                ) : (
-                    <div style={{ width: '100%', minHeight: '260px', position: 'relative' }}>
-                        {tipoGrafico === 'barras' && (
-                        <Bar
-                            data={datosGrafico}
-                            options={{
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: { display: false },
-                                    tooltip: {
-                                        callbacks: {
-                                            label: (context) =>
-                                                ` ${context.parsed.y} incidente(s)`,
-                                        },
-                                    },
-                                },
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        ticks: { precision: 0 },
-                                    },
-                                },
-                                onClick: (_evento, elementos) => {
-                                    if (elementos.length > 0) {
-                                        setTipoSeleccionado(
-                                            TIPOS[elementos[0].index]
-                                        );
-                                    }
-                                },
-                            }}
+                        <input
+                            type="date"
+                            className={styles.filtroFecha}
+                            value={fechaHasta}
+                            min={fechaDesde || undefined}
+                            max={hoy}
+                            onChange={(evento) => setFechaHasta(evento.target.value)}
                         />
-                    )}
-
-                    {tipoGrafico === 'torta' && (
-                        <Pie
-                            data={datosGrafico}
-                            options={{
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: {
-                                        display: true,
-                                        position: 'bottom',
-                                    },
-                                    tooltip: {
-                                        callbacks: {
-                                            label: (context) =>
-                                                ` ${context.label}: ${context.raw} incidente(s)`,
-                                        },
-                                    },
-                                },
-                                onClick: (_evento, elementos) => {
-                                    if (elementos.length > 0) {
-                                        setTipoSeleccionado(
-                                            TIPOS[elementos[0].index]
-                                        );
-                                    }
-                                },
-                            }}
-                        />
-                    )}
-
-                    {tipoGrafico === 'horizontal' && (
-                        <Bar
-                            data={datosGrafico}
-                            options={{
-                                indexAxis: 'y',
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: { display: false },
-                                    tooltip: {
-                                        callbacks: {
-                                            label: (context) =>
-                                                ` ${context.parsed.x} incidente(s)`,
-                                        },
-                                    },
-                                },
-                                scales: {
-                                    x: {
-                                        beginAtZero: true,
-                                        ticks: { precision: 0 },
-                                    },
-                                },
-                                onClick: (_evento, elementos) => {
-                                    if (elementos.length > 0) {
-                                        setTipoSeleccionado(
-                                            TIPOS[elementos[0].index]
-                                        );
-                                    }
-                                },
-                            }}
-                        />
-                    )}
+                    </label>
+                    <div className={estilos.rangos} role="group" aria-label="Rangos rápidos">
+                        {RANGOS.map((rango) => {
+                            const desde = rango.desde();
+                            const activo = fechaDesde === desde && fechaHasta === hoy;
+                            return (
+                                <button
+                                    key={rango.etiqueta}
+                                    type="button"
+                                    className={`${estilos.rango} ${activo ? estilos.rangoActivo : ''}`}
+                                    aria-pressed={activo}
+                                    onClick={() => aplicarRango(desde)}
+                                >
+                                    {rango.etiqueta}
+                                </button>
+                            );
+                        })}
                     </div>
+                </div>
+
+                {!rangoValido && (
+                    <p className={estilos.aviso}>La fecha desde no puede ser posterior a la fecha hasta.</p>
+                )}
+                {errorCarga && <p className={estilos.aviso}>No se pudieron cargar las estadísticas.</p>}
+
+                {rangoValido && !errorCarga && (
+                    <>
+                        <IndicadoresResumen
+                            indicadores={[
+                                {
+                                    titulo: 'Incidentes en el período',
+                                    valor: cargando ? '…' : total,
+                                    detalle: `${dias} ${dias === 1 ? 'día' : 'días'}`,
+                                },
+                                {
+                                    titulo: masFrecuentes.length > 1 ? 'Tipos más frecuentes' : 'Tipo más frecuente',
+                                    valor: cargando
+                                        ? '…'
+                                        : total === 0
+                                          ? '—'
+                                          : masFrecuentes.length > 2
+                                            ? `Empate de ${masFrecuentes.length}`
+                                            : nombresMasFrecuentes,
+                                    detalle:
+                                        total === 0
+                                            ? 'Sin incidentes en el período'
+                                            : masFrecuentes.length > 2
+                                              ? `${nombresMasFrecuentes}: ${maximo} cada uno`
+                                              : masFrecuentes.length > 1
+                                                ? `${maximo} cada uno, de ${total}`
+                                                : `${maximo} de ${total} (${Math.round((maximo / total) * 100)}%)`,
+                                },
+                                {
+                                    titulo: 'Promedio semanal',
+                                    valor: cargando ? '…' : promedioSemanal.toLocaleString('es-AR', { maximumFractionDigits: 1 }),
+                                    detalle: 'incidentes por semana',
+                                },
+                            ]}
+                        />
+
+                        <div className={estilos.graficos}>
+                            <section className={estilos.tarjeta}>
+                                <div className={estilos.tarjetaEncabezado}>
+                                    <h3>Incidentes por tipo</h3>
+                                    <span className={estilos.tarjetaAyuda}>
+                                        Hacé clic en un tipo para ver sus incidentes
+                                    </span>
+                                </div>
+
+                                {cargando ? (
+                                    <p className={estilos.vacio}>Cargando estadísticas…</p>
+                                ) : (
+                                    <GraficoBarrasHorizontales
+                                        items={conteos}
+                                        seleccionado={tipoSeleccionado}
+                                        onSeleccionar={alternarTipo}
+                                        colores={COLOR_TIPO}
+                                        unidad={unidadIncidentes}
+                                    />
+                                )}
+                            </section>
+
+                            <section className={estilos.tarjeta}>
+                                <div className={estilos.tarjetaEncabezado}>
+                                    <h3>Distribución</h3>
+                                    <span className={estilos.tarjetaAyuda}>Porción de cada tipo sobre el total</span>
+                                </div>
+
+                                {cargando ? (
+                                    <p className={estilos.vacio}>Cargando estadísticas…</p>
+                                ) : total === 0 ? (
+                                    <p className={estilos.vacio}>No hay incidentes en el período.</p>
+                                ) : (
+                                    <GraficoTorta
+                                        items={conteos}
+                                        colores={COLOR_TIPO}
+                                        colorTexto={TEXTO_SOBRE_COLOR_TIPO}
+                                        seleccionado={tipoSeleccionado}
+                                        onSeleccionar={alternarTipo}
+                                        unidad={unidadIncidentes}
+                                    />
+                                )}
+                            </section>
+                        </div>
+                    </>
                 )}
 
-                <p
-                    style={{
-                        marginBottom: 0,
-                        color: 'var(--text-muted)',
-                        fontSize: '0.85rem',
-                    }}
-                >
-                Pasá el cursor sobre una barra para ver la cantidad de incidentes.                </p>
-            </section>
-
-            {tipoSeleccionado && (
-                <section
-                    style={{
-                        width: '100%',
-                        maxWidth: '900px',
-                        marginTop: '28px',
-                        textAlign: 'left',
-                    }}
-                >
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            flexWrap: 'wrap',
-                            gap: '12px',
-                        }}
-                    >
-                        <h3>
-                            Detalle: {ETIQUETA_TIPO[tipoSeleccionado]}
-                        </h3>
-
-                        <button
-                            type="button"
-                            onClick={() => setTipoSeleccionado(null)}
-                        >
-                            Cerrar detalle
-                        </button>
-                    </div>
-
-                    {cargandoDetalle ? (
-                        <p>Cargando incidentes...</p>
-                    ) : detalle.length === 0 ? (
-                        <p style={{ color: 'var(--text-muted)' }}>
-                            No hay incidentes de este tipo en el período seleccionado.
-                        </p>
-                    ) : (
-                        <div className={styles.contenedorTabla}>
-                            <div
-                                className={styles.filaHeader}
-                                style={{
-                                    gridTemplateColumns: '1.2fr 2fr 1fr',
-                                    minWidth: '480px',
-                                }}
-                            >
-                                <div>Fecha</div>
-                                <div>Descripción</div>
-                                <div>Estado</div>
-                            </div>
-
-                            {detalle.map((incidente) => (
-                                <div
-                                    key={incidente.id}
-                                    className={styles.filaItem}
-                                    style={{
-                                        gridTemplateColumns: '1.2fr 2fr 1fr',
-                                        alignItems: 'center',
-                                        minWidth: '480px',
-                                    }}
-                                >
-                                    <div>
-                                        {formatearFechaHora(
-                                            incidente.fecha_hora_reporte,
-                                        )}
-                                    </div>
-                                    <div>{incidente.descripcion}</div>
-                                    <div>{incidente.estado}</div>
-                                </div>
-                            ))}
+                {rangoValido && tipoSeleccionado && (
+                    <section className={estilos.tarjeta}>
+                        <div className={estilos.tarjetaEncabezado}>
+                            <h3>{ETIQUETA_TIPO[tipoSeleccionado]}</h3>
+                            <Boton variant="volver" onClick={() => setTipoSeleccionado(null)}>
+                                Cerrar detalle
+                            </Boton>
                         </div>
-                    )}
-                </section>
-            )}
+
+                        {cargandoDetalle ? (
+                            <p className={estilos.vacio}>Cargando incidentes…</p>
+                        ) : detalle?.error ? (
+                            <p className={estilos.aviso}>No se pudo cargar el detalle.</p>
+                        ) : !detalle || detalle.datos.length === 0 ? (
+                            <p className={estilos.vacio}>No hay incidentes de este tipo en el período.</p>
+                        ) : (
+                            <div className={styles.contenedorTabla} style={{ marginTop: 0 }}>
+                                <div className={styles.filaHeader} style={{ gridTemplateColumns: '1.1fr 2.4fr 0.9fr 0.5fr' }}>
+                                    <div>Fecha</div>
+                                    <div>Descripción</div>
+                                    <div>Estado</div>
+                                    <div></div>
+                                </div>
+                                {detalle.datos.map((incidente) => (
+                                    <div
+                                        key={incidente.id}
+                                        className={styles.filaItem}
+                                        style={{ gridTemplateColumns: '1.1fr 2.4fr 0.9fr 0.5fr', textAlign: 'left' }}
+                                    >
+                                        <div>{formatearFechaHora(incidente.fecha_hora_reporte)}</div>
+                                        <div style={{ overflowWrap: 'anywhere' }}>{incidente.descripcion}</div>
+                                        <div className={estilos.estado}>
+                                            <span
+                                                className={estilos.estadoPunto}
+                                                style={{ backgroundColor: COLOR_ESTADO[incidente.estado] }}
+                                                aria-hidden="true"
+                                            />
+                                            {ETIQUETA_ESTADO[incidente.estado]}
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <Link to={`/incidentes/${incidente.id}`} title="Ver detalle del incidente">
+                                                <Boton variant="ver" style={{ padding: '6px 10px' }} />
+                                            </Link>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                )}
+            </div>
         </div>
     );
 }

@@ -9,6 +9,7 @@ import Boton from '../../components/Boton';
 import VisorArchivo from '../../components/VisorArchivo';
 import RegistrarCalibracionModal from './RegistrarCalibracionModal';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function EquipoDetail() {
     const [equipo, setEquipo] = useState<Equipo | null>(null);
@@ -35,7 +36,7 @@ export default function EquipoDetail() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Detalle del Equipo</h2>
+            <EncabezadoPagina titulo="Detalle del Equipo" ancho="600px" />
             {equipo ? (
                 <div className={styles.tarjetaEstatica} style={{ maxWidth: '600px', width: '100%' }}>
                     <p><strong>Nombre:</strong> {equipo.nombre}</p>

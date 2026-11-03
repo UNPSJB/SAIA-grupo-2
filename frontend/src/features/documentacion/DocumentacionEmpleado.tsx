@@ -21,6 +21,7 @@ import BuscadorTexto from '../../components/BuscadorTexto';
 import { filtrarPorTexto } from '../../utils/texto';
 import { abrirArchivoEnPestania } from '../../utils/archivos';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function DocumentacionEmpleado() {
     const { empleadoId } = useParams();
@@ -81,7 +82,7 @@ export default function DocumentacionEmpleado() {
     if (cargando) {
         return (
             <div className={styles.contenedorPrincipal}>
-                <h2>Documentación del Empleado</h2>
+                <EncabezadoPagina titulo="Documentación del Empleado" ancho="1000px" />
                 <p>Cargando...</p>
             </div>
         );
@@ -100,13 +101,21 @@ export default function DocumentacionEmpleado() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Documentación del Empleado</h2>
-
-            {empleado && (
-                <p style={{ marginTop: '-10px', marginBottom: '20px', fontSize: '1.05rem' }}>
-                    <strong>{empleado.legajo}</strong> — {empleado.nombre} {empleado.apellido}
-                </p>
-            )}
+            <EncabezadoPagina
+                titulo="Documentación del Empleado"
+                descripcion={empleado && `${empleado.legajo} — ${empleado.nombre} ${empleado.apellido}`}
+                ancho="1000px"
+                acciones={
+                    <>
+                        <Boton variant="volver" onClick={() => navigate(-1)}>
+                            Volver atrás
+                        </Boton>
+                        <Link to={`/empleados/${empleadoId}/documentacion/nuevo`}>
+                            <Boton variant="crear">Cargar Documento</Boton>
+                        </Link>
+                    </>
+                }
+            />
 
             {cumplimiento && !cumplimiento.completo && (
                 <div
@@ -139,15 +148,6 @@ export default function DocumentacionEmpleado() {
                     Documentación obligatoria al día
                 </p>
             )}
-
-            <div className={styles.filaBotones} style={{ marginBottom: '20px' }}>
-                <Link to={`/empleados/${empleadoId}/documentacion/nuevo`}>
-                    <Boton variant="crear">Cargar Documento</Boton>
-                </Link>
-                <Boton variant="volver" onClick={() => navigate(-1)} style={{ marginLeft: '10px' }}>
-                    Volver atrás
-                </Boton>
-            </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1000px', marginBottom: '16px' }}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar documento..." />

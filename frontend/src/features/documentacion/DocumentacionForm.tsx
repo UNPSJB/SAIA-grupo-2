@@ -17,6 +17,7 @@ import Boton from '../../components/Boton';
 import SubidorArchivo from '../../components/SubidorArchivo';
 import type { ArchivoAdjunto } from '../../components/SubidorArchivo';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 interface Errores {
     tipo?: string;
@@ -191,11 +192,11 @@ export default function DocumentacionForm() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>{editando ? 'Renovar o Editar Documento' : 'Cargar Documento'}</h2>
-
-            {nombreEmpleado && (
-                <p style={{ marginTop: '-10px', marginBottom: '20px' }}>{nombreEmpleado}</p>
-            )}
+            <EncabezadoPagina
+                titulo={editando ? 'Renovar o Editar Documento' : 'Cargar Documento'}
+                descripcion={nombreEmpleado}
+                ancho="780px"
+            />
 
             {errorCarga && <p style={{ color: '#ef4444' }}>{errorCarga}</p>}
 

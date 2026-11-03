@@ -4,6 +4,7 @@ import type { Empleado } from '../../types/empleados';
 import { getEmpleadoById } from '../../services/empleadosServices';
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function EmpleadoDetail() {
     const [empleado, setEmpleado] = useState<Empleado | null>(null);
@@ -27,10 +28,10 @@ export default function EmpleadoDetail() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2 style={{ marginBottom: '20px' }}>Detalle del Empleado</h2>
+            <EncabezadoPagina titulo="Detalle del Empleado" ancho="650px" />
             
             {empleado ? (
-                <div className={styles.tarjetaEstatica} style={{ maxWidth: '650px', margin: '0 auto', textAlign: 'left', padding: '30px' }}>
+                <div className={styles.tarjetaEstatica} style={{ maxWidth: '650px', width: '100%', margin: '0 auto', textAlign: 'left', padding: '30px' }}>
                     <p style={{ marginBottom: '18px', fontSize: '1.05rem', color: 'var(--text-h)' }}>
                         <strong>Legajo:</strong> {empleado.legajo}
                     </p>

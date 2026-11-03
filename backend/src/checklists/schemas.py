@@ -2,6 +2,8 @@ from datetime import date, datetime
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
+from src.checklists.constants import GranularidadCumplimiento
+
 # --- Envío de datos (Backend -> Frontend) para la lista diaria ---
 class ChecklistItem(BaseModel):
     tarea_id: int
@@ -96,5 +98,24 @@ class HistorialChecklistResumen(BaseModel):
     total_incumplidas: int
     tareas_incumplidas_resumen: List[TareaIncumplidaResumen] = []
     registros: List[RegistroHistorialItem] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GraficoCumplimientoItem(BaseModel):
+    """Un punto de la serie: el dia, o el lunes que identifica a la semana."""
+    periodo: date
+    esperadas: int
+    realizadas: int
+    porcentaje: Optional[float] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GraficoCumplimientoResumen(BaseModel):
+    fecha_desde: date
+    fecha_hasta: date
+    granularidad: GranularidadCumplimiento
+    serie: List[GraficoCumplimientoItem] = []
 
     model_config = ConfigDict(from_attributes=True)

@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
 
 from src.incidentes.constants import (
     LARGO_MAXIMO_DESCRIPCION,
@@ -15,6 +15,16 @@ Descripcion = Annotated[
     Field(min_length=3, max_length=LARGO_MAXIMO_DESCRIPCION, strip_whitespace=True),
 ]
 NombreArchivo = Annotated[str, Field(max_length=200, strip_whitespace=True)]
+
+
+def _en_utc(valor: datetime) -> str:
+    """SQLite descarta la zona al guardar; los instantes de incidentes se registran en UTC."""
+    if valor.tzinfo is None:
+        valor = valor.replace(tzinfo=timezone.utc)
+    return valor.isoformat()
+
+
+FechaUTC = Annotated[datetime, PlainSerializer(_en_utc, return_type=str)]
 
 
 class EmpleadoResumen(BaseModel):
@@ -54,7 +64,7 @@ class MovimientoIncidente(BaseModel):
     id: int
     tipo: TipoMovimiento
     descripcion: str
-    fecha_hora: datetime
+    fecha_hora: FechaUTC
     empleado: EmpleadoResumen
 
     model_config = ConfigDict(from_attributes=True)
@@ -72,14 +82,14 @@ class Incidente(BaseModel):
     descripcion: str
     tipo: TipoIncidente
     estado: EstadoIncidente
-    fecha_hora_reporte: datetime
+    fecha_hora_reporte: FechaUTC
     empleado: EmpleadoResumen
     archivo_url: Optional[str] = None
     archivo_nombre: Optional[str] = None
     dias_abierto: Optional[int] = None
 
     accion_correctiva: Optional[str] = None
-    fecha_cierre: Optional[datetime] = None
+    fecha_cierre: Optional[FechaUTC] = None
     responsable_cierre: Optional[EmpleadoResumen] = None
     movimientos: list[MovimientoIncidente] = []
 

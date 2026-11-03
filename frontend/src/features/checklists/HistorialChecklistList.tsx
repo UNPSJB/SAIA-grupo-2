@@ -7,9 +7,44 @@ import { getProductos } from '../../services/productosLimpiezaServices';
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
 import BuscadorTexto from '../../components/BuscadorTexto';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 import { filtrarPorTexto } from '../../utils/texto';
 
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
+import GraficoBarrasHorizontales, { type ItemBarra } from '../../components/GraficoBarrasHorizontales';
+import estilos from '../../components/Estadisticas.module.css';
+
+function cumplimientoPorSector(registros: HistorialChecklistResumen['registros']): ItemBarra[] {
+    const acumulado = new Map<string, { esperadas: number; realizadas: number }>();
+    registros.forEach((registro) => {
+        const sector = registro.sector_nombre || 'Sin sector';
+        const actual = acumulado.get(sector) ?? { esperadas: 0, realizadas: 0 };
+        actual.esperadas += 1;
+        if (registro.realizada) actual.realizadas += 1;
+        acumulado.set(sector, actual);
+    });
+    return [...acumulado.entries()].map(([sector, { esperadas, realizadas }]) => ({
+        clave: sector,
+        etiqueta: sector,
+        valor: Math.round((realizadas / esperadas) * 1000) / 10,
+        detalle: `${realizadas} de ${esperadas}`,
+    }));
+}
+
+function realizadasPorPersona(registros: HistorialChecklistResumen['registros']): ItemBarra[] {
+    const acumulado = new Map<string, number>();
+    registros
+        .filter((registro) => registro.realizada && registro.nombre_empleado)
+        .forEach((registro) => {
+            const nombre = String(registro.nombre_empleado).replace(/\s*\([^)]*\)\s*$/, '');
+            acumulado.set(nombre, (acumulado.get(nombre) ?? 0) + 1);
+        });
+    return [...acumulado.entries()].map(([nombre, cantidad]) => ({
+        clave: nombre,
+        etiqueta: nombre,
+        valor: cantidad,
+    }));
+}
 
 export default function HistorialChecklistList() {
     const now = new Date();
@@ -192,14 +227,14 @@ export default function HistorialChecklistList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Historial y Auditoría de Checklists</h2>
+            <EncabezadoPagina
+                titulo="Historial y Auditoría de Checklists"
+                descripcion="Consulta histórica de cumplimiento"
+            />
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar tarea, plan, sector o responsable..." />
             </div>
-            <p className={styles.textMuted} style={{ marginBottom: '20px' }}>
-                Consulta histórica de cumplimiento
-            </p>
 
             {/* FORMULARIO DE FILTROS */}
             <form onSubmit={handleFiltrar} noValidate style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: 'var(--shadow)', width: '100%', maxWidth: '1100px', marginBottom: '30px' }}>
@@ -319,6 +354,41 @@ export default function HistorialChecklistList() {
                             </div>
                         ))}
                     </div>
+                </div>
+            )}
+
+            {historial && historial.registros.length > 0 && (
+                <div className={estilos.grillaDosColumnas} style={{ width: '100%', maxWidth: '1100px', marginBottom: '30px', textAlign: 'left' }}>
+                    <section className={estilos.tarjeta}>
+                        <div className={estilos.tarjetaEncabezado}>
+                            <h3>Cumplimiento por sector</h3>
+                            <span className={estilos.tarjetaAyuda}>Los que menos cumplen, primero</span>
+                        </div>
+                        <GraficoBarrasHorizontales
+                            items={cumplimientoPorSector(historial.registros)}
+                            escala={100}
+                            orden="menor"
+                            mostrarValor={(item) => ({
+                                principal: `${item.valor.toLocaleString('es-AR')}%`,
+                                secundario: item.detalle,
+                            })}
+                        />
+                    </section>
+
+                    <section className={estilos.tarjeta}>
+                        <div className={estilos.tarjetaEncabezado}>
+                            <h3>Tareas realizadas por persona</h3>
+                            <span className={estilos.tarjetaAyuda}>Cómo se repartió el trabajo</span>
+                        </div>
+                        {realizadasPorPersona(historial.registros).length === 0 ? (
+                            <p className={estilos.vacio}>No hay tareas realizadas en el período.</p>
+                        ) : (
+                            <GraficoBarrasHorizontales
+                                items={realizadasPorPersona(historial.registros)}
+                                unidad={(valor) => `${valor} ${valor === 1 ? 'tarea' : 'tareas'}`}
+                            />
+                        )}
+                    </section>
                 </div>
             )}
 

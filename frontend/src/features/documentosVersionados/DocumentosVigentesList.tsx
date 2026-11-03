@@ -5,6 +5,7 @@ import { abrirArchivoEnPestania } from '../../utils/archivos';
 import { filtrarPorTexto } from '../../utils/texto';
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 import BuscadorTexto from '../../components/BuscadorTexto';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 import Boton from '../../components/Boton';
 import sharedStyles from '../../styles/shared.module.css';
 
@@ -128,14 +129,10 @@ export default function DocumentosVigentesList() {
 
     return (
         <div className={sharedStyles.contenedorPrincipal}>
-            <div className={sharedStyles.cabeceraLista}>
-                <div>
-                    <h1 className={sharedStyles.tituloPrincipal}>Procedimientos y Manuales Vigentes</h1>
-                    <p className={sharedStyles.textMuted}>
-                        Consulta de documentos oficiales vigentes para tareas de planta
-                    </p>
-                </div>
-            </div>
+            <EncabezadoPagina
+                titulo="Procedimientos y Manuales Vigentes"
+                descripcion="Consulta de documentos oficiales vigentes para tareas de planta"
+            />
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar procedimiento..." />

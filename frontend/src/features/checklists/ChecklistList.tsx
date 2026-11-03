@@ -10,6 +10,7 @@ import Boton from '../../components/Boton';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';
 import BuscadorTexto from '../../components/BuscadorTexto';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 import { filtrarPorTexto } from '../../utils/texto';
 
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
@@ -248,14 +249,14 @@ export default function ChecklistList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Checklist del Día</h2>
+            <EncabezadoPagina
+                titulo="Checklist del Día"
+                descripcion={new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            />
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar tarea, plan o sector..." />
             </div>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '15px', fontSize: '1.1rem' }}>
-                {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
 
             {sectoresUnicos.length > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '15px', alignItems: 'center', gap: '10px' }}>

@@ -4,6 +4,7 @@ import type { PlanLimpieza } from '../../types/planes';
 import { getPlanById } from '../../services/planesServices';
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function PlanDetail() {
     const [plan, setPlan] = useState<PlanLimpieza | null>(null);
@@ -25,7 +26,7 @@ export default function PlanDetail() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Detalle del Plan de Limpieza</h2>
+            <EncabezadoPagina titulo="Detalle del Plan de Limpieza" ancho="800px" />
             {plan ? (
                 <div className={styles.formularioTarjeta} style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'left' }}>
                     <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '15px', marginBottom: '20px' }}>

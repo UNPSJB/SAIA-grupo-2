@@ -14,6 +14,7 @@ import { abrirArchivoEnPestania } from '../../utils/archivos';
 import BotonHistorialVersiones from './BotonHistorialVersiones';
 import NuevaVersionModal from './NuevaVersionModal';
 import { Link } from 'react-router-dom';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 
 
@@ -131,21 +132,19 @@ export default function DocumentosVersionadosList(){
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2> Documentos Versionados</h2>
+            <EncabezadoPagina
+                titulo="Documentos Versionados"
+                acciones={usuario?.rol === 'admin' && (
+                    <Link to="/documentos/nuevo">
+                        <Boton variant="crear">Registrar Documento Versionado</Boton>
+                    </Link>
+                )}
+            />
 
-            <BuscadorTexto
-                valor={busqueda}
-                onCambio={setBusqueda}
-                placeholder="Buscar por nombre...">
-            </BuscadorTexto>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar por nombre..." />
+            </div>
             
-            {usuario?.rol === 'admin' && (
-                <Link to="/documentos/nuevo" className={styles.linkCrear}>
-                    <Boton variant="crear">
-                        Registrar Documento Versionado
-                    </Boton>
-                </Link>
-            )}
             {error && <p style={{ color: 'var(--rojo-texto)' }}>{error}</p>}
 
             <TablaPaginada

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from src.checklists.models import Checklist, ConsumoReal
 from src.checklists import schemas, exceptions
+from src.checklists.constants import GranularidadCumplimiento
 from src.planes.models import Plan
 from src.tareas.models import Tarea
 from src.productos_limpieza.models import ProductoLimpieza
@@ -333,4 +334,56 @@ def obtener_historial_checklists(
         total_incumplidas=total_incumplidas,
         tareas_incumplidas_resumen=tareas_incumplidas_list,
         registros=registros
+    )
+
+
+def _inicio_de_periodo(fecha: date, granularidad: GranularidadCumplimiento) -> date:
+    if granularidad == GranularidadCumplimiento.SEMANA:
+        return fecha - timedelta(days=fecha.weekday())
+    return fecha
+
+
+def obtener_grafico_cumplimiento(
+    db: Session,
+    fecha_desde: date,
+    fecha_hasta: date,
+    granularidad: GranularidadCumplimiento = GranularidadCumplimiento.DIA,
+) -> schemas.GraficoCumplimientoResumen:
+    """Porcentaje de cumplimiento por dia o por semana, calculado sobre el mismo historial de checklists.
+
+    Un periodo sin tareas programadas devuelve porcentaje nulo para no confundirlo con un 0% de cumplimiento.
+    Las semanas se identifican por su lunes y la primera y la ultima pueden estar incompletas segun el rango.
+    """
+    if fecha_desde > fecha_hasta:
+        raise exceptions.RangoFechasInvalido()
+
+    historial = obtener_historial_checklists(db, fecha_inicio=fecha_desde, fecha_fin=fecha_hasta)
+
+    conteos: dict[date, list[int]] = {}
+    fecha = fecha_desde
+    while fecha <= fecha_hasta:
+        conteos.setdefault(_inicio_de_periodo(fecha, granularidad), [0, 0])
+        fecha += timedelta(days=1)
+
+    for registro in historial.registros:
+        conteo = conteos[_inicio_de_periodo(registro.fecha_programada, granularidad)]
+        conteo[0] += 1
+        if registro.realizada:
+            conteo[1] += 1
+
+    serie = [
+        schemas.GraficoCumplimientoItem(
+            periodo=periodo,
+            esperadas=esperadas,
+            realizadas=realizadas,
+            porcentaje=round(realizadas / esperadas * 100, 1) if esperadas > 0 else None,
+        )
+        for periodo, (esperadas, realizadas) in sorted(conteos.items())
+    ]
+
+    return schemas.GraficoCumplimientoResumen(
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
+        granularidad=granularidad,
+        serie=serie,
     )

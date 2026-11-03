@@ -27,6 +27,7 @@ import {
     textoAntiguedad,
 } from './estadoIncidente';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function IncidenteDetail() {
     const { id } = useParams();
@@ -176,7 +177,7 @@ export default function IncidenteDetail() {
     if (error) {
         return (
             <div className={styles.contenedorPrincipal}>
-                <h2>Detalle del Incidente</h2>
+                <EncabezadoPagina titulo="Detalle del Incidente" ancho="900px" />
                 <p style={{ color: 'var(--rojo-texto)' }}>{error}</p>
                 <Link to="/incidentes">
                     <Boton variant="volver">Volver al listado</Boton>
@@ -188,7 +189,7 @@ export default function IncidenteDetail() {
     if (!incidente) {
         return (
             <div className={styles.contenedorPrincipal}>
-                <h2>Detalle del Incidente</h2>
+                <EncabezadoPagina titulo="Detalle del Incidente" ancho="900px" />
                 <p style={{ color: 'var(--text-muted)' }}>Cargando incidente...</p>
             </div>
         );
@@ -208,7 +209,7 @@ export default function IncidenteDetail() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Detalle del Incidente</h2>
+            <EncabezadoPagina titulo="Detalle del Incidente" ancho="900px" />
 
             <div className={styles.tarjetaEstatica} style={{ width: '100%', maxWidth: '900px', textAlign: 'left' }}>
                 <div

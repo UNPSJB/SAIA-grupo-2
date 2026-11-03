@@ -8,6 +8,7 @@ import { getInsumoById, saveInsumo } from '../../services/insumosServices';
 import Boton from '../../components/Boton';
 import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 interface FormValues {
     nombre: string;
@@ -89,7 +90,7 @@ export default function InsumoForm() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>{editando ? 'Editar Insumo' : 'Registrar Nuevo Insumo'}</h2>
+            <EncabezadoPagina titulo={editando ? 'Editar Insumo' : 'Registrar Nuevo Insumo'} ancho="600px" />
             
             <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta} style={{ maxWidth: '600px' }}>
                 <div className={styles.formGrid} style={{ gridTemplateColumns: '1fr' }}>

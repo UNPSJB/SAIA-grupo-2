@@ -15,6 +15,7 @@ import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 import TarjetasFiltro, { type Metrica } from '../../components/TarjetasFiltro';
 import BarraFiltros, { type FiltroConfig } from '../../components/BarraFiltros'; // <-- Importamos la barra
 import { filtrarPorTexto } from '../../utils/texto';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function VencimientosDocumentacionList() {
     const [vencimientos, setVencimientos] = useState<AlertaVencimiento[]>([]);
@@ -180,7 +181,7 @@ export default function VencimientosDocumentacionList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Vencimientos de Personal</h2>
+            <EncabezadoPagina titulo="Vencimientos de Personal" />
 
             {!cargando && (
                 <TarjetasFiltro 

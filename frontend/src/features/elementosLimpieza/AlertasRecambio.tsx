@@ -12,6 +12,7 @@ import BuscadorTexto from '../../components/BuscadorTexto';
 import { filtrarPorTexto } from '../../utils/texto';
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 import { DIAS_AVISO_PREVIO } from '../../constants/config';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 
 export default function AlertasRecambio() {
@@ -97,10 +98,10 @@ export default function AlertasRecambio() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Alertas de Recambio</h2>
-            <p style={{ marginTop: '-10px', marginBottom: '16px', color: 'var(--text-muted)' }}>
-                Monitoreo de elementos de limpieza próximos a recambio (Aviso previo: {DIAS_AVISO_PREVIO} días).
-            </p>
+            <EncabezadoPagina
+                titulo="Alertas de Recambio"
+                descripcion={`Monitoreo de elementos de limpieza próximos a recambio (aviso previo: ${DIAS_AVISO_PREVIO} días).`}
+            />
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar elemento..." />
