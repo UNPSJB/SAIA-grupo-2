@@ -8,6 +8,7 @@ import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
 import Boton from '../../components/Boton';
 import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 const tiposProducto: TipoProductoLimpieza[] = [
     'detergente',
@@ -139,11 +140,10 @@ export default function ProductoForm() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>
-                {editando
-                    ? 'Editar Producto de Limpieza'
-                    : 'Registrar Nuevo Producto de Limpieza'}
-            </h2>
+            <EncabezadoPagina
+                titulo={editando ? 'Editar Producto de Limpieza' : 'Registrar Nuevo Producto de Limpieza'}
+                ancho="700px"
+            />
 
             {errorCarga && <p style={{ color: '#ef4444' }}>{errorCarga}</p>}
 

@@ -6,6 +6,7 @@ import { getSectores, saveSector } from '../../services/sectoresServices';
 import Boton from '../../components/Boton';
 import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function SectorForm() {
     const { id } = useParams<{ id: string }>();
@@ -68,7 +69,7 @@ export default function SectorForm() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>{esEdicion ? 'Editar Sector' : 'Registrar Nuevo Sector'}</h2>
+            <EncabezadoPagina titulo={esEdicion ? 'Editar Sector' : 'Registrar Nuevo Sector'} ancho="500px" />
 
             <form onSubmit={handleSubmit} className={styles.formularioContainer} style={{ maxWidth: '500px', margin: '0 auto', textAlign: 'left' }}>
                 <div style={{ marginBottom: '20px' }}>

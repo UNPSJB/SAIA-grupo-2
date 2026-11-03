@@ -8,6 +8,7 @@ import { getPlanes } from '../../services/planesServices';
 import { getProductos } from '../../services/productosLimpiezaServices'; 
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 interface FormValues {
     titulo: string;
@@ -118,7 +119,7 @@ export default function TareaForm() {
     if (cargando) {
         return (
             <div className={styles.contenedorPrincipal}>
-                <h2>{editando ? 'Editar Tarea' : 'Nueva Tarea'}</h2>
+                <EncabezadoPagina titulo={editando ? 'Editar Tarea' : 'Nueva Tarea'} ancho="800px" />
                 <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
                     Cargando información...
                 </div>
@@ -128,7 +129,7 @@ export default function TareaForm() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>{editando ? 'Editar Tarea' : 'Nueva Tarea'}</h2>
+            <EncabezadoPagina titulo={editando ? 'Editar Tarea' : 'Nueva Tarea'} ancho="800px" />
             {errorMsg && <div style={{ color: '#ef4444', marginBottom: '15px', fontWeight: 'bold' }}>{errorMsg}</div>}
             
             <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta} noValidate>

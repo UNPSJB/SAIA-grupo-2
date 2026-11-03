@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     ROOT_PATH_DEVELOPMENT: str = ""
     ROOT_PATH_PRODUCTION: str = ""
     LOG_LEVEL: str = "INFO"
+    DIAS_AVISO_PREVIO: int = 15
 
     # Configuración para que lea automáticamente el archivo .env
     model_config = SettingsConfigDict(
@@ -24,3 +25,5 @@ class Settings(BaseSettings):
 
 # Instancia global que reutilizaremos en el proyecto
 settings = Settings()
+
+DIAS_AVISO_PREVIO = settings.DIAS_AVISO_PREVIO

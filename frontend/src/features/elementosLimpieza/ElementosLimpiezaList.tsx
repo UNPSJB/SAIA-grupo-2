@@ -11,6 +11,7 @@ import BuscadorTexto from '../../components/BuscadorTexto';
 import { filtrarPorTexto } from '../../utils/texto';
 
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function ElementosLimpiezaList() {
     const [elementos, setElementos] = useState<ElementoLimpieza[]>([]);
@@ -117,24 +118,29 @@ export default function ElementosLimpiezaList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Elementos de Limpieza</h2>
+            <EncabezadoPagina
+                titulo="Elementos de Limpieza"
+                descripcion="Administra los elementos y consulta su estado y frecuencia de recambio."
+                ancho="1000px"
+                acciones={
+                    <>
+                        <Link to="/elementosLimpieza/alertas">
+                            <Boton variant="ver">Ver Alertas de Recambio</Boton>
+                        </Link>
+                        <Link to="/elementosLimpieza/nuevo">
+                            <Boton variant="crear">Registrar Elemento</Boton>
+                        </Link>
+                    </>
+                }
+            />
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores} style={{ maxWidth: '1000px' }}>
+                {conAlerta > 0 && (
+                    <p className={styles.infoFilaSuperior} style={{ color: COLOR_ESTADO.vencido, fontWeight: 'bold' }}>
+                        {conAlerta} {conAlerta === 1 ? 'elemento requiere' : 'elementos requieren'} atención
+                    </p>
+                )}
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar elemento..." />
-            </div>
-            {conAlerta > 0 && (
-                <p style={{ marginTop: '-10px', marginBottom: '20px', color: COLOR_ESTADO.vencido, fontWeight: 'bold' }}>
-                    {conAlerta} {conAlerta === 1 ? 'elemento requiere' : 'elementos requieren'} atención
-                </p>
-            )}
-
-            <div className={styles.filaBotones} style={{ justifyContent: 'center', marginBottom: '20px' }}>
-                <Link to="/elementosLimpieza/nuevo">
-                    <Boton variant="crear">Registrar Elemento</Boton>
-                </Link>
-                <Link to="/elementosLimpieza/alertas">
-                    <Boton variant="ver">Ver Alertas de Recambio</Boton>
-                </Link>
             </div>
 
             <div style={{ maxWidth: '1000px', width: '100%' }}>

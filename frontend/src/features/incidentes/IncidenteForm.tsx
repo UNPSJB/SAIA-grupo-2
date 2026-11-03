@@ -10,6 +10,7 @@ import type { ArchivoAdjunto } from '../../components/SubidorArchivo';
 import ModalAlerta from '../../components/alerta';
 import { ETIQUETA_TIPO, TIPOS_INCIDENTE, formatearFechaHora } from './estadoIncidente';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 interface Errores {
     descripcion?: string;
@@ -133,10 +134,11 @@ export default function IncidenteForm() {
     if (registrado) {
         return (
             <div className={styles.contenedorPrincipal}>
-                <h2>Incidente Registrado</h2>
-                <p style={{ marginTop: '-10px', marginBottom: '20px', color: 'var(--verde-texto)', fontWeight: 'bold' }}>
-                    Quedó asentado el {formatearFechaHora(registrado.fecha_hora_reporte)}.
-                </p>
+                <EncabezadoPagina
+                    titulo="Incidente Registrado"
+                    descripcion={`Quedó asentado el ${formatearFechaHora(registrado.fecha_hora_reporte)}.`}
+                    ancho="780px"
+                />
 
                 <div className={styles.tarjetaEstatica} style={{ width: '100%', maxWidth: '780px', textAlign: 'left' }}>
                     <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
@@ -195,11 +197,11 @@ export default function IncidenteForm() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Registrar Incidente</h2>
-            <p style={{ marginTop: '-10px', marginBottom: '20px', color: 'var(--text-muted)' }}>
-                Se guarda automáticamente la fecha, la hora y tu usuario. Si no tenés la foto a mano,
-                podés adjuntarla después desde el detalle.
-            </p>
+            <EncabezadoPagina
+                titulo="Registrar Incidente"
+                descripcion="Se guarda automáticamente la fecha, la hora y tu usuario. Si no tenés la foto a mano, podés adjuntarla después desde el detalle."
+                ancho="780px"
+            />
 
             <form onSubmit={handleSubmit} className={styles.formularioTarjeta} style={{ maxWidth: '780px' }}>
                 <div className={styles.formGrid}>

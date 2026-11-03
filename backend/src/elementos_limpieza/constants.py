@@ -1,6 +1,5 @@
 from enum import Enum
-
-DIAS_AVISO_PREVIO = 10
+from src.config import DIAS_AVISO_PREVIO
 
 
 class ErrorCode:

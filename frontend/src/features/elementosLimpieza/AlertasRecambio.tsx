@@ -11,6 +11,8 @@ import styles from '../../styles/shared.module.css';
 import BuscadorTexto from '../../components/BuscadorTexto';
 import { filtrarPorTexto } from '../../utils/texto';
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
+import { DIAS_AVISO_PREVIO } from '../../constants/config';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 
 export default function AlertasRecambio() {
@@ -96,29 +98,25 @@ export default function AlertasRecambio() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Alertas de Recambio</h2>
+            <EncabezadoPagina
+                titulo="Alertas de Recambio"
+                descripcion={`Monitoreo de elementos de limpieza próximos a recambio (aviso previo: ${DIAS_AVISO_PREVIO} días).`}
+                acciones={esAdmin && (
+                    <Link to="/elementosLimpieza">
+                        <Boton variant="volver">Ver todos los elementos</Boton>
+                    </Link>
+                )}
+            />
 
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
+                {!cargando && alertas.length > 0 && (
+                    <p className={styles.infoFilaSuperior}>
+                        <span style={{ color: COLOR_ESTADO.vencido, fontWeight: 'bold' }}>{vencidos} vencidos</span>
+                        <span style={{ color: COLOR_ESTADO.proximo, fontWeight: 'bold' }}>{proximos} próximos a vencer</span>
+                    </p>
+                )}
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar elemento..." />
             </div>
-            {!cargando && alertas.length > 0 && (
-                <p style={{ marginTop: '-10px', marginBottom: '20px' }}>
-                    <span style={{ color: COLOR_ESTADO.vencido, fontWeight: 'bold' }}>{vencidos} vencidos</span>
-                    {' · '}
-                    <span style={{ color: COLOR_ESTADO.proximo, fontWeight: 'bold' }}>{proximos} próximos a vencer</span>
-                </p>
-            )}
-
-            {esAdmin && (
-                <Link to="/elementosLimpieza" className={styles.linkCrear}>
-                    <Boton variant="volver">
-                        Ver todos los elementos
-                    </Boton>
-                </Link>
-            )}
-
-
 
             <TablaPaginada
                         datos={alertasFiltradas}

@@ -1,0 +1,346 @@
+.pagina {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    text-align: left;
+    box-sizing: border-box;
+}
+
+.pagina > header {
+    margin-bottom: 0;
+}
+
+.filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px 16px;
+}
+
+.campoFecha {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 170px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.rangos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.rango {
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.rango:hover {
+    background: var(--accent-bg);
+}
+
+.rangoActivo {
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    color: var(--text-h);
+}
+
+.rango:focus-visible,
+.fila:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.aviso {
+    margin: 0;
+    color: var(--rojo-texto);
+}
+
+.indicadores {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+}
+
+.indicador {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.indicadorTitulo {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.indicadorValor {
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text-h);
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+.indicadorDetalle {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.tarjeta {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+}
+
+.tarjetaEncabezado {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-bottom: 16px;
+}
+
+.tarjetaEncabezado h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--text-h);
+}
+
+.tarjetaAyuda {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.barras {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.fila {
+    display: grid;
+    grid-template-columns: minmax(110px, 170px) 1fr minmax(84px, auto);
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.fila:hover {
+    background: var(--accent-bg);
+}
+
+.filaSeleccionada {
+    background: var(--accent-bg);
+}
+
+.filaEstatica {
+    cursor: default;
+}
+
+.filaEstatica:hover {
+    background: transparent;
+}
+
+.graficos {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 16px;
+    align-items: stretch;
+}
+
+@media (max-width: 900px) {
+    .graficos {
+        grid-template-columns: 1fr;
+    }
+}
+
+.grillaDosColumnas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 16px;
+}
+
+.etiqueta {
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pista {
+    position: relative;
+    height: 18px;
+    border-radius: 0 4px 4px 0;
+    background: color-mix(in srgb, var(--border) 45%, transparent);
+}
+
+.barra {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 0 4px 4px 0;
+    background: var(--accent);
+    transition: width 0.35s ease, background-color 0.2s ease;
+}
+
+.barraAtenuada {
+    background: var(--gris-estandar);
+}
+
+.valor {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 6px;
+    font-variant-numeric: tabular-nums;
+}
+
+.valorNumero {
+    font-weight: 700;
+    color: var(--text-h);
+}
+
+.valorPorcentaje {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    min-width: 3.2em;
+    text-align: right;
+}
+
+.vacio {
+    margin: 0;
+    padding: 24px 0;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.estadoPunto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+    .fila {
+        grid-template-columns: 1fr auto;
+        row-gap: 6px;
+    }
+
+    .pista {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .campoFecha {
+        width: calc(50% - 8px);
+    }
+}
+
+.lienzoGrafico {
+    position: relative;
+    width: 100%;
+    height: 320px;
+}
+
+.notaGrafico {
+    margin: 12px 0 0 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.datosTabla {
+    margin-top: 14px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+}
+
+.datosTabla summary {
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.datosTabla summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.datosTabla table {
+    width: 100%;
+    margin-top: 12px;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.datosTabla th,
+.datosTabla td {
+    padding: 8px 10px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+    text-align: right;
+}
+
+.datosTabla th:first-child,
+.datosTabla thead th:first-child {
+    text-align: left;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.datosTabla thead th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+@media (max-width: 600px) {
+    .lienzoGrafico {
+        height: 260px;
+    }
+}

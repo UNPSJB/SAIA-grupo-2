@@ -1,6 +1,62 @@
 .appLayout {
   display: flex;
   min-height: 100vh;
+  flex-direction: column;
+}
+
+@media (min-width: 1025px) {
+  .appLayout {
+    flex-direction: row;
+  }
+}
+
+.mobileHeader {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: var(--sidebar-bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 999;
+}
+
+.mobileBrand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--text-h);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.mobileBrand i {
+  color: var(--azul-texto);
+  font-size: 1.25rem;
+}
+
+.mobileMenuBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-h);
+  font-size: 1.4rem;
+  padding: 4px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebarOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: 999;
 }
 
 .sidebar {
@@ -11,6 +67,8 @@
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  z-index: 1000;
+  transition: transform 0.3s ease;
 }
 
 .marca {
@@ -48,6 +106,8 @@
   min-width: 0;
   margin-left: 260px;
   padding: 32px;
+  box-sizing: border-box;
+  width: calc(100% - 260px);
 }
 
 .navLink {
@@ -131,4 +191,29 @@
 .logoutBtn:hover {
   background-color: var(--accent-bg);
   color: var(--rojo-texto);
+}
+
+@media (max-width: 1024px) {
+  .mobileHeader {
+    display: flex;
+  }
+
+  .sidebar {
+    transform: translateX(-100%);
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .sidebarOpen {
+    transform: translateX(0);
+  }
+
+  .sidebarOverlayVisible {
+    display: block;
+  }
+
+  .mainContent {
+    margin-left: 0;
+    padding: 20px 14px;
+    width: 100%;
+  }
 }

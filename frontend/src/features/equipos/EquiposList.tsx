@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
 import type { Equipo } from '../../types/equipos';
 import { getEquipos } from '../../services/equiposServices';
-import { COLOR_ESTADO, ETIQUETA_ESTADO } from './estadoMantenimiento';
+import { ETIQUETA_ESTADO } from './estadoMantenimiento';
 import Boton from '../../components/Boton';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/shared.module.css';
@@ -12,6 +12,7 @@ import BuscadorTexto from '../../components/BuscadorTexto';
 import { filtrarPorTexto } from '../../utils/texto';
 
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function EquiposList() {
     const [equipoParaCalibrar, setEquipoParaCalibrar] = useState<Equipo | null>(null);
@@ -123,20 +124,21 @@ export default function EquiposList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Inventario de Equipamiento</h2>
+            <EncabezadoPagina
+                titulo="Inventario de Equipamiento"
+                descripcion="Consulta el equipamiento registrado, su estado y sus tareas de mantenimiento."
+                acciones={usuario?.rol === 'admin' && (
+                    <Link to="/equipos/nuevo">
+                        <Boton variant="crear">Registrar Equipo</Boton>
+                    </Link>
+                )}
+            />
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar equipo, sector o tipo..." />
             </div>
 
             
-            {usuario?.rol === 'admin' && (
-                <Link to="/equipos/nuevo" className={styles.linkCrear}>
-                    <Boton variant="crear">
-                        Registrar Equipo
-                    </Boton>
-                </Link>
-            )}
 
             <TablaPaginada
                 datos={equiposFiltrados}

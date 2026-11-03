@@ -4,6 +4,7 @@ import type { Sector } from '../../types/sectores';
 import { getSectorById } from '../../services/sectoresServices';
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function SectorDetail() {
     const [sector, setSector] = useState<Sector | null>(null);
@@ -25,7 +26,7 @@ export default function SectorDetail() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Detalles del Sector</h2>
+            <EncabezadoPagina titulo="Detalles del Sector" ancho="800px" />
             
             {sector ? (
                 <div className={styles.formularioTarjeta} style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'left' }}>

@@ -1,11 +1,15 @@
-export interface GraficoCumplimientoItem{
+export type GranularidadCumplimiento = 'dia' | 'semana';
+
+export interface GraficoCumplimientoItem {
     periodo: string;
-    porcentaje: number;
+    esperadas: number;
+    realizadas: number;
+    porcentaje: number | null;
 }
 
-export interface GraficoCumplimientoResumen{
+export interface GraficoCumplimientoResumen {
     fecha_desde: string;
     fecha_hasta: string;
-    granularidad: 'dia'|'semana';
+    granularidad: GranularidadCumplimiento;
     serie: GraficoCumplimientoItem[];
 }

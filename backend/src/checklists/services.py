@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from src.checklists.models import Checklist, ConsumoReal
 from src.checklists import schemas, exceptions
+from src.checklists.constants import GranularidadCumplimiento
 from src.planes.models import Plan
 from src.tareas.models import Tarea
 from src.productos_limpieza.models import ProductoLimpieza
@@ -336,63 +337,53 @@ def obtener_historial_checklists(
     )
 
 
-#-----------------------------------
+def _inicio_de_periodo(fecha: date, granularidad: GranularidadCumplimiento) -> date:
+    if granularidad == GranularidadCumplimiento.SEMANA:
+        return fecha - timedelta(days=fecha.weekday())
+    return fecha
+
 
 def obtener_grafico_cumplimiento(
-        db: Session,
-        fecha_desde: date,
-        fecha_hasta: date,
-        granularidad: str
+    db: Session,
+    fecha_desde: date,
+    fecha_hasta: date,
+    granularidad: GranularidadCumplimiento = GranularidadCumplimiento.DIA,
 ) -> schemas.GraficoCumplimientoResumen:
+    """Porcentaje de cumplimiento por dia o por semana, calculado sobre el mismo historial de checklists.
+
+    Un periodo sin tareas programadas devuelve porcentaje nulo para no confundirlo con un 0% de cumplimiento.
+    Las semanas se identifican por su lunes y la primera y la ultima pueden estar incompletas segun el rango.
+    """
+    if fecha_desde > fecha_hasta:
+        raise exceptions.RangoFechasInvalido()
 
     historial = obtener_historial_checklists(db, fecha_inicio=fecha_desde, fecha_fin=fecha_hasta)
-    agrupado = {}
+
+    conteos: dict[date, list[int]] = {}
+    fecha = fecha_desde
+    while fecha <= fecha_hasta:
+        conteos.setdefault(_inicio_de_periodo(fecha, granularidad), [0, 0])
+        fecha += timedelta(days=1)
 
     for registro in historial.registros:
-        fecha = registro.fecha_programada
-
-        if granularidad == "dia":
-            clave = fecha.strftime("%Y-%m-%d")
-        else:
-            lunes_semana = fecha - timedelta(days=fecha.weekday())
-            clave = lunes_semana.strftime("%Y-%m-%d")
-
-        if clave not in agrupado:
-            agrupado[clave] = {"esperadas": 0, "realizadas": 0}
-
-        agrupado[clave]["esperadas"] += 1
+        conteo = conteos[_inicio_de_periodo(registro.fecha_programada, granularidad)]
+        conteo[0] += 1
         if registro.realizada:
-            agrupado[clave]["realizadas"] +=1
+            conteo[1] += 1
 
-    serie_completa = []
-    fecha_actual = fecha_desde
-
-    while fecha_actual <= fecha_hasta:
-        if granularidad == "dia":
-            clave = fecha_actual.strftime("%Y-%m-%d")
-            fecha_actual += timedelta(days=1)
-        else:
-            lunes_semana = fecha_actual - timedelta(days=fecha_actual.weekday())
-            clave = lunes_semana.strftime("%Y-%m-%d")
-            fecha_actual = lunes_semana + timedelta(weeks=1)
-
-        if any(item.periodo == clave for item in serie_completa):
-            continue
-
-        if clave in agrupado:
-            esp = agrupado[clave]["esperadas"]
-            real = agrupado[clave]["realizadas"]
-            porcentaje = round((real/esp) * 100, 1) if esp > 0 else 0.0
-        else:
-            porcentaje = 0.0
-
-        serie_completa.append(
-            schemas.GraficoCumplimientoItem(periodo=clave, porcentaje=porcentaje)
+    serie = [
+        schemas.GraficoCumplimientoItem(
+            periodo=periodo,
+            esperadas=esperadas,
+            realizadas=realizadas,
+            porcentaje=round(realizadas / esperadas * 100, 1) if esperadas > 0 else None,
         )
+        for periodo, (esperadas, realizadas) in sorted(conteos.items())
+    ]
 
     return schemas.GraficoCumplimientoResumen(
         fecha_desde=fecha_desde,
         fecha_hasta=fecha_hasta,
         granularidad=granularidad,
-        serie=serie_completa
+        serie=serie,
     )

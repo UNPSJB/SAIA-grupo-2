@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import styles from './styles/shared.module.css'
+import MenuLateral from './components/MenuLateral';
+import Inicio from './features/inicio/Inicio';
 import Login from './features/auth/Login';
 
 import EmpleadosList from './features/empleados/EmpleadosList';
@@ -55,11 +57,18 @@ import ElementoLimpiezaDelete from './features/elementosLimpieza/ElementoLimpiez
 import AlertasRecambio from './features/elementosLimpieza/AlertasRecambio';
 import VencimientosList from './features/vencimientos/VencimientosList'; 
 import VencimientosDocumentacionList from './features/vencimientosDocumentacion/VencimientosDocumentacionList';
+import AlertasDocumentacion from './features/documentacion/AlertaVencimiento';
 
 import IncidentesList from './features/incidentes/IncidentesList';
 import IncidenteForm from './features/incidentes/IncidenteForm';
 import IncidenteDetail from './features/incidentes/IncidenteDetail';
 import EstadisticaIncidentes from './features/incidentes/EstadisticaIncidentes';
+
+import DocumentosVersionadosList from './features/documentosVersionados/DocumentosVersionadosList';
+import DocumentoVersionadoForm from './features/documentosVersionados/DocumentoVersionadoForm';
+
+import DocumentosVigentesList from './features/documentosVersionados/DocumentosVigentesList';
+
 
 import './App.css';
 
@@ -78,6 +87,10 @@ const ETIQUETA_ROL: Record<'admin' | 'operario', string> = {
 
 function RutasProtegidas() {
   const { isAuthenticated, logout, usuario } = useAuth();
+  const [sidebarAbierto, setSidebarAbierto] = useState(false);
+
+  const toggleSidebar = () => setSidebarAbierto(!sidebarAbierto);
+  const cerrarSidebar = () => setSidebarAbierto(false);
 
   const isAdmin = usuario?.rol === 'admin';
 
@@ -94,86 +107,29 @@ function RutasProtegidas() {
   return (
     <>
       <div className="appLayout">
-        <aside className="sidebar">
-          <NavLink to="/" className="marca">
+        <header className="mobileHeader">
+          <NavLink to="/" className="mobileBrand" onClick={cerrarSidebar}>
+            <i className="bi bi-house-door-fill"></i>
+            <span>SAIA</span>
+          </NavLink>
+          <button className="mobileMenuBtn" onClick={toggleSidebar} aria-label="Abrir menú">
+            <i className={`bi ${sidebarAbierto ? 'bi-x-lg' : 'bi-list'}`}></i>
+          </button>
+        </header>
+
+        <div
+          className={`sidebarOverlay ${sidebarAbierto ? 'sidebarOverlayVisible' : ''}`}
+          onClick={cerrarSidebar}
+        />
+
+        <aside className={`sidebar ${sidebarAbierto ? 'sidebarOpen' : ''}`}>
+          <NavLink to="/" className="marca" onClick={cerrarSidebar}>
             <i className="bi bi-house-door-fill"></i>
             <span>SAIA</span>
           </NavLink>
 
-          <nav className="navegacion">
-          {isAdmin && <NavLink to="/vencimientos" className={styles.sidebarTituloAcordeon}><strong>Vencimientos</strong></NavLink>}
-
-
-          {isAdmin && (
-            <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
-              <summary className={styles.sidebarTituloAcordeon}>
-                Recursos Humanos 
-              </summary>
-
-              <div className={styles.sidebarOpcionesAcordeon}>
-                <NavLink to="/empleados" end className={styles.sidebarItemAcordeon}>Directorio de Empleados</NavLink>
-                <NavLink to="/empleados/alertas" className={styles.sidebarItemAcordeon}>Alertas de Vencimiento</NavLink>
-                <NavLink to="/capacidades" className={styles.sidebarItemAcordeon}>Gestión de Capacidades</NavLink>
-                <NavLink to="/sectores" className={styles.sidebarItemAcordeon}>Gestión de Sectores</NavLink>
-                <NavLink to="/vencimientos-documentacion" className={styles.sidebarItemAcordeon}>Vencimientos de Personal</NavLink>
-              </div>
-            </details>
-          )}
-
-          {isAdmin && (
-            <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
-              <summary className={styles.sidebarTituloAcordeon}>
-                Gestión de Insumos 
-              </summary>
-
-              <div className={styles.sidebarOpcionesAcordeon}>
-                <NavLink to="/insumos" className={styles.sidebarItemAcordeon}>Inventario de Insumos</NavLink>
-                <NavLink to="/unidadesMedida" className={styles.sidebarItemAcordeon}>Unidades de Medida</NavLink>
-              </div>
-            </details>
-          )}
-
-          {isAdmin && (
-            <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
-              <summary className={styles.sidebarTituloAcordeon}>
-                Equipamiento 
-              </summary>
-
-              <div className={styles.sidebarOpcionesAcordeon}>
-                <NavLink to="/equipos" className={styles.sidebarItemAcordeon}>Inventario de Equipos</NavLink>
-              </div>
-            </details>
-          )}
-          
-          <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
-              <summary className={styles.sidebarTituloAcordeon}>
-                Limpieza y Planes 
-              </summary>
-
-            <div className={styles.sidebarOpcionesAcordeon}>
-              {isAdmin && <NavLink to="/productos_limpieza" className={styles.sidebarItemAcordeon}>Productos de Limpieza</NavLink>}
-              {isAdmin && <NavLink to="/elementosLimpieza" end className={styles.sidebarItemAcordeon}>Elementos de Limpieza</NavLink>}
-              <NavLink to="/elementosLimpieza/alertas" className={styles.sidebarItemAcordeon}>Alertas de Recambio</NavLink>
-              <NavLink to="/tareas" className={styles.sidebarItemAcordeon}>Tareas de Limpieza</NavLink>
-              {isAdmin && <NavLink to="/planes" className={styles.sidebarItemAcordeon}>Planes de Limpieza</NavLink>}
-              <NavLink to="/checklists/hoy" className={styles.sidebarItemAcordeon}>Checklist del Día</NavLink>
-              {isAdmin && <NavLink to="/checklists/historial" className={styles.sidebarItemAcordeon}>Historial de Checklists</NavLink>}
-              {isAdmin && <NavLink to="/checklists/cumplimiento" className={styles.sidebarItemAcordeon}>Cumplimiento de Limpieza</NavLink>}
-            </div>
-          </details>
-
-          <details name="sidebar-acordeon" className={styles.sidebarAcordeon}>
-              <summary className={styles.sidebarTituloAcordeon}>
-                No Conformidades 
-              </summary>
-
-            <div className={styles.sidebarOpcionesAcordeon}>
-              <NavLink to="/incidentes/nuevo" className={styles.sidebarItemAcordeon}>Registrar Incidente</NavLink>
-              {isAdmin && <NavLink to="/incidentes" end className={styles.sidebarItemAcordeon}>Incidentes Reportados</NavLink>}
-              {isAdmin && <NavLink to="/incidentes/abiertos" className={styles.sidebarItemAcordeon}>Incidentes Abiertos</NavLink>}
-              {isAdmin && (<NavLink to="/incidentes/estadisticas" className={styles.sidebarItemAcordeon}>Estadísticas de Incidentes</NavLink>)}
-            </div>
-          </details>
+          <nav className="navegacion" aria-label="Menú principal">
+            <MenuLateral esAdmin={isAdmin} onNavegar={cerrarSidebar} />
           </nav>
 
           <div className="userSection">
@@ -182,7 +138,7 @@ function RutasProtegidas() {
               <span className="userNombre">{usuario?.nombre} {usuario?.apellido}</span>
               <span className="userRol">{usuario ? ETIQUETA_ROL[usuario.rol] : ''}</span>
             </div>
-            <button onClick={logout} className="logoutBtn" title="Cerrar sesión" aria-label="Cerrar sesión">
+            <button onClick={() => { cerrarSidebar(); logout(); }} className="logoutBtn" title="Cerrar sesión" aria-label="Cerrar sesión">
               <i className="bi bi-box-arrow-right"></i>
             </button>
           </div>
@@ -190,7 +146,7 @@ function RutasProtegidas() {
 
         <main className="mainContent">
           <Routes>
-            <Route path="/" element={<h1>SAIA - Grupo 2</h1>} />
+            <Route path="/" element={<Inicio />} />
             
             <Route path="/empleados" element={<RutaAdmin><EmpleadosList /></RutaAdmin>} />
             <Route path="/empleados/alertas" element={<RutaAdmin><AlertasDocumentacion /></RutaAdmin>} />
@@ -253,12 +209,18 @@ function RutasProtegidas() {
             <Route path="/checklists/cumplimiento" element={<RutaAdmin><GraficoCumplimiento /></RutaAdmin>} />
 
             <Route path="/vencimientos-documentacion" element={<RutaAdmin><VencimientosDocumentacionList /></RutaAdmin>}/>
+            <Route path="/alertas-documentacion" element={<RutaAdmin><AlertasDocumentacion /></RutaAdmin>} />
 
             <Route path="/incidentes/nuevo" element={<IncidenteForm />} />
             <Route path="/incidentes" element={<RutaAdmin><IncidentesList /></RutaAdmin>} />
             <Route path="/incidentes/abiertos" element={<RutaAdmin><IncidentesList soloAbiertos /></RutaAdmin>} />
             <Route path="/incidentes/:id" element={<RutaAdmin><IncidenteDetail /></RutaAdmin>} />
             <Route path="/incidentes/estadisticas" element={<RutaAdmin><EstadisticaIncidentes /></RutaAdmin>} />
+            <Route path="/documentos" element={<RutaAdmin><DocumentosVersionadosList /></RutaAdmin>} />
+            <Route path="/documentos/nuevo" element={<RutaAdmin><DocumentoVersionadoForm /></RutaAdmin>} />
+            <Route path="/documentos/vigentes" element={<DocumentosVigentesList />} />
+
+            
           </Routes>
         </main>
         

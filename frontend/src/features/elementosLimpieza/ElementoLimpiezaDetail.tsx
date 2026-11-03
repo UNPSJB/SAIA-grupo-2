@@ -7,6 +7,7 @@ import { COLOR_ESTADO, ETIQUETA_ESTADO, textoRecambio } from './estadoRecambio';
 import Boton from '../../components/Boton';
 import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function ElementoLimpiezaDetail() {
     const { usuario } = useAuth();
@@ -46,7 +47,7 @@ export default function ElementoLimpiezaDetail() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Detalle del Elemento de Limpieza</h2>
+            <EncabezadoPagina titulo="Detalle del Elemento de Limpieza" ancho="600px" />
             {elemento ? (
                 <div className={styles.tarjetaEstatica} style={{ maxWidth: '600px', width: '100%' }}>
                     <p><strong>Nombre:</strong> {elemento.nombre}</p>

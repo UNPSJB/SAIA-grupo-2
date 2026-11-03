@@ -193,24 +193,24 @@ export default function RegistrarCalibracionModal({
     return (
         <>
         <div className={styles.modalOverlay}>
-            <div style={{ backgroundColor: 'var(--bg)', width: '95%', maxWidth: '1000px', maxHeight: '92vh', overflowY: 'auto', borderRadius: '12px', padding: '30px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
-                <h2 style={{ marginTop: 0, borderBottom: '1px solid var(--border)', paddingBottom: '15px' }}>Registrar Calibración</h2>
+            <div className={styles.modalFormulario} style={{ maxWidth: '900px' }}>
+                <h2 className={styles.modalTitulo}>Registrar Calibración</h2>
 
                 <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta} style={{ boxShadow: 'none', padding: 0, border: 'none', maxWidth: '100%' }}>
                         <div className={styles.formGroup} style={{ marginBottom: '20px' }}>
-                            <label style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Equipo a calibrar:</label>
+                            <label className={styles.modalTituloCampo}>Equipo a calibrar:</label>
                             <select
                                 value={equipo.id}
                                 disabled
                                 aria-label="Equipo a calibrar"
-                                style={{ width: '100%', padding: '12px', fontSize: '1rem', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: 'var(--blocked-input-bg)', color: 'var(--text-muted)' }}
+                                className={`${styles.modalSelector} ${styles.modalSelectorBloqueado}`}
                             >
                                 <option value={equipo.id}>{equipo.nombre}</option>
                             </select>
                         </div>
 
                         <div className={styles.formGroup} style={{ marginBottom: '20px' }}>
-                            <label style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Certificación (Obligatoria):</label>
+                            <label className={styles.modalTituloCampo}>Certificación (Obligatoria):</label>
                             <input 
                                 type="file" 
                                 accept="image/*,application/pdf,.pdf" 
@@ -219,11 +219,11 @@ export default function RegistrarCalibracionModal({
                                     campoCertificacion.ref(element);
                                     inputCertificacionRef.current = element;
                                 }}
-                                style={{ width: '100%', padding: '10px', fontSize: '1rem', borderRadius: '8px', border: '1px dashed var(--border)', backgroundColor: 'var(--input-bg)', color: 'var(--text)' }} 
+                                className={styles.modalArchivo}
                             />
-                            <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '5px' }}>Permite la subida de imágenes y documentos PDF (máximo {TAMANIO_MAXIMO_MB} MB)</small>
+                            <small className={styles.modalTextoAdicional}>Permite la subida de imágenes y documentos PDF (máximo {TAMANIO_MAXIMO_MB} MB)</small>
                             {leyendoCertificacion && (
-                                <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '5px' }}>
+                                <small className={styles.modalTextoAdicional}>
                                     Cargando vista previa...
                                 </small>
                             )}
@@ -238,7 +238,7 @@ export default function RegistrarCalibracionModal({
                                     <VisorArchivo
                                         url={vistaPreviaCertificacion}
                                         nombre={nombreCertificacion ?? 'Vista previa de la certificación'}
-                                        alto="55vh"
+                                        alto="50vh"
                                         acciones={
                                             <button
                                                 type="button"
@@ -268,15 +268,17 @@ export default function RegistrarCalibracionModal({
                             )}
                         </div>
                         <div className={styles.formGroup} style={{ marginBottom: '25px' }}>
-                            <label style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Fecha de calibración:</label>
+                            <label className={styles.modalTituloCampo}>Fecha de calibración:</label>
                             <input
                                 type="date"
                                 max={fechaMaxima}
+                                className={`${styles.filtroFecha} ${
+                                    errors.fecha ? styles.filtroFechaError : ''
+                                }`}
                                 {...register('fecha', {
                                     required: 'La fecha es obligatoria',
                                     max: { value: fechaMaxima, message: 'La fecha no puede ser futura' }
                                 })}
-                                style={errors.fecha ? { borderColor: 'var(--rojo-texto)' } : {}}
                             />
                             {errors.fecha && (
                                 <span style={{ color: 'var(--rojo-texto)', fontSize: '0.8rem', marginTop: '5px' }}>
@@ -285,8 +287,8 @@ export default function RegistrarCalibracionModal({
                             )}
                         </div>
                         
-                        <hr style={{ margin: '30px 0', borderColor: 'var(--border)' }} />
-                        <div className={styles.filaBotones} style={{ marginTop: '30px', justifyContent: 'flex-end', gap: '15px' }}>
+                        <hr style={{ margin: '25px 0', borderColor: 'var(--border)' }} />
+                        <div className={styles.filaBotones} style={{ marginTop: '20px', justifyContent: 'flex-end', gap: '12px' }}>
                             <Boton type="button" variant="volver" onClick={cerrarModal}>Cancelar</Boton>
                             <Boton type="submit" variant="guardar" disabled={isSubmitting || leyendoCertificacion}>
                                 {isSubmitting ? 'Guardando...' : leyendoCertificacion ? 'Leyendo archivo...' : 'Registrar calibración'}

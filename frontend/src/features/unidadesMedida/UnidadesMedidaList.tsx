@@ -7,6 +7,7 @@ import BuscadorTexto from '../../components/BuscadorTexto';
 import { filtrarPorTexto } from '../../utils/texto';
 
 import TablaPaginada, {type Columna } from '../../components/TablaPaginada';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function UnidadesMedidaList() {
     const [unidadesMedida, setUnidadesMedida] = useState<UnidadMedida[]>([]);
@@ -50,10 +51,13 @@ export default function UnidadesMedidaList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Unidades de Medida</h2>
+            <EncabezadoPagina
+                titulo="Unidades de Medida"
+                descripcion="Tabla de unidades de medida, con posibilidad de búsqueda por nombre."
+            />
 
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar unidad..." />
             </div>
 

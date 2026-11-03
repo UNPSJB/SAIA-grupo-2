@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import Boton from '../../components/Boton';
 import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 interface FormValues {
     dni: string;
@@ -154,7 +155,7 @@ export default function EmpleadoForm() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>{editando ? 'Editar Empleado' : 'Registrar Nuevo Empleado'}</h2>
+            <EncabezadoPagina titulo={editando ? 'Editar Empleado' : 'Registrar Nuevo Empleado'} ancho="800px" />
             
             <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta} autoComplete="off">
                 

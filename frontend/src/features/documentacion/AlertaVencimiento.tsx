@@ -1,151 +1,164 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import type { AlertaVencimiento, AlertasPorEmpleado } from '../../types/documentacion';
+
+import type { AlertaVencimiento, AlertasPorEmpleado, EstadoVencimiento } from '../../types/documentacion';
 import { getAlertasDocumentacion } from '../../services/documentacionServices';
-import { COLOR_ESTADO, ETIQUETA_ESTADO, ETIQUETA_TIPO, textoVencimiento } from './estadoVencimiento';
+import { COLOR_ESTADO, ETIQUETA_ESTADO, ETIQUETA_TIPO, formatearFecha, textoVencimiento } from './estadoVencimiento';
 import Boton from '../../components/Boton';
-import ModalAlerta from '../../components/alerta';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
+import TarjetasFiltro, { type Metrica } from '../../components/TarjetasFiltro';
+import estilos from './AlertaVencimiento.module.css';
 import styles from '../../styles/shared.module.css';
 
+interface Respuesta {
+    alertas: AlertaVencimiento[];
+    error: boolean;
+}
 
+function agruparPorEmpleado(alertas: AlertaVencimiento[]): AlertasPorEmpleado[] {
+    const grupos = new Map<number, AlertasPorEmpleado>();
+    alertas.forEach((alerta) => {
+        const grupo = grupos.get(alerta.empleado.id) ?? { empleado: alerta.empleado, documentos: [] };
+        grupo.documentos.push(alerta);
+        grupos.set(alerta.empleado.id, grupo);
+    });
+    return [...grupos.values()];
+}
 
-export default function AlertasDocumentacion(){
-    const { usuario } = useAuth();
-    const esAdmin = usuario?.rol === 'admin';
+function plural(cantidad: number, singular: string, varios: string): string {
+    return `${cantidad} ${cantidad === 1 ? singular : varios}`;
+}
 
-    const [alertas, setAlertas] = useState<AlertaVencimiento[]>([]);
-    const [cargando, setCargando] = useState(true);
-    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: ''});
-
-    const cargarAlertas = async () => {
-        try{
-            const data = await getAlertasDocumentacion();
-            setAlertas(data);
-        } catch (error) {
-            console.error("Error al cargar las alertas de vencimiento:", error);
-        } finally{
-            setCargando(false);
-        }
-    };
+export default function AlertasDocumentacion() {
+    const [respuesta, setRespuesta] = useState<Respuesta | null>(null);
+    const [filtroEstado, setFiltroEstado] = useState<EstadoVencimiento | ''>('');
 
     useEffect(() => {
-        cargarAlertas();
+        let cancelado = false;
+
+        getAlertasDocumentacion()
+            .then((datos) => {
+                if (cancelado) return;
+                setRespuesta({ alertas: datos.filter((alerta) => alerta.estado !== 'vigente'), error: false });
+            })
+            .catch((problema) => {
+                console.error('Error al cargar las alertas de vencimiento:', problema);
+                if (!cancelado) setRespuesta({ alertas: [], error: true });
+            });
+
+        return () => {
+            cancelado = true;
+        };
     }, []);
 
+    const cargando = respuesta === null;
+    const alertas = respuesta?.alertas ?? [];
+    const vencidos = alertas.filter((alerta) => alerta.estado === 'vencido').length;
+    const proximos = alertas.filter((alerta) => alerta.estado === 'proximo').length;
+    const visibles = filtroEstado === '' ? alertas : alertas.filter((alerta) => alerta.estado === filtroEstado);
+    const grupos = agruparPorEmpleado(visibles);
+    const personas = agruparPorEmpleado(alertas).length;
 
-    const alertasAgrupadas: AlertasPorEmpleado[] = Object.values(
-        alertas.reduce((acc, current) => {
-            const empId = current.empleado.id;
-            if (!acc[empId]) {
-                acc[empId] = {
-                    empleado: current.empleado,
-                    documentos: []
-                };
-            }
-            acc[empId].documentos.push(current);
-            return acc;
-        },  {} as Record<number, AlertasPorEmpleado>)
-    );
-    const vencidos = alertas.filter(a => a.estado === 'vencido').length;
-    const proximos = alertas.filter(a => a.estado === 'proximo').length;
+    const metricas: Metrica[] = [
+        { id: 'vencido', titulo: 'VENCIDOS', valor: vencidos, color: COLOR_ESTADO.vencido },
+        { id: 'proximo', titulo: 'PRÓXIMOS A VENCER', valor: proximos, color: COLOR_ESTADO.proximo },
+        { id: '', titulo: 'PERSONAS CON ALERTAS', valor: personas, color: '#3b82f6' },
+    ];
+
+    const descripcion = cargando
+        ? 'Documentación del personal vencida o próxima a vencer.'
+        : alertas.length === 0
+          ? 'No hay documentación vencida ni próxima a vencer.'
+          : `${plural(alertas.length, 'documento requiere', 'documentos requieren')} atención, de ${plural(personas, 'persona', 'personas')}. Los más urgentes, primero.`;
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2> Alertas de Vencimiento de Documentación</h2>
+            <EncabezadoPagina
+                titulo="Alertas de Vencimiento de Documentación"
+                descripcion={descripcion}
+                acciones={
+                    <Link to="/vencimientos-documentacion">
+                        <Boton variant="ver">Ver todos los vencimientos</Boton>
+                    </Link>
+                }
+            />
+
+            {respuesta?.error && (
+                <p style={{ color: 'var(--rojo-texto)' }}>No se pudieron cargar las alertas de vencimiento.</p>
+            )}
 
             {!cargando && alertas.length > 0 && (
-                <p style={{ marginTop: '-10px', marginBottom: '20px' }}>
-                    <span style={{ color: COLOR_ESTADO.vencido, fontWeight: 'bold' }}>{vencidos} vencidos</span>
-                    {' · '}
-                    <span style={{ color: COLOR_ESTADO.proximo, fontWeight: 'bold' }}>{proximos} próximos a vencer</span>
-                </p>
+                <TarjetasFiltro
+                    metricas={metricas}
+                    filtroActual={filtroEstado}
+                    onFiltroChange={(estado) => setFiltroEstado(estado as EstadoVencimiento | '')}
+                />
             )}
 
-            {esAdmin && (
-                <Link to="/empleados" className={styles.linkCrear}>
-                    <Boton variant="volver">
-                        Ver todos los empleados
-                    </Boton>
-                </Link>
-            )}
+            <div className={estilos.lista}>
+                {cargando && <p className={estilos.mensaje}>Cargando alertas…</p>}
 
-            <div className={styles.contenedorTabla} style={{ maxWidth: '900px'}}>
-                <div className={styles.filaHeader} style={{ gridTemplateColumns: '2fr 1.3fr 1.5fr 1.2fr'}}>
-                    <div>Empleado / Legajo</div>
-                    <div>Documentación</div>
-                    <div>Vencimiento</div>
-                    <div>Acciones</div>
-                </div>
-                
-                  
-                {alertasAgrupadas.map((grupo) =>(
-                    <div key={grupo.empleado.id} className={styles.filaItem} style={{ gridTemplateColumns: '2fr 1.3fr 1.5fr 1.2fr', alignItems: 'center'}}>
-                        <div style={{ fontWeight: '500', color: 'var(--text-h)' }}>
-                            {grupo.empleado.apellido}, {grupo.empleado.nombre}
-                            <div style={{ fontSize: '0.85rem', fontWeight: 'normal', color: 'var(--text-muted)', marginTop: '2px'}}>
-                                (Leg. {grupo.empleado.legajo})
-                            </div>          
-                        </div>
+                {!cargando && !respuesta?.error && grupos.length === 0 && (
+                    <p className={estilos.mensaje}>
+                        {alertas.length === 0
+                            ? 'Toda la documentación del personal está al día.'
+                            : 'No hay alertas con este filtro.'}
+                    </p>
+                )}
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {grupo.documentos.map((doc) => (
-                                <div key={doc.id} style={{ fontSize: '0.9rem', height: '35px', display: 'flex', alignItems: 'center'}}>
-                                    {ETIQUETA_TIPO[doc.tipo] || doc.tipo}
-                                </div>
-                            ))}
-                        </div>
+                {grupos.map((grupo) => (
+                    <section key={grupo.empleado.id} className={estilos.persona}>
+                        <header className={estilos.personaEncabezado}>
+                            <div>
+                                <h3>
+                                    {grupo.empleado.apellido}, {grupo.empleado.nombre}
+                                </h3>
+                                <span className={estilos.legajo}>Legajo {grupo.empleado.legajo}</span>
+                            </div>
+                            <Link to={`/empleados/${grupo.empleado.id}/documentacion`} className={estilos.verDocumentacion}>
+                                Ver su documentación
+                                <i className="bi bi-arrow-right" aria-hidden="true"></i>
+                            </Link>
+                        </header>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {grupo.documentos.map((doc) =>(
-                                <div key={doc.id} style={{ height: '35px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: COLOR_ESTADO[doc.estado] }}>
-                                        {ETIQUETA_ESTADO[doc.estado]}
+                        <ul className={estilos.documentos}>
+                            {grupo.documentos.map((documento) => (
+                                <li key={documento.id} className={estilos.documento}>
+                                    <span className={estilos.estado}>
+                                        <span
+                                            className={estilos.punto}
+                                            style={{ backgroundColor: COLOR_ESTADO[documento.estado] }}
+                                            aria-hidden="true"
+                                        />
+                                        {ETIQUETA_ESTADO[documento.estado]}
                                     </span>
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                        {textoVencimiento(doc.dias_restantes)}
+                                    <span className={estilos.textos}>
+                                        <span className={estilos.tipo}>{ETIQUETA_TIPO[documento.tipo]}</span>
+                                        <span className={estilos.secundario}>{documento.descripcion}</span>
                                     </span>
-                                </div>
+                                    <span className={estilos.textos}>
+                                        <span
+                                            className={estilos.plazo}
+                                            style={{ color: COLOR_ESTADO[documento.estado] }}
+                                        >
+                                            {textoVencimiento(documento.dias_restantes)}
+                                        </span>
+                                        <span className={estilos.secundario}>
+                                            {formatearFecha(documento.fecha_vencimiento)}
+                                        </span>
+                                    </span>
+                                    <Link
+                                        to={`/empleados/${grupo.empleado.id}/documentacion/editar/${documento.id}`}
+                                        className={estilos.accion}
+                                    >
+                                        <Boton variant="editar">Renovar</Boton>
+                                    </Link>
+                                </li>
                             ))}
-                        </div>
-
-                        <div className={styles.grupoBotonesTabla} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {grupo.documentos.map((doc) => (
-                                <div key={doc.id} style={{ height: '60px', display: 'flex', alignItems: 'center' }}>
-                                    {esAdmin && (
-                                        <Link to={`/empleados/${grupo.empleado.id}/documentacion/editar/${doc.id}`}>
-                                            <Boton variant="guardar">
-                                                Renovar documentación
-                                            </Boton>
-                                        </Link>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-  
+                        </ul>
+                    </section>
                 ))}
-                    
-                {!cargando && alertas.length === 0 && (
-                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text)' }}>
-                        No hay documentación vencida y próxima a vencer.
-                    </div>
-                )}
-
-                {cargando && (
-                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text)' }}>
-                        Cargando alertas...
-                    </div>
-                )}
             </div>
-
-            <ModalAlerta
-                isOpen={modalAlerta.isOpen}
-                titulo={modalAlerta.titulo}
-                mensaje={modalAlerta.mensaje}
-                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false})}
-            />
         </div>
-
     );
 }

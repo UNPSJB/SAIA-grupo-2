@@ -9,6 +9,7 @@ import Boton from '../../components/Boton';
 import VisorArchivo from '../../components/VisorArchivo';
 import RegistrarCalibracionModal from './RegistrarCalibracionModal';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function EquipoDetail() {
     const [equipo, setEquipo] = useState<Equipo | null>(null);
@@ -35,7 +36,7 @@ export default function EquipoDetail() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Detalle del Equipo</h2>
+            <EncabezadoPagina titulo="Detalle del Equipo" ancho="600px" />
             {equipo ? (
                 <div className={styles.tarjetaEstatica} style={{ maxWidth: '600px', width: '100%' }}>
                     <p><strong>Nombre:</strong> {equipo.nombre}</p>
@@ -79,12 +80,12 @@ export default function EquipoDetail() {
                                 </summary>
                                 <div className={styles.accordionBody}> 
                                     <div className={styles.contenedorTabla}>
-                                        <div className={styles.filaHeader} style={{ gridTemplateColumns: '2.5fr 0fr' }}>
+                                        <div className={styles.filaHeader} style={{ gridTemplateColumns: '2fr 1fr', minWidth: '320px' }}>
                                             <div>Fecha</div>
-                                            <div>Certificacion</div>
+                                            <div>Certificación</div>
                                         </div>
                                         {calibraciones.map((cr) => (
-                                            <div key={cr.fecha} className={styles.filaItem} style={{ gridTemplateColumns: '2.5fr 0fr' }}>
+                                            <div key={cr.fecha} className={styles.filaItem} style={{ gridTemplateColumns: '2fr 1fr', minWidth: '320px' }}>
                                                 <div style={{ fontWeight: '500', color: 'var(--text-h)' }}>
                                                     {cr.fecha}
                                                 </div>
@@ -130,18 +131,10 @@ export default function EquipoDetail() {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="titulo-certificacion"
-                        style={{
-                            backgroundColor: 'var(--bg)',
-                            width: '95%',
-                            maxWidth: '1000px',
-                            maxHeight: '90vh',
-                            overflowY: 'auto',
-                            borderRadius: '12px',
-                            padding: '24px',
-                            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)'
-                        }}
+                        className={styles.modalFormulario}
+                        style={{ maxWidth: '900px' }}
                     >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
                             <h2 id="titulo-certificacion" style={{ margin: 0, color: 'var(--text-h)' }}>
                                 Certificación - {certificacionAbierta.fecha}
                             </h2>
@@ -152,7 +145,7 @@ export default function EquipoDetail() {
 
                         <VisorArchivo
                             url={certificacionAbierta.certificacion_url}
-                            alto="72vh"
+                            alto="60vh"
                         />
                     </section>
                 </div>

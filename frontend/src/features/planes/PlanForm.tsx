@@ -11,6 +11,7 @@ import { getEquipos } from '../../services/equiposServices';
 import { getTareas } from '../../services/tareasServices';
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 interface FormValues {
     titulo: string;
@@ -125,7 +126,10 @@ export default function PlanForm() {
     if (cargando) {
         return (
             <div className={styles.contenedorPrincipal}>
-                <h2>{editando ? 'Editar Plan de Limpieza' : 'Configurar Nuevo Plan'}</h2>
+                <EncabezadoPagina
+                    titulo={editando ? 'Editar Plan de Limpieza' : 'Configurar Nuevo Plan'}
+                    ancho="800px"
+                />
                 <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
                     Cargando información...
                 </div>
@@ -156,7 +160,7 @@ export default function PlanForm() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>{editando ? 'Editar Plan de Limpieza' : 'Configurar Nuevo Plan'}</h2>
+            <EncabezadoPagina titulo={editando ? 'Editar Plan de Limpieza' : 'Configurar Nuevo Plan'} ancho="800px" />
             {errorMsg && <div style={{ color: '#ef4444', marginBottom: '15px', fontWeight: 'bold' }}>{errorMsg}</div>}
             
             <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta} noValidate>

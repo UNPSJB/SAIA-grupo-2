@@ -1,3 +1,11 @@
+from enum import Enum
+
+
+class GranularidadCumplimiento(str, Enum):
+    DIA = "dia"
+    SEMANA = "semana"
+
+
 class ErrorCode:
     EMPLEADO_NO_ENCONTRADO = "El empleado no fue encontrado"
     NOMBRE_DUPLICADO = "El nombre ya existe"
@@ -6,3 +14,4 @@ class ErrorCode:
     CHECKLIST_NO_ENCONTRADO = "Checklist o tarea no encontrada"
     PRODUCTO_NO_ENCONTRADO = "El producto de limpieza indicado no existe"
     STOCK_INSUFICIENTE = "Stock insuficiente para registrar el consumo"
+    RANGO_FECHAS_INVALIDO = "La fecha desde no puede ser posterior a la fecha hasta"

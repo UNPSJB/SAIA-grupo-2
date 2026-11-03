@@ -65,5 +65,5 @@
     display: flex;
     gap: 8px;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center; /*lo cambie a center por que queda mmejor cuando hay pocos botones creo*/
 }
