@@ -32,11 +32,32 @@ function hoyLocal(): string {
     return fechaLocal(new Date());
 }
 
-function RenderizadorGrafico({ items }: { items: GraficoCumplimientoItem[] }) {
+function RenderizadorGrafico({ items, granularidad}: { items: GraficoCumplimientoItem[], granularidad: 'dia' | 'semana' }) {
     const datosGrafico = {
         labels: items.map((item) => {
             const partes = item.periodo.split('-');
-            return partes.length === 3 ? `${partes[2]}-${partes[1]}-${partes[0]}` : item.periodo;
+            if (partes.length !== 3) return item.periodo; 
+            if (granularidad === 'dia'){
+                return `${partes[2]}-${partes[1]}-${partes[0]}`;
+            }
+            else{
+               const anio = Number(partes[0]);
+                const mes = Number(partes[1]) - 1;
+                const dia = Number(partes[2]);
+                const fechaBase = new Date(anio, mes, dia);
+
+                const diaSemana = fechaBase.getDay();
+                const diffALunes = diaSemana === 0 ? -6 : 1 -diaSemana;
+                const lunes = new Date(fechaBase);
+                lunes.setDate(fechaBase.getDate() + diffALunes);
+                const domingo = new Date(lunes);
+                domingo.setDate(lunes.getDate() + 6);
+                const formatFecha = (f: Date) =>
+                    `${String(f.getDate()).padStart(2, '0')}/${String(f.getMonth() + 1).padStart(2, '0')}`;
+                
+                return `Semana del ${formatFecha(lunes)} al ${formatFecha(domingo)}`; 
+            }
+            
         }),
         datasets: [
             {
@@ -77,8 +98,8 @@ function RenderizadorGrafico({ items }: { items: GraficoCumplimientoItem[] }) {
                             ticks: {
                                 autoSkip: false,
                                 maxTicksLimit: 20,
-                                maxRotation: 45,
-                                minRotation: 45,
+                                maxRotation: granularidad === 'semana' ? 15 : 45,
+                                minRotation: granularidad === 'semana' ? 15 : 45,
                                 font:{
                                     size: 10,
                                 }
@@ -98,16 +119,6 @@ export default function GraficoCumplimiento() {
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    function configurarRangoSemanal(fechaBase: Date) {
-        const diaSemana = fechaBase.getDay();
-        const dia = diaSemana === 0 ? 7 : diaSemana;
-        const diferenciaLunes = 1 - dia;
-        const lunes = new Date(fechaBase);
-        lunes.setDate(fechaBase.getDate() + diferenciaLunes);
-
-        setFechaDesde(fechaLocal(lunes));
-        setFechaHasta(fechaLocal(fechaBase));
-    }
 
     useEffect(() => {
         let cancelado = false;
@@ -182,67 +193,42 @@ export default function GraficoCumplimiento() {
                         className={styles.filtroFecha}
                         style={{ cursor: 'pointer'}}
                         value={granularidad}
-                        onChange={(evento) => {
-                            const nuevaGranularidad = evento.target.value as 'dia' | 'semana';
-                            setGranularidad(nuevaGranularidad);
-
-                            if (nuevaGranularidad === 'semana') {
-                                configurarRangoSemanal(new Date(fechaHasta));
-                            }
-                        }}
+                        onChange={(evento) =>
+                            setGranularidad(evento.target.value as 'dia' | 'semana')}
+                
                     >
                         <option value="dia">Día</option>
                         <option value="semana">Semana</option>
                     </select>
                 </label>
-                {granularidad === 'dia' ? (
-                    <>
-                        <label>
-                            <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px'}}>
-                                Desde
-                            </span>
-                            <input
-                                type="date"
-                                className={styles.filtroFecha}
-                                value={fechaDesde}
-                                max={fechaHasta || hoyLocal()}
-                                onChange={(evento) => setFechaDesde(evento.target.value)}
-                            />
-                        </label>
+                
+                <label>
+                    <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px'}}>
+                        Desde
+                    </span>
+                    <input
+                        type="date"
+                        className={styles.filtroFecha}
+                        value={fechaDesde}
+                        max={fechaHasta || hoyLocal()}
+                        onChange={(evento) => setFechaDesde(evento.target.value)}
+                    />
+                </label>
                         
-                        <label>
-                            <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px'}}>
-                                Hasta
-                            </span>
-                            <input
-                                type="date"
-                                className={styles.filtroFecha}
-                                value={fechaHasta}
-                                min={fechaDesde || undefined}
-                                max={hoyLocal()}
-                                onChange={(evento) => setFechaHasta(evento.target.value)}
-                            />
-                        </label>
-                    </>
-                ) : (
-                    <label>
-                        <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px'}}>
-                            Seleccionar fecha
-                        </span>
-                        <input
-                            type="date"
-                            className={styles.filtroFecha}
-                            value={fechaHasta}
-                            max={hoyLocal()}
-                            onChange={(evento) => {
-                                if(evento.target.value){
-                                    const fechaSeleccionada = new Date(evento.target.value + 'T00:00:00');
-                                    configurarRangoSemanal(fechaSeleccionada);
-                                }
-                            }}
-                        />
-                    </label>
-                )}       
+                <label>
+                    <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px'}}>
+                        Hasta
+                    </span>
+                    <input
+                        type="date"
+                        className={styles.filtroFecha}
+                        value={fechaHasta}
+                        min={fechaDesde || undefined}
+                        max={hoyLocal()}
+                        onChange={(evento) => setFechaHasta(evento.target.value)}
+                    />
+                </label>
+           
             </div>
 
             {error && (
@@ -270,7 +256,7 @@ export default function GraficoCumplimiento() {
                         No hay registros en el rango seleccionado.
                     </p>
                 ) : (
-                    <RenderizadorGrafico items={datos} />
+                    <RenderizadorGrafico items={datos} granularidad={granularidad} />
                 
                 )}
 
