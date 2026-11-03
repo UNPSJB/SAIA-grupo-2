@@ -62,10 +62,17 @@
     width: 95%; 
     max-width: 720px;
     max-height: 90vh; 
+    overflow-x: hidden;
     overflow-y: auto; 
     border-radius: 10px;
     padding: 28px;
     box-sizing: border-box;
+}
+.modalFormulario form {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .modalTitulo {
@@ -154,6 +161,25 @@
     font-size: 0.9rem;
     line-height: 1;
     padding: 0;
+}
+.filaBotonesSuperiores{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 16px;
+    justify-content: space-around;
+    align-items:baseline;
+    margin-top: 16px;
+}
+
+.modalIngresoTexto{
+    width: 100%; 
+    padding: 12px; 
+    font-size: 1rem; 
+    border-radius: 8px; 
+    border: 1px solid var(--border); 
+    background-color: var(--input-bg); 
+    color: var(--text);
 }
 
 .modalAreaDeTexto {
@@ -297,7 +323,7 @@ input[type="text"],
 input[type="number"], 
 input[type="password"],
 select {
-    background-color: var(--bg);
+    background-color: var(--input-bg);
     color: var(--text-h);
     border: 1px solid var(--border);
     padding: 10px 12px;
@@ -656,6 +682,13 @@ p {
     font-family: inherit;
     font-size: 0.88rem;
     transition: all 0.2s ease;
+}
+
+.filtroFechaCompacto {
+    width: auto;
+    max-width: 100%;
+    display: flex;
+    align-items: center;
 }
 
 .filtroFecha:focus {

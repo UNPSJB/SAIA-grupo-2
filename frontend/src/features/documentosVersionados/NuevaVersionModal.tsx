@@ -112,21 +112,12 @@ export default function NuevaVersionModal({
                         <input
                             id="nombre-nueva-version"
                             type="text"
+                            className={sharedStyles.modalIngresoTexto}
                             value={nombreArchivo}
                             onChange={(event) => setNombreArchivo(event.target.value)}
                             disabled={guardando}
                             required
                             maxLength={255}
-                            style={{
-                                boxSizing: 'border-box',
-                                width: '100%',
-                                padding: '12px',
-                                marginTop: '8px',
-                                borderRadius: '8px',
-                                border: '1px solid var(--border)',
-                                backgroundColor: 'var(--input-bg)',
-                                color: 'var(--text)',
-                            }}
                         />
                     </div>
 
@@ -137,6 +128,7 @@ export default function NuevaVersionModal({
                         <input
                             id="fecha-vigencia-nueva-version"
                             type="date"
+                            className={`${sharedStyles.filtroFecha} ${sharedStyles.filtroFechaCompacto}`}
                             value={fechaVigencia}
                             className={sharedStyles.filtroFecha}
                             onChange={(event) => setFechaVigencia(event.target.value)}

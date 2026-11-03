@@ -111,7 +111,6 @@ export default function DocumentosVersionadosList(){
                             onClick={() => handleVisualizar(doc)}
                             title="Visualizar documento en una pestaña nueva"
                         >
-                            Visualizar
                         </Boton>
 
                         {usuario?.rol === 'admin' &&(
@@ -132,22 +131,22 @@ export default function DocumentosVersionadosList(){
     return (
         <div className={styles.contenedorPrincipal}>
             <h2> Documentos Versionados</h2>
+            <div className={styles.filaBotonesSuperiores}>
+                {usuario?.rol === 'admin' && (
+                    <Link to="/documentos/nuevo" className={styles.linkCrear}>
+                        <Boton variant="crear">
+                            Registrar Documento Versionado
+                        </Boton>
+                    </Link>
+                )}
+                {error && <p style={{ color: 'var(--rojo-texto)' }}>{error}</p>}
 
-            <BuscadorTexto
-                valor={busqueda}
-                onCambio={setBusqueda}
-                placeholder="Buscar por nombre...">
-            </BuscadorTexto>
-            
-            {usuario?.rol === 'admin' && (
-                <Link to="/documentos/nuevo" className={styles.linkCrear}>
-                    <Boton variant="crear">
-                        Registrar Documento Versionado
-                    </Boton>
-                </Link>
-            )}
-            {error && <p style={{ color: 'var(--rojo-texto)' }}>{error}</p>}
-
+                <BuscadorTexto
+                    valor={busqueda}
+                    onCambio={setBusqueda}
+                    placeholder="Buscar por nombre...">
+                </BuscadorTexto>
+            </div>
             <TablaPaginada
                 datos={documentosVersionadosFiltrados}
                 columnas={misColumnas}
