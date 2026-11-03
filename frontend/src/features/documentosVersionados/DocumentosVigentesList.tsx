@@ -136,12 +136,13 @@ export default function DocumentosVigentesList() {
                     </p>
                 </div>
             </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
-                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar procedimiento..." />
-            </div>
-            
-
+            <div className={sharedStyles.filaBotonesSuperiores}>
+                <BuscadorTexto 
+                    valor={busqueda} 
+                    onCambio={setBusqueda} 
+                    placeholder="Buscar procedimiento..." 
+                />
+            </div>       
      
             {error && (
                 <div className={sharedStyles.textDanger}>

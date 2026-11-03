@@ -108,19 +108,29 @@ export default function SectoresList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Gestión de Sectores</h2>
-            
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
-                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar sector o responsable..." />
+            <div className={styles.cabeceraLista}>
+                <div>
+                    <h1 className={styles.tituloPrincipal}>Gestión de Sectores</h1>
+                    <p className={styles.textMuted}>
+                        Administra los sectores de la organización, asignando responsables y gestionando su información.
+                    </p>
+                </div>
             </div>
-            {usuario?.rol === 'admin' && (
-                <Link to="/sectores/nuevo" className={styles.linkCrear}>
-                    <Boton variant="crear">
-                        Registrar Sector
-                    </Boton>
-                </Link>
-            )}
+            <div className={styles.filaBotonesSuperiores}>
+                {usuario?.rol === 'admin' && (
+                    <Link to="/sectores/nuevo" className={styles.linkCrear}>
+                        <Boton variant="crear">
+                            Registrar Sector
+                        </Boton>
+                    </Link>
+                )}
+
+                <BuscadorTexto 
+                    valor={busqueda}
+                    onCambio={setBusqueda} 
+                    placeholder="Buscar sector o responsable..." 
+                />
+            </div>            
 
             <div style={{ maxWidth: '1100px', width: '100%' }}>
                  <TablaPaginada

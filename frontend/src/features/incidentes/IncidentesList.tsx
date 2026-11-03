@@ -82,7 +82,18 @@ export default function IncidentesList({ soloAbiertos = false }: IncidentesListP
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>{soloAbiertos ? 'Incidentes Abiertos' : 'Incidentes Reportados'}</h2>
+            <div className={styles.cabeceraLista}>
+                <div>
+                    <h1 className={styles.tituloPrincipal}>
+                        {soloAbiertos ? 'Incidentes Abiertos' : 'Incidentes Reportados'}
+                    </h1>
+                    <p className={styles.textMuted}>
+                        {soloAbiertos
+                            ? 'Da seguimiento a los incidentes pendientes de resolución.'
+                            : 'Consulta y gestiona los incidentes reportados por el personal.'}
+                    </p>
+                </div>
+            </div>
             <p style={{ marginTop: '-10px', marginBottom: soloAbiertos ? '14px' : '20px', color: 'var(--text-muted)' }}>
                 {soloAbiertos
                     ? incidentes.length > 0
@@ -125,23 +136,22 @@ export default function IncidentesList({ soloAbiertos = false }: IncidentesListP
                 </div>
             )}
 
-            <div
-                style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '16px',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    maxWidth: '1280px',
-                    marginBottom: '16px',
-                }}
-            >
-                <Link to="/incidentes/nuevo">
-                    <Boton variant="crear">Registrar Incidente</Boton>
-                </Link>
+            <div className={styles.filaBotonesSuperiores}>
+                <div style={{ flex: '1 1 0', display: 'flex', justifyContent: 'flex-start' }}>
+                    <Link to="/incidentes/nuevo">
+                        <Boton variant="crear">Registrar Incidente</Boton>
+                    </Link>
+                </div>
 
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 0', display: 'flex', justifyContent: 'center' }}>
+                    <BuscadorTexto
+                        valor={busqueda}
+                        onCambio={setBusqueda}
+                        placeholder="Buscar por descripción o persona..."
+                    />
+                </div>
+
+                <div style={{ flex: '1 1 0', display: 'flex', justifyContent: 'flex-end' }}>
                     {!soloAbiertos && (
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>Estado:</span>
@@ -159,12 +169,6 @@ export default function IncidentesList({ soloAbiertos = false }: IncidentesListP
                             </select>
                         </label>
                     )}
-
-                    <BuscadorTexto
-                        valor={busqueda}
-                        onCambio={setBusqueda}
-                        placeholder="Buscar por descripción o persona..."
-                    />
                 </div>
             </div>
 

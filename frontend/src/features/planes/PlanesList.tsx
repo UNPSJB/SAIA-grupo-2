@@ -101,17 +101,24 @@ export default function PlanesList() {
     ];
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Gestión de Planes de Limpieza</h2>
+            <div className={styles.cabeceraLista}>
+                <div>
+                    <h1 className={styles.tituloPrincipal}>Gestión de Planes de Limpieza</h1>
+                    <p className={styles.textMuted}>
+                        Consulta y administra los planes de limpieza y sus tareas asociadas.
+                    </p>
+                </div>
+            </div>
             
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
+                {usuario?.rol === 'admin' && (
+                    <Link to="/planes/nuevo" className={styles.linkCrear}>
+                        <Boton variant="crear">Crear Nuevo Plan</Boton>
+                    </Link>
+                )}
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar plan o sector..." />
             </div>
-            {usuario?.rol === 'admin' && (
-                <Link to="/planes/nuevo" className={styles.linkCrear}>
-                    <Boton variant="crear">Crear Nuevo Plan</Boton>
-                </Link>
-            )}
 
             <TablaPaginada
                 datos={planesFiltrados}

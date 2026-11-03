@@ -180,7 +180,15 @@ export default function VencimientosDocumentacionList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Vencimientos de Personal</h2>
+            <div className={styles.cabeceraLista}>
+                <div>
+                    <h1 className={styles.tituloPrincipal}>Vencimientos de Personal</h1>
+                    <p className={styles.textMuted}>
+                        Monitoreo de vencimientos de documentación de personal, con alertas de aviso previo.
+                    </p>
+                </div>
+            </div>
+
 
             {!cargando && (
                 <TarjetasFiltro 
@@ -191,14 +199,16 @@ export default function VencimientosDocumentacionList() {
             )}
 
 
-           <BarraFiltros
-                busqueda={busqueda}
-                onBusquedaChange={setBusqueda}
-                placeholderBusqueda="Buscar por nombre o detalle..."
-                onLimpiar={limpiarFiltros}
-                mostrarBotonLimpiar={empleadoId !== '' || fechaDesde !== '' || fechaHasta !== '' || filtroEstado !== '' || busqueda !== ''}
-                filtros={misFiltros}
-            />
+            <div className={styles.filaBotonesSuperiores}>
+                <BarraFiltros
+                    busqueda={busqueda}
+                    onBusquedaChange={setBusqueda}
+                    placeholderBusqueda="Buscar por nombre o detalle..."
+                    onLimpiar={limpiarFiltros}
+                    mostrarBotonLimpiar={empleadoId !== '' || fechaDesde !== '' || fechaHasta !== '' || filtroEstado !== '' || busqueda !== ''}
+                    filtros={misFiltros}
+                />
+            </div>
 
             {error && (
                 <p style={{ color: '#ef4444', marginTop: '15px' }}>

@@ -90,31 +90,44 @@ export default function CapacidadesList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Gestión de Capacidades y Roles</h2>
+            <div className={styles.cabeceraLista}>
+                <div>
+                    <h1>Gestión de Capacidades y Roles</h1>
+                    <p className={styles.textMuted}>
+                        Administra los roles y capacidades asignables a los empleados.
+                    </p>
+                </div>
+            </div>
+            
+            <div className={styles.filaBotonesSuperiores}>
+                {usuario?.rol === 'admin' && (
+                    <Link to="/capacidades/nuevo" className={styles.linkCrear}>
+                        <Boton variant="crear">
+                            Registrar Capacidad
+                        </Boton>
+                    </Link>
+                )}
+        
+                <BuscadorTexto 
+                    valor={busqueda} 
+                    onCambio={setBusqueda} 
+                    placeholder="Buscar capacidad..." 
+                />
+            </div>
+
             
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
-                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar capacidad..." />
+            <div style={{ maxWidth: '1100px', width: '100%' }}>
+                <TablaPaginada
+                    datos={capacidadesFiltradas}
+                    columnas={misColumnas}
+                    gridTemplateColumns="1.5fr 1fr"
+                    itemsPorPagina={5}
+                    mensajeVacio="No se encontraron capacidades con los filtros actuales."
+                    columnaOrdenInicial="nombre" 
+                    ordenAscInicial={true}
+                />
             </div>
-            {usuario?.rol === 'admin' && (
-                <Link to="/capacidades/nuevo" className={styles.linkCrear}>
-                    <Boton variant="crear">
-                        Registrar Capacidad
-                    </Boton>
-                </Link>
-            )}
-
-                       <div style={{ maxWidth: '1100px', width: '100%' }}>
-                            <TablaPaginada
-                                datos={capacidadesFiltradas}
-                                columnas={misColumnas}
-                                gridTemplateColumns="1.5fr 1fr"
-                                itemsPorPagina={5}
-                                mensajeVacio="No se encontraron capacidades con los filtros actuales."
-                                columnaOrdenInicial="nombre" 
-                                ordenAscInicial={true}
-                            />
-                        </div>
 
             <ModalConfirmacion
                 isOpen={modalConfirmacion.isOpen}

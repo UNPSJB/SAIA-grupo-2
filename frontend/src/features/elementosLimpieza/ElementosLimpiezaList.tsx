@@ -117,25 +117,42 @@ export default function ElementosLimpiezaList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Elementos de Limpieza</h2>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
-                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar elemento..." />
+            <div className={styles.cabeceraLista}>
+                <div>
+                    <h1 className={styles.tituloPrincipal}>Elementos de Limpieza</h1>
+                    <p className={styles.textMuted}>
+                        Administra los elementos y consulta su estado y frecuencia de recambio.
+                    </p>
+                </div>
             </div>
-            {conAlerta > 0 && (
-                <p style={{ marginTop: '-10px', marginBottom: '20px', color: COLOR_ESTADO.vencido, fontWeight: 'bold' }}>
-                    {conAlerta} {conAlerta === 1 ? 'elemento requiere' : 'elementos requieren'} atención
-                </p>
-            )}
+            <div className={styles.filaBotonesSuperiores}>
+                <div style={{ gap: '12px', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <Link to="/elementosLimpieza/nuevo">
+                        <Boton variant="crear">Registrar Elemento</Boton>
+                    </Link>
+                    <Link to="/elementosLimpieza/alertas">
+                        <Boton variant="ver">Ver Alertas de Recambio</Boton>
+                    </Link>
+                    
+                    
+                </div>
 
-            <div className={styles.filaBotones} style={{ justifyContent: 'center', marginBottom: '20px' }}>
-                <Link to="/elementosLimpieza/nuevo">
-                    <Boton variant="crear">Registrar Elemento</Boton>
-                </Link>
-                <Link to="/elementosLimpieza/alertas">
-                    <Boton variant="ver">Ver Alertas de Recambio</Boton>
-                </Link>
+                {conAlerta > 0 && (
+                        <p style={{ margin: 0, color: COLOR_ESTADO.vencido, fontWeight: 'bold', flexShrink: 0 }}>
+                            {conAlerta} {conAlerta === 1 ? 'elemento requiere' : 'elementos requieren'} atención
+                        </p>
+                    )}
+                
+                <BuscadorTexto 
+                    valor={busqueda} 
+                    onCambio={setBusqueda} 
+                    placeholder="Buscar elemento..." 
+                />
+
             </div>
+            
+
+            
 
             <div style={{ maxWidth: '1000px', width: '100%' }}>
                 <TablaPaginada

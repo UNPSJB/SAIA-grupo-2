@@ -67,32 +67,41 @@ export default function InsumosList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Inventario de Insumos</h2>
-            
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
-                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar insumo..." />
+            <div className={styles.cabeceraLista}>
+                <div>
+                    <h1 className={styles.tituloPrincipal}>Inventario de Insumos</h1>
+                    <p className={styles.textMuted}>
+                        Gestión y control de insumos disponibles, incluyendo detalles de cada insumo y su unidad de medida.
+                    </p>
+                </div>
             </div>
-            {usuario?.rol === 'admin' && (
-                <Link to="/insumos/nuevo" className={styles.linkCrear}>
-                    <Boton variant="crear">
-                        Registrar Insumo
-                    </Boton>
-                </Link>
-            )}
+            
+            <div className={styles.filaBotonesSuperiores}>
+                {usuario?.rol === 'admin' && (
+                    <Link to="/insumos/nuevo" className={styles.linkCrear}>
+                        <Boton variant="crear">
+                            Registrar Insumo
+                        </Boton>
+                    </Link>
+                )}
+                <BuscadorTexto 
+                    valor={busqueda} 
+                    onCambio={setBusqueda} 
+                    placeholder="Buscar insumo..." 
+                />
+            </div>
 
-                       <div style={{ maxWidth: '1100px', width: '100%' }}>
-                            <TablaPaginada
-                                datos={insumosFiltrados}
-                                columnas={misColumnas}
-                                gridTemplateColumns="1fr 2fr 1.5fr"
-                                itemsPorPagina={5}
-                                mensajeVacio="No se encontraron Insumos con los filtros actuales."
-                                columnaOrdenInicial="nombre" 
-                                ordenAscInicial={true}
-                            />
-                        </div>
-
+            <div style={{ maxWidth: '1100px', width: '100%' }}>
+                <TablaPaginada
+                    datos={insumosFiltrados}
+                    columnas={misColumnas}
+                    gridTemplateColumns="1fr 2fr 1.5fr"
+                    itemsPorPagina={5}
+                    mensajeVacio="No se encontraron Insumos con los filtros actuales."
+                    columnaOrdenInicial="nombre" 
+                    ordenAscInicial={true}
+                />
+            </div>
         </div>
     );
 }

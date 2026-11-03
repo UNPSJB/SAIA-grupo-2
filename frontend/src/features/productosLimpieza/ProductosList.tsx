@@ -80,18 +80,28 @@ export default function ProductosList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Gestión de Productos de Limpieza</h2>
-            
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
-                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar producto..." />
+            <div className={styles.cabeceraLista}>
+                <div>
+                    <h1 className={styles.tituloPrincipal}>Gestión de Productos de Limpieza</h1>
+                    <p className={styles.textMuted}>
+                        Administra los productos de limpieza y consulta sus existencias.
+                    </p>
+                </div>
             </div>
-            {usuario?.rol === 'admin' && (
-                <Link to="/productos_limpieza/nuevo" className={styles.linkCrear}>
-                    <Boton variant="crear">Nuevo Producto</Boton>
-                </Link>
-            )}
+            
+            <div className={styles.filaBotonesSuperiores}>
+                {usuario?.rol === 'admin' && (
+                    <Link to="/productos_limpieza/nuevo" className={styles.linkCrear}>
+                        <Boton variant="crear">Nuevo Producto</Boton>
+                    </Link>
+                )}
 
+                <BuscadorTexto 
+                    valor={busqueda} 
+                    onCambio={setBusqueda} 
+                    placeholder="Buscar producto..." 
+                />
+            </div>
 
             <TablaPaginada
                 datos={productosFiltrados}

@@ -130,7 +130,14 @@ export default function DocumentosVersionadosList(){
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2> Documentos Versionados</h2>
+            <div className={styles.cabeceraLista}>
+                <div>
+                    <h1 className={styles.tituloPrincipal}>Gestión de Documentos Versionados</h1>
+                    <p className={styles.textMuted}>
+                        Administra los documentos versionados, incluyendo procedimientos, manuales y otros archivos importantes.
+                    </p>
+                </div>
+            </div>
             <div className={styles.filaBotonesSuperiores}>
                 {usuario?.rol === 'admin' && (
                     <Link to="/documentos/nuevo" className={styles.linkCrear}>

@@ -162,6 +162,8 @@
     line-height: 1;
     padding: 0;
 }
+
+
 .filaBotonesSuperiores{
     display: flex;
     flex-direction: row;
@@ -170,6 +172,16 @@
     justify-content: space-around;
     align-items:baseline;
     margin-top: 16px;
+}
+
+.filaBotonesSuperiores:has(> :nth-child(1):last-child) {
+    justify-content: flex-end;
+    max-width: 1000px;
+}
+
+.filaBotonesSuperiores:has(> :nth-child(3):last-child) {
+    max-width: 1000px;
+    margin-inline: auto;
 }
 
 .modalIngresoTexto{

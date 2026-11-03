@@ -100,17 +100,24 @@ export default function TareasList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Gestión de Tareas y Checklists</h2>
+            <div className={styles.cabeceraLista}>
+                <div>
+                    <h1 className={styles.tituloPrincipal}>Gestión de Tareas y Checklists</h1>
+                    <p className={styles.textMuted}>
+                        Administra las tareas de limpieza, sus frecuencias e insumos asociados.
+                    </p>
+                </div>
+            </div>
             
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
+                {usuario?.rol === 'admin' && (
+                    <Link to="/tareas/nueva" className={styles.linkCrear}>
+                        <Boton variant="crear">Nueva Tarea</Boton>
+                    </Link>
+                )}
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar tarea..." />
             </div>
-            {usuario?.rol === 'admin' && (
-                <Link to="/tareas/nueva" className={styles.linkCrear}>
-                    <Boton variant="crear">Nueva Tarea</Boton>
-                </Link>
-            )}
 
             <TablaPaginada
                 datos={tareasFiltradas}

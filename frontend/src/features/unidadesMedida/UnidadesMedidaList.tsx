@@ -50,13 +50,22 @@ export default function UnidadesMedidaList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Unidades de Medida</h2>
-
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
-                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar unidad..." />
+            <div className={styles.cabeceraLista}>
+                <div>
+                    <h1 className={styles.tituloPrincipal}>Unidades de Medida</h1>
+                    <p className={styles.textMuted}>
+                        Tabla de unidades de medida, con posibilidad de búsqueda por nombre.
+                    </p>
+                </div>
             </div>
 
+            <div className={styles.filaBotonesSuperiores}>
+                <BuscadorTexto 
+                    valor={busqueda} 
+                    onCambio={setBusqueda} 
+                    placeholder="Buscar unidad..." 
+                />
+            </div>
 
             <div style={{ maxWidth: '1100px', width: '100%' }}>
                  <TablaPaginada

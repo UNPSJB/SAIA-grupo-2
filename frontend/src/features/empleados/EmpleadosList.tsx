@@ -199,15 +199,23 @@ export default function EmpleadosList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '1100px', marginBottom: '20px' }}>
-                <h2>Directorio de Personal</h2>
+
+            <div className={styles.cabeceraLista}>
+                <h1 className={styles.tituloPrincipal}>Directorio de Empleados</h1>
+                <p className={styles.textMuted}>
+                    Listado completo del personal con sus roles, sectores y estado actual.
+                </p>
+            </div>
+
+            <div className={styles.filaBotonesSuperiores}>
                 {usuario?.rol === 'admin' && (
-                    <Link to="/empleados/nuevo">
+                    <Link to="/empleados/nuevo" className={styles.linkCrear}>
                         <Boton variant="crear">
                             Registrar Empleado
                         </Boton>
                     </Link>
                 )}
+                <div></div>
             </div>
 
             {/* Inyectamos nuestras métricas al componente genérico */}

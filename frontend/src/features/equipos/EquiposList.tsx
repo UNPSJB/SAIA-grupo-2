@@ -123,20 +123,29 @@ export default function EquiposList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Inventario de Equipamiento</h2>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
-                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar equipo, sector o tipo..." />
+            <div className={styles.cabeceraLista}>
+                <div>
+                    <h1 className={styles.tituloPrincipal}>Inventario de Equipamiento</h1>
+                    <p className={styles.textMuted}>
+                        Consulta el equipamiento registrado, su estado y sus tareas de mantenimiento.
+                    </p>
+                </div>
             </div>
 
-            
-            {usuario?.rol === 'admin' && (
-                <Link to="/equipos/nuevo" className={styles.linkCrear}>
-                    <Boton variant="crear">
-                        Registrar Equipo
-                    </Boton>
-                </Link>
-            )}
+            <div className={styles.filaBotonesSuperiores}>
+                {usuario?.rol === 'admin' && (
+                    <Link to="/equipos/nuevo" className={styles.linkCrear}>
+                        <Boton variant="crear">
+                            Registrar Equipo
+                        </Boton>
+                    </Link>
+                )}
+                <BuscadorTexto 
+                    valor={busqueda} 
+                    onCambio={setBusqueda} 
+                    placeholder="Buscar equipo, sector o tipo..." 
+                />
+            </div>  
 
             <TablaPaginada
                 datos={equiposFiltrados}

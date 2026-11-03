@@ -97,29 +97,35 @@ export default function AlertasRecambio() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Alertas de Recambio</h2>
-            <p style={{ marginTop: '-10px', marginBottom: '16px', color: 'var(--text-muted)' }}>
-                Monitoreo de elementos de limpieza próximos a recambio (Aviso previo: {DIAS_AVISO_PREVIO} días).
-            </p>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
-                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar elemento..." />
+            <div className={styles.cabeceraLista}>
+                <div>
+                    <h1 className={styles.tituloPrincipal}>Alertas de Recambio</h1>
+                    <p className={styles.textMuted}>
+                        Monitoreo de elementos de limpieza próximos a recambio (aviso previo: {DIAS_AVISO_PREVIO} días).
+                    </p>
+                </div>
             </div>
-            {!cargando && alertas.length > 0 && (
-                <p style={{ marginTop: '-10px', marginBottom: '20px' }}>
-                    <span style={{ color: COLOR_ESTADO.vencido, fontWeight: 'bold' }}>{vencidos} vencidos</span>
-                    {' · '}
-                    <span style={{ color: COLOR_ESTADO.proximo, fontWeight: 'bold' }}>{proximos} próximos a vencer</span>
-                </p>
-            )}
 
-            {esAdmin && (
-                <Link to="/elementosLimpieza" className={styles.linkCrear}>
-                    <Boton variant="volver">
-                        Ver todos los elementos
-                    </Boton>
-                </Link>
-            )}
+                        <div className={styles.filaBotonesSuperiores}>
+                            {esAdmin && (
+                                <Link to="/elementosLimpieza" className={styles.linkCrear}>
+                                    <Boton variant="volver">
+                                        Ver todos los elementos
+                                    </Boton>
+                                </Link>
+                            )}
+                            {!cargando && alertas.length > 0 && (
+                                <p style={{ marginTop: '-10px' }}>
+                                    <span style={{ color: COLOR_ESTADO.vencido, fontWeight: 'bold' }}>{vencidos} vencidos</span>
+                                    {' · '}
+                                    <span style={{ color: COLOR_ESTADO.proximo, fontWeight: 'bold' }}>{proximos} próximos a vencer</span>
+                                </p>
+                            )}
+                            <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar elemento..." />
+                        </div>
+           
+
+            
 
 
 

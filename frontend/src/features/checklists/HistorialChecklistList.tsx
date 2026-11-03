@@ -192,17 +192,21 @@ export default function HistorialChecklistList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Historial y Auditoría de Checklists</h2>
+            <div className={styles.cabeceraLista}>
+                <div>
+                    <h1 className={styles.tituloPrincipal}>Historial y Auditoría de Checklists</h1>
+                    <p className={styles.textMuted}>
+                        Consulta el historial de cumplimiento de las tareas de limpieza.
+                    </p>
+                </div>
+            </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1100px', marginBottom: '16px' }}>
+            <div className={styles.filaBotonesSuperiores}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar tarea, plan, sector o responsable..." />
             </div>
-            <p className={styles.textMuted} style={{ marginBottom: '20px' }}>
-                Consulta histórica de cumplimiento
-            </p>
 
             {/* FORMULARIO DE FILTROS */}
-            <form onSubmit={handleFiltrar} noValidate style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: 'var(--shadow)', width: '100%', maxWidth: '1100px', marginBottom: '30px' }}>
+            <form onSubmit={handleFiltrar} noValidate style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: 'var(--shadow)', width: '100%', maxWidth: '1100px',marginTop:'20px', marginBottom: '30px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', alignItems: 'flex-start' }}>
                     <div className={styles.formGroup} style={{ margin: 0 }}>
                         <label style={{ fontWeight: 'bold' }}>Fecha Desde:</label>

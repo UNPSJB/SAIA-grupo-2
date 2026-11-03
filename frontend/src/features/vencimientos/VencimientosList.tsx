@@ -184,12 +184,14 @@ export default function VencimientosList() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Vista Consolidada de Vencimientos</h2>
+            <div className={styles.cabeceraLista}>
+                <h1 className= {styles.tituloPrincipal}>Vista Consolidada de Vencimientos</h1>
+                <p className={styles.textMuted}>
+                    Monitoreo unificado de vencimientos de personal, documentos, elementos de limpieza y calibraciones (alerta de aviso previo: {DIAS_AVISO_PREVIO} días).
+                </p>
 
-            <p style={{ marginTop: '-10px', marginBottom: '20px', color: 'var(--text-muted)' }}>
-                Monitoreo unificado de vencimientos de personal, documentos, elementos de limpieza y calibraciones (alerta de aviso previo: {DIAS_AVISO_PREVIO} días).
-            </p>
-
+            </div>
+            
             {/* Tarjeta rectangular única que engloba las 4 métricas globales */}
             {resumen && (
                 <TarjetasFiltro 
