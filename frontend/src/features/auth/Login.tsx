@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../context/AuthContext';
+import { API_URL } from '../../constants/config';
+import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
 
 interface LoginFormValues {
@@ -20,7 +22,7 @@ export default function Login() {
         setErrorBackend('');
 
         try {
-            const respuesta = await fetch('http://127.0.0.1:8000/empleados/login', {
+            const respuesta = await fetch(`${API_URL}/empleados/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -40,11 +42,11 @@ export default function Login() {
     return (
         <div className={styles.contenedorPrincipal} style={{ justifyContent: 'center', paddingTop: 0 }}>
             <div className={styles.tarjetaEstatica} style={{ maxWidth: '420px', width: '100%', alignItems: 'center' }}>
-                <h1 style={{ margin: '0 0 5px 0', fontSize: '2.2rem' }}>SAIA 2</h1>
+                <h1 style={{ margin: '0 0 5px 0', fontSize: '2.2rem', color: 'var(--text-h)' }}>SAIA 2</h1>
                 <p className={styles.textMuted} style={{ margin: '0 0 25px 0' }}>Sistema de Apoyo a la Inocuidad</p>
 
                 {errorBackend && (
-                    <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '12px', borderRadius: '8px', marginBottom: '20px', width: '100%', textAlign: 'center', fontSize: '0.95rem', border: '1px solid #f87171', boxSizing: 'border-box' }}>
+                    <div className={styles.textDanger} style={{ marginBottom: '20px', width: '100%', textAlign: 'center', fontSize: '0.95rem', padding: '10px', borderRadius: '6px', border: '1px solid var(--rojo-texto)', boxSizing: 'border-box' }}>
                         {errorBackend}
                     </div>
                 )}
@@ -56,7 +58,7 @@ export default function Login() {
                             type="text" 
                             placeholder="Ej: EMP-1000"
                             {...register('legajo', { required: 'El legajo es obligatorio' })}
-                            style={errors.legajo ? { borderColor: '#ef4444' } : {}}
+                            style={errors.legajo ? { borderColor: 'var(--rojo-texto)' } : {}}
                         />
                         {errors.legajo && (
                             <span className={styles.textDanger}>
@@ -71,7 +73,7 @@ export default function Login() {
                             type="password" 
                             placeholder="Ingrese su DNI sin puntos"
                             {...register('dni', { required: 'La contraseña es obligatoria' })}
-                            style={errors.dni ? { borderColor: '#ef4444' } : {}}
+                            style={errors.dni ? { borderColor: 'var(--rojo-texto)' } : {}}
                         />
                         {errors.dni && (
                             <span className={styles.textDanger}>
@@ -80,26 +82,18 @@ export default function Login() {
                         )}
                     </div>
 
-                    <button 
-                        type="submit" 
-                        style={{ 
-                            width: '100%', 
-                            padding: '14px', 
-                            backgroundColor: '#16a34a', 
-                            color: '#ffffff', 
-                            border: 'none', 
-                            borderRadius: '8px', 
-                            fontSize: '1.1rem', 
-                            fontWeight: 'bold', 
-                            cursor: 'pointer',
-                            boxSizing: 'border-box'
-                        }}
-                    >
-                        Ingresar
-                    </button>
+                    <div style={{ width: '100%' }}>
+                        <Boton
+                            type="submit"
+                            variant="guardar"
+                            style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
+                        >
+                            Ingresar
+                        </Boton>
+                    </div>
                 </form>
-                <p style={{ color: '#16a34a', margin: '20px 0 5px 0', fontSize: '0.9rem' }}>admin: EMP-1001 / 22222222</p>
-                <p style={{ color: '#16a34a', margin: '0', fontSize: '0.9rem' }}>operario: EMP-1002 / 33333333</p>
+                <p style={{ color: 'var(--verde-estandar)', margin: '20px 0 5px 0', fontSize: '0.9rem' }}>admin: EMP-1001 / 22222222</p>
+                <p style={{ color: 'var(--verde-estandar)', margin: '0', fontSize: '0.9rem' }}>operario: EMP-1002 / 33333333</p>
             </div>
         </div>
     );

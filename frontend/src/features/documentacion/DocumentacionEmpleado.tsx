@@ -154,7 +154,7 @@ export default function DocumentacionEmpleado() {
             </div>
 
             <div className={styles.contenedorTabla} style={{ maxWidth: '1000px' }}>
-                <div className={styles.filaHeader} style={{ gridTemplateColumns: '1.5fr 2fr 1.2fr 1.4fr 1.3fr 0.8fr 1.2fr' }}>
+                <div className={styles.filaHeader} style={{ gridTemplateColumns: '1.5fr 2fr 1.2fr 1.4fr 1.3fr 0.8fr 1.2fr', minWidth: '780px' }}>
                     <div>Tipo</div>
                     <div>Detalle</div>
                     <div>Vencimiento</div>
@@ -168,7 +168,7 @@ export default function DocumentacionEmpleado() {
                     <div
                         key={documento.id}
                         className={styles.filaItem}
-                        style={{ gridTemplateColumns: '1.5fr 2fr 1.2fr 1.4fr 1.3fr 0.8fr 1.2fr' }}
+                        style={{ gridTemplateColumns: '1.5fr 2fr 1.2fr 1.4fr 1.3fr 0.8fr 1.2fr', minWidth: '780px' }}
                     >
                         <div style={{ fontWeight: '500', color: 'var(--text-h)' }}>
                             {ETIQUETA_TIPO[documento.tipo]}
