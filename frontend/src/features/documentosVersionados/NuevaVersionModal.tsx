@@ -128,7 +128,7 @@ export default function NuevaVersionModal({
                         <input
                             id="fecha-vigencia-nueva-version"
                             type="date"
-                            className={sharedStyles.filtroFecha}
+                            className={`${sharedStyles.filtroFecha} ${sharedStyles.filtroFechaCompacto}`}
                             value={fechaVigencia}
                             onChange={(event) => setFechaVigencia(event.target.value)}
                             disabled={guardando}

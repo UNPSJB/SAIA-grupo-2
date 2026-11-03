@@ -637,6 +637,13 @@ p {
     transition: all 0.2s ease;
 }
 
+.filtroFechaCompacto {
+    width: auto;
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+}
+
 .filtroFecha:focus {
     outline: none;
     border-color: var(--azul-texto);
