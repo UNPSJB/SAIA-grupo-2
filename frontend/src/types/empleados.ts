@@ -1,5 +1,10 @@
 import type { Capacidad } from './capacidades';
 
+export interface SectorRef {
+    id: number;
+    nombre: string;
+}
+
 export interface Empleado {
     id: number;
     legajo: string;
@@ -7,7 +12,9 @@ export interface Empleado {
     nombre: string;
     apellido: string;
     activo: boolean;
+    rol: 'admin' | 'operario';
     capacidades: Capacidad[];
+    sectores: SectorRef[];
 }
 
 export interface EmpleadoPayload {
@@ -16,4 +23,5 @@ export interface EmpleadoPayload {
     apellido: string;
     activo: boolean;
     listaCapacidades: number[] | null;
+    listaSectores: number[] | null; 
 }

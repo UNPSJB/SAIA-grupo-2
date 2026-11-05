@@ -5,12 +5,13 @@ from src.unidades_medida.schemas import UnidadMedida
 class InsumoBase(BaseModel):
     nombre: str
     unidad_medida_id: int
+    activo: bool = True
 
 class InsumoCreate(InsumoBase):
     pass
 
 class InsumoUpdate(InsumoBase):
-    pass
+    activo: bool = True
 
 class Insumo(InsumoBase):
     id: int

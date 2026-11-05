@@ -9,13 +9,13 @@ export const getEmpleados = async (): Promise<Empleado[]> => {
 };
 
 export const getEmpleadoById = async (id: string): Promise<Empleado> => {
-    const res = await fetch(`${BASE_URL}/${id}/`);
+    const res = await fetch(`${BASE_URL}/${id}`);
     if (!res.ok) throw new Error("Error al cargar el empleado");
     return res.json();
 };
 
 export const deleteEmpleado = async (id: string): Promise<boolean> => {
-    const res = await fetch(`${BASE_URL}/${id}/`, { method: 'DELETE' });
+    const res = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE' });
     return res.ok;
 };
 

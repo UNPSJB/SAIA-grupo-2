@@ -9,13 +9,13 @@ export const getUnidadesMedida = async (): Promise<UnidadMedida[]> => {
 };
 
 export const getUnidadMedidaById = async (id: string): Promise<UnidadMedida> => {
-    const res = await fetch(`${BASE_URL}/${id}/`);
+    const res = await fetch(`${BASE_URL}/${id}`);
     if (!res.ok) throw new Error("Error al cargar la unidad de medida");
     return res.json();
 };
 
 export const deleteUnidadMedida = async (id: string): Promise<boolean> => {
-    const res = await fetch(`${BASE_URL}/${id}/`, { method: 'DELETE' });
+    const res = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE' });
     return res.ok;
 };
 

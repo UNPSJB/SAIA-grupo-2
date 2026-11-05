@@ -1,0 +1,143 @@
+.lista {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    max-width: 1100px;
+    text-align: left;
+}
+
+.mensaje {
+    margin: 0;
+    padding: 28px;
+    text-align: center;
+    color: var(--text-muted);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.persona {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.personaEncabezado {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.personaEncabezado h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-h);
+}
+
+.legajo {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.verDocumentacion {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.verDocumentacion:hover {
+    text-decoration: underline;
+}
+
+.verDocumentacion:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.documentos {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.documento {
+    display: grid;
+    grid-template-columns: minmax(150px, 0.9fr) minmax(0, 2fr) minmax(150px, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 20px;
+}
+
+.documento + .documento {
+    border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.punto {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.textos {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.tipo {
+    font-weight: 600;
+    color: var(--text-h);
+}
+
+.plazo {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.secundario {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}
+
+.accion {
+    justify-self: end;
+}
+
+@media (max-width: 700px) {
+    .documento {
+        grid-template-columns: 1fr auto;
+        gap: 6px 12px;
+        padding: 12px 16px;
+    }
+
+    .estado {
+        grid-column: 1 / -1;
+    }
+
+    .accion {
+        grid-column: 2;
+        grid-row: 2 / span 2;
+        align-self: center;
+    }
+}

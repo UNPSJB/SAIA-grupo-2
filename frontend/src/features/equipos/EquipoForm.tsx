@@ -1,21 +1,29 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import type { EquipoPayload, TipoEquipo } from '../../types/equipos';
+import type { EquipoPayload, TipoEquipo, EstadoEquipo } from '../../types/equipos';
+import type { Sector } from '../../types/sectores';
 import { getEquipoById, saveEquipo, getTiposEquipo } from '../../services/equiposServices';
+import { getSectores } from '../../services/sectoresServices'; 
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 interface FormValues {
     nombre: string;
     activo: boolean;
-    tipo_id: number;
-    ubicacion: string;
+    tipo_id: number | '';
+    sector_id: number | ''; 
+    estado: EstadoEquipo;
+    frecuencia_mantenimiento_dias: number | null;
 }
 
 export default function EquipoForm() {
     const [tiposDisponibles, setTiposDisponibles] = useState<TipoEquipo[]>([]);
-    
+    const [sectoresDisponibles, setSectoresDisponibles] = useState<Sector[]>([]); 
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
+
     const navigate = useNavigate();
     const { id } = useParams();
     const editando = Boolean(id);
@@ -24,20 +32,27 @@ export default function EquipoForm() {
         defaultValues: {
             nombre: '',
             activo: true,
-            ubicacion: ''
+            tipo_id: '',
+            sector_id: '',
+            estado: 'bueno',
+            frecuencia_mantenimiento_dias: null
         }
     });
 
     useEffect(() => {
-        const cargarTipos = async () => {
+        const cargarDatos = async () => {
             try {
-                const data = await getTiposEquipo();
-                setTiposDisponibles(data);
+                const [tiposData, sectoresData] = await Promise.all([
+                    getTiposEquipo(),
+                    getSectores()
+                ]);
+                setTiposDisponibles(tiposData);
+                setSectoresDisponibles(sectoresData);
             } catch (err) {
-                console.error("Error al cargar tipos de equipo:", err);
+                console.error("Error al cargar datos:", err);
             }
         };
-        cargarTipos();
+        cargarDatos();
     }, []);
 
     useEffect(() => {
@@ -49,7 +64,9 @@ export default function EquipoForm() {
                         nombre: data.nombre,
                         activo: data.activo,
                         tipo_id: data.tipo.id,
-                        ubicacion: data.ubicacion
+                        sector_id: data.sector.id,
+                        estado: data.estado,
+                        frecuencia_mantenimiento_dias: data.frecuencia_mantenimiento_dias
                     });
                 } catch (err) {
                     console.error("Error al cargar equipo:", err);
@@ -63,8 +80,10 @@ export default function EquipoForm() {
         const datos: EquipoPayload = { 
             nombre: data.nombre, 
             activo: data.activo, 
-            tipo_id: data.tipo_id,
-            ubicacion: data.ubicacion 
+            tipo_id: Number(data.tipo_id),
+            sector_id: Number(data.sector_id),
+            estado: data.estado,
+            frecuencia_mantenimiento_dias: data.frecuencia_mantenimiento_dias
         };
 
         try {
@@ -72,16 +91,25 @@ export default function EquipoForm() {
             if (exito) {
                 navigate('/equipos');
             } else {
-                alert('Hubo un error al guardar el registro.');
+                setModalAlerta({
+                    isOpen: true,
+                    titulo: 'Error al Guardar',
+                    mensaje: 'Hubo un error al guardar el registro.'
+                });
             }
         } catch (error) {
             console.error('Error de red:', error);
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error de Red',
+                mensaje: 'No se pudo conectar con el servidor.'
+            });
         }
     };
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>{editando ? 'Editar Equipo' : 'Registrar Nuevo Equipo'}</h2>
+            <EncabezadoPagina titulo={editando ? 'Editar Equipo' : 'Registrar Nuevo Equipo'} ancho="800px" />
             
             <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta}>
                 
@@ -105,9 +133,7 @@ export default function EquipoForm() {
                         <label>Categoría:</label>
                         <select 
                             {...register('tipo_id', { 
-                                required: "Debe seleccionar una categoría",
-                                valueAsNumber: true,
-                                validate: value => !isNaN(value) || "Debe seleccionar una categoría"
+                                required: "Debe seleccionar una categoría"
                             })} 
                             style={errors.tipo_id ? { borderColor: '#ef4444', outline: 'none' } : {}}
                         >
@@ -123,16 +149,46 @@ export default function EquipoForm() {
 
                     <div className={styles.formGroup}>
                         <label>Ubicación / Sector:</label>
-                        <input
-                            type="text" 
-                            {...register('ubicacion', { 
-                                required: "La ubicación es obligatoria",
-                                minLength: { value: 2, message: "Debe tener al menos 2 caracteres" },
-                                validate: (value) => value.trim().length > 0 || "No puede estar vacío o contener solo espacios"
+                        <select 
+                            {...register('sector_id', { 
+                                required: "Debe seleccionar un sector"
                             })} 
-                            style={errors.ubicacion ? { borderColor: '#ef4444', outline: 'none' } : {}}
+                            style={errors.sector_id ? { borderColor: '#ef4444', outline: 'none' } : {}}
+                        >
+                            <option value="">Seleccione un sector...</option>
+                            {sectoresDisponibles.map((s) => (
+                                <option key={s.id} value={s.id}>
+                                    {s.nombre}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.sector_id && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.sector_id.message}</span>}
+                    </div>
+
+                    <div className={styles.formGroup}>
+                        <label>Condición Física:</label>
+                        <select {...register('estado', { required: true })}>
+                            <option value="bueno">Operativo (Bueno)</option>
+                            <option value="danado">Dañado</option>
+                        </select>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                        <label>Frecuencia de mantenimiento recomendada (opcional):</label>
+                        <input
+                            type="number"
+                            step="1"
+                            placeholder="Cantidad de días. Dejar vacío si no aplica."
+                            {...register('frecuencia_mantenimiento_dias', {
+                                setValueAs: (valor) => (valor === '' || valor === null ? null : Number(valor)),
+                                validate: (valor) =>
+                                    valor === null ||
+                                    (Number.isInteger(valor) && valor > 0) ||
+                                    "Debe ser un número entero mayor a cero"
+                            })}
+                            style={errors.frecuencia_mantenimiento_dias ? { borderColor: '#ef4444', outline: 'none' } : {}}
                         />
-                        {errors.ubicacion && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.ubicacion.message}</span>}
+                        {errors.frecuencia_mantenimiento_dias && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.frecuencia_mantenimiento_dias.message}</span>}
                     </div>
 
                     <div className={styles.formGroup} style={{ justifyContent: 'center' }}>
@@ -142,14 +198,14 @@ export default function EquipoForm() {
                                 className={styles.checkbox}
                                 {...register('activo')}
                             />
-                            <span className={styles.labelCheckbox}>Equipo Operativo</span>
+                            <span className={styles.labelCheckbox}>Activo en Sistema</span>
                         </label>
                     </div>
                 </div>
 
                 <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
                     <Boton type="submit" variant="guardar">
-                        {editando ? 'Actualizar Cambios' : 'Guardar'}
+                        {editando ? 'Actualizar' : 'Guardar'}
                     </Boton>
                     <Link to="/equipos">
                         <Boton variant="eliminar">
@@ -158,6 +214,13 @@ export default function EquipoForm() {
                     </Link>
                 </div>
             </form>
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }

@@ -1,8 +1,11 @@
-from src.equipos.constants import ErrorCore
-from src.exceptions import NotFound
+from src.equipos.constants import ErrorCode
+from src.exceptions import BadRequest, NotFound
 
 class EquipoNoEncontrado(NotFound):
-    DETAIL = ErrorCore.EQUIPO_NO_ENCONTRADO
+    DETAIL = ErrorCode.EQUIPO_NO_ENCONTRADO
 
 class TipoEquipoNoEncontrado(NotFound):
-    DETAIL = ErrorCore.TIPO_EQUIPO_NO_ENCONTRADO
+    DETAIL = ErrorCode.TIPO_EQUIPO_NO_ENCONTRADO
+
+class VencimientoInvalido(BadRequest):
+    DETAIL = ErrorCode.VENCIMIENTO_INVALIDO

@@ -15,8 +15,8 @@ export default function ModalConfirmacion({ isOpen, titulo, mensaje, onConfirm, 
     return (
         <div className={styles.modalOverlay}>
             <div className={styles.modalContent}>
-                <h3 style={{ color: 'var(--text-h)', marginTop: 0 }}>{titulo}</h3>
-                <p style={{ color: 'var(--text)', marginBottom: '25px' }}>{mensaje}</p>
+                <h3>{titulo}</h3>
+                <p>{mensaje}</p>
                 
                 <div className={styles.filaBotones}>
                     <Boton variant="volver" onClick={onCancel}>

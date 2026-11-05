@@ -28,16 +28,33 @@ def leer_unidad_medida(db: Session, unidad_id: int) -> schemas.UnidadMedida:
         raise exceptions.UnidadMedidaNoEncontrada()
     return db_unidad
 
+from sqlalchemy.exc import IntegrityError
+
 def modificar_unidad_medida(
     db: Session, unidad_id: int, unidad: schemas.UnidadMedidaUpdate
 ) -> UnidadMedida:
     db_unidad = leer_unidad_medida(db, unidad_id)
-    db.execute(
-        update(UnidadMedida).where(UnidadMedida.id == unidad_id).values(**unidad.model_dump())
-    )
-    db.commit()
-    db.refresh(db_unidad)
-    return db_unidad
+
+    if unidad.nombre == "":
+        raise exceptions.NombreVacio()
+
+    if unidad.nombre:
+        existe = db.scalar(
+            select(UnidadMedida).where(UnidadMedida.nombre == unidad.nombre, UnidadMedida.id != unidad_id)
+        )
+        if existe is not None:
+            raise exceptions.UnidadMedidaDuplicada()
+
+    try:
+        db.execute(
+            update(UnidadMedida).where(UnidadMedida.id == unidad_id).values(**unidad.model_dump())
+        )
+        db.commit()
+        db.refresh(db_unidad)
+        return db_unidad
+    except IntegrityError:
+        db.rollback()
+        raise exceptions.UnidadMedidaDuplicada()
 
 def eliminar_unidad_medida(db: Session, unidad_id: int) -> schemas.UnidadMedida:
     db_unidad = leer_unidad_medida(db, unidad_id)

@@ -6,7 +6,9 @@ import type { InsumoPayload } from '../../types/insumos';
 import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
 import { getInsumoById, saveInsumo } from '../../services/insumosServices';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 interface FormValues {
     nombre: string;
@@ -15,7 +17,8 @@ interface FormValues {
 
 export default function InsumoForm() {
     const [unidadesDisponibles, setUnidadesDisponibles] = useState<UnidadMedida[]>([]);
-    
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
+
     const navigate = useNavigate();
     const { id } = useParams();
     const editando = Boolean(id);
@@ -36,7 +39,7 @@ export default function InsumoForm() {
             }
         };
         cargarUnidades(); 
-    }, []);
+    }, [editando, id, reset]);
 
     useEffect(() => {
         if (editando && id) {
@@ -69,16 +72,25 @@ export default function InsumoForm() {
             if (exito) {
                 navigate('/insumos');
             } else {
-                alert('Hubo un error al guardar el registro.');
+                setModalAlerta({
+                    isOpen: true,
+                    titulo: 'Error al Guardar',
+                    mensaje: 'Hubo un error al guardar el registro.'
+                });
             }
         } catch (error) {
             console.error('Error de red:', error);
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error de Red',
+                mensaje: 'No se pudo conectar con el servidor.'
+            });
         }
     };
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>{editando ? 'Editar Insumo' : 'Registrar Nuevo Insumo'}</h2>
+            <EncabezadoPagina titulo={editando ? 'Editar Insumo' : 'Registrar Nuevo Insumo'} ancho="600px" />
             
             <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta} style={{ maxWidth: '600px' }}>
                 <div className={styles.formGrid} style={{ gridTemplateColumns: '1fr' }}>
@@ -119,7 +131,7 @@ export default function InsumoForm() {
 
                 <div className={styles.filaBotones} style={{ marginTop: '20px' }}>
                     <Boton type="submit" variant="guardar">
-                        {editando ? 'Actualizar Cambios' : 'Guardar'}
+                        {editando ? 'Actualizar' : 'Guardar'}
                     </Boton>
                     <Link to="/insumos">
                         <Boton variant="eliminar">
@@ -128,6 +140,13 @@ export default function InsumoForm() {
                     </Link>
                 </div>
             </form>
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }

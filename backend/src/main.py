@@ -5,20 +5,41 @@ from src.models import ModeloBase
 
 from src.unidades_medida.models import UnidadMedida
 from src.insumos.models import Insumo
+from src.checklists.models import Checklist, ConsumoReal
+from src.empleados.models import Empleado
+from src.capacidades.models import Capacidad
+from src.equipos.models import Equipo
+from src.calibracion_realizada.models import CalibracionRealizada
+from src.sectores.models import Sector
+from src.planes.models import Plan
+from src.productos_limpieza.models import ProductoLimpieza
+from src.tareas.models import Tarea
+from src.elementos_limpieza.models import ElementoLimpieza
+from src.documentacion.models import Documentacion, LibretaSanitaria, Capacitacion, CertificadoAptitudFisica, RequisitoDocumentacion
 
-# Importamos la configuración validada por Pydantic
 from src.config import settings
-
-# Importamos configuracion de logger
 from src.logger import setup_logging
-
-# Importamos los routers desde nuestros modulos
 
 from src.unidades_medida.router import router as unidades_medida_router
 from src.insumos.router import router as insumos_router
 from src.empleados.router import router as empleados_router
 from src.capacidades.router import router as capacidades_router
 from src.equipos.router import router as equipos_router
+from src.calibracion_realizada.router import router as calibracion_realizada_router
+from src.sectores.router import router as sectores_router
+from src.planes.router import router as planes_router
+from src.productos_limpieza.router import router as productos_limpieza_router
+from src.tareas.router import router as tareas_router
+from src.checklists.router import router as checklist_router
+from src.elementos_limpieza.router import router as elementos_limpieza_router
+from src.documentacion.router import router as documentacion_router
+from src.vencimientos.router import router as vencimientos_router
+from src.incidentes.router import router as incidentes_router
+from src.documentos_versionados.router import (
+    router as documentos_versionados_router,
+    router_documentos,
+)
+
 from fastapi.middleware.cors import CORSMiddleware
 
 ENV = settings.ENV.upper()
@@ -31,28 +52,40 @@ async def db_creation_lifespan(app: FastAPI):
     ModeloBase.metadata.create_all(bind=engine)
     yield
 
-
 app = FastAPI(root_path=ROOT_PATH, lifespan=db_creation_lifespan)
 
-# Usamos "*" para que acepte peticiones desde cualquier puerto (5173, 5174, etc.)
+# Permitir orígenes de desarrollo local (localhost o 127.0.0.1 en cualquier puerto)
 origins = [
-    "*" 
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# asociamos los routers a nuestra app
-
 app.include_router(unidades_medida_router)
 app.include_router(insumos_router)
 app.include_router(empleados_router)
 app.include_router(capacidades_router)
 app.include_router(equipos_router)
-
+app.include_router(calibracion_realizada_router)
+app.include_router(sectores_router)
+app.include_router(planes_router)
+app.include_router(productos_limpieza_router)
+app.include_router(tareas_router)
+app.include_router(checklist_router)
+app.include_router(elementos_limpieza_router)
+app.include_router(documentacion_router)
+app.include_router(vencimientos_router)
+app.include_router(incidentes_router)
+app.include_router(documentos_versionados_router)
+app.include_router(router_documentos)

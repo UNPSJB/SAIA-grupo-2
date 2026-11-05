@@ -1,0 +1,239 @@
+import { useState, useEffect } from 'react';
+import { Link, useParams,useNavigate} from 'react-router-dom';
+
+import type { CumplimientoEmpleado, Documentacion } from '../../types/documentacion';
+import type { Empleado } from '../../types/empleados';
+import {
+    getCumplimiento,
+    getDocumentacion,
+    deleteDocumentacion,
+} from '../../services/documentacionServices';
+import { getEmpleadoById } from '../../services/empleadosServices';
+import {
+    COLOR_ESTADO,
+    ETIQUETA_ESTADO,
+    ETIQUETA_TIPO,
+    formatearFecha,
+    textoVencimiento,
+} from './estadoVencimiento';
+import Boton from '../../components/Boton';
+import BuscadorTexto from '../../components/BuscadorTexto';
+import { filtrarPorTexto } from '../../utils/texto';
+import { abrirArchivoEnPestania } from '../../utils/archivos';
+import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
+
+export default function DocumentacionEmpleado() {
+    const { empleadoId } = useParams();
+
+    const [empleado, setEmpleado] = useState<Empleado | null>(null);
+    const [documentos, setDocumentos] = useState<Documentacion[]>([]);
+    const [busqueda, setBusqueda] = useState('');
+    const [cumplimiento, setCumplimiento] = useState<CumplimientoEmpleado | null>(null);
+    const [cargando, setCargando] = useState(true);
+    const navigate = useNavigate(); 
+
+    const cargarDatos = async () => {
+        if (!empleadoId) return;
+        try {
+            const [datosEmpleado, datosDocumentos, datosCumplimiento] = await Promise.all([
+                getEmpleadoById(empleadoId),
+                getDocumentacion(Number(empleadoId)),
+                getCumplimiento(Number(empleadoId)),
+            ]);
+            setEmpleado(datosEmpleado);
+            setDocumentos(datosDocumentos);
+            setCumplimiento(datosCumplimiento);
+        } catch (error) {
+            console.error('Error al cargar la documentación del empleado:', error);
+        } finally {
+            setCargando(false);
+        }
+    };
+
+    useEffect(() => {
+        cargarDatos();
+    }, [empleadoId]);
+
+    const handleEliminar = async (documento: Documentacion) => {
+        const confirmado = window.confirm(
+            `¿Eliminar el documento "${ETIQUETA_TIPO[documento.tipo]}"?`
+        );
+        if (!confirmado) return;
+
+        const exito = await deleteDocumentacion(String(documento.id));
+        if (exito) {
+            cargarDatos();
+        } else {
+            alert('Hubo un error al eliminar el documento.');
+        }
+    };
+
+    const detalle = (documento: Documentacion): string => {
+        if (documento.tipo === 'libreta_sanitaria') {
+            return `N° ${documento.numero_carnet} — ${documento.autoridad_emisora}`;
+        }
+        if (documento.tipo === 'capacitacion') {
+            return documento.titulo ?? '';
+        }
+        return `Dr/a. ${documento.nombre_medico} — Mat. ${documento.matricula}`;
+    };
+
+    if (cargando) {
+        return (
+            <div className={styles.contenedorPrincipal}>
+                <EncabezadoPagina titulo="Documentación del Empleado" ancho="1000px" />
+                <p>Cargando...</p>
+            </div>
+        );
+    }
+
+    const documentosFiltrados = filtrarPorTexto(documentos, busqueda, (c) => [
+        ETIQUETA_TIPO[c.tipo],
+        c.numero_carnet,
+        c.autoridad_emisora,
+        c.titulo,
+        c.observaciones,
+        c.nombre_medico,
+        c.matricula,
+        c.archivo_nombre,
+    ]);
+
+    return (
+        <div className={styles.contenedorPrincipal}>
+            <EncabezadoPagina
+                titulo="Documentación del Empleado"
+                descripcion={empleado && `${empleado.legajo} — ${empleado.nombre} ${empleado.apellido}`}
+                ancho="1000px"
+                acciones={
+                    <>
+                        <Boton variant="volver" onClick={() => navigate(-1)}>
+                            Volver atrás
+                        </Boton>
+                        <Link to={`/empleados/${empleadoId}/documentacion/nuevo`}>
+                            <Boton variant="crear">Cargar Documento</Boton>
+                        </Link>
+                    </>
+                }
+            />
+
+            {cumplimiento && !cumplimiento.completo && (
+                <div
+                    className={styles.tarjetaEstatica}
+                    style={{
+                        maxWidth: '900px',
+                        width: '100%',
+                        marginBottom: '20px',
+                        borderLeft: `4px solid ${COLOR_ESTADO.vencido}`,
+                    }}
+                >
+                    <strong style={{ color: COLOR_ESTADO.vencido }}>
+                        Documentación incompleta
+                    </strong>
+                    {cumplimiento.faltantes.length > 0 && (
+                        <p style={{ margin: '8px 0 0 0' }}>
+                            Falta cargar: {cumplimiento.faltantes.map((t) => ETIQUETA_TIPO[t]).join(', ')}
+                        </p>
+                    )}
+                    {cumplimiento.vencidos.length > 0 && (
+                        <p style={{ margin: '8px 0 0 0' }}>
+                            Vencidos: {cumplimiento.vencidos.map((t) => ETIQUETA_TIPO[t]).join(', ')}
+                        </p>
+                    )}
+                </div>
+            )}
+
+            {cumplimiento && cumplimiento.completo && (
+                <p style={{ marginTop: '-10px', marginBottom: '20px', color: COLOR_ESTADO.vigente, fontWeight: 'bold' }}>
+                    Documentación obligatoria al día
+                </p>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '1000px', marginBottom: '16px' }}>
+                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar documento..." />
+            </div>
+
+            <div className={styles.contenedorTabla} style={{ maxWidth: '1000px' }}>
+                <div className={styles.filaHeader} style={{ gridTemplateColumns: '1.5fr 2fr 1.2fr 1.4fr 1.3fr 0.8fr 1.2fr', minWidth: '780px' }}>
+                    <div>Tipo</div>
+                    <div>Detalle</div>
+                    <div>Vencimiento</div>
+                    <div>Estado</div>
+                    <div>Plazo</div>
+                    <div>Archivo</div>
+                    <div>Acciones</div>
+                </div>
+
+                {documentosFiltrados.map((documento) => (
+                    <div
+                        key={documento.id}
+                        className={styles.filaItem}
+                        style={{ gridTemplateColumns: '1.5fr 2fr 1.2fr 1.4fr 1.3fr 0.8fr 1.2fr', minWidth: '780px' }}
+                    >
+                        <div style={{ fontWeight: '500', color: 'var(--text-h)' }}>
+                            {ETIQUETA_TIPO[documento.tipo]}
+                        </div>
+
+                        <div style={{ fontSize: '0.85rem' }}>{detalle(documento)}</div>
+
+                        <div>{formatearFecha(documento.fecha_vencimiento)}</div>
+
+                        <div>
+                            <span
+                                style={{
+                                    fontSize: '0.85rem',
+                                    fontWeight: 'bold',
+                                    color: COLOR_ESTADO[documento.estado],
+                                }}
+                            >
+                                {ETIQUETA_ESTADO[documento.estado]}
+                            </span>
+                        </div>
+
+
+                        <div style={{ fontSize: '0.85rem' }}>
+                            {textoVencimiento(documento.dias_restantes)}
+                        </div>
+
+                        <div>
+                            {documento.archivo_url ? (
+                                <button
+                                    type="button"
+                                    onClick={() => abrirArchivoEnPestania(documento.archivo_url!, documento.archivo_nombre)}
+                                    title={documento.archivo_nombre ?? 'Ver archivo adjunto'}
+                                    aria-label={documento.archivo_nombre ?? 'Ver archivo adjunto'}
+                                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--azul-texto)', fontSize: '1.1rem' }}
+                                >
+                                    <i className="bi bi-paperclip"></i>
+                                </button>
+                            ) : (
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>—</span>
+                            )}
+                        </div>
+
+                        <div className={styles.grupoBotonesTabla}>
+                            <Link
+                                to={`/empleados/${empleadoId}/documentacion/editar/${documento.id}`}
+                                title="Renovar o editar"
+                            >
+                                <Boton variant="editar" style={{ padding: '8px 12px' }}></Boton>
+                            </Link>
+                            <Boton
+                                variant="eliminar"
+                                style={{ padding: '8px 12px' }}
+                                onClick={() => handleEliminar(documento)}
+                                title="Eliminar documento"
+                            ></Boton>
+                        </div>
+                    </div>
+                ))}
+
+                {documentos.length === 0 && (
+                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text)' }}>
+                        Este empleado no tiene documentación cargada.
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}

@@ -3,10 +3,12 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import type { Insumo } from '../../types/insumos';
 import { getInsumoById, deleteInsumo } from '../../services/insumosServices';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 
 export default function InsumoDelete() {
     const [insumo, setInsumo] = useState<Insumo | null>(null);
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
     const { id } = useParams();
     const navigate = useNavigate(); 
 
@@ -32,10 +34,19 @@ export default function InsumoDelete() {
             if (exito) {
                 navigate('/insumos');
             } else {
-                alert('Hubo un error al intentar eliminar el registro.');
+                setModalAlerta({
+                    isOpen: true,
+                    titulo: 'Error al Eliminar',
+                    mensaje: 'Hubo un error al intentar eliminar el registro.'
+                });
             }
         } catch (error) {
             console.error('Error de red:', error);
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error de Red',
+                mensaje: 'No se pudo conectar con el servidor.'
+            });
         }
     };
 
@@ -61,6 +72,13 @@ export default function InsumoDelete() {
             ) : (
                 <p>Insumo no encontrado</p>
             )}
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }

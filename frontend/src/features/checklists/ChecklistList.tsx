@@ -1,0 +1,548 @@
+import { useState, useEffect } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
+import type { ChecklistItem, ChecklistMarcarPayload, RegistroChecklistDetalle } from '../../types/checklists';
+import { getChecklistHoy, marcarTareaCompletada, getDetalleTareaRealizada } from '../../services/checklistsServices';
+import { getEmpleados } from '../../services/empleadosServices';
+import { getTareaById } from '../../services/tareasServices';
+import { getProductos } from '../../services/productosLimpiezaServices';
+import ModalAlerta from '../../components/alerta';
+import Boton from '../../components/Boton';
+import { useAuth } from '../../context/AuthContext';
+import styles from '../../styles/shared.module.css';
+import BuscadorTexto from '../../components/BuscadorTexto';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
+import { filtrarPorTexto } from '../../utils/texto';
+
+import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
+
+interface FormValues {
+    empleado_id: string;
+    observaciones: string;
+    evidencia: FileList; 
+    consumos: {
+        producto_limpieza_id: string;
+        nombre_producto: string;
+        cantidad_estimada: number;
+        cantidad: string;
+        stock_disponible: number;
+        unidad_medida?: string;
+    }[];
+}
+
+export default function ChecklistList() {
+    const { usuario } = useAuth();
+    const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+    const [empleados, setEmpleados] = useState<any[]>([]);
+    const [productosList, setProductosList] = useState<any[]>([]);
+    const [cargando, setCargando] = useState(true);
+    const [sectorFiltro, setSectorFiltro] = useState<string>('todos');
+    const [busqueda, setBusqueda] = useState('');
+
+    const [modalAbierto, setModalAbierto] = useState(false);
+    const [tareaActiva, setTareaActiva] = useState<number | null>(null);
+    const [planActivo, setPlanActivo] = useState<number | null>(null);
+    const [cargandoModal, setCargandoModal] = useState(false);
+
+    const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
+    const [detalleTarea, setDetalleTarea] = useState<RegistroChecklistDetalle | null>(null);
+    const [cargandoDetalle, setCargandoDetalle] = useState(false);
+
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
+    const [vistaPreviaEvidencia, setVistaPreviaEvidencia] = useState<string | null>(null);
+
+    const { register, control, handleSubmit, reset, setValue, formState: { errors } } = useForm<FormValues>({
+        defaultValues: { empleado_id: '', observaciones: '', consumos: [] }
+    });
+
+    const { fields } = useFieldArray({ control, name: 'consumos' });
+
+    const cargarDatos = async () => {
+        setCargando(true);
+        try {
+            const [checklistData, empleadosData] = await Promise.all([
+                getChecklistHoy(usuario?.id),
+                getEmpleados()
+            ]);
+            setChecklist(checklistData);
+            setEmpleados(empleadosData);
+        } catch (error) {
+            console.error("Error cargando checklist:", error);
+        } finally {
+            setCargando(false);
+        }
+    };
+
+    useEffect(() => {
+        cargarDatos();
+    }, [usuario?.id]);
+
+    const abrirModal = async (tarea_id: number, plan_id: number) => {
+        setTareaActiva(tarea_id);
+        setPlanActivo(plan_id);
+        setVistaPreviaEvidencia(null);
+        setModalAbierto(true);
+        setCargandoModal(true);
+        
+        try {
+            const [tareaOriginal, productosData] = await Promise.all([
+                getTareaById(tarea_id.toString()),
+                getProductos()
+            ]);
+            setProductosList(productosData);
+
+            const consumosPredefinidos = tareaOriginal.consumos_estimados?.map((c: any) => {
+                const prod = productosData.find((p: any) => p.id === c.producto_limpieza.id);
+                const stockActual = prod ? prod.stock : (c.producto_limpieza.stock ?? 0);
+                const unidadMedida = prod?.unidad_medida?.nombre || c.producto_limpieza?.unidad_medida?.nombre || '';
+                return {
+                    producto_limpieza_id: c.producto_limpieza.id.toString(),
+                    nombre_producto: c.producto_limpieza.nombre,
+                    cantidad_estimada: c.cantidad,
+                    cantidad: c.cantidad.toString(),
+                    stock_disponible: stockActual,
+                    unidad_medida: unidadMedida
+                };
+            }) || [];
+
+            reset({ empleado_id: usuario?.id ? usuario.id.toString() : '', observaciones: '', consumos: consumosPredefinidos });
+        } catch (error) {
+            console.error("Error al cargar detalles de la tarea", error);
+            reset({ empleado_id: usuario?.id ? usuario.id.toString() : '', observaciones: '', consumos: [] });
+        } finally {
+            setCargandoModal(false);
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setVistaPreviaEvidencia(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            setVistaPreviaEvidencia(null);
+        }
+    };
+
+    const quitarEvidencia = () => {
+        setVistaPreviaEvidencia(null);
+        try {
+            setValue('evidencia', new DataTransfer().files);
+        } catch {
+            // fallback for environments without DataTransfer constructor
+        }
+    };
+
+    const abrirDetalleTarea = async (tarea_id: number, plan_id: number) => {
+        setModalDetalleAbierto(true);
+        setCargandoDetalle(true);
+        try {
+            const [data, productosData] = await Promise.all([
+                getDetalleTareaRealizada(tarea_id, plan_id),
+                productosList.length > 0 ? Promise.resolve(productosList) : getProductos()
+            ]);
+            setProductosList(productosData);
+            setDetalleTarea(data);
+        } catch (error) {
+            console.error("Error al obtener detalle de la tarea:", error);
+        } finally {
+            setCargandoDetalle(false);
+        }
+    };
+
+    const onSubmit = async (data: FormValues) => {
+        if (!tareaActiva) return;
+
+        let evidenciaUrl = '';
+        if (data.evidencia && data.evidencia.length > 0) {
+            evidenciaUrl = vistaPreviaEvidencia || data.evidencia[0].name;
+        }
+
+        const payload: ChecklistMarcarPayload = {
+            plan_id: planActivo || undefined,
+            empleado_id: Number(data.empleado_id || usuario?.id),
+            observaciones: data.observaciones,
+            evidencia_url: evidenciaUrl,
+            consumos: data.consumos.map(c => ({
+                producto_limpieza_id: Number(c.producto_limpieza_id),
+                cantidad: Number(c.cantidad)
+            }))
+        };
+
+        const res = await marcarTareaCompletada(tareaActiva, payload);
+        if (res.ok) {
+            setModalAbierto(false);
+            setVistaPreviaEvidencia(null);
+            cargarDatos();
+        } else {
+            setModalAlerta({
+                isOpen: true,
+                titulo: "Error al Guardar",
+                mensaje: res.mensaje || "Error al guardar el registro."
+            });
+        }
+    };
+
+    const sectoresUnicos = Array.from(new Set(checklist.map(item => item.sector_nombre).filter(Boolean)));
+    const fechaDeHoy = new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    const checklistPorSector = checklist.filter(t => sectorFiltro === 'todos' || t.sector_nombre === sectorFiltro);
+    const checklistFiltrado = filtrarPorTexto(checklistPorSector, busqueda);
+
+
+    const misColumnas: Columna<ChecklistItem>[] = [
+        {
+            key: 'titulo_tarea',
+            encabezado: 'Tarea',
+            ordenable: true,
+            variant: 'titulo', // Elimina el font-weight inline
+            render: (tarea) => <span style={{ fontSize: '1.05rem' }}>{tarea.titulo_tarea}</span>
+        },
+        {
+            key: 'ubicacion',
+            encabezado: 'Ubicación',
+            ordenable: false, 
+            variant: 'celdaBase', 
+            render: (tarea) => (
+                <>
+                    <div><strong>Planes:</strong> {tarea.plan_titulo}</div>
+                    <div><strong>Sectores:</strong> {tarea.sector_nombre}</div>
+                </>
+            )
+        },
+        {
+            key: 'frecuencia',
+            encabezado: 'Frecuencia',
+            ordenable: true,
+            variant: 'celdaBase',
+            render: (tarea) => <span style={{ textTransform: 'capitalize' }}>{tarea.frecuencia}</span>
+        },
+        {
+            key: 'estado',
+            encabezado: 'Estado',
+            ordenable: true,
+            variant: (tarea) => `${tarea.estado}`,
+            render: (tarea) => tarea.estado.toUpperCase()
+        },
+        {
+            key: 'acciones',
+            encabezado: 'Acción',
+            variant: 'acciones', // Inyecta flex y gap automáticamente
+            render: (tarea) => (
+                tarea.estado === 'pendiente' ? (
+                    <Boton variant="guardar" onClick={() => abrirModal(tarea.tarea_id, tarea.plan_id)}>
+                        Completar
+                    </Boton>
+                ) : (
+                    <Boton variant="ver" onClick={() => abrirDetalleTarea(tarea.tarea_id, tarea.plan_id)}>
+                        Ver Detalle
+                    </Boton>
+                )
+            )
+        }
+    ];
+
+
+
+    if (cargando) return <div className={styles.contenedorPrincipal}>Cargando tareas del día...</div>;
+
+    return (
+        <div className={styles.contenedorPrincipal}>
+            <EncabezadoPagina
+                titulo="Checklist del Día"
+                descripcion={`${fechaDeHoy} · Consulta y registra el cumplimiento de las tareas de limpieza programadas para hoy.`}
+            />
+
+            <div className={styles.filaBotonesSuperiores}>
+                {sectoresUnicos.length > 0 && (
+                    <label className={styles.infoFilaSuperior} style={{ gap: '10px' }}>
+                        <span style={{ fontWeight: '500', color: 'var(--text-h)', whiteSpace: 'nowrap' }}>Filtrar por Sector:</span>
+                        <select
+                            value={sectorFiltro}
+                            onChange={(e) => setSectorFiltro(e.target.value)}
+                            style={{ width: 'auto', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', maxWidth: '250px', margin: 0 }}
+                        >
+                            <option value="todos">Todos los sectores</option>
+                            {sectoresUnicos.map(sec => (
+                                <option key={sec} value={sec}>{sec}</option>
+                            ))}
+                        </select>
+                    </label>
+                )}
+                <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar tarea, plan o sector..." />
+            </div>
+
+            <TablaPaginada
+                datos={checklistFiltrado}
+                columnas={misColumnas}
+                gridTemplateColumns="2.5fr 2.5fr 1fr 1fr 1.2fr"
+                itemsPorPagina={15} 
+                mensajeVacio="No hay tareas programadas para hoy en el sector seleccionado."
+                columnaOrdenInicial="estado" 
+            />
+
+
+            {/* MODAL COMPLETAR TAREA */}
+            {modalAbierto && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalFormulario}>
+                        <h2 className={styles.modalTitulo}>Registrar Tarea</h2>
+                        
+                        {cargandoModal ? (
+                            <p className={styles.modalCargando}>Cargando detalles de la tarea...</p>
+                        ) : (
+                            <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta} style={{ boxShadow: 'none', padding: 0, border: 'none' }}>
+                                
+                                <div className={styles.formGroup} style={{ marginBottom: '20px' }}>
+                                    <label className={styles.modalTituloCampo}>Empleado a cargo:</label>
+                                    <select
+                                        {...register('empleado_id', { required: true })}
+                                        disabled={usuario?.rol !== 'admin'}
+                                        className={`${styles.modalSelector} ${usuario?.rol !== 'admin' ? styles.modalSelectorBloqueado : ''}`}
+                                    >
+                                        <option value="">-- Seleccionar empleado --</option>
+                                        {empleados.map(e => (
+                                            <option key={e.id} value={e.id}>{e.nombre} {e.apellido}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className={styles.formGroup} style={{ marginBottom: '20px' }}>
+                                    <label className={styles.modalTituloCampo}>Evidencia Fotográfica (Opcional):</label>
+                                    <input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        capture="environment" 
+                                        {...register('evidencia', {
+                                            onChange: handleFileChange
+                                        })}
+                                        className={styles.modalArchivo}
+                                    />
+                                    <small className={styles.modalTextoAdicional}>Desde el celular, esto abrirá la cámara directamente.</small>
+
+                                    {vistaPreviaEvidencia && (
+                                        <div className={styles.modalVistaPrevia}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                                <p className={styles.modalTextoVistaPrevia}>Vista previa de la evidencia:</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={quitarEvidencia}
+                                                    title="Quitar foto"
+                                                    className={styles.modalBotonQuitar}
+                                                >
+                                                    &times;
+                                                </button>
+                                            </div>
+                                            <img
+                                                src={vistaPreviaEvidencia}
+                                                alt="Vista previa evidencia"
+                                                style={{ maxWidth: '100%', maxHeight: '220px', borderRadius: '6px', objectFit: 'contain' }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className={styles.formGroup} style={{ marginBottom: '25px' }}>
+                                    <label className={styles.modalTituloCampo}>Observaciones (Opcional):</label>
+                                    <textarea 
+                                        {...register('observaciones')} 
+                                        rows={3} 
+                                        placeholder="Ej: Quedó una mancha que no salió, se rompió un trapo, etc."
+                                        className={styles.modalAreaDeTexto}
+                                    ></textarea>
+                                </div>
+
+                                <hr style={{ margin: '25px 0', borderColor: 'var(--border)' }} />
+
+                                <div style={{ marginBottom: '20px' }}>
+                                    <h3 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>Consumo de Insumos</h3>
+                                    
+                                    {fields.length === 0 ? (
+                                        <p style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Esta tarea no requiere insumos.</p>
+                                    ) : (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                            {fields.map((item, index) => {
+                                                const errCant = errors.consumos?.[index]?.cantidad;
+                                                return (
+                                                    <div
+                                                        key={item.id}
+                                                        style={{
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            padding: '14px',
+                                                            backgroundColor: errCant ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                                                            border: errCant ? '1px solid #ef4444' : '1px solid var(--border)',
+                                                            borderRadius: '8px',
+                                                            gap: '8px',
+                                                            boxSizing: 'border-box'
+                                                        }}
+                                                    >
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', minWidth: '180px', flex: 1 }}>
+                                                                <span style={{ fontWeight: 'bold', fontSize: '1rem', color: 'var(--text-h)' }}>
+                                                                    {item.nombre_producto}
+                                                                </span>
+                                                                
+                                                                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                                                                    Estimado: {item.cantidad_estimada} {item.unidad_medida || ''} | Stock disponible: {item.stock_disponible} {item.unidad_medida || ''}
+                                                                </span>
+                                                            </div>
+
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                <label style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-h)', margin: 0 }}>
+                                                                    Usado:
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    step="any"
+                                                                    {...register(`consumos.${index}.cantidad`, {
+                                                                        required: "Debe ingresar una cantidad",
+                                                                        min: { value: 0, message: "No puede ser menor a 0" },
+                                                                        validate: (val) => {
+                                                                            const num = Number(val);
+                                                                            if (isNaN(num)) return "Ingresa un número válido";
+                                                                            if (num > item.stock_disponible) {
+                                                                                return `Stock insuficiente para registrar el consumo`;
+                                                                            }
+                                                                            return true;
+                                                                        }
+                                                                    })}
+                                                                    style={{
+                                                                        width: '90px',
+                                                                        padding: '8px',
+                                                                        fontSize: '1rem',
+                                                                        borderRadius: '6px',
+                                                                        border: errCant ? '2px solid #ef4444' : '1px solid var(--border)',
+                                                                        textAlign: 'center',
+                                                                        backgroundColor: 'var(--bg)',
+                                                                        color: 'var(--text-h)',
+                                                                        outline: 'none'
+                                                                    }}
+                                                                />
+                                                                {item.unidad_medida && (
+                                                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+                                                                        {item.unidad_medida}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        {errCant && (
+                                                            <span style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: '600', marginTop: '2px', textAlign: 'right' }}>
+                                                                {errCant.message}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className={styles.filaBotones} style={{ marginTop: '25px', justifyContent: 'flex-end', gap: '12px' }}>
+                                    <Boton type="submit" variant="guardar">Guardar</Boton>
+                                    <Boton type="button" variant="eliminar" onClick={() => setModalAbierto(false)}>Cancelar</Boton>
+                                </div>
+                            </form>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL VER DETALLE DE TAREA REALIZADA */}
+            {modalDetalleAbierto && (
+                <div className={styles.modalOverlay}>
+                    <div style={{ backgroundColor: 'var(--bg)', width: '95%', maxWidth: '650px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '12px', padding: '30px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', textAlign: 'left' }}>
+                        <h2 style={{ marginTop: 0, borderBottom: '1px solid var(--border)', paddingBottom: '15px', color: 'var(--text-h)' }}>
+                            Detalle de Tarea Realizada
+                        </h2>
+
+                        {cargandoDetalle ? (
+                            <p style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>Cargando auditoría de la tarea...</p>
+                        ) : detalleTarea ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                <div>
+                                    <h3 style={{ color: 'var(--text-h)', margin: '0 0 5px 0' }}>{detalleTarea.titulo_tarea}</h3>
+                                    <p style={{ margin: 0, color: 'var(--text-muted)' }}>
+                                        <strong>Plan:</strong> {detalleTarea.plan_titulo} | <strong>Sector:</strong> {detalleTarea.sector_nombre}
+                                    </p>
+                                </div>
+
+                                <div style={{ backgroundColor: 'var(--card-bg)', padding: '15px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                    <p style={{ margin: '4px 0' }}><strong>Completada por:</strong> {detalleTarea.nombre_empleado || 'No registrado'}</p>
+                                    <p style={{ margin: '4px 0' }}>
+                                        <strong>Fecha y Hora:</strong> {detalleTarea.fecha_hora_completada
+                                            ? new Date(detalleTarea.fecha_hora_completada).toLocaleString('es-AR')
+                                            : detalleTarea.fecha_programada}
+                                    </p>
+                                    {detalleTarea.evidencia_url && (
+                                        <div style={{ marginTop: '10px' }}>
+                                            <p style={{ margin: '0 0 6px 0', fontWeight: 'bold' }}>Evidencia adjuntada:</p>
+                                            {detalleTarea.evidencia_url.startsWith('data:image') ||
+                                             detalleTarea.evidencia_url.startsWith('http') ||
+                                             detalleTarea.evidencia_url.startsWith('blob:') ? (
+                                                <div style={{ textAlign: 'center', backgroundColor: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                                    <img
+                                                        src={detalleTarea.evidencia_url}
+                                                        alt="Evidencia adjuntada"
+                                                        style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '6px', objectFit: 'contain' }}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <code>{detalleTarea.evidencia_url}</code>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {detalleTarea.observaciones && (
+                                    <div>
+                                        <strong>Observaciones registradas:</strong>
+                                        <div style={{ backgroundColor: '#f8fafc', padding: '12px', borderRadius: '6px', border: '1px solid var(--border)', marginTop: '5px', fontStyle: 'italic', color: '#1f2937' }}>
+                                            "{detalleTarea.observaciones}"
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <h4 style={{ margin: '15px 0 10px 0', color: 'var(--text-h)' }}>Consumo Real de Insumos:</h4>
+                                    {detalleTarea.consumos_reales && detalleTarea.consumos_reales.length > 0 ? (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            {detalleTarea.consumos_reales.map(c => {
+                                                const prod = productosList.find((p: any) => p.id === c.producto_limpieza_id);
+                                                const unidad = prod?.unidad_medida?.nombre || '';
+                                                return (
+                                                    <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 15px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px' }}>
+                                                        <span style={{ fontWeight: '500', color: '#166534' }}>{c.nombre_producto}</span>
+                                                        <span style={{ fontWeight: 'bold', color: '#15803d' }}>{c.cantidad} {unidad ? unidad : 'unidades'}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', margin: 0 }}>No se registraron consumos para esta ejecución.</p>
+                                    )}
+                                </div>
+
+                                <div className={styles.filaBotones} style={{ marginTop: '20px', justifyContent: 'flex-end' }}>
+                                    <Boton variant="volver" onClick={() => setModalDetalleAbierto(false)}>Volver</Boton>
+                                </div>
+                            </div>
+                        ) : (
+                            <p style={{ color: 'var(--rojo-texto)' }}>No se encontraron detalles para esta tarea.</p>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
+        </div>
+    );
+}

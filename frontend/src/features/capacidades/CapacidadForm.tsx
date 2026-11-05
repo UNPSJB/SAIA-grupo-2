@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { createCapacidad } from '../../services/capacidadesServices';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 interface FormValues {
     nombre: string;
@@ -10,6 +13,7 @@ interface FormValues {
 
 export default function CapacidadForm() {
     const navigate = useNavigate();
+    const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
     const { register, handleSubmit, formState: { errors } } = useForm<FormValues>();
 
     const onSubmit = async (data: FormValues) => {
@@ -21,16 +25,25 @@ export default function CapacidadForm() {
             if (exito) {
                 navigate('/capacidades');
             } else {
-                alert('Hubo un error al crear el registro.');
+                setModalAlerta({
+                    isOpen: true,
+                    titulo: 'Error',
+                    mensaje: 'Hubo un error al crear el registro.'
+                });
             }
         } catch (error) {
             console.error('Error de red:', error);
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error de Red',
+                mensaje: 'No se pudo conectar con el servidor.'
+            });
         }
     };
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Registrar Nueva Capacidad</h2>
+            <EncabezadoPagina titulo="Registrar Nueva Capacidad" ancho="600px" />
             
             <form onSubmit={handleSubmit(onSubmit)} className={styles.formularioTarjeta} style={{ maxWidth: '600px' }}>
                 <div className={styles.formGrid} style={{ gridTemplateColumns: '1fr' }}>
@@ -61,6 +74,13 @@ export default function CapacidadForm() {
                     </Link>
                 </div>
             </form>
+
+            <ModalAlerta
+                isOpen={modalAlerta.isOpen}
+                titulo={modalAlerta.titulo}
+                mensaje={modalAlerta.mensaje}
+                onClose={() => setModalAlerta({ ...modalAlerta, isOpen: false })}
+            />
         </div>
     );
 }

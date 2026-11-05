@@ -4,6 +4,7 @@ import type { Insumo } from '../../types/insumos';
 import { getInsumoById } from '../../services/insumosServices';
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina';
 
 export default function InsumoDetail() {
     const [insumo, setInsumo] = useState<Insumo | null>(null);
@@ -25,7 +26,7 @@ export default function InsumoDetail() {
 
     return (
         <div className={styles.contenedorPrincipal}>
-            <h2>Detalle del Insumo</h2>
+            <EncabezadoPagina titulo="Detalle del Insumo" ancho="600px" />
             {insumo ? (
                 <div className={styles.tarjetaEstatica} style={{ maxWidth: '600px', width: '100%' }}>
                     <p><strong>Nombre:</strong> {insumo.nombre}</p>
