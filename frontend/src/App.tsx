@@ -56,6 +56,11 @@ import AlertasRecambio from './features/elementosLimpieza/AlertasRecambio';
 import VencimientosList from './features/vencimientos/VencimientosList'; 
 import VencimientosDocumentacionList from './features/vencimientosDocumentacion/VencimientosDocumentacionList';
 import AlertasDocumentacion from './features/documentacion/AlertaVencimiento';
+import ProductosElaboradosList from './features/productos/ProductosList';
+import ProductoElaboradoForm from './features/productos/ProductoForm';
+import ProductoElaboradoDetail from './features/productos/ProductoDetail';
+import LotesList from './features/lotesProduccion/LotesList';
+import LoteForm from './features/lotesProduccion/LoteForm';
 
 import IncidentesList from './features/incidentes/IncidentesList';
 import IncidenteForm from './features/incidentes/IncidenteForm';
@@ -207,6 +212,13 @@ function RutasProtegidas() {
 
             <Route path="/vencimientos-documentacion" element={<RutaAdmin><VencimientosDocumentacionList /></RutaAdmin>}/>
             <Route path="/alertas-documentacion" element={<RutaAdmin><AlertasDocumentacion /></RutaAdmin>} />
+
+            <Route path="/productos" element={<RutaAdmin><ProductosElaboradosList /></RutaAdmin>} />
+            <Route path="/productos/nuevo" element={<RutaAdmin><ProductoElaboradoForm /></RutaAdmin>} />
+            <Route path="/productos/editar/:id" element={<RutaAdmin><ProductoElaboradoForm /></RutaAdmin>} />
+            <Route path="/productos/:id" element={<RutaAdmin><ProductoElaboradoDetail /></RutaAdmin>} />
+            <Route path="/lotes-produccion" element={<RutaAdmin><LotesList /></RutaAdmin>} />
+            <Route path="/lotes-produccion/nuevo" element={<LoteForm />} />
 
             <Route path="/incidentes/nuevo" element={<IncidenteForm />} />
             <Route path="/incidentes" element={<RutaAdmin><IncidentesList /></RutaAdmin>} />

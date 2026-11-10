@@ -31,6 +31,7 @@ const SECCIONES: Seccion[] = [
             { etiqueta: 'Inicio', ruta: '/', icono: 'grid-1x2', exacta: true },
             { etiqueta: 'Checklist del día', ruta: '/checklists/hoy', icono: 'check2-square' },
             { etiqueta: 'Registrar incidente', ruta: '/incidentes/nuevo', icono: 'exclamation-octagon' },
+            { etiqueta: 'Registrar lote', ruta: '/lotes-produccion/nuevo', icono: 'box2' },
             { etiqueta: 'Documentos vigentes', ruta: '/documentos/vigentes', icono: 'file-earmark-check' },
             { etiqueta: 'Vencimientos', ruta: '/vencimientos', icono: 'calendar2-week', soloAdmin: true },
         ],
@@ -82,6 +83,16 @@ const SECCIONES: Seccion[] = [
                     { etiqueta: 'Alertas de recambio', ruta: '/elementosLimpieza/alertas' },
                     { etiqueta: 'Historial de checklists', ruta: '/checklists/historial', soloAdmin: true },
                     { etiqueta: 'Cumplimiento de limpieza', ruta: '/checklists/cumplimiento', soloAdmin: true },
+                ],
+            },
+            {
+                clave: 'produccion',
+                etiqueta: 'Producción',
+                icono: 'basket',
+                soloAdmin: true,
+                enlaces: [
+                    { etiqueta: 'Productos', ruta: '/productos' },
+                    { etiqueta: 'Historial de lotes', ruta: '/lotes-produccion', exacta: true },
                 ],
             },
             {
