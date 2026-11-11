@@ -34,6 +34,9 @@ from src.incidentes.constants import EstadoIncidente, TipoIncidente, TipoMovimie
 from src.documentos_versionados.models import DocumentoVersionado
 from src.documentos_versionados.constants import TipoDocumentoVersionado
 from src.asociaciones.version_documento import version_documento, EstadoVersionDocumento
+from src.productos.models import Producto
+from src.productos.constants import TipoProducto
+from src.lotes_produccion.models import LoteProduccion
 
 DIAS_DE_HISTORIAL = 90
 ZONA_PLANTA = timezone(timedelta(hours=-3))
@@ -385,6 +388,45 @@ def generar_incidentes(db: Session) -> tuple[int, int]:
 
     db.commit()
     return len(INCIDENTES_SEED), movimientos
+
+DIAS_DE_PRODUCCION = 45
+TODOS_LOS_DIAS_HABILES = (0, 1, 2, 3, 4, 5)
+
+DATOS_PRODUCTOS = [
+    ("Pan francés", TipoProducto.ALIMENTO, "Kilogramos", 35, TODOS_LOS_DIAS_HABILES, (40, 70)),
+    ("Medialunas de manteca", TipoProducto.ALIMENTO, "Unidades", 0, TODOS_LOS_DIAS_HABILES, (120, 200)),
+    ("Pan lactal", TipoProducto.ALIMENTO, "Unidades", 24, (0, 2, 4), (30, 50)),
+    ("Prepizza", TipoProducto.ALIMENTO, "Unidades", 60, (1, 3, 5), (80, 120)),
+    ("Galletitas de agua", TipoProducto.ALIMENTO, "Paquetes", 45, (2,), (40, 60)),
+    ("Jugo de naranja exprimido", TipoProducto.BEBIDA, "Litros", 12, (5,), (20, 30)),
+]
+
+
+def generar_productos_y_lotes(db: Session) -> int:
+    """Crea los productos elaborados y sus lotes de las ultimas semanas, segun los dias en que se produce cada uno."""
+    azar = random.Random(27)
+    hoy = date.today()
+    lotes = []
+
+    for nombre, tipo, nombre_unidad, stock, dias_semana, (minimo, maximo) in DATOS_PRODUCTOS:
+        unidad = db.query(UnidadMedida).filter_by(nombre=nombre_unidad).first()
+        producto = Producto(nombre=nombre, tipo=tipo, stock=stock, unidad_medida_id=unidad.id)
+        db.add(producto)
+        db.flush()
+
+        for dias_atras in range(DIAS_DE_PRODUCCION, -1, -1):
+            fecha = hoy - timedelta(days=dias_atras)
+            if fecha.weekday() in dias_semana:
+                lotes.append((fecha, producto.id, azar.randint(minimo, maximo)))
+
+    lotes.sort(key=lambda lote: lote[0])
+    db.add_all(
+        LoteProduccion(producto_id=producto_id, fecha=fecha, cantidad=cantidad)
+        for fecha, producto_id, cantidad in lotes
+    )
+    db.commit()
+    return len(lotes)
+
 
 def seed_database(reset: bool = True):
     if reset:
@@ -906,6 +948,10 @@ def seed_database(reset: bool = True):
             )
             db.commit()
             print("Documentos Versionados y Versiones Históricas creados (5 documentos, 6 versiones).")
+
+        if db.query(Producto).count() == 0:
+            cantidad_lotes = generar_productos_y_lotes(db)
+            print(f"Productos ({len(DATOS_PRODUCTOS)}) y lotes de produccion ({cantidad_lotes}) creados.")
 
         print("Base de datos poblada exitosamente con datos de prueba enriquecidos para SAIA!")
 

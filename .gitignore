@@ -327,4 +327,7 @@ sketch
 Arrancar Backend.bat
 Arrancar Frontend.bat
 
+*.sqlite
+*.db
+
 # End of https://www.toptal.com/developers/gitignore/api/react,node,python
