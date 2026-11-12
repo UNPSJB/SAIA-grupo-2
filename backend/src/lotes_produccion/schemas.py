@@ -19,3 +19,18 @@ class LoteProduccion(BaseModel):
     producto: ProductoResumen
 
     model_config = ConfigDict(from_attributes=True)
+
+
+
+
+
+
+class AsociarInsumoLote(BaseModel):
+    insumo_id: int
+    cantidad_utilizada: float
+
+class InsumoAsociadoDetalle(BaseModel):
+    insumo_id: int
+    nombre: str
+    cantidad_utilizada: float
+    unidad_medida: str

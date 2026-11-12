@@ -8,6 +8,7 @@ export interface Insumo {
 
     //nuevo
      cantidad?: number;
+    activo?: boolean; // <-- Agregamos esta línea
 }
 
 export interface InsumoPayload {
@@ -16,4 +17,5 @@ export interface InsumoPayload {
 
     //nuevo
     cantidad?: number;
+    activo?: boolean;
 }
