@@ -31,3 +31,13 @@ def update_insumo(
 @router.delete("/{insumo_id}", response_model=schemas.InsumoDelete)
 def delete_insumo(insumo_id: int, db: Session = Depends(get_db)):
     return services.eliminar_insumo(db, insumo_id)
+
+
+#nuevo
+@router.patch("/{insumo_id}/agregar-stock", response_model=schemas.Insumo)
+def agregar_stock_insumo(
+    insumo_id: int, 
+    datos: schemas.InsumoAgregarStock, 
+    db: Session = Depends(get_db)
+):
+    return services.sumar_stock(db, insumo_id, datos.cantidad)

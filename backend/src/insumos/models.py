@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, Boolean
+from sqlalchemy import ForeignKey, Boolean, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.models import ModeloBase
 
@@ -9,6 +9,9 @@ class Insumo(ModeloBase):
     nombre: Mapped[str] = mapped_column(index=True)
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     unidad_medida_id: Mapped[int] = mapped_column(ForeignKey("unidades_medida.id"))
+
+    #nuevo
+    cantidad: Mapped[float] = mapped_column(Float, default=0.0)
     
     # Referenciamos UnidadMedida mediante string para evitar dependencias circulares
     unidad_medida: Mapped["src.unidades_medida.models.UnidadMedida"] = relationship(

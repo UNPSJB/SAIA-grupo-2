@@ -7,6 +7,9 @@ class InsumoBase(BaseModel):
     unidad_medida_id: int
     activo: bool = True
 
+    #nuevo, lo pongo en cero para que no se rompa nada creo
+    cantidad: float = 0.0
+
 class InsumoCreate(InsumoBase):
     pass
 
@@ -23,3 +26,8 @@ class InsumoDelete(BaseModel):
     id: int
     msg: str
     model_config = ConfigDict(from_attributes=True)
+
+
+# para agregar gramos desde el modal en la lista
+class InsumoAgregarStock(BaseModel):
+    cantidad: float
