@@ -69,9 +69,9 @@ import EstadisticaIncidentes from './features/incidentes/EstadisticaIncidentes';
 
 import DocumentosVersionadosList from './features/documentosVersionados/DocumentosVersionadosList';
 import DocumentoVersionadoForm from './features/documentosVersionados/DocumentoVersionadoForm';
-
 import DocumentosVigentesList from './features/documentosVersionados/DocumentosVigentesList';
 
+import ConfiguracionVistaPublica from './features/vistaPublica/ConfiguracionVistaPublica';
 
 import './App.css';
 
@@ -229,7 +229,7 @@ function RutasProtegidas() {
             <Route path="/documentos/nuevo" element={<RutaAdmin><DocumentoVersionadoForm /></RutaAdmin>} />
             <Route path="/documentos/vigentes" element={<DocumentosVigentesList />} />
 
-            
+            <Route path="/configuracion/vista-publica" element={<RutaAdmin><ConfiguracionVistaPublica /></RutaAdmin>} />
           </Routes>
         </main>
         

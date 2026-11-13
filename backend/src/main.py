@@ -18,6 +18,7 @@ from src.elementos_limpieza.models import ElementoLimpieza
 from src.documentacion.models import Documentacion, LibretaSanitaria, Capacitacion, CertificadoAptitudFisica, RequisitoDocumentacion
 from src.productos.models import Producto
 from src.lotes_produccion.models import LoteProduccion
+from src.vista_publica.models import ConfiguracionVistaPublica
 
 from src.config import settings
 from src.logger import setup_logging
@@ -39,6 +40,7 @@ from src.vencimientos.router import router as vencimientos_router
 from src.incidentes.router import router as incidentes_router
 from src.productos.router import router as productos_router
 from src.lotes_produccion.router import router as lotes_produccion_router
+from src.vista_publica.router import router as vista_publica_router
 from src.documentos_versionados.router import (
     router as documentos_versionados_router,
     router_documentos,
@@ -93,5 +95,6 @@ app.include_router(vencimientos_router)
 app.include_router(incidentes_router)
 app.include_router(productos_router)
 app.include_router(lotes_produccion_router)
+app.include_router(vista_publica_router)
 app.include_router(documentos_versionados_router)
 app.include_router(router_documentos)

@@ -113,6 +113,15 @@ const SECCIONES: Seccion[] = [
                     { etiqueta: 'Estadísticas', ruta: '/incidentes/estadisticas' },
                 ],
             },
+            {
+                clave: 'configuracion',
+                etiqueta: 'Configuración',
+                icono: 'gear',
+                soloAdmin: true,
+                enlaces: [
+                    { etiqueta: 'Vista Pública', ruta: '/configuracion/vista-publica', exacta: true },
+                ],
+            },
         ],
     },
 ];
