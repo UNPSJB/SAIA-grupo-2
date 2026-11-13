@@ -9,6 +9,7 @@ class ClaseFuncionalAditivo(ModeloBase):
     __tablename__="clases_funcionales_aditivos"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     nombre: Mapped[str] = mapped_column(index=True, unique=True)
+    necesita_ins: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
 class Aditivo(ModeloBase):
