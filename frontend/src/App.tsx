@@ -72,6 +72,7 @@ import DocumentoVersionadoForm from './features/documentosVersionados/DocumentoV
 import DocumentosVigentesList from './features/documentosVersionados/DocumentosVigentesList';
 
 import ConfiguracionVistaPublica from './features/vistaPublica/ConfiguracionVistaPublica';
+import VistaPublica from './features/vistaPublica/VistaPublica';
 
 import './App.css';
 
@@ -243,7 +244,10 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <RutasProtegidas />
+        <Routes>
+          <Route path="/publico/:token" element={<VistaPublica />} />
+          <Route path="*" element={<RutasProtegidas />} />
+        </Routes>
       </BrowserRouter>
     </AuthProvider>
   );

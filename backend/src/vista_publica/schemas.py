@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
 class ConfiguracionVistaPublicaBase(BaseModel):
@@ -18,10 +18,15 @@ class ConfiguracionVistaPublicaResponse(ConfiguracionVistaPublicaBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+class ItemSeriePublica(BaseModel):
+    periodo: str
+    porcentaje: Optional[float] = None
+
 class VistaPublicaResumenResponse(BaseModel):
     activa: bool
     fecha_actualizacion: datetime
     porcentaje_cumplimiento_limpieza: Optional[float] = None
     porcentaje_equipos_al_dia: Optional[float] = None
+    serie_cumplimiento: List[ItemSeriePublica] = []
 
     model_config = ConfigDict(from_attributes=True)
