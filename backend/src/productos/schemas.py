@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, StringConstraints
@@ -39,3 +40,23 @@ class ProductoResumen(BaseModel):
     unidad_medida: UnidadMedida
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ProduccionPorProducto(BaseModel):
+    producto_id: int
+    producto: str
+    unidad_medida: UnidadMedida
+    cantidad: float
+
+
+class EvolucionProduccion(BaseModel):
+    fecha: date
+    producto_id: int
+    producto: str
+    unidad_medida: UnidadMedida
+    cantidad: float
+    
+
+class EstadisticasProduccion(BaseModel):
+    totales_por_producto: list[ProduccionPorProducto]
+    evolucion_por_producto: list[EvolucionProduccion]
