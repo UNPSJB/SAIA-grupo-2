@@ -1,37 +1,38 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
-from src.vista_publica.models import ConfiguracionVistaPublica
 from src.vista_publica import services
-from src.vista_publica.schemas import ConfiguracionVistaPublicaUpdate
+from src.vista_publica.schemas import ConfiguracionVistaPublicaCreate, ConfiguracionVistaPublicaUpdate
 
 def test_get_configuracion_crea_por_defecto(db_session: Session):
     config = services.get_configuracion(db_session)
     assert config.activa is False
-    assert config.fecha_activacion is None
     assert config.token is not None
-    assert len(config.token) == 32
-    assert config.mostrar_cumplimiento_limpieza is False
-    assert config.mostrar_equipos_calibrados is False
-    assert config.mostrar_capacitaciones is False
+    assert config.nombre == "Vista Pública"
 
-    config_en_bd = db_session.query(ConfiguracionVistaPublica).first()
-    assert config_en_bd is not None
-    assert config_en_bd.id == config.id
+def test_crear_y_eliminar_configuracion(db_session: Session):
+    nueva = services.crear_configuracion(db_session, ConfiguracionVistaPublicaCreate(nombre="Sucursal Norte"))
+    assert nueva.id is not None
+    assert nueva.nombre == "Sucursal Norte"
+    assert nueva.activa is False
 
-def test_update_configuracion_a_activa(db_session: Session):
-    update_data = ConfiguracionVistaPublicaUpdate(activa=True)
-    config = services.update_configuracion(db_session, update_data)
+    configs = services.listar_configuraciones(db_session)
+    ids = [c.id for c in configs]
+    assert nueva.id in ids
 
-    assert config.activa is True
-    assert isinstance(config.fecha_activacion, datetime)
-    assert config.token is not None
+    services.eliminar_configuracion(db_session, nueva.id)
+    configs_despues = services.listar_configuraciones(db_session)
+    ids_despues = [c.id for c in configs_despues]
+    assert nueva.id not in ids_despues
 
-def test_update_configuracion_a_inactiva(db_session: Session):
-    update_data_true = ConfiguracionVistaPublicaUpdate(activa=True)
-    services.update_configuracion(db_session, update_data_true)
+def test_modificar_configuracion_por_id(db_session: Session):
+    target = services.get_configuracion(db_session)
 
-    update_data_false = ConfiguracionVistaPublicaUpdate(activa=False)
-    config = services.update_configuracion(db_session, update_data_false)
+    updated = services.modificar_configuracion(
+        db_session,
+        target.id,
+        ConfiguracionVistaPublicaUpdate(nombre="Planta Principal", activa=True)
+    )
 
-    assert config.activa is False
-    assert config.fecha_activacion is None
+    assert updated.nombre == "Planta Principal"
+    assert updated.activa is True
+    assert isinstance(updated.fecha_activacion, datetime)
