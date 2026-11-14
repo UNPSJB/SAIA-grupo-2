@@ -16,7 +16,8 @@ interface BarraFiltrosProps {
     placeholderBusqueda?: string;
     onLimpiar: () => void;
     mostrarBotonLimpiar: boolean;
-    filtros?: FiltroConfig[]; 
+    filtros?: FiltroConfig[];
+    children?: React.ReactNode; 
 }
 
 export default function BarraFiltros({
@@ -25,7 +26,8 @@ export default function BarraFiltros({
     placeholderBusqueda = "Buscar...",
     onLimpiar,
     mostrarBotonLimpiar,
-    filtros = []
+    filtros = [],
+    children 
 }: BarraFiltrosProps) {
     return (
         <div
@@ -45,6 +47,11 @@ export default function BarraFiltros({
                 boxSizing: 'border-box',
             }}
         >
+                        {children && (
+                <div style={{ width: '100%', marginBottom: '12px' }}>
+                    {children}
+                </div>
+            )}
             <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-end', flexGrow: 1, width: '100%', maxWidth: '100%' }}>
                 
                 {onBusquedaChange && (

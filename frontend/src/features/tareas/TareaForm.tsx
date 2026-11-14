@@ -218,7 +218,7 @@ export default function TareaForm() {
                             return (
                                 <div key={item.id} style={{ 
                                     display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '20px', alignItems: 'center',
-                                    padding: '20px', border: '1px solid var(--border)', borderRadius: '8px', backgroundColor: '#fff'
+                                    padding: '20px', border: '1px solid var(--border)', borderRadius: '8px', backgroundColor: 'var(--card-bg)'
                                 }}>
                                     
                                     <div style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>

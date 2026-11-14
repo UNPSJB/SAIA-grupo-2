@@ -1,115 +1,42 @@
-import pytest
+from fastapi import status
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
-# PRUEBAS POSITIVAS (CASOS DE ÉXITO - ROUTER)
+from src.unidades_medida import services
+from src.unidades_medida.constants import ErrorCode
 
-def test_router_crear_unidad_medida_exito(client: TestClient):
-    """POST /unidades_medida/ debe responder 200 OK y retornar la unidad creada."""
-    payload = {"nombre": "unidad router test"}
-    response = client.post("/unidades_medida/", json=payload)
-
-    assert response.status_code == 200
-    data = response.json()
-    assert "id" in data
-    assert data["nombre"] == "unidad router test"
+URL = "/unidades_medida"
 
 
-def test_router_listar_unidades_medida(client: TestClient):
-    """GET /unidades_medida/ debe responder 200 OK y devolver un arreglo."""
-    client.post("/unidades_medida/", json={"nombre": "unidad r1 test"})
-    client.post("/unidades_medida/", json={"nombre": "unidad r2 test"})
+def test_router_listar_unidades_medida(client: TestClient, db_session: Session):
+    services.crear_catalogo(db_session)
 
-    response = client.get("/unidades_medida/")
-    assert response.status_code == 200
-    data = response.json()
-    assert isinstance(data, list)
-    assert len(data) >= 2
+    respuesta = client.get(f"{URL}/")
 
-
-def test_router_read_unidad_medida_exito(client: TestClient):
-    """GET /unidades_medida/{id} debe responder 200 OK."""
-    res_crear = client.post("/unidades_medida/", json={"nombre": "unidad paquete test"})
-    unidad_id = res_crear.json()["id"]
-
-    response = client.get(f"/unidades_medida/{unidad_id}")
-    assert response.status_code == 200
-    assert response.json()["nombre"] == "unidad paquete test"
+    assert respuesta.status_code == status.HTTP_200_OK
+    cuerpo = respuesta.json()
+    assert [u["nombre"] for u in cuerpo] == ["Gramos", "Kilogramos", "Mililitros", "Litros", "Unidades"]
+    assert cuerpo[3] == {"id": cuerpo[3]["id"], "nombre": "Litros", "magnitud": "volumen", "factor_base": 1000.0}
 
 
-def test_router_update_unidad_medida_exito(client: TestClient):
-    """PUT /unidades_medida/{id} debe responder 200 OK y actualizar la unidad."""
-    res_crear = client.post("/unidades_medida/", json={"nombre": "unidad caja test"})
-    unidad_id = res_crear.json()["id"]
+def test_router_leer_unidad_medida(client: TestClient, db_session: Session):
+    services.crear_catalogo(db_session)
+    gramos = services.listar_unidades_medida(db_session)[0]
 
-    response = client.put(f"/unidades_medida/{unidad_id}", json={"nombre": "unidad cajas modificada test"})
-    assert response.status_code == 200
-    assert response.json()["nombre"] == "unidad cajas modificada test"
+    respuesta = client.get(f"{URL}/{gramos.id}")
 
-
-def test_router_delete_unidad_medida_exito(client: TestClient):
-    """DELETE /unidades_medida/{id} debe responder 200 OK y eliminar la unidad."""
-    res_crear = client.post("/unidades_medida/", json={"nombre": "unidad bidon test"})
-    unidad_id = res_crear.json()["id"]
-
-    response = client.delete(f"/unidades_medida/{unidad_id}")
-    assert response.status_code == 200
-
-    # Confirmar que ya no existe (404)
-    res_get = client.get(f"/unidades_medida/{unidad_id}")
-    assert res_get.status_code == 404
+    assert respuesta.status_code == status.HTTP_200_OK
+    assert respuesta.json()["magnitud"] == "masa"
 
 
-# PRUEBAS NEGATIVAS (CASOS DE FALLA - ROUTER)
+def test_router_leer_unidad_medida_inexistente(client: TestClient):
+    respuesta = client.get(f"{URL}/999")
 
-def test_router_crear_unidad_medida_nombre_vacio(client: TestClient):
-    """POST /unidades_medida/ con nombre "" debe responder 400 Bad Request."""
-    response = client.post("/unidades_medida/", json={"nombre": ""})
-    assert response.status_code == 400
-    assert response.json()["detail"] == "la unidad de medida debe tener un nombre."
+    assert respuesta.status_code == status.HTTP_404_NOT_FOUND
+    assert respuesta.json()["detail"] == ErrorCode.UNIDAD_MEDIDA_NO_ENCONTRADA
 
 
-def test_router_crear_unidad_medida_duplicada(client: TestClient):
-    """POST /unidades_medida/ con nombre duplicado debe responder 400 Bad Request."""
-    client.post("/unidades_medida/", json={"nombre": "unidad tambores test"})
-    response = client.post("/unidades_medida/", json={"nombre": "unidad tambores test"})
-
-    assert response.status_code == 400
-    assert response.json()["detail"] == "La unidad de medida ya existe."
-
-
-def test_router_crear_unidad_medida_payload_invalido(client: TestClient):
-    """POST /unidades_medida/ con JSON incompleto debe responder 422 Unprocessable Entity."""
-    response = client.post("/unidades_medida/", json={})
-    assert response.status_code == 422
-
-
-def test_router_read_unidad_medida_no_encontrada(client: TestClient):
-    """GET /unidades_medida/{id} con ID inexistente debe responder 404 Not Found."""
-    response = client.get("/unidades_medida/9999")
-    assert response.status_code == 404
-    assert response.json()["detail"] == "La unidad de medida no fue encontrada."
-
-
-def test_router_update_unidad_medida_no_encontrada(client: TestClient):
-    """PUT /unidades_medida/{id} con ID inexistente debe responder 404 Not Found."""
-    response = client.put("/unidades_medida/9999", json={"nombre": "unidad nueva test"})
-    assert response.status_code == 404
-    assert response.json()["detail"] == "La unidad de medida no fue encontrada."
-
-
-def test_router_update_unidad_medida_duplicada(client: TestClient):
-    """PUT /unidades_medida/{id} con nombre existente debe responder 400 Bad Request."""
-    client.post("/unidades_medida/", json={"nombre": "unidad tipo 1 test"})
-    res_2 = client.post("/unidades_medida/", json={"nombre": "unidad tipo 2 test"})
-    u2_id = res_2.json()["id"]
-
-    response = client.put(f"/unidades_medida/{u2_id}", json={"nombre": "unidad tipo 1 test"})
-    assert response.status_code == 400
-    assert response.json()["detail"] == "La unidad de medida ya existe."
-
-
-def test_router_delete_unidad_medida_no_encontrada(client: TestClient):
-    """DELETE /unidades_medida/{id} con ID inexistente debe responder 404 Not Found."""
-    response = client.delete("/unidades_medida/9999")
-    assert response.status_code == 404
-    assert response.json()["detail"] == "La unidad de medida no fue encontrada."
+def test_router_no_permite_crear_modificar_ni_borrar(client: TestClient):
+    assert client.post(f"{URL}/", json={"nombre": "Pallets"}).status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+    assert client.put(f"{URL}/1", json={"nombre": "Pallets"}).status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+    assert client.delete(f"{URL}/1").status_code == status.HTTP_405_METHOD_NOT_ALLOWED

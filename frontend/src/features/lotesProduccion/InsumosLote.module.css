@@ -1,0 +1,198 @@
+.seccion {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    text-align: left;
+}
+
+.encabezadoSeccion {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.encabezadoSeccion h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--text-h);
+}
+
+.agregar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 1fr) auto;
+    gap: 12px;
+    align-items: start;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    margin-bottom: 12px;
+}
+
+.agregar label {
+    font-size: 0.85rem;
+}
+
+.campoInsumo {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.botonAgregar {
+    padding-top: 27px;
+}
+
+.lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.item strong {
+    color: var(--text-h);
+}
+
+.vacio,
+.nota {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.nota {
+    margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+    .agregar {
+        grid-template-columns: 1fr;
+    }
+
+    .botonAgregar {
+        padding-top: 0;
+    }
+}
+
+.correccion {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.correccion .agregar {
+    grid-template-columns: 1fr;
+    margin-bottom: 0;
+}
+
+.correccion .botonAgregar {
+    padding-top: 0;
+}
+
+.itemEditable {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 6px 10px;
+}
+
+.itemEditable label {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text-h);
+}
+
+.cantidadEditable {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cantidadEditable input {
+    width: 120px;
+    padding: 6px 8px;
+}
+
+.errorRenglon {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--rojo-texto);
+    font-size: 0.8rem;
+}
+
+.accionesCorreccion {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.estado {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.estadoAbierto {
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.45);
+}
+
+.estadoCerrado {
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+}
+
+.detalleEstado {
+    display: block;
+    margin-top: 4px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.confirmacion {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.confirmacion p {
+    margin: 0 0 10px;
+}
+
+.botonesEncabezado {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+@media (max-width: 480px) {
+    .cantidadEditable input {
+        width: 90px;
+    }
+}

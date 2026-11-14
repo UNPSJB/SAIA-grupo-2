@@ -1,5 +1,11 @@
 import { API_URL } from '../constants/config';
-import type { FiltrosLotes, LoteProduccion, LoteProduccionPayload } from '../types/lotesProduccion';
+import type {
+    FiltrosLotes,
+    InsumoAsociado,
+    InsumoUtilizadoPayload,
+    LoteProduccion,
+    LoteProduccionPayload,
+} from '../types/lotesProduccion';
 import { mensajeDeError } from '../utils/errores';
 
 const BASE_URL = `${API_URL}/lotes-produccion`;
@@ -29,5 +35,31 @@ export const crearLote = async (datos: LoteProduccionPayload): Promise<LoteProdu
         body: JSON.stringify(datos),
     });
     if (!res.ok) throw new Error(await mensajeDeError(res, 'No se pudo registrar el lote'));
+    return res.json();
+};
+
+export const getInsumosLote = async (nroLote: number): Promise<InsumoAsociado[]> => {
+    const res = await fetch(`${BASE_URL}/${nroLote}/insumos`);
+    if (!res.ok) throw new Error(await mensajeDeError(res, 'Error al cargar los insumos del lote'));
+    return res.json();
+};
+
+export const corregirConsumoLote = async (nroLote: number, insumos: InsumoUtilizadoPayload[]): Promise<LoteProduccion> => {
+    const res = await fetch(`${BASE_URL}/${nroLote}/insumos`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ insumos }),
+    });
+    if (!res.ok) throw new Error(await mensajeDeError(res, 'No se pudo corregir el consumo'));
+    return res.json();
+};
+
+export const cerrarLote = async (nroLote: number, empleadoId: number): Promise<LoteProduccion> => {
+    const res = await fetch(`${BASE_URL}/${nroLote}/cerrar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ empleado_id: empleadoId }),
+    });
+    if (!res.ok) throw new Error(await mensajeDeError(res, 'No se pudo cerrar el lote'));
     return res.json();
 };

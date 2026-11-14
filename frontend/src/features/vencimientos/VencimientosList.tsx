@@ -11,7 +11,7 @@ import { getVencimientosConsolidados } from '../../services/vencimientosServices
 import styles from '../../styles/shared.module.css';
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 import TarjetasFiltro, { type Metrica } from '../../components/TarjetasFiltro';
-import BarraFiltros from '../../components/BarraFiltros'; // <-- Importamos la barra
+import BarraFiltros from '../../components/BarraFiltros'; 
 import { filtrarPorTexto } from '../../utils/texto';
 import { rutaDeVencimiento } from '../../utils/vencimientos';
 import { DIAS_AVISO_PREVIO } from '../../constants/config';

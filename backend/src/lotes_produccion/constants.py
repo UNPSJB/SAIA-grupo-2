@@ -3,3 +3,8 @@ class ErrorCode:
     FECHA_FUTURA = "La fecha del lote no puede ser posterior a hoy."
     CANTIDAD_INVALIDA = "La cantidad producida debe ser mayor a 0."
     RANGO_FECHAS_INVALIDO = "La fecha desde no puede ser posterior a la fecha hasta."
+    INSUMO_NO_ENCONTRADO = "El insumo no existe."
+    INSUMO_INACTIVO = "No se puede usar un insumo que está dado de baja."
+    INSUMO_REPETIDO = "Cada insumo puede declararse una sola vez por lote."
+    LOTE_CERRADO = "El lote está cerrado: su consumo ya no se puede modificar."
+    STOCK_INSUFICIENTE = "No hay suficiente stock disponible de este insumo."

@@ -37,6 +37,15 @@ from src.asociaciones.version_documento import version_documento, EstadoVersionD
 from src.productos.models import Producto
 from src.productos.constants import TipoProducto
 from src.lotes_produccion.models import LoteProduccion
+from src.lotes_produccion import services as lotes_produccion_services
+from src.asociaciones.lote_insumos import lote_insumo
+from pathlib import Path
+from src.unidades_medida import services as unidades_medida_services
+from src.alimentos_referencia.models import AlimentoReferencia
+from src.alimentos_referencia import services as alimentos_referencia_services
+from src.datos_nutricionales import services as datos_nutricionales_services
+from src.datos_nutricionales.constants import FuenteDatoNutricional, Nutriente
+from src.datos_nutricionales.schemas import CargaDatosNutricionales
 
 DIAS_DE_HISTORIAL = 90
 ZONA_PLANTA = timezone(timedelta(hours=-3))
@@ -397,16 +406,59 @@ DATOS_PRODUCTOS = [
     ("Medialunas de manteca", TipoProducto.ALIMENTO, "Unidades", 0, TODOS_LOS_DIAS_HABILES, (120, 200)),
     ("Pan lactal", TipoProducto.ALIMENTO, "Unidades", 24, (0, 2, 4), (30, 50)),
     ("Prepizza", TipoProducto.ALIMENTO, "Unidades", 60, (1, 3, 5), (80, 120)),
-    ("Galletitas de agua", TipoProducto.ALIMENTO, "Paquetes", 45, (2,), (40, 60)),
+    ("Galletitas de agua", TipoProducto.ALIMENTO, "Unidades", 45, (2,), (40, 60)),
     ("Jugo de naranja exprimido", TipoProducto.BEBIDA, "Litros", 12, (5,), (20, 30)),
 ]
 
 
+CONSUMO_POR_UNIDAD_PRODUCIDA = {
+    "Pan francés": {"Harina 000": 650, "Levadura Fresca": 15, "Sal Fina": 12},
+    "Medialunas de manteca": {
+        "Harina 000": 30, "Manteca": 10, "Azúcar Blanca": 6, "Leche Entera": 8, "Levadura Fresca": 1.5, "Sal Fina": 0.5,
+    },
+    "Pan lactal": {
+        "Harina 000": 300, "Leche Entera": 100, "Manteca": 20, "Azúcar Blanca": 15, "Levadura Fresca": 8, "Sal Fina": 6,
+    },
+    "Prepizza": {"Harina 000": 160, "Aceite de Girasol": 10, "Levadura Fresca": 4, "Sal Fina": 3},
+    "Galletitas de agua": {"Harina 000": 110, "Aceite de Girasol": 12, "Sal Fina": 2, "Levadura Fresca": 1},
+    "Jugo de naranja exprimido": {"Naranjas": 2000},
+}
+VARIACION_CONSUMO = 0.05
+PROPORCION_CERRADOS_A_MANO = 0.7
+
+
+def consumos_del_lote(nombre_producto: str, cantidad: float, insumos: dict, azar: random.Random) -> list:
+    """Arma el consumo de insumos de un lote (en gramos o mililitros) segun una receta aproximada del producto."""
+    filas = []
+    for nombre_insumo, por_unidad in CONSUMO_POR_UNIDAD_PRODUCIDA.get(nombre_producto, {}).items():
+        insumo, unidad_base_id = insumos[nombre_insumo]
+        variacion = azar.uniform(1 - VARIACION_CONSUMO, 1 + VARIACION_CONSUMO)
+        filas.append({
+            "insumo_id": insumo.id,
+            "cantidad_utilizada": round(por_unidad * cantidad * variacion),
+            "unidad_medida_id": unidad_base_id,
+        })
+    return filas
+
+
 def generar_productos_y_lotes(db: Session) -> int:
-    """Crea los productos elaborados y sus lotes de las ultimas semanas, segun los dias en que se produce cada uno."""
+    """Crea los productos elaborados y sus lotes de las ultimas semanas, con los insumos consumidos en cada uno.
+
+    El stock de los insumos no se toca: el que se carga en el seed es el que quedo despues de estas producciones.
+    Los lotes de dias anteriores quedan cerrados (la mayoria a mano, el resto automaticamente al terminar el dia)
+    y los de hoy quedan abiertos, para poder corregir su consumo o cerrarlos.
+    """
     azar = random.Random(27)
+    azar_consumo = random.Random(31)
+    azar_cierre = random.Random(43)
     hoy = date.today()
+    ahora = datetime.now()
+    responsables = db.query(Empleado).filter(Empleado.legajo.in_(["EMP-1000", "EMP-1001"])).all()
     lotes = []
+    insumos = {}
+    for insumo in db.query(Insumo).all():
+        base = unidades_medida_services.unidad_base(db, insumo.unidad_medida.magnitud)
+        insumos[insumo.nombre] = (insumo, base.id)
 
     for nombre, tipo, nombre_unidad, stock, dias_semana, (minimo, maximo) in DATOS_PRODUCTOS:
         unidad = db.query(UnidadMedida).filter_by(nombre=nombre_unidad).first()
@@ -417,15 +469,214 @@ def generar_productos_y_lotes(db: Session) -> int:
         for dias_atras in range(DIAS_DE_PRODUCCION, -1, -1):
             fecha = hoy - timedelta(days=dias_atras)
             if fecha.weekday() in dias_semana:
-                lotes.append((fecha, producto.id, azar.randint(minimo, maximo)))
+                lotes.append((fecha, producto, azar.randint(minimo, maximo)))
 
     lotes.sort(key=lambda lote: lote[0])
-    db.add_all(
-        LoteProduccion(producto_id=producto_id, fecha=fecha, cantidad=cantidad)
-        for fecha, producto_id, cantidad in lotes
-    )
+    registros = []
+    for fecha, producto, cantidad in lotes:
+        lote = LoteProduccion(producto_id=producto.id, fecha=fecha, cantidad=cantidad)
+        if fecha == hoy:
+            lote.fecha_registro = max(datetime.combine(hoy, time.min), ahora - timedelta(minutes=azar_cierre.randint(5, 90)))
+        else:
+            lote.fecha_registro = datetime.combine(fecha, time(azar_cierre.randint(13, 18), azar_cierre.randint(0, 59)))
+            if responsables and azar_cierre.random() < PROPORCION_CERRADOS_A_MANO:
+                lote.fecha_cierre = lote.fecha_registro + timedelta(minutes=azar_cierre.randint(20, 120))
+                lote.cerrado_por_id = azar_cierre.choice(responsables).id
+        registros.append((lote, producto.nombre))
+    db.add_all(lote for lote, _ in registros)
+    db.flush()
+
+    consumos = [
+        {"lote_id": lote.nro_lote, **consumo}
+        for lote, nombre_producto in registros
+        for consumo in consumos_del_lote(nombre_producto, lote.cantidad, insumos, azar_consumo)
+    ]
+    if consumos:
+        db.execute(insert(lote_insumo), consumos)
     db.commit()
+    lotes_produccion_services.cerrar_lotes_vencidos(db)
     return len(lotes)
+
+
+INSUMOS_ALIMENTARIOS = [
+    ("Harina 000", "Kilogramos", 50),
+    ("Azúcar Blanca", "Kilogramos", 20),
+    ("Levadura Fresca", "Kilogramos", 2),
+    ("Sal Fina", "Kilogramos", 5),
+    ("Manteca", "Kilogramos", 10),
+    ("Leche Entera", "Litros", 30),
+    ("Aceite de Girasol", "Litros", 10),
+    ("Naranjas", "Kilogramos", 40),
+    ("Harina Integral", "Kilogramos", 25),
+    ("Harina de Arroz", "Kilogramos", 10),
+    ("Harina de Maíz (Polenta)", "Kilogramos", 15),
+    ("Almidón de Maíz", "Kilogramos", 8),
+    ("Avena Arrollada", "Kilogramos", 6),
+    ("Azúcar Morena", "Kilogramos", 5),
+    ("Dulce de Leche", "Kilogramos", 20),
+    ("Dulce de Batata", "Kilogramos", 8),
+    ("Mermelada de Frutas", "Kilogramos", 6),
+    ("Miel", "Kilogramos", 4),
+    ("Cacao en Polvo", "Kilogramos", 3),
+    ("Chocolate para Taza", "Kilogramos", 5),
+    ("Huevo Entero", "Kilogramos", 30),
+    ("Yema de Huevo", "Kilogramos", 5),
+    ("Clara de Huevo", "Kilogramos", 5),
+    ("Crema de Leche", "Litros", 12),
+    ("Queso Crema", "Kilogramos", 6),
+    ("Ricota", "Kilogramos", 8),
+    ("Queso Muzzarella", "Kilogramos", 20),
+    ("Margarina", "Kilogramos", 10),
+    ("Grasa Vacuna", "Kilogramos", 15),
+    ("Aceite de Oliva", "Litros", 5),
+    ("Nueces", "Kilogramos", 3),
+    ("Almendras", "Kilogramos", 3),
+    ("Pasas de Uva", "Kilogramos", 4),
+    ("Manzanas", "Kilogramos", 20),
+    ("Bananas", "Kilogramos", 15),
+    ("Tomate Fresco", "Kilogramos", 25),
+    ("Puré de Tomate", "Kilogramos", 18),
+    ("Polvo de Hornear", "Kilogramos", 2),
+    ("Bicarbonato de Sodio", "Kilogramos", 1),
+    ("Esencia de Vainilla", "Litros", 1),
+]
+
+
+def crear_insumos(db: Session) -> int:
+    """Crea los insumos alimentarios con su stock, que se guarda en gramos o mililitros."""
+    for nombre, nombre_unidad, stock in INSUMOS_ALIMENTARIOS:
+        unidad = db.query(UnidadMedida).filter_by(nombre=nombre_unidad).first()
+        db.add(Insumo(
+            nombre=nombre,
+            unidad_medida_id=unidad.id,
+            cantidad=unidades_medida_services.convertir_a_base(stock, unidad),
+        ))
+    db.commit()
+    return len(INSUMOS_ALIMENTARIOS)
+
+
+CARPETA_DATOS = Path(__file__).resolve().parent / "data"
+CSV_ALIMENTOS_SARA = CARPETA_DATOS / "alimentos_sara.csv"
+CSV_COMPLEMENTO_SARA2 = CARPETA_DATOS / "alimentos_sara2_complemento.csv"
+
+NUTRIENTES_DEL_CSV = [
+    Nutriente.ENERGIA,
+    Nutriente.CARBOHIDRATOS,
+    Nutriente.PROTEINAS,
+    Nutriente.GRASAS_TOTALES,
+    Nutriente.GRASAS_SATURADAS,
+    Nutriente.FIBRA_ALIMENTARIA,
+    Nutriente.SODIO,
+]
+
+TODOS_LOS_NUTRIENTES = list(Nutriente)
+
+DATOS_DESDE_SARA = [
+    ("Harina 000", "A033", TODOS_LOS_NUTRIENTES),
+    ("Azúcar Blanca", "D003", TODOS_LOS_NUTRIENTES),
+    ("Leche Entera", "L006", TODOS_LOS_NUTRIENTES),
+    ("Manteca", "G010", NUTRIENTES_DEL_CSV),
+    ("Naranjas", "F031", TODOS_LOS_NUTRIENTES),
+    ("Harina Integral", "A034", TODOS_LOS_NUTRIENTES),
+    ("Harina de Arroz", "A028", TODOS_LOS_NUTRIENTES),
+    ("Harina de Maíz (Polenta)", "A031", TODOS_LOS_NUTRIENTES),
+    ("Almidón de Maíz", "A001", TODOS_LOS_NUTRIENTES),
+    ("Avena Arrollada", "A005", TODOS_LOS_NUTRIENTES),
+    ("Azúcar Morena", "D004", TODOS_LOS_NUTRIENTES),
+    ("Dulce de Leche", "D008", TODOS_LOS_NUTRIENTES),
+    ("Dulce de Batata", "D005", TODOS_LOS_NUTRIENTES),
+    ("Mermelada de Frutas", "D010", TODOS_LOS_NUTRIENTES),
+    ("Miel", "D011", TODOS_LOS_NUTRIENTES),
+    ("Cacao en Polvo", "D018", TODOS_LOS_NUTRIENTES),
+    ("Chocolate para Taza", "D016", TODOS_LOS_NUTRIENTES),
+    ("Huevo Entero", "U001", TODOS_LOS_NUTRIENTES),
+    ("Yema de Huevo", "U003", TODOS_LOS_NUTRIENTES),
+    ("Clara de Huevo", "U002", TODOS_LOS_NUTRIENTES),
+    ("Crema de Leche", "G013", TODOS_LOS_NUTRIENTES),
+    ("Queso Crema", "Q001", TODOS_LOS_NUTRIENTES),
+    ("Ricota", "Q004", TODOS_LOS_NUTRIENTES),
+    ("Queso Muzzarella", "Q006", TODOS_LOS_NUTRIENTES),
+    ("Margarina", "G011", TODOS_LOS_NUTRIENTES),
+    ("Grasa Vacuna", "G009", TODOS_LOS_NUTRIENTES),
+    ("Aceite de Oliva", "G004", TODOS_LOS_NUTRIENTES),
+    ("Nueces", "F033", TODOS_LOS_NUTRIENTES),
+    ("Almendras", "F002", TODOS_LOS_NUTRIENTES),
+    ("Pasas de Uva", "F035", TODOS_LOS_NUTRIENTES),
+    ("Manzanas", "F027", TODOS_LOS_NUTRIENTES),
+    ("Bananas", "F006", TODOS_LOS_NUTRIENTES),
+    ("Tomate Fresco", "H038", TODOS_LOS_NUTRIENTES),
+    ("Puré de Tomate", "H039", TODOS_LOS_NUTRIENTES),
+]
+
+DATOS_DESDE_BIBLIOGRAFIA = [
+    (
+        "Levadura Fresca",
+        "SARA 2 (PDF): Levadura fresca",
+        {
+            Nutriente.ENERGIA: 91,
+            Nutriente.CARBOHIDRATOS: 10.0,
+            Nutriente.AZUCARES_TOTALES: 0,
+            Nutriente.AZUCARES_ANADIDOS: 0,
+            Nutriente.PROTEINAS: 8.4,
+            Nutriente.GRASAS_TOTALES: 1.9,
+            Nutriente.GRASAS_SATURADAS: 0.24,
+            Nutriente.GRASAS_TRANS: 0,
+            Nutriente.FIBRA_ALIMENTARIA: 8.1,
+            Nutriente.SODIO: 30,
+        },
+    ),
+    ("Sal Fina", "SARA 2 (PDF): Sal", {nutriente: 0 for nutriente in Nutriente} | {Nutriente.SODIO: 40000}),
+]
+
+
+def cargar_datos_nutricionales_de_ejemplo(db: Session) -> int:
+    """Importa la base SARA (CSV mas el complemento de SARA 2) y carga datos de algunos insumos.
+
+    De cada alimento se cargan los nutrientes que SARA informa: los que no tienen equivalente en el PDF
+    de SARA 2 quedan incompletos (sin azucares ni grasas trans), igual que la manteca, que se carga a
+    proposito solo con lo que trae el CSV. El aceite de girasol y los aditivos (polvo de hornear,
+    bicarbonato, esencia) quedan sin datos, y en la harina el sodio aparece modificado a mano.
+    """
+    alimentos_referencia_services.importar_desde_csv(db, CSV_ALIMENTOS_SARA)
+    alimentos_referencia_services.importar_complemento_sara2(db, CSV_COMPLEMENTO_SARA2)
+    administradora = db.query(Empleado).filter_by(legajo="EMP-1001").first()
+    supervisor = db.query(Empleado).filter_by(legajo="EMP-1000").first()
+
+    def cargar(nombre_insumo: str, empleado: Empleado, datos: list) -> bool:
+        insumo = db.query(Insumo).filter_by(nombre=nombre_insumo).first()
+        if insumo is None:
+            return False
+        datos_nutricionales_services.cargar_datos(
+            db, insumo.id, CargaDatosNutricionales(empleado_id=empleado.id, datos=datos)
+        )
+        return True
+
+    cargados = 0
+    for nombre, codigo, nutrientes in DATOS_DESDE_SARA:
+        alimento = alimentos_referencia_services.leer_alimento(db, codigo)
+        datos = [
+            {
+                "nutriente": nutriente,
+                "valor": alimentos_referencia_services.valor_de(alimento, nutriente),
+                "fuente": FuenteDatoNutricional.SARA,
+                "alimento_codigo": codigo,
+            }
+            for nutriente in nutrientes
+            if alimentos_referencia_services.valor_de(alimento, nutriente) is not None
+        ]
+        cargados += cargar(nombre, administradora, datos)
+
+    for nombre, referencia, valores in DATOS_DESDE_BIBLIOGRAFIA:
+        datos = [
+            {"nutriente": nutriente, "valor": valor, "fuente": FuenteDatoNutricional.BIBLIOGRAFIA, "referencia": referencia}
+            for nutriente, valor in valores.items()
+        ]
+        cargados += cargar(nombre, administradora, datos)
+
+    cargar("Harina 000", supervisor, [
+        {"nutriente": Nutriente.SODIO, "valor": 2.0, "fuente": FuenteDatoNutricional.SARA, "alimento_codigo": "A033"}
+    ])
+    return cargados
 
 
 def seed_database(reset: bool = True):
@@ -442,22 +693,9 @@ def seed_database(reset: bool = True):
         print("Iniciando el poblamiento completo de la base de datos...")
 
         # --- UNIDADES DE MEDIDA ---
-        if db.query(UnidadMedida).count() == 0:
-            unidades = [
-                UnidadMedida(nombre="Kilogramos"),
-                UnidadMedida(nombre="Litros"),
-                UnidadMedida(nombre="Gramos"),
-                UnidadMedida(nombre="Unidades"),
-                UnidadMedida(nombre="Mililitros"),
-                UnidadMedida(nombre="Toneladas"),
-                UnidadMedida(nombre="Cajas"),
-                UnidadMedida(nombre="Paquetes"),
-                UnidadMedida(nombre="Rollos"),
-                UnidadMedida(nombre="Pallets")
-            ]
-            db.add_all(unidades)
-            db.commit()
-            print("Unidades de medida creadas (10).")
+        unidades_creadas = unidades_medida_services.crear_catalogo(db)
+        if unidades_creadas:
+            print(f"Unidades de medida creadas ({unidades_creadas}).")
 
         # --- CAPACIDADES ---
         if db.query(Capacidad).count() == 0:
@@ -473,34 +711,7 @@ def seed_database(reset: bool = True):
 
         # --- INSUMOS ---
         if db.query(Insumo).count() == 0:
-            u_kg = db.query(UnidadMedida).filter_by(nombre="Kilogramos").first().id
-            u_l = db.query(UnidadMedida).filter_by(nombre="Litros").first().id
-            u_u = db.query(UnidadMedida).filter_by(nombre="Unidades").first().id
-            u_cj = db.query(UnidadMedida).filter_by(nombre="Cajas").first().id
-            u_rl = db.query(UnidadMedida).filter_by(nombre="Rollos").first().id
-            u_pq = db.query(UnidadMedida).filter_by(nombre="Paquetes").first().id
-
-            insumos = [
-                Insumo(nombre="Harina 000", unidad_medida_id=u_kg),
-                Insumo(nombre="Azúcar Blanca", unidad_medida_id=u_kg),
-                Insumo(nombre="Detergente Industrial", unidad_medida_id=u_l),
-                Insumo(nombre="Lavandina Concentrada", unidad_medida_id=u_l),
-                Insumo(nombre="Desengrasante", unidad_medida_id=u_l),
-                Insumo(nombre="Cofias Descartables", unidad_medida_id=u_u),
-                Insumo(nombre="Guantes de Nitrilo", unidad_medida_id=u_cj),
-                Insumo(nombre="Levadura Fresca", unidad_medida_id=u_kg),
-                Insumo(nombre="Sal Fina", unidad_medida_id=u_kg),
-                Insumo(nombre="Aceite de Girasol", unidad_medida_id=u_l),
-                Insumo(nombre="Alcohol al 70%", unidad_medida_id=u_l),
-                Insumo(nombre="Papel Film", unidad_medida_id=u_rl),
-                Insumo(nombre="Etiquetas Adhesivas", unidad_medida_id=u_rl),
-                Insumo(nombre="Cajas de Cartón Corrugado", unidad_medida_id=u_cj),
-                Insumo(nombre="Bolsas de Consorcio", unidad_medida_id=u_pq),
-                Insumo(nombre="Esponjas Metálicas", unidad_medida_id=u_u)
-            ]
-            db.add_all(insumos)
-            db.commit()
-            print("Insumos creados (16).")
+            print(f"Insumos alimentarios creados ({crear_insumos(db)}).")
 
         # --- EMPLEADOS ---
         if db.query(Empleado).count() == 0:
@@ -952,6 +1163,10 @@ def seed_database(reset: bool = True):
         if db.query(Producto).count() == 0:
             cantidad_lotes = generar_productos_y_lotes(db)
             print(f"Productos ({len(DATOS_PRODUCTOS)}) y lotes de produccion ({cantidad_lotes}) creados.")
+
+        if db.query(AlimentoReferencia).count() == 0:
+            insumos_con_datos = cargar_datos_nutricionales_de_ejemplo(db)
+            print(f"Base de referencia SARA importada y datos nutricionales de {insumos_con_datos} insumos cargados.")
 
         print("Base de datos poblada exitosamente con datos de prueba enriquecidos para SAIA!")
 

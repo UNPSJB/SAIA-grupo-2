@@ -3,14 +3,22 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import type { LoteProduccion } from '../../types/lotesProduccion';
 import type { Producto } from '../../types/productos';
+import type { Insumo } from '../../types/insumos';
+import type { UnidadMedida } from '../../types/unidadesMedida';
+
 import { crearLote } from '../../services/lotesProduccionServices';
 import { getProductos } from '../../services/productosServices';
+import { getInsumos } from '../../services/insumosServices';
+import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
 import { useAuth } from '../../context/AuthContext';
 import Boton from '../../components/Boton';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
 import NuevoProductoModal from '../productos/NuevoProductoModal';
 import { ETIQUETA_TIPO_PRODUCTO, hoyLocal } from '../productos/formatoProducto';
 import LoteDetalleModal from './LoteDetalleModal';
+import AgregarInsumoLote, { type InsumoElegido } from './AgregarInsumoLote';
+import ListaInsumosLote from './ListaInsumosLote';
+import estilosInsumos from './InsumosLote.module.css';
 import styles from '../../styles/shared.module.css';
 
 interface Errores {
@@ -40,6 +48,12 @@ export default function LoteForm() {
     const [creandoProducto, setCreandoProducto] = useState(false);
     const [loteRegistrado, setLoteRegistrado] = useState<LoteProduccion | null>(null);
 
+    const [catalogoInsumos, setCatalogoInsumos] = useState<Insumo[]>([]);
+    const [unidades, setUnidades] = useState<UnidadMedida[]>([]);
+    const [insumosAgregados, setInsumosAgregados] = useState<InsumoElegido[]>([]);
+    const [versionInsumos, setVersionInsumos] = useState(0);
+
+
     useEffect(() => {
         let cancelado = false;
 
@@ -60,9 +74,28 @@ export default function LoteForm() {
         };
     }, []);
 
+    useEffect(() => {
+        let cancelado = false;
+        Promise.all([getInsumos(), getUnidadesMedida()])
+            .then(([datosInsumos, datosUnidades]) => {
+                if (cancelado) return;
+                setCatalogoInsumos(datosInsumos.filter((insumo) => insumo.activo));
+                setUnidades(datosUnidades);
+            })
+            .catch((problema) => console.error('Error al cargar insumos:', problema));
+        return () => {
+            cancelado = true;
+        };
+    }, [versionInsumos]);
+
     const hoy = hoyLocal();
     const productoElegido = productos?.find((producto) => String(producto.id) === productoId) ?? null;
     const unidad = productoElegido?.unidad_medida.nombre.toLowerCase();
+
+
+    const quitarInsumo = (insumoId: number) => {
+        setInsumosAgregados((actuales) => actuales.filter((item) => item.insumo.id !== insumoId));
+    };
 
     const validar = (): Errores => {
         const nuevos: Errores = {};
@@ -101,9 +134,16 @@ export default function LoteForm() {
                 producto_id: productoElegido.id,
                 fecha,
                 cantidad: Number(cantidad),
+                insumos: insumosAgregados.map((item) => ({
+                    insumo_id: item.insumo.id,
+                    cantidad_utilizada: item.cantidad,
+                    unidad_medida_id: item.unidadMedidaId,
+                })),
             });
             setLoteRegistrado(lote);
             setCantidad('');
+            setInsumosAgregados([]);
+            setVersionInsumos((v) => v + 1);
         } catch (error) {
             console.error('Error al registrar el lote:', error);
             setErrorGuardado(error instanceof Error ? error.message : 'No se pudo registrar el lote.');
@@ -214,6 +254,35 @@ export default function LoteForm() {
                     </div>
                 </div>
 
+
+                <section className={estilosInsumos.seccion} aria-labelledby="titulo-insumos-lote">
+                    <div className={estilosInsumos.encabezadoSeccion}>
+                        <h3 id="titulo-insumos-lote">Insumos utilizados</h3>
+                    </div>
+                    <AgregarInsumoLote
+                        insumos={catalogoInsumos}
+                        unidades={unidades}
+                        yaAgregados={insumosAgregados.map((item) => item.insumo.id)}
+                        onAgregar={(elegido) => setInsumosAgregados((actuales) => [...actuales, elegido])}
+                    />
+                    <ListaInsumosLote
+                        items={insumosAgregados.map((item) => ({
+                            insumoId: item.insumo.id,
+                            nombre: item.insumo.nombre,
+                            cantidadBase: item.cantidadBase,
+                            magnitud: item.insumo.unidad_medida.magnitud,
+                        }))}
+                        mensajeVacio="Opcional: agregá los insumos que se usaron. Se descuentan del stock al registrar el lote."
+                        onQuitar={quitarInsumo}
+                    />
+                    {insumosAgregados.length > 0 && (
+                        <p className={estilosInsumos.nota}>
+                            Al registrar el lote se descuentan del stock. El consumo se puede corregir hasta cerrar el lote
+                            (como máximo, al terminar el día); después queda fijo.
+                        </p>
+                    )}
+                </section>
+
                 {errorGuardado && (
                     <p role="alert" style={{ color: '#ef4444', margin: '16px 0 0' }}>
                         {errorGuardado}
@@ -238,6 +307,7 @@ export default function LoteForm() {
                 <LoteDetalleModal
                     lote={loteRegistrado}
                     subtitulo="Lote registrado correctamente."
+                    onActualizado={() => setVersionInsumos((v) => v + 1)}
                     onClose={() => setLoteRegistrado(null)}
                     acciones={
                         esAdmin && (

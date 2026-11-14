@@ -41,7 +41,7 @@ def test_router_crear_producto(client: TestClient, db_session: Session):
     assert cuerpo["nombre"] == "Medialunas"
     assert cuerpo["tipo"] == "alimento"
     assert cuerpo["stock"] == 24
-    assert cuerpo["unidad_medida"] == {"id": unidad.id, "nombre": "Unidades"}
+    assert cuerpo["unidad_medida"] == {"id": unidad.id, "nombre": "Unidades", "magnitud": "cantidad", "factor_base": 1.0}
 
 
 def test_router_crear_producto_stock_por_defecto(client: TestClient, db_session: Session):

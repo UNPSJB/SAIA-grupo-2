@@ -20,6 +20,7 @@ import Boton from '../../components/Boton';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
 import estilos from '../../components/Estadisticas.module.css';
 import styles from '../../styles/shared.module.css';
+import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 
 const MS_POR_DIA = 24 * 60 * 60 * 1000;
 
@@ -153,6 +154,49 @@ export default function EstadisticaIncidentes() {
         const tipo = clave as TipoIncidente;
         setTipoSeleccionado((actual) => (actual === tipo ? null : tipo));
     };
+
+
+      const columnasDetalle: Columna<Incidente>[] = [
+        {
+            key: 'fecha_hora_reporte',
+            encabezado: 'Fecha',
+            ordenable: true,
+            variant: 'celdaBase', 
+            render: (inc) => {
+                const [fecha, hora] = formatearFechaHora(inc.fecha_hora_reporte).split(' ');
+                return (
+                    <>
+                        <div>{fecha}</div>
+                        <div>{hora}</div>
+                    </>
+                );
+            }
+        },
+        {
+            key: 'descripcion',
+            encabezado: 'Descripción',
+            ordenable: true,
+            render: (inc) => inc.descripcion
+        },
+        {
+            key: 'estado',
+            encabezado: 'Estado',
+            ordenable: true,
+            variant: (inc) => inc.estado === 'abierto' ? 'pendiente' : 'activo',
+            render: (inc) => ETIQUETA_ESTADO[inc.estado]
+        },
+        {
+            key: 'acciones',
+            encabezado: 'Acciones', 
+            variant: 'acciones',    
+            render: (inc) => (
+                <Link to={`/incidentes/${inc.id}`} title="Ver detalle del incidente">
+                    <Boton variant="ver" />
+                </Link>
+            )
+        }
+    ];
+
 
     return (
         <div className={styles.contenedorPrincipal}>
@@ -300,6 +344,8 @@ export default function EstadisticaIncidentes() {
                             </Boton>
                         </div>
 
+
+                    
                         {cargandoDetalle ? (
                             <p className={estilos.vacio}>Cargando incidentes…</p>
                         ) : detalle?.error ? (
@@ -307,38 +353,51 @@ export default function EstadisticaIncidentes() {
                         ) : !detalle || detalle.datos.length === 0 ? (
                             <p className={estilos.vacio}>No hay incidentes de este tipo en el período.</p>
                         ) : (
-                            <div className={styles.contenedorTabla} style={{ marginTop: 0 }}>
-                                <div className={styles.filaHeader} style={{ gridTemplateColumns: '1.1fr 2.4fr 0.9fr 0.5fr' }}>
-                                    <div>Fecha</div>
-                                    <div>Descripción</div>
-                                    <div>Estado</div>
-                                    <div></div>
-                                </div>
-                                {detalle.datos.map((incidente) => (
-                                    <div
-                                        key={incidente.id}
-                                        className={styles.filaItem}
-                                        style={{ gridTemplateColumns: '1.1fr 2.4fr 0.9fr 0.5fr', textAlign: 'left' }}
-                                    >
-                                        <div>{formatearFechaHora(incidente.fecha_hora_reporte)}</div>
-                                        <div style={{ overflowWrap: 'anywhere' }}>{incidente.descripcion}</div>
-                                        <div className={estilos.estado}>
-                                            <span
-                                                className={estilos.estadoPunto}
-                                                style={{ backgroundColor: COLOR_ESTADO[incidente.estado] }}
-                                                aria-hidden="true"
-                                            />
-                                            {ETIQUETA_ESTADO[incidente.estado]}
-                                        </div>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <Link to={`/incidentes/${incidente.id}`} title="Ver detalle del incidente">
-                                                <Boton variant="ver" style={{ padding: '6px 10px' }} />
-                                            </Link>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+
+                            // <div className={styles.contenedorTabla} style={{ marginTop: 0 }}>
+                            //     <div className={styles.filaHeader} style={{ gridTemplateColumns: '1.1fr 2.4fr 0.9fr 0.5fr' }}>
+                            //         <div>Fecha</div>
+                            //         <div>Descripción</div>
+                            //         <div>Estado</div>
+                            //         <div>Acciones</div>
+                            //     </div>
+                            //     {detalle.datos.map((incidente) => (
+                            //         <div
+                            //             key={incidente.id}
+                            //             className={styles.filaItem}
+                            //             style={{ gridTemplateColumns: '1.1fr 2.4fr 0.9fr 0.5fr', textAlign: 'left' }}
+                            //         >
+                            //             <div>{formatearFechaHora(incidente.fecha_hora_reporte)}</div>
+                            //             <div style={{ overflowWrap: 'anywhere' }}>{incidente.descripcion}</div>
+                            //             <div className={estilos.estado}>
+                            //                 <span
+                            //                     className={estilos.estadoPunto}
+                            //                     style={{ backgroundColor: COLOR_ESTADO[incidente.estado] }}
+                            //                     aria-hidden="true"
+                            //                 />
+                            //                 {ETIQUETA_ESTADO[incidente.estado]}
+                            //             </div>
+                            //             <div style={{ textAlign: 'right' }}>
+                            //                 <Link to={`/incidentes/${incidente.id}`} title="Ver detalle del incidente">
+                            //                     <Boton variant="ver" style={{ padding: '6px 10px' }} />
+                            //                 </Link>
+                            //             </div>
+                            //         </div>
+                            //     ))}
+                            // </div>
+                            <TablaPaginada
+                                datos={detalle?.datos ?? []}
+                                columnas={columnasDetalle}
+                                gridTemplateColumns="1.2fr 2.5fr 1fr 0.8fr"
+                                itemsPorPagina={5}
+                                mensajeVacio="No hay incidentes de este tipo en el período."
+                                columnaOrdenInicial="fecha_hora_reporte"
+                                ordenAscInicial={false}
+                            />
+
                         )}
+
+                        
                     </section>
                 )}
             </div>
