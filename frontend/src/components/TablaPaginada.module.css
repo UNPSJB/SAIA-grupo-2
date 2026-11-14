@@ -67,3 +67,44 @@
     align-items: center;
     justify-content: center; /*lo cambie a center por que queda mmejor cuando hay pocos botones creo*/
 }
+
+
+
+/* Pie de la tabla: paginación centrada y botón de exportar a la derecha */
+.pieTabla {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    margin-top: 25px;
+    width: 100%;
+    max-width: 1100px;
+}
+
+.paginacionCentrada {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.textoPagina {
+    color: var(--text-h);
+    font-weight: bold;
+    margin: 0 10px;
+}
+
+.botonExportarDerecha {
+    justify-self: end;
+}
+
+/* En pantallas chicas los acomoda verticalmente */
+@media (max-width: 600px) {
+    .pieTabla {
+        display: flex;
+        flex-direction: column-reverse;
+        gap: 15px;
+    }
+    .botonExportarDerecha {
+        justify-self: center;
+    }
+}

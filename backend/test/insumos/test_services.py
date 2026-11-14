@@ -3,11 +3,12 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from src.insumos import services, schemas, exceptions
+from src.unidades_medida.constants import MagnitudUnidad
 from src.unidades_medida.models import UnidadMedida
 
 
 def _crear_unidad_base(db: Session, nombre: str = "unidad insumo test") -> UnidadMedida:
-    unidad = UnidadMedida(nombre=nombre)
+    unidad = UnidadMedida(nombre=nombre, magnitud=MagnitudUnidad.MASA, factor_base=1.0)
     db.add(unidad)
     db.commit()
     db.refresh(unidad)

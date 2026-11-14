@@ -12,6 +12,7 @@ import { formatearCantidad, formatearFecha, hoyLocal } from '../productos/format
 import LoteDetalleModal from './LoteDetalleModal';
 import estilosFiltros from '../../components/Estadisticas.module.css';
 import estilos from './LoteDetalleModal.module.css';
+import estilosInsumos from './InsumosLote.module.css';
 import styles from '../../styles/shared.module.css';
 
 interface Respuesta {
@@ -31,7 +32,7 @@ export default function LotesList() {
     const [fechaDesde, setFechaDesde] = useState('');
     const [fechaHasta, setFechaHasta] = useState('');
     const [respuesta, setRespuesta] = useState<Respuesta | null>(null);
-    const [loteAbierto, setLoteAbierto] = useState<LoteProduccion | null>(null);
+    const [loteSeleccionado, setLoteSeleccionado] = useState<LoteProduccion | null>(null);
 
     const rangoValido = !fechaDesde || !fechaHasta || fechaDesde <= fechaHasta;
     const clave = `${productoId}|${fechaDesde}|${fechaHasta}`;
@@ -91,7 +92,16 @@ export default function LotesList() {
 
     const descripcion = cargando
         ? 'Lotes de producción registrados, del más reciente al más antiguo.'
-        : `${plural(lotes.length, 'lote', 'lotes')} ${hayFiltros ? 'con los filtros aplicados' : 'registrados en total'}. Los lotes ya registrados son de solo lectura.`;
+        : `${plural(lotes.length, 'lote', 'lotes')} ${hayFiltros ? 'con los filtros aplicados' : 'registrados en total'}. El consumo de un lote se puede corregir mientras está abierto; se cierra a mano o al terminar el día, y cerrado es de solo lectura.`;
+
+    const loteActualizado = (actualizado: LoteProduccion) => {
+        setRespuesta((actual) =>
+            actual && {
+                ...actual,
+                lotes: actual.lotes.map((lote) => (lote.nro_lote === actualizado.nro_lote ? actualizado : lote)),
+            },
+        );
+    };
 
     const columnas: Columna<LoteProduccion>[] = [
         {
@@ -126,12 +136,22 @@ export default function LotesList() {
             render: (lote) => formatearCantidad(lote.cantidad, lote.producto.unidad_medida.nombre),
         },
         {
+            key: 'cerrado',
+            encabezado: 'Estado',
+            ordenable: true,
+            render: (lote) => (
+                <span className={`${estilosInsumos.estado} ${lote.cerrado ? estilosInsumos.estadoCerrado : estilosInsumos.estadoAbierto}`}>
+                    {lote.cerrado ? 'Cerrado' : 'Abierto'}
+                </span>
+            ),
+        },
+        {
             key: 'acciones',
             encabezado: 'Acciones',
             variant: 'acciones',
             render: (lote) => (
                 <div className={styles.grupoBotonesTabla}>
-                    <Boton variant="ver" title="Ver detalle del lote" onClick={() => setLoteAbierto(lote)} />
+                    <Boton variant="ver" title="Ver detalle del lote" onClick={() => setLoteSeleccionado(lote)} />
                 </div>
             ),
         },
@@ -204,7 +224,7 @@ export default function LotesList() {
                 key={clave}
                 datos={lotes}
                 columnas={columnas}
-                gridTemplateColumns="1fr 1fr 2fr 1.4fr 0.8fr"
+                gridTemplateColumns="1fr 1fr 2fr 1.4fr 1fr 0.8fr"
                 itemsPorPagina={10}
                 mensajeVacio={
                     cargando
@@ -217,7 +237,13 @@ export default function LotesList() {
                 ordenAscInicial={false}
             />
 
-            {loteAbierto && <LoteDetalleModal lote={loteAbierto} onClose={() => setLoteAbierto(null)} />}
+            {loteSeleccionado && (
+                <LoteDetalleModal
+                    lote={loteSeleccionado}
+                    onActualizado={loteActualizado}
+                    onClose={() => setLoteSeleccionado(null)}
+                />
+            )}
         </div>
     );
 }

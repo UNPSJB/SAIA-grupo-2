@@ -1,107 +1,58 @@
 import pytest
 from sqlalchemy.orm import Session
 
-from src.unidades_medida import services, schemas, exceptions
+from src.unidades_medida import exceptions, services
+from src.unidades_medida.constants import CATALOGO_UNIDADES, MagnitudUnidad
+from src.unidades_medida.models import UnidadMedida
 
 
-# PRUEBAS POSITIVAS (CASOS DE ÉXITO - SERVICES)
+def test_crear_catalogo_carga_las_cinco_unidades(db_session: Session):
+    agregadas = services.crear_catalogo(db_session)
 
-def test_crear_unidad_medida_exito(db_session: Session):
-    """Verifica la creación correcta de una unidad de medida."""
-    data = schemas.UnidadMedidaCreate(nombre="unidad test")
-    unidad = services.crear_unidad_medida(db_session, data)
-
-    assert unidad.id is not None
-    assert unidad.nombre == "unidad test"
-
-
-def test_listar_unidades_medida_vacia_y_con_datos(db_session: Session):
-    """Verifica el listado de unidades cuando está vacío y cuando contiene elementos."""
-    assert services.listar_unidades_medida(db_session) == []
-
-    services.crear_unidad_medida(db_session, schemas.UnidadMedidaCreate(nombre="unidad kilogramos test"))
-    services.crear_unidad_medida(db_session, schemas.UnidadMedidaCreate(nombre="unidad metros test"))
-
-    lista = services.listar_unidades_medida(db_session)
-    assert len(lista) == 2
-    nombres = [u.nombre for u in lista]
-    assert "unidad kilogramos test" in nombres
-    assert "unidad metros test" in nombres
+    unidades = services.listar_unidades_medida(db_session)
+    assert agregadas == len(CATALOGO_UNIDADES) == 5
+    assert [u.nombre for u in unidades] == ["Gramos", "Kilogramos", "Mililitros", "Litros", "Unidades"]
+    kilos = unidades[1]
+    assert (kilos.magnitud, kilos.factor_base) == (MagnitudUnidad.MASA, 1000.0)
 
 
-def test_leer_unidad_medida_exito(db_session: Session):
-    """Verifica consultar una unidad de medida existente por su ID."""
-    creada = services.crear_unidad_medida(db_session, schemas.UnidadMedidaCreate(nombre="unidad gramos test"))
-    leida = services.leer_unidad_medida(db_session, creada.id)
+def test_crear_catalogo_no_duplica_las_existentes(db_session: Session):
+    db_session.add(UnidadMedida(nombre="Gramos", magnitud=MagnitudUnidad.MASA, factor_base=1.0))
+    db_session.commit()
 
-    assert leida.id == creada.id
-    assert leida.nombre == "unidad gramos test"
-
-
-def test_modificar_unidad_medida_exito(db_session: Session):
-    """Verifica modificar el nombre de una unidad de medida."""
-    creada = services.crear_unidad_medida(db_session, schemas.UnidadMedidaCreate(nombre="unidad mililitro test"))
-    update_data = schemas.UnidadMedidaUpdate(nombre="unidad mililitros modificada test")
-
-    modificada = services.modificar_unidad_medida(db_session, creada.id, update_data)
-    assert modificada.id == creada.id
-    assert modificada.nombre == "unidad mililitros modificada test"
+    assert services.crear_catalogo(db_session) == 4
+    assert services.crear_catalogo(db_session) == 0
+    assert len(services.listar_unidades_medida(db_session)) == 5
 
 
-def test_eliminar_unidad_medida_exito(db_session: Session):
-    """Verifica eliminar físicamente una unidad de medida existente."""
-    creada = services.crear_unidad_medida(db_session, schemas.UnidadMedidaCreate(nombre="unidad borrable test"))
-    services.eliminar_unidad_medida(db_session, creada.id)
+def test_leer_unidad_medida(db_session: Session):
+    services.crear_catalogo(db_session)
+    litros = services.listar_unidades_medida(db_session)[3]
 
-    with pytest.raises(exceptions.UnidadMedidaNoEncontrada):
-        services.leer_unidad_medida(db_session, creada.id)
-
-
-# PRUEBAS NEGATIVAS (CASOS DE FALLA - SERVICES)
-
-def test_crear_unidad_medida_nombre_vacio(db_session: Session):
-    """Verifica que crear una unidad con nombre vacío "" lance NombreVacio."""
-    data = schemas.UnidadMedidaCreate(nombre="")
-    with pytest.raises(exceptions.NombreVacio):
-        services.crear_unidad_medida(db_session, data)
-
-
-def test_crear_unidad_medida_duplicada(db_session: Session):
-    """Verifica que crear una unidad con un nombre ya registrado lance UnidadMedidaDuplicada."""
-    services.crear_unidad_medida(db_session, schemas.UnidadMedidaCreate(nombre="unidad centimetros test"))
-    with pytest.raises(exceptions.UnidadMedidaDuplicada):
-        services.crear_unidad_medida(db_session, schemas.UnidadMedidaCreate(nombre="unidad centimetros test"))
+    assert services.leer_unidad_medida(db_session, litros.id).nombre == "Litros"
 
 
 def test_leer_unidad_medida_inexistente(db_session: Session):
-    """Verifica que leer una unidad inexistente lance UnidadMedidaNoEncontrada."""
     with pytest.raises(exceptions.UnidadMedidaNoEncontrada):
-        services.leer_unidad_medida(db_session, 9999)
+        services.leer_unidad_medida(db_session, 999)
 
 
-def test_modificar_unidad_medida_inexistente(db_session: Session):
-    """Verifica que modificar una unidad inexistente lance UnidadMedidaNoEncontrada."""
+def test_unidad_base_de_cada_magnitud(db_session: Session):
+    services.crear_catalogo(db_session)
+
+    assert services.unidad_base(db_session, MagnitudUnidad.MASA).nombre == "Gramos"
+    assert services.unidad_base(db_session, MagnitudUnidad.VOLUMEN).nombre == "Mililitros"
+
+
+def test_unidad_base_sin_catalogo(db_session: Session):
     with pytest.raises(exceptions.UnidadMedidaNoEncontrada):
-        services.modificar_unidad_medida(db_session, 9999, schemas.UnidadMedidaUpdate(nombre="unidad test"))
+        services.unidad_base(db_session, MagnitudUnidad.MASA)
 
 
-def test_modificar_unidad_medida_nombre_vacio(db_session: Session):
-    """Verifica que intentar actualizar el nombre a vacío "" lance NombreVacio."""
-    creada = services.crear_unidad_medida(db_session, schemas.UnidadMedidaCreate(nombre="unidad horas test"))
-    with pytest.raises(exceptions.NombreVacio):
-        services.modificar_unidad_medida(db_session, creada.id, schemas.UnidadMedidaUpdate(nombre=""))
+def test_convertir_a_base_redondea_a_dos_decimales():
+    kilos = UnidadMedida(nombre="Kilogramos", magnitud=MagnitudUnidad.MASA, factor_base=1000.0)
+    gramos = UnidadMedida(nombre="Gramos", magnitud=MagnitudUnidad.MASA, factor_base=1.0)
 
-
-def test_modificar_unidad_medida_duplicada(db_session: Session):
-    """Verifica que renombrar una unidad a un nombre perteneciente a otra lance UnidadMedidaDuplicada."""
-    u1 = services.crear_unidad_medida(db_session, schemas.UnidadMedidaCreate(nombre="unidad a test"))
-    u2 = services.crear_unidad_medida(db_session, schemas.UnidadMedidaCreate(nombre="unidad b test"))
-
-    with pytest.raises(exceptions.UnidadMedidaDuplicada):
-        services.modificar_unidad_medida(db_session, u2.id, schemas.UnidadMedidaUpdate(nombre="unidad a test"))
-
-
-def test_eliminar_unidad_medida_inexistente(db_session: Session):
-    """Verifica que eliminar una unidad inexistente lance UnidadMedidaNoEncontrada."""
-    with pytest.raises(exceptions.UnidadMedidaNoEncontrada):
-        services.eliminar_unidad_medida(db_session, 9999)
+    assert services.convertir_a_base(1.2345, kilos) == 1234.5
+    assert services.convertir_a_base(0.123456, kilos) == 123.46
+    assert services.convertir_a_base(250, gramos) == 250

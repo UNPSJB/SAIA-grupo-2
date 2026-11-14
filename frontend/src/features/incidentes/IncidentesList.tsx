@@ -23,6 +23,8 @@ import {
     textoAntiguedad,
 } from './estadoIncidente';
 import styles from '../../styles/shared.module.css';
+import BarraFiltros, { type FiltroConfig } from '../../components/BarraFiltros';
+import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 
 const GRILLA = '1.05fr 2.5fr 1.05fr 1.25fr 0.85fr 0.85fr 0.6fr 0.75fr';
 
@@ -81,11 +83,132 @@ export default function IncidentesList({ soloAbiertos = false }: IncidentesListP
 
     const abiertos = incidentes.filter((item) => item.estado === 'abierto').length;
 
+
+        // Si la pantalla es "soloAbiertos", no mostramos el filtro de estado porque ya están fijos
+    const misFiltros: FiltroConfig[] = !soloAbiertos ? [
+        {
+            label: "Estado:",
+            value: filtroEstado,
+            onChange: (val: string) => setFiltroEstado(val as EstadoIncidente | ''),
+            opciones: [
+                { value: "", label: "Todos los estados" },
+                ...ESTADOS_INCIDENTE.map((estado) => ({
+                    value: estado,
+                    label: ETIQUETA_ESTADO[estado]
+                }))
+            ]
+        }
+    ] : [];
+
+    // Función para resetear los filtros al presionar "Limpiar Filtros"
+    const limpiarFiltros = () => {
+        setFiltroEstado('');
+        setBusqueda('');
+    };
+
+
+    const misColumnas: Columna<Incidente>[] = [
+        {
+            key: 'fecha_hora_reporte',
+            encabezado: 'Fecha',
+            ordenable: true,
+            variant: 'celdaBase', // celdaBase formatea el segundo div abajo en gris automáticamente
+            render: (inc) => {
+                const [fecha, hora] = formatearFechaHora(inc.fecha_hora_reporte).split(' ');
+                return (
+                    <>
+                        <div>{fecha}</div>
+                        <div>{hora}</div>
+                    </>
+                );
+            }
+        },
+        {
+            key: 'descripcion',
+            encabezado: 'Descripción',
+            ordenable: true,
+            render: (inc) => inc.descripcion
+        },
+        {
+            key: 'tipo',
+            encabezado: 'Tipo',
+            ordenable: true,
+            variant: 'badge',
+            valorOrdenamiento: (inc) => ETIQUETA_TIPO[inc.tipo],
+            render: (inc) => <span>{ETIQUETA_TIPO[inc.tipo]}</span>
+        },
+        {
+            key: 'empleado',
+            encabezado: 'Reportado por',
+            ordenable: true,
+            variant: 'celdaBase',
+            valorOrdenamiento: (inc) => nombreCompleto(inc.empleado),
+            render: (inc) => (
+                <>
+                    <div>{nombreCompleto(inc.empleado)}</div>
+                    <div>{inc.empleado.legajo}</div>
+                </>
+            )
+        },
+        {
+            key: 'estado',
+            encabezado: 'Estado',
+            ordenable: true,
+            // 'pendiente' pinta en rojo y 'activo' en verde desde TablaPaginada.module.css
+            variant: (inc) => inc.estado === 'abierto' ? 'pendiente' : 'activo',
+            render: (inc) => ETIQUETA_ESTADO[inc.estado]
+        },
+        {
+            key: 'antiguedad',
+            encabezado: 'Antigüedad',
+            ordenable: true,
+            variant: (inc) => (inc.dias_abierto !== null && inc.dias_abierto >= DIAS_PARA_DESTACAR_ANTIGUEDAD) ? 'estado_vencido' : 'muted',
+            valorOrdenamiento: (inc) => inc.dias_abierto ?? -1,
+            render: (inc) => textoAntiguedad(inc.dias_abierto)
+        },
+        {
+            key: 'foto',
+            encabezado: 'Foto',
+            variant: 'acciones',
+            render: (inc) => inc.archivo_url ? (
+                <button
+                    type="button"
+                    className={styles.linkSubrayado}
+                    onClick={() => abrirArchivoEnPestania(inc.archivo_url!, inc.archivo_nombre)}
+                    title={inc.archivo_nombre ?? 'Ver foto del incidente'}
+                >
+                    <i className="bi bi-camera"></i>
+                </button>
+            ) : (
+                <Link
+                    to={`/incidentes/${inc.id}`}
+                    className={styles.textMuted}
+                    title="Sin foto. Entrar al detalle para adjuntarla"
+                >
+                    <i className="bi bi-plus-circle"></i>
+                </Link>
+            )
+        },
+        {
+            key: 'acciones',
+            encabezado: 'Acciones',
+            variant: 'acciones',
+            render: (inc) => (
+                <Link to={`/incidentes/${inc.id}`} title="Ver detalle">
+                    <Boton variant="ver" />
+                </Link>
+            )
+        }
+    ];
+
+
+
+
     return (
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
                 titulo={soloAbiertos ? 'Incidentes Abiertos' : 'Incidentes Reportados'}
-                ancho="1280px"
+                //ancho="1280px"
                 descripcion={
                     soloAbiertos
                         ? incidentes.length > 0
@@ -102,7 +225,7 @@ export default function IncidentesList({ soloAbiertos = false }: IncidentesListP
                 }
             />
 
-            {soloAbiertos && resumen && resumen.abiertos > 0 && (
+            {/* {soloAbiertos && resumen && resumen.abiertos > 0 && (
                 <div
                     style={{
                         display: 'flex',
@@ -132,9 +255,9 @@ export default function IncidentesList({ soloAbiertos = false }: IncidentesListP
                             </span>
                         ))}
                 </div>
-            )}
+            )} */}
 
-            <div
+            {/* <div
                 style={{
                     display: 'flex',
                     flexWrap: 'wrap',
@@ -171,10 +294,68 @@ export default function IncidentesList({ soloAbiertos = false }: IncidentesListP
                         placeholder="Buscar por descripción o persona..."
                     />
                 </div>
-            </div>
+            </div> */}
+
+
+            {/* Y EN SU LUGAR PONER LA BARRA MODULAR: */}
+            <BarraFiltros
+                busqueda={busqueda}
+                onBusquedaChange={setBusqueda}
+                placeholderBusqueda="Buscar por descripción o persona..."
+                onLimpiar={limpiarFiltros}
+                mostrarBotonLimpiar={(!soloAbiertos && filtroEstado !== '') || busqueda !== ''}
+                filtros={misFiltros}
+>
+                {/* Contadores adentro de la barra de filtros */}
+                {soloAbiertos && resumen && resumen.abiertos > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                            Pendientes por tipo:
+                        </span>
+                        {resumen.abiertos_por_tipo
+                            .filter((conteo) => conteo.cantidad > 0)
+                            .map((conteo) => (
+                                <span
+                                    key={conteo.tipo}
+                                    style={{
+                                        padding: '4px 10px',
+                                        borderRadius: '999px',
+                                        border: '1px solid var(--border)',
+                                        backgroundColor: 'var(--bg)',
+                                        color: 'var(--text)',
+                                        fontSize: '0.8rem',
+                                    }}
+                                >
+                                    {ETIQUETA_TIPO[conteo.tipo]}:{' '}
+                                    <strong style={{ color: 'var(--text-h)' }}>{conteo.cantidad}</strong>
+                                </span>
+                            ))}
+                    </div>
+                )}
+            </BarraFiltros>
 
             {error && <p style={{ color: 'var(--rojo-texto)' }}>{error}</p>}
 
+            
+            
+            <div style={{ maxWidth: '1100px', width: '100%' }}>
+                <TablaPaginada
+                    datos={incidentesFiltrados}
+                    columnas={misColumnas}
+                    gridTemplateColumns="1fr 2.3fr 1fr 1.3fr 0.9fr 0.9fr 0.6fr 0.8fr"
+                    itemsPorPagina={8}
+                    mensajeVacio={
+                        busqueda
+                            ? `No hay resultados para "${busqueda}".`
+                            : soloAbiertos
+                            ? 'No queda ningún incidente sin resolver.'
+                            : 'No se registraron incidentes con ese filtro.'
+                    }
+                    columnaOrdenInicial="fecha_hora_reporte"
+                    ordenAscInicial={soloAbiertos ? true : true}
+                />
+            </div>
+{/*             
             <div className={styles.contenedorTabla} style={{ maxWidth: '100%', width: '100%' }}>
                 <div className={styles.filaHeader} style={{ gridTemplateColumns: GRILLA, minWidth: '820px' }}>
                     <div>Fecha</div>
@@ -315,7 +496,7 @@ export default function IncidentesList({ soloAbiertos = false }: IncidentesListP
                         );
                     })
                 )}
-            </div>
+            </div> */}
         </div>
     );
 }

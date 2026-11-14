@@ -61,6 +61,8 @@ import ProductoElaboradoForm from './features/productos/ProductoForm';
 import ProductoElaboradoDetail from './features/productos/ProductoDetail';
 import LotesList from './features/lotesProduccion/LotesList';
 import LoteForm from './features/lotesProduccion/LoteForm';
+import DatosNutricionalesList from './features/datosNutricionales/DatosNutricionalesList';
+import DatosNutricionalesInsumo from './features/datosNutricionales/DatosNutricionalesInsumo';
 
 import IncidentesList from './features/incidentes/IncidentesList';
 import IncidenteForm from './features/incidentes/IncidenteForm';
@@ -220,6 +222,8 @@ function RutasProtegidas() {
             <Route path="/productos/:id" element={<RutaAdmin><ProductoElaboradoDetail /></RutaAdmin>} />
             <Route path="/lotes-produccion" element={<RutaAdmin><LotesList /></RutaAdmin>} />
             <Route path="/lotes-produccion/nuevo" element={<LoteForm />} />
+            <Route path="/datos-nutricionales" element={<RutaAdmin><DatosNutricionalesList /></RutaAdmin>} />
+            <Route path="/datos-nutricionales/:id" element={<RutaAdmin><DatosNutricionalesInsumo /></RutaAdmin>} />
 
             <Route path="/incidentes/nuevo" element={<IncidenteForm />} />
             <Route path="/incidentes" element={<RutaAdmin><IncidentesList /></RutaAdmin>} />
