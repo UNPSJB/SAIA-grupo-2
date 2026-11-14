@@ -8,6 +8,8 @@ class ClaseFuncionalNoEncontrada(NotFound):
     DETAIL = ErrorCode.CLASE_FUNCIONAL_NO_ENCONTRADA
 class ClaseFuncionalDuplicada(BadRequest):
     DETAIL = ErrorCode.CLASE_FUNCIONAL_DUPLICADA
+class ClaseFuncionalConAditivos(BadRequest):
+    DETAIL = ErrorCode.CLASE_FUNCIONAL_CON_ADITIVOS
 
 class AditivoNoEncontrado(NotFound):
     DETAIL = ErrorCode.ADITIVO_NO_ENCONTRADO

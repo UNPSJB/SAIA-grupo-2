@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import ForeignKey, Integer, Boolean, Enum as SQLEnum
+from sqlalchemy import ForeignKey, String, Boolean, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.models import ModeloBase
@@ -8,7 +8,7 @@ from src.models import ModeloBase
 class ClaseFuncionalAditivo(ModeloBase):
     __tablename__="clases_funcionales_aditivos"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    nombre: Mapped[str] = mapped_column(index=True, unique=True)
+    nombre: Mapped[str] = mapped_column(index=True, unique=True, nullable=False)
     necesita_ins: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
@@ -21,4 +21,4 @@ class Aditivo(ModeloBase):
         ForeignKey("clases_funcionales_aditivos.id"),
         nullable=False
     )
-    numero_ins: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    numero_ins: Mapped[Optional[str]] = mapped_column(String, nullable=True)

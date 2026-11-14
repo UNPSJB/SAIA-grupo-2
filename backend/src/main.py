@@ -43,6 +43,10 @@ from src.documentos_versionados.router import (
     router as documentos_versionados_router,
     router_documentos,
 )
+from src.aditivos.router import(
+    router as aditivos_router,
+    router_clases_funcionales as clases_funcionales_router
+)
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -95,3 +99,5 @@ app.include_router(productos_router)
 app.include_router(lotes_produccion_router)
 app.include_router(documentos_versionados_router)
 app.include_router(router_documentos)
+app.include_router(aditivos_router)
+app.include_router(clases_funcionales_router)

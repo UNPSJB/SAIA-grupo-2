@@ -3,7 +3,7 @@ from enum import Enum
 class ErrorCode:
     CLASE_FUNCIONAL_NO_ENCONTRADA = "La clase funcional no fue encontrada"
     CLASE_FUNCIONAL_DUPLICADA = "Ya existe una clase funcional con ese nombre"
-
+    CLASE_FUNCIONAL_CON_ADITIVOS = "Ya existen aditivos asociados a la clase ingresada"
 
 
     ADITIVO_NO_ENCONTRADO = "El aditivo no fue encontrado"

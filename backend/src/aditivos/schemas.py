@@ -1,11 +1,15 @@
-from pydantic import BaseModel, ConfigDict, model_validator
-from datetime import date, datetime
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional
 
 # --- Clase funcional para aditivos ---
 class ClaseFuncionalAditivoBase(BaseModel):
     nombre: str
     necesita_ins: bool = True
+
+    @field_validator("nombre")
+    @classmethod
+    def convertirAMinusculas(cls, valor:str) -> str:
+        return valor.strip().lower()
 
 class ClaseFuncionalAditivoCreate(ClaseFuncionalAditivoBase):
     pass
@@ -21,7 +25,7 @@ class ClaseFuncionalAditivo(ClaseFuncionalAditivoBase):
 class AditivoBase(BaseModel):
     nombre_completo: str
     clase_funcional: int
-    numero_ins: Optional[int] = None
+    numero_ins: Optional[str] = None
     
 
 class AditivoCreate(AditivoBase):

@@ -27,14 +27,28 @@ def verificar_acceso_operario_o_admin(x_user_role: Optional[str] = Header(None, 
 def listar_clases_funcionales_aditivos(db: Annotated[Session, Depends(get_db)]):
     return services.listar_clases_funcionales_aditivos(db)
 
-@router_clases_funcionales.post("/", response_model=schemas.ClaseFuncionalAditivo)
+@router_clases_funcionales.get("/{clase_funcional_id}/aditivos", response_model=list[schemas.Aditivo])
+def listar_aditivos_de_clase(db: Annotated[Session, Depends(get_db)], clase_funcional_id:int):
+    return services.listar_aditivos_de_clase(db, clase_funcional_id)
+
+@router_clases_funcionales.post(
+    "/",
+    response_model=schemas.ClaseFuncionalAditivo,
+    dependencies=[Depends(verificar_rol_admin)],
+    summary="Crear clase funcional (Solo Administrador)",
+)
 def crear_clase_funcional_aditivo(
     clase_funcional: schemas.ClaseFuncionalAditivoCreate,
     db: Annotated[Session, Depends(get_db)],
 ):
     return services.crear_clase_funcional_aditivo(db, clase_funcional)
 
-@router_clases_funcionales.put("/{clase_funcional_id}", response_model=schemas.ClaseFuncionalAditivo)
+@router_clases_funcionales.put(
+    "/{clase_funcional_id}",
+    response_model=schemas.ClaseFuncionalAditivo,
+    dependencies=[Depends(verificar_rol_admin)],
+    summary="Modificar clase funcional (Solo Administrador)",
+)
 def update_clase_funcional(
     clase_funcional_id: int, 
     clase_funcional: schemas.ClaseFuncionalAditivoUpdate,
@@ -49,7 +63,12 @@ def update_clase_funcional(
 def listar_aditivos(db: Annotated[Session, Depends(get_db)]):
     return services.listar_aditivos(db)
 
-@router.post("/", response_model=schemas.Aditivo)
+@router.post(
+    "/",
+    response_model=schemas.Aditivo,
+    dependencies=[Depends(verificar_rol_admin)],
+    summary="Crear aditivo (Solo Administrador)",
+)
 def crear_aditivo(
     aditivo: schemas.AditivoCreate,
     db: Annotated[Session, Depends(get_db)],
