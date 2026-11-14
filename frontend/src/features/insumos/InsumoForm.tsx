@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import type { UnidadMedida } from '../../types/unidadesMedida';
+import type { MagnitudUnidad, UnidadMedida } from '../../types/unidadesMedida';
 import type { InsumoPayload } from '../../types/insumos';
 import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
 import { getInsumoById, saveInsumo } from '../../services/insumosServices';
@@ -9,6 +9,7 @@ import Boton from '../../components/Boton';
 import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
+import { esUnidadDeInsumo } from './cantidades';
 
 interface FormValues {
     nombre: string;
@@ -18,6 +19,7 @@ interface FormValues {
 export default function InsumoForm() {
     const [unidadesDisponibles, setUnidadesDisponibles] = useState<UnidadMedida[]>([]);
     const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
+    const [magnitudFija, setMagnitudFija] = useState<MagnitudUnidad | null>(null);
 
     const navigate = useNavigate();
     const { id } = useParams();
@@ -50,6 +52,7 @@ export default function InsumoForm() {
                         nombre: data.nombre,
                         unidad_medida_id: data.unidad_medida_id
                     });
+                    setMagnitudFija(data.cantidad > 0 ? data.unidad_medida.magnitud : null);
                 } catch (err) {
                     console.error("Error al cargar insumo:", err);
                 }
@@ -119,13 +122,20 @@ export default function InsumoForm() {
                             style={errors.unidad_medida_id ? { borderColor: '#ef4444', outline: 'none' } : {}}
                         >
                             <option value="">Seleccione una unidad...</option>
-                            {unidadesDisponibles.map(unidad => (
+                            {unidadesDisponibles
+                                .filter((unidad) => esUnidadDeInsumo(unidad) && (!magnitudFija || unidad.magnitud === magnitudFija))
+                                .map(unidad => (
                                 <option key={unidad.id} value={unidad.id}>
                                     {unidad.nombre}
                                 </option>
                             ))}
                         </select>
                         {errors.unidad_medida_id && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.unidad_medida_id.message}</span>}
+                        <span className={styles.textMuted} style={{ fontSize: '0.8rem', marginTop: '6px', textAlign: 'left' }}>
+                            {magnitudFija
+                                ? 'Como ya tiene stock cargado, solo se puede cambiar por otra unidad de la misma magnitud.'
+                                : 'Es la unidad en la que se compra. El stock se registra en gramos, o en litros si es líquido.'}
+                        </span>
                     </div>
                 </div>
 

@@ -46,7 +46,12 @@ def test_router_crear_lote(client: TestClient, db_session: Session):
         "id": producto.id,
         "nombre": "Prepizza",
         "tipo": "alimento",
-        "unidad_medida": {"id": producto.unidad_medida_id, "nombre": "Unidades"},
+        "unidad_medida": {
+            "id": producto.unidad_medida_id,
+            "nombre": "Unidades",
+            "magnitud": "cantidad",
+            "factor_base": 1.0,
+        },
     }
 
 

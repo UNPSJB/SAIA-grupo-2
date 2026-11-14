@@ -1,0 +1,197 @@
+Codigo,AlimentoSara2,AzucaresTotales,AzucaresAnadidos,GrasasTrans
+A001,"Almidón de maíz, crudo",0.0,0.0,0.0
+A003,"Arroz blanco, crudo",0.3,0.0,0.0
+A004,"Arroz integral, crudo",0.7,0.0,0.0
+A005,"Avena, arrollada, cruda",1.0,0.0,0.0
+A006,"Arveja, semilla seca entera / partida, cruda",3.1,0.0,0.0
+A009,Tortitas Jachaleras,16.9,16.6,0.0
+A010,Bizcochos tipo Bay Biscuit,38.0,38.0,0.0
+A012,Tutuca,23.9,23.9,0.0
+A013,Chipá,2.6,0.0,0.54
+A015,Facturas rellenas,20.4,19.7,0.81
+A016,Facturas simples,11.3,11.3,1.0
+A017,"Fideos frescos, al huevo, crudos",2.1,0.0,0.01
+A018,"Fideos secos, crudos",2.7,0.0,0.0
+A019,Galletas de arroz,1.2,0.0,0.0
+A022,Galletitas de salvado o integrales,1.2,1.2,0.0
+A023,Galletitas dulces rellenas,40.0,40.0,0.6
+A024,Galletitas dulces simples,20.3,20.3,0.63
+A025,"Garbanzos, crudos",10.7,0.0,0.0
+A027,Harina de algarrobo,49.1,0.0,0.0
+A028,"Harina de arroz, cruda",0.1,0.0,0.0
+A029,"Harina de cebada, cruda",0.8,0.0,0.0
+A030,"Harina de centeno, cruda",0.9,0.0,0.0
+A033,"Harina de trigo, cruda",0.3,0.0,0.0
+A034,"Harina de trigo integral, cruda",1.0,0.0,0.0
+A036,"Maíz, grano entero, crudo",0.6,0.0,0.0
+A040,Pan de Centeno,3.9,3.9,0.0
+A041,Pan francés sin sal,0.2,0.0,0.0
+A042,Pan de gluten,1.4,0.0,0.0
+A043,Pan de maíz,0.0,0.0,0.0
+A044,Pan de miga,0.2,0.0,0.0
+A045,Pan de molde con salvado,5.9,5.9,0.0
+A046,Pan de viena,4.6,4.6,0.0
+A047,"Pan lactal, SIN TACC",3.5,3.5,0.01
+A048,Pan de molde con salvado,5.9,5.9,0.0
+A049,Pan negro sin levadura,4.3,4.3,0.02
+A050,Pan rallado,6.2,3.0,0.0
+A051,"Porotos, crudos",2.1,0.0,0.0
+A052,"Soja, porotos, crudos",7.3,0.0,0.0
+A054,"Ravioles frescos, envasados, crudos",1.5,0.0,0.17
+A056,Salvado de trigo,0.4,0.0,0.02
+A060,"Trigo, grano entero, crudo",0.0,0.0,0.0
+A064,Galleta de campo,0.0,0.0,0.0
+A065,Galleta marinera,0.0,0.0,0.0
+A066,Galletitas de agua sin sal,1.3,0.0,0.3
+A067,Galletitas integrales sin sal,1.2,1.2,0.0
+A068,Cucurucho / cubanito,6.0,6.0,0.0
+A069,Grisines,3.3,1.6,0.0
+A071,Pan árabe,1.3,1.3,0.0
+B001,Amargo serrano,20.0,20.0,0.0
+B006,Cerveza con alcohol,0.0,0.0,0.0
+B007,Cerveza sin alcohol,5.4,0.0,0.0
+B015,Sidra,4.3,0.0,0.0
+B017,Vino blanco,1.0,0.0,0.0
+C001,"Cabra, cruda",0.0,0.0,0.0
+C008,"Conejo, crudo",0.0,0.0,0.0
+C012,"Hígado, crudo",0.0,0.0,0.17
+C013,"Lengua, cruda",0.0,0.0,0.79
+C014,"Mollejas, crudas",0.0,0.0,1.02
+C015,"Mondongo, crudo",0.0,0.0,0.15
+C016,Morcilla,1.3,0.0,0.0
+C018,Paté / picadillo,0.0,0.0,0.0
+C019,"Pato, crudo",0.0,0.0,0.0
+C020,"Pavo, crudo",0.1,0.0,0.01
+C022,"Pollo, menudos, crudos",0.0,0.0,0.0
+C023,"Pollo sin piel, crudo",0.0,0.0,0.0
+C025,"Riñón, crudo",0.0,0.0,0.1
+C026,Salame,0.3,0.0,0.48
+C028,"Salchicha parrillera, a la parrilla",0.0,0.0,0.17
+C029,"Sesos, crudos",0.0,0.0,0.61
+C030,"Ubre, cruda",0.0,0.0,0.6
+D001,Alfajor de chocolate,35.0,35.0,0.6
+D002,Alfajor de dulce de leche,42.4,42.4,0.2
+D003,Azúcar blanca molida,99.8,99.8,0.0
+D004,Azúcar morena / azúcar mascabo,97.0,97.0,0.0
+D005,Dulce de batata,52.0,52.0,0.0
+D008,Dulce de leche,49.7,44.0,0.33
+D011,Miel,82.1,82.1,0.0
+D013,Caramelos masticables,54.5,54.5,0.01
+D014,Caramelos duros,62.9,62.9,0.0
+D016,Chocolate para taza,54.5,54.5,0.0
+D018,Cacao en polvo sin fortificar,65.6,65.6,0.0
+D019,Helado de agua (heladería),27.5,27.5,0.0
+D020,Helado de crema (heladería),23.3,19.5,0.23
+F002,Almendra,4.4,0.0,0.02
+F003,Ananá,9.9,0.0,0.0
+F004,"Ananá, enlatado (fruta y almíbar)",16.9,8.5,0.0
+F005,Avellana,4.3,0.0,0.0
+F006,Banana,12.23,0.0,0.0
+F008,Ciruela,9.9,0.0,0.0
+F009,Ciruela pasa / ciruela seca,38.1,0.0,0.0
+F010,Damasco,9.2,0.0,0.0
+F011,Durazno,8.4,0.0,0.0
+F015,Frutilla,4.9,0.0,0.0
+F016,Granada,13.7,0.0,0.0
+F017,Guayaba,8.9,0.0,0.0
+F018,Higo,16.3,0.0,0.0
+F019,Kaki,12.5,0.0,0.0
+F021,Kiwi,9.0,0.0,0.0
+F022,Limón,2.5,0.0,0.0
+F023,Mamón,8.8,0.0,0.0
+F024,Mandarina,10.6,0.0,0.0
+F025,Mango,13.7,0.0,0.0
+F026,Maní tostado salado,4.9,0.0,0.0
+F027,Manzana con piel,10.4,0.0,0.0
+F028,Manzana sin piel,10.1,0.0,0.0
+F029,Melón,8.1,0.0,0.0
+F030,Membrillo,6.3,0.0,0.0
+F031,Naranja,9.35,0.0,0.0
+F032,Níspero,8.6,0.0,0.0
+F033,Nuez,2.6,0.0,0.0
+F036,Pera,9.8,0.0,0.0
+F039,Pera orejón,62.2,0.0,0.0
+F041,Pomelo,4.8,0.0,0.0
+F042,Sandía,6.2,0.0,0.0
+F043,Uva,15.5,0.0,0.0
+F044,Acerola,5.0,0.0,0.0
+G001,Aceite de girasol,0.0,0.0,0.0
+G002,Aceite de maíz,0.0,0.0,0.0
+G003,Aceite comestible mezcla,0.0,0.0,0.4
+G004,Aceite de oliva,0.0,0.0,0.0
+G005,Aceite de canola,0.0,0.0,0.46
+G006,Aceite de uva,0.0,0.0,0.0
+G007,Aceite de soja,0.0,0.0,0.0
+G008,Grasa de cerdo,0.0,0.0,0.0
+G009,Grasa vacuna,0.0,0.0,3.7
+G010,Manteca,0.1,0.0,3.28
+G013,Crema de leche,2.9,0.0,1.24
+H001,"Acelga, cruda",1.1,0.0,0.0
+H002,"Achicoria, cruda",0.7,0.0,0.0
+H003,"Ají rojo / morrón rojo, crudo",4.2,0.0,0.0
+H004,"Ají verde o amarillo / morrón verde, crudo",2.4,0.0,0.0
+H005,"Alcaucil, crudo",1.0,0.0,0.0
+H006,"Apio, crudo",1.3,0.0,0.0
+H007,"Arveja, fresca, cruda",5.7,0.0,0.0
+H008,"Arveja, enlatada",5.9,0.0,0.0
+H009,"Batata, cruda",4.2,0.0,0.0
+H010,"Berenjena, cruda",3.5,0.0,0.0
+H011,"Berro, crudo",4.4,0.0,0.0
+H012,"Brócoli, crudo",1.7,0.0,0.0
+H015,"Coliflor, crudo",1.9,0.0,0.0
+H016,"Chaucha, fresca, cruda",3.3,0.0,0.0
+H017,"Choclo, crudo",3.2,0.0,0.0
+H020,"Escarola, cruda",0.3,0.0,0.0
+H021,"Espárrago, crudo",1.9,0.0,0.0
+H022,"Espinaca, cruda",0.42,0.0,0.0
+H023,"Habas, cruda",1.5,0.0,0.0
+H024,"Hinojo, crudo",3.9,0.0,0.0
+H025,"Hongos, frescos, crudos",2.0,0.0,0.0
+H026,"Hongos, enlatados",2.3,0.0,0.0
+H027,"Lechuga, cruda",1.2,0.0,0.0
+H028,"Mandioca, cruda",1.7,0.0,0.0
+H030,"Papa, cruda",1.2,0.0,0.0
+H031,"Pepino, crudo",1.4,0.0,0.0
+H032,"Puerro, crudo",3.9,0.0,0.0
+H033,"Rabanito, crudo",1.9,0.0,0.0
+H034,"Radicheta, cruda",0.7,0.0,0.0
+H035,"Remolacha, cruda",6.8,0.0,0.0
+H036,"Repollito de Bruselas, crudos",2.2,0.0,0.0
+H037,"Repollo, crudo",3.2,0.0,0.0
+H038,"Tomate, crudo",2.6,0.0,0.0
+H040,"Zanahoria, cruda",4.7,0.0,0.0
+H041,"Zapallito, crudo",2.5,0.0,0.0
+H042,"Zapallo, crudo",2.5,0.0,0.0
+L002,"Leche de cabra, entera, fluida",4.5,0.0,0.14
+L003,"Leche de oveja, entera, fluida",4.5,0.0,0.38
+L004,"Leche parcialmente descremada fluida, sin fortificación",4.6,0.0,0.09
+L006,"Leche entera fluida, sin fortificación",4.8,0.0,0.13
+L007,"Leche entera fluida, fortificada con vitaminas A, D y B9",4.6,0.0,0.13
+L008,"Leche descremada en polvo, fortificada con vitaminas A y D",52.0,0.0,0.0
+L009,"Leche entera en polvo, deslactosada, fortificada con vitaminas A y D",38.4,0.0,1.06
+L010,"Leche de cabra, entera, en polvo",27.8,0.0,0.88
+L011,"Leche entera fluida, deslactosada, fortificada con vitaminas A y D",4.8,0.0,0.13
+L012,"Leche parcialmente descremada fluida, deslactosada, fortificada con vitaminas A y D",4.6,0.0,0.09
+L018,Probióticos enteros,16.0,10.0,0.06
+L020,"Leche entera fluida, fortificada con hierro",4.8,0.0,0.13
+L022,"Leche fórmula inicio, en polvo",55.0,0.0,0.0
+L023,"Leche fórmula seguimiento, en polvo",55.0,0.0,0.0
+L024,"Leche fórmula inicio, fluida",7.6,0.0,0.0
+L025,"Leche fórmula seguimiento, fluida",8.1,0.0,0.0
+M005,Ketchup,21.3,10.6,0.0
+M010,"Sopa crema instantánea, polvo para preparar (sabores varios)",18.7,18.7,0.13
+M014,Palitos salados,0.0,0.0,0.0
+M015,Papas fritas de copetín,0.3,0.0,0.0
+P002,"Pescados de río (ej: dorado, palometa, surubí, trucha, etc.), PROMEDIO, crudo",0.0,0.0,0.0
+P004,Camarón,0.0,0.0,0.0
+P005,Langostino,0.0,0.0,0.0
+P008,"Atún, enlatado en aceite",0.0,0.0,0.0
+P010,"Anchoa, enlatada en aceite",0.0,0.0,0.0
+P012,"Caballa, enlatada",0.0,0.0,0.0
+Q001,"Queso crema entero, untable",3.8,0.0,1.17
+Q003,"Queso blanco descremado, untable",5.5,0.0,0.0
+Q004,Ricota,0.3,0.0,0.35
+U001,"Huevo de gallina, entero, crudo",0.4,0.0,0.0
+U002,"Huevo de gallina, clara, cruda",0.7,0.0,0.0
+U003,"Huevo de gallina, yema, cruda",0.6,0.0,0.0
+U004,"Huevo de codorníz, entero, crudo",0.4,0.0,0.02

@@ -1,10 +1,10 @@
 import styles from '../styles/shared.module.css';
 
 export interface Metrica {
-    id: string;      // El valor por el que vamos a filtrar (ej: 'vencido', 'activos', '')
-    titulo: string;  // El texto que se lee arriba (ej: 'ACTIVOS')
-    valor: number;   // El número grande
-    color: string;   // El color en HEX o var(--color)
+    id: string;
+    titulo: string;
+    valor: number;
+    color: string;
 }
 
 interface TarjetasFiltroProps {
@@ -34,14 +34,13 @@ export default function TarjetasFiltro({
             }}
         >
             {metricas.map((metrica) => {
-                // Generamos las opacidades dinámicamente según el color pasado
                 const colorActivo = `${metrica.color}40`; 
                 const colorHover = `${metrica.color}20`;  
 
                 return (
                     <div 
                         key={metrica.id}
-                        onClick={() => onFiltroChange(metrica.id)}
+                        onClick={() => onFiltroChange(filtroActual === metrica.id ? '' : metrica.id)}
                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colorHover}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = filtroActual === metrica.id ? colorActivo : 'transparent'}
                         style={{ 

@@ -18,13 +18,21 @@ class RangoFechasInvalido(BadRequest):
     DETAIL = ErrorCode.RANGO_FECHAS_INVALIDO
 
 
-
-#excepciones para la asociacion con insumos
 class InsumoNoEncontrado(NotFound):
     DETAIL = ErrorCode.INSUMO_NO_ENCONTRADO
+
+
 class InsumoInactivo(BadRequest):
     DETAIL = ErrorCode.INSUMO_INACTIVO
-class InsumoYaAsociado(BadRequest):
-    DETAIL = ErrorCode.INSUMO_YA_ASOCIADO
+
+
+class InsumoRepetido(BadRequest):
+    DETAIL = ErrorCode.INSUMO_REPETIDO
+
+
 class StockInsuficiente(BadRequest):
     DETAIL = ErrorCode.STOCK_INSUFICIENTE
+
+
+class LoteCerrado(BadRequest):
+    DETAIL = ErrorCode.LOTE_CERRADO

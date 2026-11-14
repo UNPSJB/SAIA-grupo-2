@@ -1,26 +1,29 @@
 from pydantic import BaseModel, ConfigDict
-# Importamos el schema desde el otro módulo
-from src.unidades_medida.schemas import UnidadMedida 
+
+from src.unidades_medida.schemas import UnidadMedida
+
 
 class InsumoBase(BaseModel):
     nombre: str
     unidad_medida_id: int
     activo: bool = True
 
-    #nuevo, lo pongo en cero para que no se rompa nada creo
-    cantidad: float = 0.0
 
 class InsumoCreate(InsumoBase):
     pass
 
+
 class InsumoUpdate(InsumoBase):
     activo: bool = True
 
+
 class Insumo(InsumoBase):
     id: int
-    unidad_medida: UnidadMedida  # Cuando pidamos un insumo, traerá los datos de su unidad
-    
+    cantidad: float
+    unidad_medida: UnidadMedida
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class InsumoDelete(BaseModel):
     id: int
@@ -28,6 +31,6 @@ class InsumoDelete(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# para agregar gramos desde el modal en la lista
 class InsumoAgregarStock(BaseModel):
     cantidad: float
+    unidad_medida_id: int

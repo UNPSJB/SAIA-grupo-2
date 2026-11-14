@@ -93,6 +93,7 @@ const SECCIONES: Seccion[] = [
                 enlaces: [
                     { etiqueta: 'Productos', ruta: '/productos' },
                     { etiqueta: 'Historial de lotes', ruta: '/lotes-produccion', exacta: true },
+                    { etiqueta: 'Datos nutricionales', ruta: '/datos-nutricionales' },
                 ],
             },
             {

@@ -5,9 +5,12 @@ import { getInsumoById } from '../../services/insumosServices';
 import Boton from '../../components/Boton';
 import styles from '../../styles/shared.module.css';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
+import { useAuth } from '../../context/AuthContext';
+import { formatearStock } from './cantidades';
 
 export default function InsumoDetail() {
     const [insumo, setInsumo] = useState<Insumo | null>(null);
+    const { usuario } = useAuth();
     const { id } = useParams();
 
     useEffect(() => {
@@ -31,11 +34,17 @@ export default function InsumoDetail() {
                 <div className={styles.tarjetaEstatica} style={{ maxWidth: '600px', width: '100%' }}>
                     <p><strong>Nombre:</strong> {insumo.nombre}</p>
                     <p><strong>Unidad de Medida:</strong> {insumo.unidad_medida.nombre}</p>
+                    <p><strong>Stock disponible:</strong> {formatearStock(insumo.cantidad, insumo.unidad_medida.magnitud)}</p>
 
                     <div className={styles.bloqueDetalle} style={{ textAlign: 'center', marginTop: '20px' }}>
                         <Link to="/insumos">
                             <Boton variant="volver">Volver a la lista</Boton>
                         </Link>
+                        {usuario?.rol === 'admin' && (
+                            <Link to={`/datos-nutricionales/${insumo.id}`}>
+                                <Boton variant="ver">Datos nutricionales</Boton>
+                            </Link>
+                        )}
                     </div>
                 </div>
             ) : (
