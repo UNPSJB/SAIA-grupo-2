@@ -21,6 +21,7 @@ interface EstadoAlerta {
     isOpen: boolean;
     titulo: string;
     mensaje: string;
+    tipo?: 'exito' | 'error' | 'info';
     documentoCreado: boolean;
 }
 
@@ -100,6 +101,7 @@ export default function DocumentoVersionadoForm() {
                 isOpen: true,
                 titulo: 'Documento registrado',
                 mensaje: 'El documento versionado y su versión inicial se crearon correctamente.',
+                tipo:'exito',
                 documentoCreado: true,
             });
         } catch (problema) {
@@ -110,6 +112,7 @@ export default function DocumentoVersionadoForm() {
                 mensaje: problema instanceof Error
                     ? problema.message
                     : 'No se pudo contactar al servidor. Intentá nuevamente.',
+                tipo:'error',
                 documentoCreado: false,
             });
         } finally {
@@ -242,6 +245,7 @@ export default function DocumentoVersionadoForm() {
                 isOpen={modalAlerta.isOpen}
                 titulo={modalAlerta.titulo}
                 mensaje={modalAlerta.mensaje}
+                tipo={modalAlerta.tipo}
                 onClose={cerrarAlerta}
             />
         </div>

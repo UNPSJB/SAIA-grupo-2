@@ -14,7 +14,7 @@ interface BotonHistorialVersionesProps {
 export default function BotonHistorialVersiones({
     documentoId,
     documentoNombre,
-    texto = 'Historial de versiones',
+    texto = '',
     style,
     onVersionVigenteCambiada,
 }: BotonHistorialVersionesProps) {
@@ -26,13 +26,17 @@ export default function BotonHistorialVersiones({
         return null;
     }
 
+    const tooltip = documentoNombre 
+    ? `Historial de versiones de "${documentoNombre}"` 
+    : 'Historial de versiones';
+
     return (
         <>
             <Boton
                 variant="documentos"
                 onClick={() => setModalAbierto(true)}
                 style={style}
-                title={`Ver historial de versiones de ${documentoNombre || 'documento'}`}
+                title={tooltip} // Tooltip descriptivo
             >
                 {texto}
             </Boton>
