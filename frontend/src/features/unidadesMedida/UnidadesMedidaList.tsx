@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { UnidadMedida } from '../../types/unidadesMedida';
+import type { MagnitudUnidad, UnidadMedida } from '../../types/unidadesMedida';
 import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
 import styles from '../../styles/shared.module.css';
 
@@ -8,6 +8,23 @@ import { filtrarPorTexto } from '../../utils/texto';
 
 import TablaPaginada, {type Columna } from '../../components/TablaPaginada';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
+
+const ETIQUETA_MAGNITUD: Record<MagnitudUnidad, string> = {
+    masa: 'Masa',
+    volumen: 'Volumen',
+    cantidad: 'Cantidad',
+};
+
+const UNIDAD_BASE: Record<MagnitudUnidad, string> = {
+    masa: 'g',
+    volumen: 'ml',
+    cantidad: 'unidades',
+};
+
+function equivalencia(unidad: UnidadMedida): string {
+    const factor = unidad.factor_base.toLocaleString('es-AR');
+    return `${factor} ${UNIDAD_BASE[unidad.magnitud]}`;
+}
 
 export default function UnidadesMedidaList() {
     const [unidadesMedida, setUnidadesMedida] = useState<UnidadMedida[]>([]);
@@ -41,10 +58,19 @@ export default function UnidadesMedidaList() {
             ordenable: true,
             variant: 'titulo',
             render: (unidad) => unidad.nombre
+        },
+        {
+            key:'magnitud',
+            encabezado:'Magnitud',
+            ordenable: true,
+            render: (unidad) => ETIQUETA_MAGNITUD[unidad.magnitud]
+        },
+        {
+            key:'factor_base',
+            encabezado:'Equivale a',
+            ordenable: false,
+            render: (unidad) => equivalencia(unidad)
         }
-
-
-
     ]
 
 
@@ -53,7 +79,7 @@ export default function UnidadesMedidaList() {
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
                 titulo="Unidades de Medida"
-                descripcion="Tabla de unidades de medida, con posibilidad de búsqueda por nombre."
+                descripcion="Catálogo fijo de unidades. Las cantidades de insumos se convierten a gramos o mililitros."
             />
 
 
@@ -66,7 +92,7 @@ export default function UnidadesMedidaList() {
                  <TablaPaginada
                      datos={unidadesFiltradas}
                      columnas={misColumnas}
-                     gridTemplateColumns="1.5fr 1fr "
+                     gridTemplateColumns="0.5fr 1.5fr 1fr 1fr"
                      itemsPorPagina={5}
                      mensajeVacio="No se encontraron unidades de medida."
                      columnaOrdenInicial="id" 

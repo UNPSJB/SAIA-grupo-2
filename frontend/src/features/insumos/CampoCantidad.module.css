@@ -1,0 +1,33 @@
+.campo {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    text-align: left;
+}
+
+.fila {
+    display: flex;
+    gap: 8px;
+}
+
+.fila input {
+    flex: 1;
+    min-width: 0;
+}
+
+.fila select {
+    width: auto;
+    flex: 0 0 auto;
+}
+
+.ayuda {
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.error {
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--rojo-texto);
+}

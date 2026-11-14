@@ -16,6 +16,7 @@ import { rutaDeVencimiento, textoDiasRestantes } from '../../utils/vencimientos'
 import styles from './Inicio.module.css';
 import shared from '../../styles/shared.module.css';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
+import GraficoProduccion from '../tablero/GraficoProduccion';
 
 type Resultado<T> = { ok: true; datos: T } | { ok: false };
 
@@ -312,6 +313,9 @@ function TableroAdmin({ datos }: { datos: DatosTablero }) {
                 incidentes={datos.todosLosIncidentes}
                 documentos={datos.documentos}
             />
+            
+            <GraficoProduccion />
+
         </>
     );
 }

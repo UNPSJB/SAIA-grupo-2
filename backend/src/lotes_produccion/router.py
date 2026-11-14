@@ -30,21 +30,16 @@ def read_lote(nro_lote: int, db: Session = Depends(get_db)):
     return services.leer_lote(db, nro_lote)
 
 
-
 @router.get("/{nro_lote}/insumos", response_model=List[schemas.InsumoAsociadoDetalle])
 def get_insumos_del_lote(nro_lote: int, db: Session = Depends(get_db)):
     return services.listar_insumos_lote(db, nro_lote)
-@router.post("/{nro_lote}/insumos")
-def post_insumo_a_lote(
-    nro_lote: int,
-    datos: schemas.AsociarInsumoLote,
-    db: Session = Depends(get_db)
-):
-    return services.asociar_insumo(db, nro_lote, datos)
-@router.delete("/{nro_lote}/insumos/{insumo_id}")
-def delete_insumo_de_lote(
-    nro_lote: int,
-    insumo_id: int,
-    db: Session = Depends(get_db)
-):
-    return services.quitar_insumo(db, nro_lote, insumo_id)
+
+
+@router.put("/{nro_lote}/insumos", response_model=schemas.LoteProduccion)
+def update_insumos_del_lote(nro_lote: int, correccion: schemas.CorreccionConsumo, db: Session = Depends(get_db)):
+    return services.corregir_consumo(db, nro_lote, correccion)
+
+
+@router.post("/{nro_lote}/cerrar", response_model=schemas.LoteProduccion)
+def close_lote(nro_lote: int, cierre: schemas.CierreLote, db: Session = Depends(get_db)):
+    return services.cerrar_lote(db, nro_lote, cierre)

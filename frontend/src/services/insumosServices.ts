@@ -1,4 +1,5 @@
 import type { Insumo, InsumoPayload } from '../types/insumos';
+import { mensajeDeError } from '../utils/errores';
 
 const BASE_URL = 'http://127.0.0.1:8000/insumos';
 
@@ -32,16 +33,12 @@ export const saveInsumo = async (datos: InsumoPayload, id?: string): Promise<boo
 };
 
 
-// nuevo
-export const agregarStockInsumo = async (id: number, cantidad: number): Promise<Insumo> => {
+export const agregarStockInsumo = async (id: number, cantidad: number, unidadMedidaId: number): Promise<Insumo> => {
     const res = await fetch(`${BASE_URL}/${id}/agregar-stock`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cantidad }),
+        body: JSON.stringify({ cantidad, unidad_medida_id: unidadMedidaId }),
     });
-    if (!res.ok) {
-        const errorData = await res.json().catch(() => null);
-        throw new Error(errorData?.detail || "Error al sumar stock al insumo");
-    }
+    if (!res.ok) throw new Error(await mensajeDeError(res, 'No se pudo sumar stock al insumo'));
     return res.json();
-}
+};

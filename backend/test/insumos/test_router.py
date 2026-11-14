@@ -1,19 +1,23 @@
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from src.unidades_medida.constants import MagnitudUnidad
+from src.unidades_medida.models import UnidadMedida
 
 
-# Helper para crear unidad de medida 
-def _crear_unidad_api(client: TestClient, nombre: str = "unidad test") -> int:
-    res = client.post("/unidades_medida/", json={"nombre": nombre})
-    if res.status_code == 200:
-        return res.json()["id"]
-    return 1
+def _crear_unidad(db: Session, nombre: str = "unidad test", magnitud: MagnitudUnidad = MagnitudUnidad.MASA,
+                  factor: float = 1.0) -> int:
+    unidad = UnidadMedida(nombre=nombre, magnitud=magnitud, factor_base=factor)
+    db.add(unidad)
+    db.commit()
+    return unidad.id
 
 # PRUEBAS POSITIVAS (CASOS DE ÉXITO - ROUTER)
 
-def test_router_crear_insumo_exito(client: TestClient):
+def test_router_crear_insumo_exito(client: TestClient, db_session: Session):
     """POST /insumos/ debe responder 200 OK y crear el insumo."""
-    unidad_id = _crear_unidad_api(client, "unidad insumo test 1")
+    unidad_id = _crear_unidad(db_session, "unidad insumo test 1")
 
     payload = {
         "nombre": "insumo router test",
@@ -27,9 +31,9 @@ def test_router_crear_insumo_exito(client: TestClient):
     assert data["nombre"] == "insumo router test"
 
 
-def test_router_listar_insumos(client: TestClient):
+def test_router_listar_insumos(client: TestClient, db_session: Session):
     """GET /insumos/ debe responder 200 OK y devolver una lista."""
-    unidad_id = _crear_unidad_api(client, "unidad insumo test 2")
+    unidad_id = _crear_unidad(db_session, "unidad insumo test 2")
 
     client.post("/insumos/", json={"nombre": "insumo 1 test", "unidad_medida_id": unidad_id})
     client.post("/insumos/", json={"nombre": "insumo 2 test", "unidad_medida_id": unidad_id})
@@ -41,9 +45,9 @@ def test_router_listar_insumos(client: TestClient):
     assert len(data) >= 2
 
 
-def test_router_read_insumo_exito(client: TestClient):
+def test_router_read_insumo_exito(client: TestClient, db_session: Session):
     """GET /insumos/{id} debe responder 200 OK."""
-    unidad_id = _crear_unidad_api(client, "unidad insumo test 3")
+    unidad_id = _crear_unidad(db_session, "unidad insumo test 3")
     res_crear = client.post(
         "/insumos/",
         json={"nombre": "insumo read test", "unidad_medida_id": unidad_id}
@@ -55,9 +59,9 @@ def test_router_read_insumo_exito(client: TestClient):
     assert response.json()["id"] == insumo_id
 
 
-def test_router_update_insumo_exito(client: TestClient):
+def test_router_update_insumo_exito(client: TestClient, db_session: Session):
     """PUT /insumos/{id} debe responder 200 OK."""
-    unidad_id = _crear_unidad_api(client, "unidad insumo test 4")
+    unidad_id = _crear_unidad(db_session, "unidad insumo test 4")
     res_crear = client.post(
         "/insumos/",
         json={"nombre": "insumo update viejo test", "unidad_medida_id": unidad_id}
@@ -74,9 +78,9 @@ def test_router_update_insumo_exito(client: TestClient):
     assert response.json()["nombre"] == "insumo update nuevo test"
 
 
-def test_router_delete_insumo_inactivo_exito(client: TestClient):
+def test_router_delete_insumo_inactivo_exito(client: TestClient, db_session: Session):
     """DELETE /insumos/{id} sobre un insumo inactivo (activo=False) debe responder 200 OK."""
-    unidad_id = _crear_unidad_api(client, "unidad insumo test 5")
+    unidad_id = _crear_unidad(db_session, "unidad insumo test 5")
     res_crear = client.post(
         "/insumos/",
         json={"nombre": "insumo borrable test", "unidad_medida_id": unidad_id}
@@ -99,9 +103,9 @@ def test_router_delete_insumo_inactivo_exito(client: TestClient):
 
 # PRUEBAS NEGATIVAS (CASOS DE FALLA - ROUTER)
 
-def test_router_crear_insumo_nombre_vacio(client: TestClient):
+def test_router_crear_insumo_nombre_vacio(client: TestClient, db_session: Session):
     """POST /insumos/ con nombre "" debe responder 400 Bad Request."""
-    unidad_id = _crear_unidad_api(client, "unidad vacia test")
+    unidad_id = _crear_unidad(db_session, "unidad vacia test")
     payload = {"nombre": "", "unidad_medida_id": unidad_id}
 
     response = client.post("/insumos/", json=payload)
@@ -109,9 +113,9 @@ def test_router_crear_insumo_nombre_vacio(client: TestClient):
     assert response.json()["detail"] == "El insumo debe tener un nombre."
 
 
-def test_router_crear_insumo_nombre_duplicado(client: TestClient):
+def test_router_crear_insumo_nombre_duplicado(client: TestClient, db_session: Session):
     """POST /insumos/ con nombre duplicado debe responder 400 Bad Request."""
-    unidad_id = _crear_unidad_api(client, "unidad duplicada test")
+    unidad_id = _crear_unidad(db_session, "unidad duplicada test")
     payload = {"nombre": "insumo unico test", "unidad_medida_id": unidad_id}
     client.post("/insumos/", json=payload)
 
@@ -141,9 +145,9 @@ def test_router_update_insumo_no_encontrado(client: TestClient):
     assert response.json()["detail"] == "El insumo no fue encontrado."
 
 
-def test_router_delete_insumo_activo_falla(client: TestClient):
+def test_router_delete_insumo_activo_falla(client: TestClient, db_session: Session):
     """DELETE /insumos/{id} sobre un insumo activo debe responder 400 Bad Request."""
-    unidad_id = _crear_unidad_api(client, "unidad activo test")
+    unidad_id = _crear_unidad(db_session, "unidad activo test")
     res_crear = client.post(
         "/insumos/",
         json={"nombre": "insumo activo router test", "unidad_medida_id": unidad_id, "activo": True}

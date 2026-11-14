@@ -5,17 +5,12 @@ export interface Insumo {
     nombre: string;
     unidad_medida_id: number;
     unidad_medida: UnidadMedida;
-
-    //nuevo
-     cantidad?: number;
-    activo?: boolean; // <-- Agregamos esta línea
+    activo: boolean;
+    cantidad: number;
 }
 
 export interface InsumoPayload {
     nombre: string;
     unidad_medida_id: number;
-
-    //nuevo
-    cantidad?: number;
     activo?: boolean;
 }

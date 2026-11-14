@@ -63,6 +63,8 @@ import ProductoElaboradoForm from './features/productos/ProductoForm';
 import ProductoElaboradoDetail from './features/productos/ProductoDetail';
 import LotesList from './features/lotesProduccion/LotesList';
 import LoteForm from './features/lotesProduccion/LoteForm';
+import DatosNutricionalesList from './features/datosNutricionales/DatosNutricionalesList';
+import DatosNutricionalesInsumo from './features/datosNutricionales/DatosNutricionalesInsumo';
 
 import IncidentesList from './features/incidentes/IncidentesList';
 import IncidenteForm from './features/incidentes/IncidenteForm';
@@ -71,9 +73,10 @@ import EstadisticaIncidentes from './features/incidentes/EstadisticaIncidentes';
 
 import DocumentosVersionadosList from './features/documentosVersionados/DocumentosVersionadosList';
 import DocumentoVersionadoForm from './features/documentosVersionados/DocumentoVersionadoForm';
-
 import DocumentosVigentesList from './features/documentosVersionados/DocumentosVigentesList';
 
+import ConfiguracionVistaPublica from './features/vistaPublica/ConfiguracionVistaPublica';
+import VistaPublica from './features/vistaPublica/VistaPublica';
 
 import './App.css';
 
@@ -222,6 +225,8 @@ function RutasProtegidas() {
             <Route path="/productos/:id" element={<RutaAdmin><ProductoElaboradoDetail /></RutaAdmin>} />
             <Route path="/lotes-produccion" element={<RutaAdmin><LotesList /></RutaAdmin>} />
             <Route path="/lotes-produccion/nuevo" element={<LoteForm />} />
+            <Route path="/datos-nutricionales" element={<RutaAdmin><DatosNutricionalesList /></RutaAdmin>} />
+            <Route path="/datos-nutricionales/:id" element={<RutaAdmin><DatosNutricionalesInsumo /></RutaAdmin>} />
 
             <Route path="/incidentes/nuevo" element={<IncidenteForm />} />
             <Route path="/incidentes" element={<RutaAdmin><IncidentesList /></RutaAdmin>} />
@@ -232,7 +237,7 @@ function RutasProtegidas() {
             <Route path="/documentos/nuevo" element={<RutaAdmin><DocumentoVersionadoForm /></RutaAdmin>} />
             <Route path="/documentos/vigentes" element={<DocumentosVigentesList />} />
 
-            
+            <Route path="/configuracion/vista-publica" element={<RutaAdmin><ConfiguracionVistaPublica /></RutaAdmin>} />
           </Routes>
         </main>
         
@@ -246,7 +251,10 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <RutasProtegidas />
+        <Routes>
+          <Route path="/publico/:token" element={<VistaPublica />} />
+          <Route path="*" element={<RutasProtegidas />} />
+        </Routes>
       </BrowserRouter>
     </AuthProvider>
   );

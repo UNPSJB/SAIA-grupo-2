@@ -93,6 +93,7 @@ const SECCIONES: Seccion[] = [
                 enlaces: [
                     { etiqueta: 'Productos', ruta: '/productos' },
                     { etiqueta: 'Historial de lotes', ruta: '/lotes-produccion', exacta: true },
+                    { etiqueta: 'Datos nutricionales', ruta: '/datos-nutricionales' },
                 ],
             },
             {
@@ -111,6 +112,15 @@ const SECCIONES: Seccion[] = [
                     { etiqueta: 'Incidentes reportados', ruta: '/incidentes', exacta: true },
                     { etiqueta: 'Incidentes abiertos', ruta: '/incidentes/abiertos' },
                     { etiqueta: 'Estadísticas', ruta: '/incidentes/estadisticas' },
+                ],
+            },
+            {
+                clave: 'configuracion',
+                etiqueta: 'Configuración',
+                icono: 'gear',
+                soloAdmin: true,
+                enlaces: [
+                    { etiqueta: 'Vista Pública', ruta: '/configuracion/vista-publica', exacta: true },
                 ],
             },
         ],

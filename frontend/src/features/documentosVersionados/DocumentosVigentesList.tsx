@@ -106,13 +106,12 @@ export default function DocumentosVigentesList() {
             encabezado: 'Acceso Directo',
             variant: 'acciones',
             render: (doc) => (
-                <div>
+                <div className={sharedStyles.grupoBotonesTabla}>
                 <Boton
                     variant="ver"
                     onClick={() => handleAbrirArchivo(doc)}
                     title={`Abrir versión vigente de ${doc.nombre}`}
                 >
-                    Ver Procedimiento
                 </Boton>
 
                 <BotonHistorialVersiones 
@@ -167,4 +166,4 @@ export default function DocumentosVigentesList() {
             
         </div>
     );
-}
+}

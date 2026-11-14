@@ -1,0 +1,111 @@
+.cuerpo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 20px;
+    text-align: left;
+}
+
+.resultados {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    max-height: 320px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.resultado {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-h);
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+}
+
+.resultado:hover,
+.resultado:focus-visible {
+    background: rgba(78, 150, 226, 0.12);
+    outline: none;
+}
+
+.resultadoElegido {
+    background: rgba(78, 150, 226, 0.2);
+}
+
+.codigo {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.estado {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    padding: 12px;
+    margin: 0;
+}
+
+.vistaPrevia h3 {
+    margin: 0 0 4px;
+    color: var(--text-h);
+    font-size: 1rem;
+}
+
+.valores {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 16px;
+    margin: 12px 0 0;
+    font-size: 0.9rem;
+}
+
+.valores dt {
+    color: var(--text-muted);
+}
+
+.valores dd {
+    margin: 0;
+    color: var(--text-h);
+    text-align: right;
+}
+
+.noInforma {
+    color: #f59e0b !important;
+    font-style: italic;
+}
+
+.advertencia {
+    margin: 12px 0 0;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    color: #f59e0b;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 700px) {
+    .cuerpo {
+        grid-template-columns: 1fr;
+    }
+}
+
+.marcaPdf {
+    margin-left: 2px;
+    color: var(--azul-texto);
+    font-weight: 700;
+}
+
+.notaPdf {
+    margin: 12px 0 0;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
