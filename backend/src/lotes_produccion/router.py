@@ -28,3 +28,23 @@ def create_lote(lote: schemas.LoteProduccionCreate, db: Session = Depends(get_db
 @router.get("/{nro_lote}", response_model=schemas.LoteProduccion)
 def read_lote(nro_lote: int, db: Session = Depends(get_db)):
     return services.leer_lote(db, nro_lote)
+
+
+
+@router.get("/{nro_lote}/insumos", response_model=List[schemas.InsumoAsociadoDetalle])
+def get_insumos_del_lote(nro_lote: int, db: Session = Depends(get_db)):
+    return services.listar_insumos_lote(db, nro_lote)
+@router.post("/{nro_lote}/insumos")
+def post_insumo_a_lote(
+    nro_lote: int,
+    datos: schemas.AsociarInsumoLote,
+    db: Session = Depends(get_db)
+):
+    return services.asociar_insumo(db, nro_lote, datos)
+@router.delete("/{nro_lote}/insumos/{insumo_id}")
+def delete_insumo_de_lote(
+    nro_lote: int,
+    insumo_id: int,
+    db: Session = Depends(get_db)
+):
+    return services.quitar_insumo(db, nro_lote, insumo_id)

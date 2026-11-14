@@ -72,3 +72,18 @@ def eliminar_insumo(db: Session, insumo_id: int) -> schemas.InsumoDelete:
     db.execute(delete(Insumo).where(Insumo.id == insumo_id))
     db.commit()
     return {"id": insumo_id, "msg": "borrado"}
+
+
+#nuevo. para agregar stock al insumo. valido que no se agregue una cantidad negativa nomas
+def sumar_stock(db: Session, insumo_id: int, cantidad_a_sumar: float) -> Insumo:
+    if cantidad_a_sumar <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="La cantidad a sumar debe ser mayor a 0 gramos."
+        )
+    db_insumo = leer_insumo(db, insumo_id)
+    db_insumo.cantidad = (db_insumo.cantidad or 0.0) + cantidad_a_sumar
+    
+    db.commit()
+    db.refresh(db_insumo)
+    return db_insumo

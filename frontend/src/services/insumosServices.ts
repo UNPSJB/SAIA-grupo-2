@@ -30,3 +30,18 @@ export const saveInsumo = async (datos: InsumoPayload, id?: string): Promise<boo
     });
     return res.ok;
 };
+
+
+// nuevo
+export const agregarStockInsumo = async (id: number, cantidad: number): Promise<Insumo> => {
+    const res = await fetch(`${BASE_URL}/${id}/agregar-stock`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cantidad }),
+    });
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.detail || "Error al sumar stock al insumo");
+    }
+    return res.json();
+}

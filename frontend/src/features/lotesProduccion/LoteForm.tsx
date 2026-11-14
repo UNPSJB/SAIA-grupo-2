@@ -3,10 +3,14 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import type { LoteProduccion } from '../../types/lotesProduccion';
 import type { Producto } from '../../types/productos';
-import { crearLote } from '../../services/lotesProduccionServices';
+import type { Insumo } from '../../types/insumos';
+
+import { crearLote, asociarInsumoALote } from '../../services/lotesProduccionServices';
 import { getProductos } from '../../services/productosServices';
+import { getInsumos } from '../../services/insumosServices';
 import { useAuth } from '../../context/AuthContext';
 import Boton from '../../components/Boton';
+import ModalAlerta from '../../components/alerta';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
 import NuevoProductoModal from '../productos/NuevoProductoModal';
 import { ETIQUETA_TIPO_PRODUCTO, hoyLocal } from '../productos/formatoProducto';
@@ -17,6 +21,15 @@ interface Errores {
     productoId?: string;
     fecha?: string;
     cantidad?: string;
+}
+
+
+//estructura para los insumos
+interface InsumoTemporal {
+    insumo_id: number;
+    nombre: string;
+    cantidad_utilizada: number;
+    stock_disponible: number;
 }
 
 const estiloError = { borderColor: '#ef4444', outline: 'none' };
@@ -40,6 +53,16 @@ export default function LoteForm() {
     const [creandoProducto, setCreandoProducto] = useState(false);
     const [loteRegistrado, setLoteRegistrado] = useState<LoteProduccion | null>(null);
 
+
+
+    // estados para los insumos
+    const [catalogoInsumos, setCatalogoInsumos] = useState<Insumo[]>([]);
+    const [insumosAgregados, setInsumosAgregados] = useState<InsumoTemporal[]>([]);
+    const [insumoSeleccionadoId, setInsumoSeleccionadoId] = useState('');
+    const [gramosInsumo, setGramosInsumo] = useState('');
+    const [alerta, setAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
+
+
     useEffect(() => {
         let cancelado = false;
 
@@ -55,6 +78,17 @@ export default function LoteForm() {
                 }
             });
 
+
+            //carga de insumos
+        getInsumos()
+            .then((datos) => {
+                if (!cancelado) {
+                    setCatalogoInsumos(datos.filter((i) => i.activo !== false));
+                }
+            })
+            .catch((err) => console.error('Error al cargar insumos:', err));
+
+
         return () => {
             cancelado = true;
         };
@@ -63,6 +97,57 @@ export default function LoteForm() {
     const hoy = hoyLocal();
     const productoElegido = productos?.find((producto) => String(producto.id) === productoId) ?? null;
     const unidad = productoElegido?.unidad_medida.nombre.toLowerCase();
+
+
+    // agregar insumos
+    const handleAgregarInsumo = () => {
+        const idNum = Number(insumoSeleccionadoId);
+        const gramos = parseFloat(gramosInsumo);
+        if (!insumoSeleccionadoId) {
+            setAlerta({ isOpen: true, titulo: "Atención", mensaje: "Seleccioná un insumo de la lista." });
+            return;
+        }
+        if (isNaN(gramos) || gramos <= 0) {
+            setAlerta({ isOpen: true, titulo: "Cantidad inválida", mensaje: "La cantidad debe ser mayor a 0 gramos." });
+            return;
+        }
+        const insumoReal = catalogoInsumos.find((i) => i.id === idNum);
+        if (!insumoReal) return;
+        // Validamos si ya fue agregado a la lista del formulario
+        if (insumosAgregados.some((i) => i.insumo_id === idNum)) {
+            setAlerta({ isOpen: true, titulo: "Insumo repetido", mensaje: "Este insumo ya está en la lista. Si querés cambiar la cantidad, quitalo y volvelo a agregar." });
+            return;
+        }
+        //calido que haya la cantidad solicitada
+        const stockActual = insumoReal.cantidad || 0;
+        if (gramos > stockActual) {
+            setAlerta({
+                isOpen: true,
+                titulo: "Stock insuficiente",
+                mensaje: `No podés usar ${gramos}g de "${insumoReal.nombre}" porque solo hay ${stockActual}g disponibles en stock.`
+            });
+            return;
+        }
+        // si esta todo bien lo sumo
+        setInsumosAgregados([
+            ...insumosAgregados,
+            {
+                insumo_id: insumoReal.id,
+                nombre: insumoReal.nombre,
+                cantidad_utilizada: gramos,
+                stock_disponible: stockActual
+            }
+        ]);
+        setInsumoSeleccionadoId('');
+        setGramosInsumo('');
+    };
+    // Función para quitar un insumo de la lista antes de guardar
+    const handleQuitarInsumo = (insumoId: number) => {
+        setInsumosAgregados(insumosAgregados.filter((i) => i.insumo_id !== insumoId));
+    };
+
+
+
 
     const validar = (): Errores => {
         const nuevos: Errores = {};
@@ -95,6 +180,20 @@ export default function LoteForm() {
         setErrorGuardado(null);
         if (Object.keys(nuevosErrores).length > 0 || !productoElegido) return;
 
+
+
+        for (const item of insumosAgregados) {
+            if (item.cantidad_utilizada > item.stock_disponible) {
+                setAlerta({
+                    isOpen: true,
+                    titulo: "Stock insuficiente",
+                    mensaje: `El insumo ${item.nombre} no tiene stock suficiente para crear el lote.`
+                });
+                return;
+            }
+        }
+
+
         try {
             setGuardando(true);
             const lote = await crearLote({
@@ -102,8 +201,20 @@ export default function LoteForm() {
                 fecha,
                 cantidad: Number(cantidad),
             });
+
+
+
+            //asociacion de los insumos
+            for (const item of insumosAgregados) {
+                await asociarInsumoALote(lote.nro_lote, {
+                    insumo_id: item.insumo_id,
+                    cantidad_utilizada: item.cantidad_utilizada
+                });
+            }
+
             setLoteRegistrado(lote);
             setCantidad('');
+            setInsumosAgregados([]);
         } catch (error) {
             console.error('Error al registrar el lote:', error);
             setErrorGuardado(error instanceof Error ? error.message : 'No se pudo registrar el lote.');
@@ -214,6 +325,89 @@ export default function LoteForm() {
                     </div>
                 </div>
 
+
+                {/* zona de agregar insumos */}
+                <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '24px 0 16px' }} />
+                
+                <h3 style={{ fontSize: '1.1rem', margin: '0 0 12px 0' }}>Insumos utilizados en la elaboración</h3>
+                
+                <div style={{ background: 'var(--bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '16px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr auto', gap: '10px', alignItems: 'flex-end' }}>
+                        <div>
+                            <label className={styles.modalTituloCampo} style={{ fontSize: '0.85rem' }}>Insumo:</label>
+                            <select
+                                className={styles.modalSelector}
+                                value={insumoSeleccionadoId}
+                                onChange={(e) => setInsumoSeleccionadoId(e.target.value)}
+                                style={{ marginTop: '4px' }}
+                            >
+                                <option value="">Seleccione insumo...</option>
+                                {catalogoInsumos.map((ins) => (
+                                    <option key={ins.id} value={ins.id}>
+                                        {ins.nombre} ({ins.cantidad ?? 0}g disponibles)
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className={styles.modalTituloCampo} style={{ fontSize: '0.85rem' }}>Gramos:</label>
+                            <input
+                                type="number"
+                                min="0.1"
+                                step="any"
+                                placeholder="Ej: 250"
+                                value={gramosInsumo}
+                                onChange={(e) => setGramosInsumo(e.target.value)}
+                                style={{ marginTop: '4px', width: '100%' }}
+                            />
+                        </div>
+                        <Boton type="button" variant="crear" onClick={handleAgregarInsumo}>
+                            Agregar
+                        </Boton>
+                    </div>
+                    {/*lista de insumos que se van sumando */}
+                    {insumosAgregados.length > 0 ? (
+                        <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {insumosAgregados.map((item) => (
+                                <div
+                                    key={item.insumo_id}
+                                    style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        padding: '6px 12px',
+                                        background: 'var(--card-bg)',
+                                        borderRadius: '6px',
+                                        border: '1px solid var(--border)'
+                                    }}
+                                >
+                                    <span style={{ fontSize: '0.9rem' }}>
+                                        <strong>{item.nombre}</strong>: {item.cantidad_utilizada} g 
+                                        <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginLeft: '8px' }}>
+                                            (de {item.stock_disponible}g en stock)
+                                        </span>
+                                    </span>
+                                    <Boton
+                                        type="button"
+                                        variant="eliminar"
+                                        title="Quitar de la lista"
+                                        onClick={() => handleQuitarInsumo(item.insumo_id)}
+                                    >
+                                        Quitar
+                                    </Boton>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '12px 0 0', fontStyle: 'italic' }}>
+                            No se agregaron insumos todavía (opcional).
+                        </p>
+                    )}
+                </div>
+
+
+
+
                 {errorGuardado && (
                     <p role="alert" style={{ color: '#ef4444', margin: '16px 0 0' }}>
                         {errorGuardado}
@@ -248,6 +442,12 @@ export default function LoteForm() {
                     }
                 />
             )}
+            <ModalAlerta
+                isOpen={alerta.isOpen}
+                titulo={alerta.titulo}
+                mensaje={alerta.mensaje}
+                onClose={() => setAlerta({ ...alerta, isOpen: false })}
+            />
         </div>
     );
 }
