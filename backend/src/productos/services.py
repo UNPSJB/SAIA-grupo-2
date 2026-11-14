@@ -92,6 +92,8 @@ def obtener_estadisticas_produccion(
             Producto.nombre.label("producto"),
             UnidadMedida.id.label("unidad_id"),
             UnidadMedida.nombre.label("unidad_nombre"),
+            UnidadMedida.magnitud.label("unidad_magnitud"),
+            UnidadMedida.factor_base.label("unidad_factor_base"),
             func.sum(LoteProduccion.cantidad).label("cantidad"),
         )
         .join(Producto, LoteProduccion.producto_id == Producto.id)
@@ -110,6 +112,8 @@ def obtener_estadisticas_produccion(
         Producto.nombre,
         UnidadMedida.id,
         UnidadMedida.nombre,
+        UnidadMedida.magnitud,
+        UnidadMedida.factor_base,
     ).order_by(
         LoteProduccion.fecha,
         Producto.nombre,
@@ -124,6 +128,8 @@ def obtener_estadisticas_produccion(
         unidad = {
             "id": fila.unidad_id,
             "nombre": fila.unidad_nombre,
+            "magnitud": fila.unidad_magnitud,
+            "factor_base": fila.unidad_factor_base,
         }
 
         cantidad = float(fila.cantidad)

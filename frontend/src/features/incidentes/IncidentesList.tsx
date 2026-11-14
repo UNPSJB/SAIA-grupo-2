@@ -8,12 +8,12 @@ import {
     getResumenIncidentes,
 } from '../../services/incidentesServices';
 import Boton from '../../components/Boton';
-import BuscadorTexto from '../../components/BuscadorTexto';
+//import BuscadorTexto from '../../components/BuscadorTexto';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
 import { filtrarPorTexto } from '../../utils/texto';
 import { abrirArchivoEnPestania } from '../../utils/archivos';
 import {
-    COLOR_ESTADO,
+    //COLOR_ESTADO,
     DIAS_PARA_DESTACAR_ANTIGUEDAD,
     ESTADOS_INCIDENTE,
     ETIQUETA_ESTADO,
@@ -26,14 +26,14 @@ import styles from '../../styles/shared.module.css';
 import BarraFiltros, { type FiltroConfig } from '../../components/BarraFiltros';
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 
-const GRILLA = '1.05fr 2.5fr 1.05fr 1.25fr 0.85fr 0.85fr 0.6fr 0.75fr';
+//const GRILLA = '1.05fr 2.5fr 1.05fr 1.25fr 0.85fr 0.85fr 0.6fr 0.75fr';
 
-const CELDA_SIN_CORTE: React.CSSProperties = {
-    fontSize: '0.86rem',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-};
+// const CELDA_SIN_CORTE: React.CSSProperties = {
+//     fontSize: '0.86rem',
+//     whiteSpace: 'nowrap',
+//     overflow: 'hidden',
+//     textOverflow: 'ellipsis',
+// };
 
 interface IncidentesListProps {
     /** Pantalla de incidentes abiertos: filtra sola y ordena del mas viejo al mas nuevo. */
@@ -45,7 +45,8 @@ export default function IncidentesList({ soloAbiertos = false }: IncidentesListP
     const [resumen, setResumen] = useState<ResumenIncidentes | null>(null);
     const [filtroEstado, setFiltroEstado] = useState<EstadoIncidente | ''>('');
     const [busqueda, setBusqueda] = useState('');
-    const [cargando, setCargando] = useState(true);
+    //const [cargando, setCargando] = useState(true);
+    const [, setCargando] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {

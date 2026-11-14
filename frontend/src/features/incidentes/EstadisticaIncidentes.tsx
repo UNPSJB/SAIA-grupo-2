@@ -5,7 +5,7 @@ import type { Incidente, TipoIncidente } from '../../types/incidentes';
 import { getEstadisticasIncidentes, getIncidentes } from '../../services/incidentesServices';
 import type { EstadisticaIncidente } from '../../services/incidentesServices';
 import {
-    COLOR_ESTADO,
+    //COLOR_ESTADO,
     COLOR_TIPO,
     ETIQUETA_ESTADO,
     ETIQUETA_TIPO,
