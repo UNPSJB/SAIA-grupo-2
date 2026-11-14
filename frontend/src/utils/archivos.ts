@@ -37,3 +37,7 @@ export function abrirArchivoEnPestania(url: string, nombre?: string | null): voi
         window.setTimeout(() => URL.revokeObjectURL(destino), MILISEGUNDOS_ANTES_DE_LIBERAR);
     }
 }
+
+
+
+

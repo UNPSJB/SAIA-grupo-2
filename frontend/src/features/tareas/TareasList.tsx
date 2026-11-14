@@ -14,6 +14,7 @@ import EncabezadoPagina from '../../components/EncabezadoPagina';
 export default function TareasList() {
     const { usuario } = useAuth();
     const [tareas, setTareas] = useState<Tarea[]>([]);
+    const esAdmin = usuario?.rol === 'admin'; 
 
     const [busqueda, setBusqueda] = useState('');
     useEffect(() => {
@@ -77,11 +78,11 @@ export default function TareasList() {
                 )
             )
         },
-        {
+        ...(esAdmin ? [{
             key: 'acciones',
             encabezado: 'Acciones',
             variant: 'acciones', 
-            render: (tarea) => (
+            render: (tarea: Tarea) => (
                 <>
                     {usuario?.rol === 'admin' && (
                         <>
@@ -95,7 +96,7 @@ export default function TareasList() {
                     )}
                 </>
             )
-            }
+            }] : [])
     ];
 
 
@@ -119,7 +120,7 @@ export default function TareasList() {
             <TablaPaginada
                 datos={tareasFiltradas}
                 columnas={misColumnas}
-                gridTemplateColumns="2fr 1fr 2fr 1fr 1.5fr"
+                gridTemplateColumns={esAdmin ? "2fr 1fr 2fr 1fr 1.5fr" : "2fr 1fr 2fr 1fr"}
                 itemsPorPagina={10}
                 mensajeVacio="No hay tareas registradas."
                 columnaOrdenInicial="titulo"
