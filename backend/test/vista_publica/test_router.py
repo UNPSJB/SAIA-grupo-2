@@ -12,7 +12,12 @@ def test_router_get_configuracion(client: TestClient):
     assert data["token"] is not None
 
 def test_router_put_configuracion_activar(client: TestClient):
-    payload = {"activa": True}
+    payload = {
+        "activa": True,
+        "titulo_publico": "Panadería La Espiga",
+        "presentacion": "Pan y facturas todos los días.",
+        "contacto": "Trelew",
+    }
     response = client.put("/vista-publica/configuracion", json=payload)
 
     assert response.status_code == 200

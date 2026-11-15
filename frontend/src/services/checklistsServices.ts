@@ -1,6 +1,7 @@
 import type { ChecklistItem, ChecklistMarcarPayload, RegistroChecklistDetalle, HistorialChecklistResumen } from '../types/checklists';
+import { API_URL as URL_SERVIDOR } from '../constants/config';
 
-const API_URL = 'http://127.0.0.1:8000/checklists';
+const API_URL = `${URL_SERVIDOR}/checklists`;
 
 export const getChecklistHoy = async (empleadoId?: number): Promise<ChecklistItem[]> => {
     try {

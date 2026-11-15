@@ -1,6 +1,7 @@
 import type { Empleado, EmpleadoPayload } from '../types/empleados';
+import { API_URL } from '../constants/config';
 
-const BASE_URL = 'http://127.0.0.1:8000/empleados';
+const BASE_URL = `${API_URL}/empleados`;
 
 export const getEmpleados = async (): Promise<Empleado[]> => {
     const res = await fetch(`${BASE_URL}/`);

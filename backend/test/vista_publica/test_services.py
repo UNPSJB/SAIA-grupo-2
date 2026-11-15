@@ -30,7 +30,7 @@ def test_modificar_configuracion_por_id(db_session: Session):
     updated = services.modificar_configuracion(
         db_session,
         target.id,
-        ConfiguracionVistaPublicaUpdate(nombre="Planta Principal", activa=True)
+        ConfiguracionVistaPublicaUpdate(nombre="Planta Principal", activa=True, titulo_publico="Panadería La Espiga", presentacion="Pan y facturas todos los días.", contacto="Trelew")
     )
 
     assert updated.nombre == "Planta Principal"

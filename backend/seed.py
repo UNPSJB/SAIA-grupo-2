@@ -1,4 +1,5 @@
 import random
+import uuid
 from datetime import date, datetime, time, timedelta, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import insert, delete
@@ -38,6 +39,7 @@ from src.productos.models import Producto
 from src.productos.constants import TipoProducto
 from src.lotes_produccion.models import LoteProduccion
 from src.lotes_produccion import services as lotes_produccion_services
+from src.vista_publica.models import ConfiguracionVistaPublica
 from src.asociaciones.lote_insumos import lote_insumo
 from pathlib import Path
 from src.unidades_medida import services as unidades_medida_services
@@ -679,6 +681,28 @@ def cargar_datos_nutricionales_de_ejemplo(db: Session) -> int:
     return cargados
 
 
+def crear_vista_publica_de_ejemplo(db: Session) -> None:
+    """Deja un QR activo con la presentacion del establecimiento, listo para mostrar en la demo."""
+    db.add(ConfiguracionVistaPublica(
+        nombre="Local Centro",
+        activa=True,
+        fecha_activacion=datetime.now(timezone.utc),
+        token=uuid.uuid4().hex,
+        mostrar_cumplimiento_limpieza=True,
+        mostrar_equipos_calibrados=True,
+        mostrar_capacitaciones=True,
+        mostrar_poes_vigentes=False,
+        mostrar_trazabilidad_lotes=True,
+        titulo_publico="Panadería La Espiga",
+        presentacion=(
+            "Elaboramos pan, facturas y pastelería todos los días con materias primas seleccionadas.\n"
+            "Trabajamos con buenas prácticas de manufactura y controles de higiene diarios."
+        ),
+        contacto="Av. Fontana 123, Trelew · Lunes a sábado de 7 a 20 h",
+    ))
+    db.commit()
+
+
 def seed_database(reset: bool = True):
     if reset:
         print("Recreando las tablas de la base de datos...")
@@ -1163,6 +1187,10 @@ def seed_database(reset: bool = True):
         if db.query(Producto).count() == 0:
             cantidad_lotes = generar_productos_y_lotes(db)
             print(f"Productos ({len(DATOS_PRODUCTOS)}) y lotes de produccion ({cantidad_lotes}) creados.")
+
+        if db.query(ConfiguracionVistaPublica).count() == 0:
+            crear_vista_publica_de_ejemplo(db)
+            print("Vista publica de ejemplo creada (QR 'Local Centro').")
 
         if db.query(AlimentoReferencia).count() == 0:
             insumos_con_datos = cargar_datos_nutricionales_de_ejemplo(db)

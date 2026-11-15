@@ -15,6 +15,11 @@ import ModalAlerta from '../../components/alerta';
 import ModalConfirmacion from '../../components/confirmacion';
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 import VistaPublicaContenido from './VistaPublicaContenido';
+import { abiertoDesdeEstaPc, direccionesDeRed, urlVistaPublica } from '../../utils/vistaPublicaUrl';
+import { LARGO_CONTACTO, LARGO_PRESENTACION, LARGO_TITULO_PUBLICO } from './presentacion';
+
+const REDES = direccionesDeRed();
+const DESDE_ESTA_PC = abiertoDesdeEstaPc();
 
 export default function ConfiguracionVistaPublica() {
     const [configuraciones, setConfiguraciones] = useState<ConfiguracionVistaPublica[]>([]);
@@ -34,8 +39,12 @@ export default function ConfiguracionVistaPublica() {
     const [poesEditar, setPoesEditar] = useState<boolean>(false);
     const [capacitacionesEditar, setCapacitacionesEditar] = useState<boolean>(false);
     const [trazabilidadEditar, setTrazabilidadEditar] = useState<boolean>(false);
-    const [errorIndicadoresModal, setErrorIndicadoresModal] = useState<string>('');
+    const [erroresPresentacion, setErroresPresentacion] = useState({ titulo: '', presentacion: '', contacto: '' });
     const [errorNombreEditar, setErrorNombreEditar] = useState<string>('');
+    const [tituloEditar, setTituloEditar] = useState<string>('');
+    const [presentacionEditar, setPresentacionEditar] = useState<string>('');
+    const [contactoEditar, setContactoEditar] = useState<string>('');
+    const [red, setRed] = useState<string | null>(REDES[0] ?? null);
 
     const [modalEliminarId, setModalEliminarId] = useState<number | null>(null);
     const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
@@ -122,7 +131,10 @@ export default function ConfiguracionVistaPublica() {
         setPoesEditar(conf.mostrar_poes_vigentes ?? false);
         setCapacitacionesEditar(conf.mostrar_capacitaciones ?? false);
         setTrazabilidadEditar(conf.mostrar_trazabilidad_lotes ?? false);
-        setErrorIndicadoresModal('');
+        setTituloEditar(conf.titulo_publico ?? '');
+        setPresentacionEditar(conf.presentacion ?? '');
+        setContactoEditar(conf.contacto ?? '');
+        setErroresPresentacion({ titulo: '', presentacion: '', contacto: '' });
         setErrorNombreEditar('');
 
         if (conf.token && conf.activa) {
@@ -143,11 +155,13 @@ export default function ConfiguracionVistaPublica() {
         }
         setErrorNombreEditar('');
 
-        if (!limpiezaEditar && !equiposEditar && !poesEditar && !capacitacionesEditar && !trazabilidadEditar) {
-            setErrorIndicadoresModal('Debe seleccionar al menos un indicador para mostrar en la vista pública.');
-            return;
-        }
-        setErrorIndicadoresModal('');
+        const errores = {
+            titulo: tituloEditar.trim() ? '' : 'El nombre a mostrar es obligatorio.',
+            presentacion: presentacionEditar.trim() ? '' : 'El mensaje de presentación es obligatorio.',
+            contacto: contactoEditar.trim() ? '' : 'El contacto es obligatorio.',
+        };
+        setErroresPresentacion(errores);
+        if (errores.titulo || errores.presentacion || errores.contacto) return;
 
         try {
             setLoading(true);
@@ -158,7 +172,10 @@ export default function ConfiguracionVistaPublica() {
                 mostrar_equipos_calibrados: equiposEditar,
                 mostrar_capacitaciones: capacitacionesEditar,
                 mostrar_poes_vigentes: poesEditar,
-                mostrar_trazabilidad_lotes: trazabilidadEditar
+                mostrar_trazabilidad_lotes: trazabilidadEditar,
+                titulo_publico: tituloEditar.trim(),
+                presentacion: presentacionEditar.trim(),
+                contacto: contactoEditar.trim()
             };
             const actualizada = await updateConfiguracionVistaPublicaById(configSeleccionada.id, payload);
             setModalEditarAbierto(false);
@@ -169,7 +186,7 @@ export default function ConfiguracionVistaPublica() {
             setModalAlerta({
                 isOpen: true,
                 titulo: 'Error',
-                mensaje: 'Ocurrió un error al guardar los cambios del código QR.'
+                mensaje: err instanceof Error ? err.message : 'Ocurrió un error al guardar los cambios del código QR.'
             });
         } finally {
             setLoading(false);
@@ -185,6 +202,11 @@ export default function ConfiguracionVistaPublica() {
             }
         } catch (err) {
             console.error("Error al cambiar estado:", err);
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'No se pudo activar',
+                mensaje: err instanceof Error ? err.message : 'No se pudo cambiar el estado del código QR.'
+            });
         }
     };
 
@@ -212,7 +234,7 @@ export default function ConfiguracionVistaPublica() {
 
     const copiarEnlace = (tokenStr: string | null) => {
         if (!tokenStr) return;
-        const url = `${window.location.origin}/publico/${tokenStr}`;
+        const url = urlVistaPublica(tokenStr, red);
         navigator.clipboard.writeText(url);
         setModalAlerta({
             isOpen: true,
@@ -299,7 +321,6 @@ export default function ConfiguracionVistaPublica() {
         return <div className={styles.contenedorPrincipal}>Cargando configuración de vistas públicas...</div>;
     }
 
-    // Objeto para vista previa interactiva en tiempo real en el modal de edición
     const resumenPreviaLocal: VistaPublicaResumen | null = resumenPrevia ? {
         ...resumenPrevia,
         nombre: nombreEditar,
@@ -307,7 +328,10 @@ export default function ConfiguracionVistaPublica() {
         mostrar_equipos_calibrados: equiposEditar,
         mostrar_poes_vigentes: poesEditar,
         mostrar_capacitaciones: capacitacionesEditar,
-        mostrar_trazabilidad_lotes: trazabilidadEditar
+        mostrar_trazabilidad_lotes: trazabilidadEditar,
+        titulo_publico: tituloEditar.trim() || null,
+        presentacion: presentacionEditar.trim() || null,
+        contacto: contactoEditar.trim() || null
     } : null;
 
     return (
@@ -332,7 +356,6 @@ export default function ConfiguracionVistaPublica() {
                 />
             </div>
 
-            {/* MODAL CREAR NUEVO QR */}
             {modalCrearAbierto && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
                     <div className={styles.tarjeta} style={{ maxWidth: '450px', width: '100%' }}>
@@ -365,7 +388,6 @@ export default function ConfiguracionVistaPublica() {
                 </div>
             )}
 
-            {/* MODAL CONFIGURAR / EDITAR QR */}
             {modalEditarAbierto && configSeleccionada && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
                     <div className={styles.tarjeta} style={{ maxWidth: '650px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -393,6 +415,66 @@ export default function ConfiguracionVistaPublica() {
                                 )}
                             </div>
 
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                <div>
+                                    <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.95rem', color: 'var(--text-h)' }}>Presentación del establecimiento:</h4>
+                                    <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                                        Se muestra siempre en la vista pública, con o sin indicadores. No incluyas datos del personal.
+                                    </p>
+                                </div>
+                                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-h)' }}>
+                                    Nombre a mostrar *
+                                    <input
+                                        type="text"
+                                        maxLength={LARGO_TITULO_PUBLICO}
+                                        placeholder="Ej. Panadería La Espiga"
+                                        value={tituloEditar}
+                                        onChange={(e) => { setTituloEditar(e.target.value); setErroresPresentacion((previos) => ({ ...previos, titulo: '' })); }}
+                                        style={{ width: '100%', marginTop: '0.35rem' }}
+                                    />
+                                    {erroresPresentacion.titulo && (
+                                        <span style={{ display: 'block', color: '#ef4444', fontSize: '0.82rem', fontWeight: 400, marginTop: '4px' }}>
+                                            {erroresPresentacion.titulo}
+                                        </span>
+                                    )}
+                                </label>
+                                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-h)' }}>
+                                    Mensaje de presentación *
+                                    <textarea
+                                        maxLength={LARGO_PRESENTACION}
+                                        rows={4}
+                                        placeholder="Ej. Elaboramos pan y facturas todos los días con materias primas seleccionadas."
+                                        value={presentacionEditar}
+                                        onChange={(e) => { setPresentacionEditar(e.target.value); setErroresPresentacion((previos) => ({ ...previos, presentacion: '' })); }}
+                                        style={{ width: '100%', marginTop: '0.35rem', boxSizing: 'border-box', resize: 'vertical', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-h)', fontFamily: 'inherit', fontWeight: 400, fontSize: '0.92rem' }}
+                                    />
+                                    {erroresPresentacion.presentacion && (
+                                        <span style={{ display: 'block', color: '#ef4444', fontSize: '0.82rem', fontWeight: 400, marginTop: '4px' }}>
+                                            {erroresPresentacion.presentacion}
+                                        </span>
+                                    )}
+                                    <span style={{ display: 'block', textAlign: 'right', fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-muted)' }}>
+                                        {presentacionEditar.length}/{LARGO_PRESENTACION}
+                                    </span>
+                                </label>
+                                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-h)' }}>
+                                    Contacto *
+                                    <input
+                                        type="text"
+                                        maxLength={LARGO_CONTACTO}
+                                        placeholder="Ej. Av. Fontana 123 · Tel. 280 400-0000 · @laespiga"
+                                        value={contactoEditar}
+                                        onChange={(e) => { setContactoEditar(e.target.value); setErroresPresentacion((previos) => ({ ...previos, contacto: '' })); }}
+                                        style={{ width: '100%', marginTop: '0.35rem' }}
+                                    />
+                                    {erroresPresentacion.contacto && (
+                                        <span style={{ display: 'block', color: '#ef4444', fontSize: '0.82rem', fontWeight: 400, marginTop: '4px' }}>
+                                            {erroresPresentacion.contacto}
+                                        </span>
+                                    )}
+                                </label>
+                            </div>
+
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)' }}>
                                 <div>
                                     <strong style={{ color: 'var(--text-h)' }}>Estado de la Vista Pública:</strong>
@@ -415,17 +497,17 @@ export default function ConfiguracionVistaPublica() {
 
                             {activaEditar && (
                                 <div>
-                                    <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '0.95rem', color: 'var(--text-h)' }}>Indicadores Visibles:</h4>
+                                    <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.95rem', color: 'var(--text-h)' }}>Indicadores Visibles:</h4>
+                                    <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                                        Opcionales: elegí cuáles mostrar, o ninguno.
+                                    </p>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                         <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
                                             <span style={{ fontSize: '0.9rem' }}>Cumplimiento de Limpieza e Higiene</span>
                                             <input
                                                 type="checkbox"
                                                 checked={limpiezaEditar}
-                                                onChange={(e) => {
-                                                    setLimpiezaEditar(e.target.checked);
-                                                    setErrorIndicadoresModal('');
-                                                }}
+                                                onChange={(e) => setLimpiezaEditar(e.target.checked)}
                                                 style={{ width: '18px', height: '18px' }}
                                             />
                                         </label>
@@ -435,10 +517,7 @@ export default function ConfiguracionVistaPublica() {
                                             <input
                                                 type="checkbox"
                                                 checked={equiposEditar}
-                                                onChange={(e) => {
-                                                    setEquiposEditar(e.target.checked);
-                                                    setErrorIndicadoresModal('');
-                                                }}
+                                                onChange={(e) => setEquiposEditar(e.target.checked)}
                                                 style={{ width: '18px', height: '18px' }}
                                             />
                                         </label>
@@ -448,10 +527,7 @@ export default function ConfiguracionVistaPublica() {
                                             <input
                                                 type="checkbox"
                                                 checked={poesEditar}
-                                                onChange={(e) => {
-                                                    setPoesEditar(e.target.checked);
-                                                    setErrorIndicadoresModal('');
-                                                }}
+                                                onChange={(e) => setPoesEditar(e.target.checked)}
                                                 style={{ width: '18px', height: '18px' }}
                                             />
                                         </label>
@@ -461,10 +537,7 @@ export default function ConfiguracionVistaPublica() {
                                             <input
                                                 type="checkbox"
                                                 checked={capacitacionesEditar}
-                                                onChange={(e) => {
-                                                    setCapacitacionesEditar(e.target.checked);
-                                                    setErrorIndicadoresModal('');
-                                                }}
+                                                onChange={(e) => setCapacitacionesEditar(e.target.checked)}
                                                 style={{ width: '18px', height: '18px' }}
                                             />
                                         </label>
@@ -474,27 +547,41 @@ export default function ConfiguracionVistaPublica() {
                                             <input
                                                 type="checkbox"
                                                 checked={trazabilidadEditar}
-                                                onChange={(e) => {
-                                                    setTrazabilidadEditar(e.target.checked);
-                                                    setErrorIndicadoresModal('');
-                                                }}
+                                                onChange={(e) => setTrazabilidadEditar(e.target.checked)}
                                                 style={{ width: '18px', height: '18px' }}
                                             />
                                         </label>
                                     </div>
-                                    {errorIndicadoresModal && (
-                                        <span style={{ color: '#ef4444', fontSize: '0.82rem', marginTop: '6px', display: 'block' }}>
-                                            {errorIndicadoresModal}
-                                        </span>
-                                    )}
                                 </div>
                             )}
 
                             {activaEditar && configSeleccionada.token && (
                                 <div style={{ textAlign: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
                                     <div style={{ padding: '0.75rem', background: '#fff', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'inline-block', marginBottom: '1rem' }}>
-                                        <QRCodeSVG value={`${window.location.origin}/publico/${configSeleccionada.token}`} size={160} level="H" />
+                                        <QRCodeSVG value={urlVistaPublica(configSeleccionada.token, red)} size={160} level="H" />
                                     </div>
+                                    <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.82rem', color: 'var(--text-muted)', wordBreak: 'break-all' }}>
+                                        {urlVistaPublica(configSeleccionada.token, red)}
+                                    </p>
+                                    {DESDE_ESTA_PC && REDES.length > 1 && (
+                                        <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.75rem', color: 'var(--text-h)' }}>
+                                            Red del QR
+                                            <select
+                                                value={red ?? ''}
+                                                onChange={(e) => setRed(e.target.value)}
+                                                style={{ width: 'auto', marginLeft: '0.5rem' }}
+                                            >
+                                                {REDES.map((direccion) => (
+                                                    <option key={direccion} value={direccion}>{direccion}</option>
+                                                ))}
+                                            </select>
+                                        </label>
+                                    )}
+                                    {DESDE_ESTA_PC && REDES.length === 0 && (
+                                        <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.82rem', color: '#f59e0b' }}>
+                                            Esta computadora no está conectada a ninguna red: el QR solo va a funcionar en esta PC.
+                                        </p>
+                                    )}
                                     <div>
                                         <Boton type="button" onClick={() => copiarEnlace(configSeleccionada.token)} variant="crear">Copiar Enlace Público</Boton>
                                     </div>
@@ -517,7 +604,6 @@ export default function ConfiguracionVistaPublica() {
                 </div>
             )}
 
-            {/* MODAL DE CONFIRMACION PARA ELIMINAR */}
             <ModalConfirmacion
                 isOpen={modalEliminarId !== null}
                 titulo="Eliminar Código QR"
@@ -526,7 +612,6 @@ export default function ConfiguracionVistaPublica() {
                 onCancel={() => setModalEliminarId(null)}
             />
 
-            {/* MODAL ALERTA */}
             <ModalAlerta
                 isOpen={modalAlerta.isOpen}
                 titulo={modalAlerta.titulo}

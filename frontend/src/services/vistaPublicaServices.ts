@@ -1,5 +1,10 @@
 import { API_URL } from '../constants/config';
-import type { ConfiguracionVistaPublica, VistaPublicaResumen } from '../types/vistaPublica';
+import { mensajeDeError } from '../utils/errores';
+import type {
+    ConfiguracionVistaPublica,
+    ConfiguracionVistaPublicaPayload,
+    VistaPublicaResumen,
+} from '../types/vistaPublica';
 
 const BASE_URL = `${API_URL}/vista-publica`;
 
@@ -27,15 +32,7 @@ export const createConfiguracionVistaPublica = async (nombre: string): Promise<C
     return res.json();
 };
 
-export const updateConfiguracionVistaPublica = async (payload: {
-    nombre?: string;
-    activa?: boolean;
-    mostrar_cumplimiento_limpieza?: boolean;
-    mostrar_equipos_calibrados?: boolean;
-    mostrar_capacitaciones?: boolean;
-    mostrar_poes_vigentes?: boolean;
-    mostrar_trazabilidad_lotes?: boolean;
-}): Promise<ConfiguracionVistaPublica> => {
+export const updateConfiguracionVistaPublica = async (payload: ConfiguracionVistaPublicaPayload): Promise<ConfiguracionVistaPublica> => {
     const res = await fetch(`${BASE_URL}/configuracion`, {
         method: 'PUT',
         headers: {
@@ -43,19 +40,11 @@ export const updateConfiguracionVistaPublica = async (payload: {
         },
         body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error("Error al actualizar la configuración de vista pública");
+    if (!res.ok) throw new Error(await mensajeDeError(res, 'Error al actualizar la configuración de vista pública'));
     return res.json();
 };
 
-export const updateConfiguracionVistaPublicaById = async (id: number, payload: {
-    nombre?: string;
-    activa?: boolean;
-    mostrar_cumplimiento_limpieza?: boolean;
-    mostrar_equipos_calibrados?: boolean;
-    mostrar_capacitaciones?: boolean;
-    mostrar_poes_vigentes?: boolean;
-    mostrar_trazabilidad_lotes?: boolean;
-}): Promise<ConfiguracionVistaPublica> => {
+export const updateConfiguracionVistaPublicaById = async (id: number, payload: ConfiguracionVistaPublicaPayload): Promise<ConfiguracionVistaPublica> => {
     const res = await fetch(`${BASE_URL}/configuraciones/${id}`, {
         method: 'PUT',
         headers: {
@@ -63,7 +52,7 @@ export const updateConfiguracionVistaPublicaById = async (id: number, payload: {
         },
         body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error("Error al actualizar la vista pública");
+    if (!res.ok) throw new Error(await mensajeDeError(res, 'Error al actualizar la vista pública'));
     return res.json();
 };
 

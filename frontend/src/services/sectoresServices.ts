@@ -1,6 +1,7 @@
 import type { Sector, SectorPayload } from '../types/sectores';
+import { API_URL } from '../constants/config';
 
-const BASE_URL = 'http://127.0.0.1:8000/sectores';
+const BASE_URL = `${API_URL}/sectores`;
 
 export const getSectores = async (): Promise<Sector[]> => {
     const res = await fetch(`${BASE_URL}/`);

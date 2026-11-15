@@ -17,6 +17,7 @@ def test_publico_activo_devuelve_indicadores_agregados(client: TestClient, db_se
     config = services.get_configuracion(db_session)
     services.update_configuracion(db_session, ConfiguracionVistaPublicaUpdate(
         activa=True,
+        titulo_publico="Panadería La Espiga", presentacion="Pan y facturas todos los días.", contacto="Trelew",
         mostrar_cumplimiento_limpieza=True,
         mostrar_equipos_calibrados=True
     ))
@@ -32,6 +33,7 @@ def test_publico_oculta_indicador_desactivado(client: TestClient, db_session: Se
     config = services.get_configuracion(db_session)
     services.update_configuracion(db_session, ConfiguracionVistaPublicaUpdate(
         activa=True,
+        titulo_publico="Panadería La Espiga", presentacion="Pan y facturas todos los días.", contacto="Trelew",
         mostrar_cumplimiento_limpieza=True,
         mostrar_equipos_calibrados=False
     ))

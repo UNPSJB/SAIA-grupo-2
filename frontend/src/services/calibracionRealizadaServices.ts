@@ -1,5 +1,6 @@
 import type { CalibracionRealizada, CalibracionRealizadaPayload } from '../types/calibracionRealizada';
-const BASE_URL = 'http://127.0.0.1:8000/calibraciones_realizadas';
+import { API_URL } from '../constants/config';
+const BASE_URL = `${API_URL}/calibraciones_realizadas`;
 
 export const getCalibracionesByEquipoId = async (id: string): Promise<CalibracionRealizada[]> =>{
     const res = await fetch(`${BASE_URL}/${id}`)

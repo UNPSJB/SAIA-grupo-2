@@ -4,9 +4,10 @@ import type {
     GraficoCumplimientoResumen,
     GranularidadCumplimiento,
 } from '../types/tablero';
+import { API_URL } from '../constants/config';
 
-const BASE_URL = 'http://127.0.0.1:8000/checklists';
-const PRODUCTOS_URL = 'http://127.0.0.1:8000/productos';
+const BASE_URL = `${API_URL}/checklists`;
+const PRODUCTOS_URL = `${API_URL}/productos`;
 
 export const getGraficoCumplimiento = async (
     fechaDesde: string,

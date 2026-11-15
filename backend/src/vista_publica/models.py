@@ -1,5 +1,6 @@
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
 from src.models import ModeloBase
+from src.vista_publica.constants import LARGO_CONTACTO, LARGO_PRESENTACION, LARGO_TITULO_PUBLICO
 
 class ConfiguracionVistaPublica(ModeloBase):
     __tablename__ = "configuracion_vista_publica"
@@ -15,3 +16,7 @@ class ConfiguracionVistaPublica(ModeloBase):
     mostrar_capacitaciones = Column(Boolean, default=False, nullable=False)
     mostrar_poes_vigentes = Column(Boolean, default=False, nullable=False)
     mostrar_trazabilidad_lotes = Column(Boolean, default=False, nullable=False)
+
+    titulo_publico = Column(String(LARGO_TITULO_PUBLICO), nullable=True)
+    presentacion = Column(String(LARGO_PRESENTACION), nullable=True)
+    contacto = Column(String(LARGO_CONTACTO), nullable=True)

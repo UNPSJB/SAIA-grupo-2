@@ -1,7 +1,8 @@
 import { Bar } from 'react-chartjs-2';
-import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Tooltip } from 'chart.js';
+import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Tooltip, type TooltipItem } from 'chart.js';
 import type { VistaPublicaResumen } from '../../types/vistaPublica';
 import styles from '../../styles/shared.module.css';
+import estilos from './VistaPublica.module.css';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
@@ -49,8 +50,8 @@ export default function VistaPublicaContenido({ resumen }: Props) {
             tooltip: {
                 displayColors: false,
                 callbacks: {
-                    label: (context: any) => {
-                        const val = context.raw;
+                    label: (context: TooltipItem<'bar'>) => {
+                        const val = context.raw as number | null;
                         return val === null ? 'Sin tareas' : `Cumplimiento: ${val}%`;
                     }
                 }
@@ -62,7 +63,7 @@ export default function VistaPublicaContenido({ resumen }: Props) {
                 max: 100,
                 border: { display: false },
                 grid: { color: 'rgba(226, 232, 240, 0.1)' },
-                ticks: { color: '#8b939b', stepSize: 25, callback: (v: any) => `${v}%` }
+                ticks: { color: '#8b939b', stepSize: 25, callback: (v: string | number) => `${v}%` }
             },
             x: {
                 grid: { display: false },
@@ -81,14 +82,27 @@ export default function VistaPublicaContenido({ resumen }: Props) {
 
     return (
         <div style={{ width: '100%', maxWidth: '520px', margin: '0 auto', padding: '1rem', boxSizing: 'border-box' }}>
-            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '0 0 0.5rem 0', color: 'var(--text-h)' }}>
-                    Indicadores de Calidad
-                </h2>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
-                    Monitoreo continuo de cumplimiento y buenas prácticas de manufactura.
+            <header className={estilos.portada}>
+                <span className={estilos.sello}>
+                    <i className="bi bi-shield-check" aria-hidden="true"></i>
+                    Compromiso con la inocuidad
+                </span>
+                <h1 className={estilos.nombre}>{resumen.titulo_publico || 'Nombre del establecimiento'}</h1>
+                <p className={estilos.mensaje}>
+                    {resumen.presentacion || 'Acá va el mensaje de presentación del establecimiento.'}
                 </p>
-            </div>
+            </header>
+
+            {algunIndicadorActivo && (
+                <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '0 0 0.5rem 0', color: 'var(--text-h)' }}>
+                        Indicadores de Calidad
+                    </h2>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                        Monitoreo continuo de cumplimiento y buenas prácticas de manufactura.
+                    </p>
+                </div>
+            )}
 
             {resumen.mostrar_cumplimiento_limpieza && (
                 <div className={styles.tarjeta} style={{ marginBottom: '1.25rem', textAlign: 'center', padding: '1.25rem' }}>
@@ -166,13 +180,10 @@ export default function VistaPublicaContenido({ resumen }: Props) {
                 </div>
             )}
 
-            {!algunIndicadorActivo && (
-                <div className={styles.tarjeta} style={{ textAlign: 'center', padding: '2rem' }}>
-                    <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
-                        No hay indicadores públicos seleccionados para mostrar actualmente.
-                    </p>
-                </div>
-            )}
+            <p className={estilos.contacto}>
+                <i className="bi bi-geo-alt" aria-hidden="true"></i>
+                <span>{resumen.contacto || 'Datos de contacto del establecimiento'}</span>
+            </p>
 
             <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                 <span>Última actualización: {fechaFormateada}</span>

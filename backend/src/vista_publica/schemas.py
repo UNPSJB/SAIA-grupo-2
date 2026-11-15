@@ -1,6 +1,12 @@
 from datetime import datetime
-from typing import List, Optional
-from pydantic import BaseModel, ConfigDict
+from typing import Annotated, List, Optional
+from pydantic import BaseModel, ConfigDict, StringConstraints
+
+from src.vista_publica.constants import LARGO_CONTACTO, LARGO_PRESENTACION, LARGO_TITULO_PUBLICO
+
+TituloPublico = Annotated[str, StringConstraints(strip_whitespace=True, max_length=LARGO_TITULO_PUBLICO)]
+Presentacion = Annotated[str, StringConstraints(strip_whitespace=True, max_length=LARGO_PRESENTACION)]
+Contacto = Annotated[str, StringConstraints(strip_whitespace=True, max_length=LARGO_CONTACTO)]
 
 class ConfiguracionVistaPublicaBase(BaseModel):
     nombre: str = "Vista Pública"
@@ -10,6 +16,9 @@ class ConfiguracionVistaPublicaBase(BaseModel):
     mostrar_capacitaciones: bool = False
     mostrar_poes_vigentes: bool = False
     mostrar_trazabilidad_lotes: bool = False
+    titulo_publico: Optional[str] = None
+    presentacion: Optional[str] = None
+    contacto: Optional[str] = None
 
 class ConfiguracionVistaPublicaCreate(BaseModel):
     nombre: Optional[str] = "Vista Pública"
@@ -22,6 +31,9 @@ class ConfiguracionVistaPublicaUpdate(BaseModel):
     mostrar_capacitaciones: Optional[bool] = None
     mostrar_poes_vigentes: Optional[bool] = None
     mostrar_trazabilidad_lotes: Optional[bool] = None
+    titulo_publico: Optional[TituloPublico] = None
+    presentacion: Optional[Presentacion] = None
+    contacto: Optional[Contacto] = None
 
 class ConfiguracionVistaPublicaResponse(ConfiguracionVistaPublicaBase):
     id: int
@@ -43,6 +55,9 @@ class VistaPublicaResumenResponse(BaseModel):
     mostrar_capacitaciones: bool = False
     mostrar_poes_vigentes: bool = False
     mostrar_trazabilidad_lotes: bool = False
+    titulo_publico: Optional[str] = None
+    presentacion: Optional[str] = None
+    contacto: Optional[str] = None
     porcentaje_cumplimiento_limpieza: Optional[float] = None
     porcentaje_equipos_al_dia: Optional[float] = None
     porcentaje_personal_capacitado: Optional[float] = None

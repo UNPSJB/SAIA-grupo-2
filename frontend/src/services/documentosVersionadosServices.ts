@@ -4,8 +4,9 @@ import type {
     VersionDocumento,
     VersionDocumentoPayload,
 } from '../types/documentosVersionados';
-const BASE_URL_DOCUMENTOS_VERSIONADOS = 'http://127.0.0.1:8000/documentos-versionados';
-const BASE_URL_DOCUMENTOS = 'http://127.0.0.1:8000/documentos';
+import { API_URL } from '../constants/config';
+const BASE_URL_DOCUMENTOS_VERSIONADOS = `${API_URL}/documentos-versionados`;
+const BASE_URL_DOCUMENTOS = `${API_URL}/documentos`;
 
 function describirDetalleError(detalle: unknown): string | null {
     if (typeof detalle === 'string' && detalle.trim()) return detalle;

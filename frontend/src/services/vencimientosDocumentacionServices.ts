@@ -3,8 +3,9 @@ import type {
     EstadoVencimiento,
     ResumenVencimientos,
 } from '../types/vencimientos';
+import { API_URL } from '../constants/config';
 
-const BASE_URL = 'http://127.0.0.1:8000/vencimientos';
+const BASE_URL = `${API_URL}/vencimientos`;
 
 export const getVencimientosConsolidados = async (
     categoria?: CategoriaVencimiento | '',

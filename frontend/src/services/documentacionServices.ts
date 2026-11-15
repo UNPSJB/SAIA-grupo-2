@@ -7,8 +7,9 @@ import type {
     RequisitoDocumentacion,
     TipoDocumentacion,
 } from '../types/documentacion';
+import { API_URL } from '../constants/config';
 
-const BASE_URL = 'http://127.0.0.1:8000/documentacion';
+const BASE_URL = `${API_URL}/documentacion`;
 
 export const getDocumentacion = async (
     empleadoId?: number,
