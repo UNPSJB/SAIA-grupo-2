@@ -9,16 +9,69 @@ export const getConfiguracionVistaPublica = async (): Promise<ConfiguracionVista
     return res.json();
 };
 
-export const updateConfiguracionVistaPublica = async (activa: boolean): Promise<ConfiguracionVistaPublica> => {
+export const getConfiguracionesVistaPublica = async (): Promise<ConfiguracionVistaPublica[]> => {
+    const res = await fetch(`${BASE_URL}/configuraciones`);
+    if (!res.ok) throw new Error("Error al listar las configuraciones de vista pública");
+    return res.json();
+};
+
+export const createConfiguracionVistaPublica = async (nombre: string): Promise<ConfiguracionVistaPublica> => {
+    const res = await fetch(`${BASE_URL}/configuraciones`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nombre }),
+    });
+    if (!res.ok) throw new Error("Error al crear la vista pública");
+    return res.json();
+};
+
+export const updateConfiguracionVistaPublica = async (payload: {
+    nombre?: string;
+    activa?: boolean;
+    mostrar_cumplimiento_limpieza?: boolean;
+    mostrar_equipos_calibrados?: boolean;
+    mostrar_capacitaciones?: boolean;
+    mostrar_poes_vigentes?: boolean;
+    mostrar_trazabilidad_lotes?: boolean;
+}): Promise<ConfiguracionVistaPublica> => {
     const res = await fetch(`${BASE_URL}/configuracion`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ activa }),
+        body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error("Error al actualizar la configuración de vista pública");
     return res.json();
+};
+
+export const updateConfiguracionVistaPublicaById = async (id: number, payload: {
+    nombre?: string;
+    activa?: boolean;
+    mostrar_cumplimiento_limpieza?: boolean;
+    mostrar_equipos_calibrados?: boolean;
+    mostrar_capacitaciones?: boolean;
+    mostrar_poes_vigentes?: boolean;
+    mostrar_trazabilidad_lotes?: boolean;
+}): Promise<ConfiguracionVistaPublica> => {
+    const res = await fetch(`${BASE_URL}/configuraciones/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error("Error al actualizar la vista pública");
+    return res.json();
+};
+
+export const deleteConfiguracionVistaPublicaById = async (id: number): Promise<void> => {
+    const res = await fetch(`${BASE_URL}/configuraciones/${id}`, {
+        method: 'DELETE',
+    });
+    if (!res.ok) throw new Error("Error al eliminar la vista pública");
 };
 
 export const getVistaPublicaByToken = async (token: string): Promise<VistaPublicaResumen> => {
