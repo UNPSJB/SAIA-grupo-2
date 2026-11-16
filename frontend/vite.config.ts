@@ -9,7 +9,6 @@ const REDES_INALAMBRICAS = /wi-?fi|wlan|wireless|inal[aá]mbrica/i
 const REDES_DE_MAQUINAS_VIRTUALES = /^192\.168\.(56|99)\./
 
 function prioridad(nombre: string, ip: string): number {
-  if (REDES_DE_MAQUINAS_VIRTUALES.test(ip)) return 9
   const base = REDES_INALAMBRICAS.test(nombre) ? 0 : 4
   if (ip.startsWith('192.168.')) return base
   if (ip.startsWith('10.')) return base + 1
@@ -27,7 +26,9 @@ function direccionesDeRed(): string[] {
       }
     }
   }
-  return candidatas.sort((a, b) => a.orden - b.orden).map((candidata) => candidata.ip)
+  const reales = candidatas.filter((candidata) => !REDES_DE_MAQUINAS_VIRTUALES.test(candidata.ip))
+  const elegidas = reales.length > 0 ? reales : candidatas
+  return elegidas.sort((a, b) => a.orden - b.orden).map((candidata) => candidata.ip)
 }
 
 export default defineConfig({
