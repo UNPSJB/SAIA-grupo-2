@@ -80,10 +80,10 @@ export default function AlertasRecambio() {
             valorOrdenamiento: (el) => textoRecambio(el),
             render: (el) => <span style={{ fontSize: '0.85rem' }}>{textoRecambio(el)}</span>
         },
-        {
+        ...(esAdmin ? [{
             key: 'acciones',
             encabezado: 'Acciones',
-            render: (el) => (
+            render: (el:ElementoLimpieza) => (
                 <div className={styles.grupoBotonesTabla}>
                     {esAdmin && (
                         <Boton variant="guardar" onClick={() => handleRecambio(el)}>
@@ -92,7 +92,7 @@ export default function AlertasRecambio() {
                     )}
                 </div>
             )
-        }
+        }] : [])
     ];
 
 
@@ -121,7 +121,7 @@ export default function AlertasRecambio() {
             <TablaPaginada
                         datos={alertasFiltradas}
                         columnas={misColumnas}
-                        gridTemplateColumns="2fr 1.3fr 1.5fr 1.2fr"
+                        gridTemplateColumns={esAdmin ? "2fr 1.3fr 1.5fr 1.2fr" : "2fr 1.3fr 1.5fr"}
                         itemsPorPagina={10}
                         mensajeVacio="No hay elementos vencidos ni próximos a vencer."
                         columnaOrdenInicial="estado_recambio"

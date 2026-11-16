@@ -15,12 +15,32 @@ def test_publico_token_invalido_devuelve_404(client: TestClient):
 
 def test_publico_activo_devuelve_indicadores_agregados(client: TestClient, db_session: Session):
     config = services.get_configuracion(db_session)
-    services.update_configuracion(db_session, ConfiguracionVistaPublicaUpdate(activa=True))
+    services.update_configuracion(db_session, ConfiguracionVistaPublicaUpdate(
+        activa=True,
+        titulo_publico="Panadería La Espiga", presentacion="Pan y facturas todos los días.", contacto="Trelew",
+        mostrar_cumplimiento_limpieza=True,
+        mostrar_equipos_calibrados=True
+    ))
 
     response = client.get(f"/vista-publica/publico/{config.token}")
     assert response.status_code == 200
     data = response.json()
     assert data["activa"] is True
-    assert "porcentaje_cumplimiento_limpieza" in data
-    assert "porcentaje_equipos_al_dia" in data
-    assert "fecha_actualizacion" in data
+    assert data["mostrar_cumplimiento_limpieza"] is True
+    assert data["mostrar_equipos_calibrados"] is True
+
+def test_publico_oculta_indicador_desactivado(client: TestClient, db_session: Session):
+    config = services.get_configuracion(db_session)
+    services.update_configuracion(db_session, ConfiguracionVistaPublicaUpdate(
+        activa=True,
+        titulo_publico="Panadería La Espiga", presentacion="Pan y facturas todos los días.", contacto="Trelew",
+        mostrar_cumplimiento_limpieza=True,
+        mostrar_equipos_calibrados=False
+    ))
+
+    response = client.get(f"/vista-publica/publico/{config.token}")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["mostrar_cumplimiento_limpieza"] is True
+    assert data["mostrar_equipos_calibrados"] is False
+    assert data["porcentaje_equipos_al_dia"] is None

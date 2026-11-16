@@ -1,6 +1,7 @@
 import type { Tarea, TareaPayload } from '../types/tareas';
+import { API_URL } from '../constants/config';
 
-const BASE_URL = 'http://127.0.0.1:8000/tareas';
+const BASE_URL = `${API_URL}/tareas`;
 
 export const getTareas = async (planId?: number): Promise<Tarea[]> => {
     const url = planId ? `${BASE_URL}/?plan_id=${planId}` : `${BASE_URL}/`;

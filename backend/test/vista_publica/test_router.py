@@ -12,7 +12,12 @@ def test_router_get_configuracion(client: TestClient):
     assert data["token"] is not None
 
 def test_router_put_configuracion_activar(client: TestClient):
-    payload = {"activa": True}
+    payload = {
+        "activa": True,
+        "titulo_publico": "Panadería La Espiga",
+        "presentacion": "Pan y facturas todos los días.",
+        "contacto": "Trelew",
+    }
     response = client.put("/vista-publica/configuracion", json=payload)
 
     assert response.status_code == 200
@@ -31,6 +36,6 @@ def test_router_put_configuracion_desactivar(client: TestClient):
     assert data["fecha_activacion"] is None
 
 def test_router_put_configuracion_payload_invalido(client: TestClient):
-    payload = {"estado_incorrecto": "activo"}
+    payload = {"activa": "tipo_no_booleano_invalido"}
     response = client.put("/vista-publica/configuracion", json=payload)
     assert response.status_code == 422

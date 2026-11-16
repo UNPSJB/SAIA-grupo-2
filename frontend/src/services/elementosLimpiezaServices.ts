@@ -3,8 +3,9 @@ import type {
     ElementoLimpiezaPayload,
     RecambioPayload
 } from '../types/elementosLimpieza';
+import { API_URL } from '../constants/config';
 
-const BASE_URL = 'http://127.0.0.1:8000/elementos_limpieza';
+const BASE_URL = `${API_URL}/elementos_limpieza`;
 
 export const getElementosLimpieza = async (): Promise<ElementoLimpieza[]> => {
     const res = await fetch(`${BASE_URL}/`);

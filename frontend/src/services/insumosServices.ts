@@ -1,7 +1,8 @@
 import type { Insumo, InsumoPayload } from '../types/insumos';
 import { mensajeDeError } from '../utils/errores';
+import { API_URL } from '../constants/config';
 
-const BASE_URL = 'http://127.0.0.1:8000/insumos';
+const BASE_URL = `${API_URL}/insumos`;
 
 export const getInsumos = async (): Promise<Insumo[]> => {
     const res = await fetch(`${BASE_URL}/`);

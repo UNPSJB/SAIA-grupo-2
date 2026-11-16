@@ -1,6 +1,7 @@
 import type { ProductoLimpieza, ProductoLimpiezaPayload } from '../types/productosLimpieza';
+import { API_URL } from '../constants/config';
 
-const BASE_URL = 'http://127.0.0.1:8000/productos_limpieza';
+const BASE_URL = `${API_URL}/productos_limpieza`;
 
 export const getProductos = async (conStock: boolean = false): Promise<ProductoLimpieza[]> => {
     const url = conStock ? `${BASE_URL}/?con_stock=true` : `${BASE_URL}/`;

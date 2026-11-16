@@ -1,6 +1,7 @@
 import type { Capacidad } from '../types/capacidades';
+import { API_URL } from '../constants/config';
 
-const BASE_URL = 'http://127.0.0.1:8000/capacidades';
+const BASE_URL = `${API_URL}/capacidades`;
 
 export const getCapacidades = async (): Promise<Capacidad[]> => {
     try {

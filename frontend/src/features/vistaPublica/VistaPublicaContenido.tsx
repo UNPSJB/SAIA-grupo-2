@@ -1,7 +1,8 @@
 import { Bar } from 'react-chartjs-2';
-import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Tooltip } from 'chart.js';
+import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Tooltip, type TooltipItem } from 'chart.js';
 import type { VistaPublicaResumen } from '../../types/vistaPublica';
 import styles from '../../styles/shared.module.css';
+import estilos from './VistaPublica.module.css';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
@@ -49,8 +50,8 @@ export default function VistaPublicaContenido({ resumen }: Props) {
             tooltip: {
                 displayColors: false,
                 callbacks: {
-                    label: (context: any) => {
-                        const val = context.raw;
+                    label: (context: TooltipItem<'bar'>) => {
+                        const val = context.raw as number | null;
                         return val === null ? 'Sin tareas' : `Cumplimiento: ${val}%`;
                     }
                 }
@@ -62,7 +63,7 @@ export default function VistaPublicaContenido({ resumen }: Props) {
                 max: 100,
                 border: { display: false },
                 grid: { color: 'rgba(226, 232, 240, 0.1)' },
-                ticks: { color: '#8b939b', stepSize: 25, callback: (v: any) => `${v}%` }
+                ticks: { color: '#8b939b', stepSize: 25, callback: (v: string | number) => `${v}%` }
             },
             x: {
                 grid: { display: false },
@@ -72,46 +73,117 @@ export default function VistaPublicaContenido({ resumen }: Props) {
         }
     };
 
+    const algunIndicadorActivo =
+        resumen.mostrar_cumplimiento_limpieza ||
+        resumen.mostrar_equipos_calibrados ||
+        resumen.mostrar_capacitaciones ||
+        resumen.mostrar_poes_vigentes ||
+        resumen.mostrar_trazabilidad_lotes;
+
     return (
         <div style={{ width: '100%', maxWidth: '520px', margin: '0 auto', padding: '1rem', boxSizing: 'border-box' }}>
-            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '0 0 0.5rem 0', color: 'var(--text-h)' }}>
-                    Indicadores de Calidad
-                </h2>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
-                    Monitoreo continuo de cumplimiento y buenas prácticas de manufactura.
+            <header className={estilos.portada}>
+                <span className={estilos.sello}>
+                    <i className="bi bi-shield-check" aria-hidden="true"></i>
+                    Compromiso con la inocuidad
+                </span>
+                <h1 className={estilos.nombre}>{resumen.titulo_publico || 'Nombre del establecimiento'}</h1>
+                <p className={estilos.mensaje}>
+                    {resumen.presentacion || 'Acá va el mensaje de presentación del establecimiento.'}
                 </p>
-            </div>
+            </header>
 
-            <div className={styles.tarjeta} style={{ marginBottom: '1.25rem', textAlign: 'center', padding: '1.25rem' }}>
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
-                    Cumplimiento de Limpieza e Higiene
+            {algunIndicadorActivo && (
+                <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '0 0 0.5rem 0', color: 'var(--text-h)' }}>
+                        Indicadores de Calidad
+                    </h2>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                        Monitoreo continuo de cumplimiento y buenas prácticas de manufactura.
+                    </p>
                 </div>
-                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#16a34a' }}>
-                    {resumen.porcentaje_cumplimiento_limpieza !== null ? `${resumen.porcentaje_cumplimiento_limpieza}%` : 'N/A'}
-                </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: '1.25rem' }}>
-                    Promedio global de tareas ejecutadas en los últimos 30 días
-                </div>
+            )}
 
-                {serie.length > 0 && (
-                    <div style={{ height: '180px', width: '100%', marginTop: '1rem' }}>
-                        <Bar data={chartData} options={chartOptions} />
+            {resumen.mostrar_cumplimiento_limpieza && (
+                <div className={styles.tarjeta} style={{ marginBottom: '1.25rem', textAlign: 'center', padding: '1.25rem' }}>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
+                        Cumplimiento de Limpieza e Higiene
                     </div>
-                )}
-            </div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#16a34a' }}>
+                        {resumen.porcentaje_cumplimiento_limpieza !== null ? `${resumen.porcentaje_cumplimiento_limpieza}%` : 'N/A'}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: '1.25rem' }}>
+                        Promedio global de tareas ejecutadas en los últimos 30 días
+                    </div>
 
-            <div className={styles.tarjeta} style={{ marginBottom: '1.25rem', textAlign: 'center', padding: '1.25rem' }}>
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
-                    Equipos con Calibración al Día
+                    {serie.length > 0 && (
+                        <div style={{ height: '180px', width: '100%', marginTop: '1rem' }}>
+                            <Bar data={chartData} options={chartOptions} />
+                        </div>
+                    )}
                 </div>
-                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#2563eb' }}>
-                    {resumen.porcentaje_equipos_al_dia !== null ? `${resumen.porcentaje_equipos_al_dia}%` : 'N/A'}
+            )}
+
+            {resumen.mostrar_equipos_calibrados && (
+                <div className={styles.tarjeta} style={{ marginBottom: '1.25rem', textAlign: 'center', padding: '1.25rem' }}>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
+                        Equipos con Calibración al Día
+                    </div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#2563eb' }}>
+                        {resumen.porcentaje_equipos_al_dia !== null ? `${resumen.porcentaje_equipos_al_dia}%` : 'N/A'}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                        Dispositivos y maquinarias con mantenimiento vigente
+                    </div>
                 </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                    Dispositivos y maquinarias con mantenimiento vigente
+            )}
+
+            {resumen.mostrar_poes_vigentes && (
+                <div className={styles.tarjeta} style={{ marginBottom: '1.25rem', textAlign: 'center', padding: '1.25rem' }}>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
+                        Procedimientos Operativos (POES) Vigentes
+                    </div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#0d9488' }}>
+                        {resumen.porcentaje_poes_vigentes !== null ? `${resumen.porcentaje_poes_vigentes}%` : 'N/A'}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                        Documentación y normas de calidad aprobadas
+                    </div>
                 </div>
-            </div>
+            )}
+
+            {resumen.mostrar_capacitaciones && (
+                <div className={styles.tarjeta} style={{ marginBottom: '1.25rem', textAlign: 'center', padding: '1.25rem' }}>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
+                        Personal Capacitado y Habilitado
+                    </div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#8b5cf6' }}>
+                        {resumen.porcentaje_personal_capacitado !== null ? `${resumen.porcentaje_personal_capacitado}%` : 'N/A'}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                        Libretas sanitarias y acreditaciones vigentes
+                    </div>
+                </div>
+            )}
+
+            {resumen.mostrar_trazabilidad_lotes && (
+                <div className={styles.tarjeta} style={{ marginBottom: '1.25rem', textAlign: 'center', padding: '1.25rem' }}>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
+                        Control de Trazabilidad en Lotes
+                    </div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#ea580c' }}>
+                        {resumen.porcentaje_lotes_trazables !== null ? `${resumen.porcentaje_lotes_trazables}%` : 'N/A'}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                        Lotes de producción con rastreabilidad verificada
+                    </div>
+                </div>
+            )}
+
+            <p className={estilos.contacto}>
+                <i className="bi bi-geo-alt" aria-hidden="true"></i>
+                <span>{resumen.contacto || 'Datos de contacto del establecimiento'}</span>
+            </p>
 
             <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                 <span>Última actualización: {fechaFormateada}</span>

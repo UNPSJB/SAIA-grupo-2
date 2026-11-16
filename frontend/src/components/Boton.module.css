@@ -25,7 +25,8 @@
 }
 
 .crear,
-.guardar {
+.guardar,
+.reanudar {
     background-color: var(--verde-estandar);
 }
 
@@ -45,7 +46,8 @@
 }
 
 .eliminar, 
-.limpiar {
+.limpiar,
+.pausar{
     background-color: var(--rojo-estandar);
 }
 

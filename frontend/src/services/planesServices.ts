@@ -1,6 +1,7 @@
 import type { PlanLimpieza, PlanLimpiezaPayload } from '../types/planes';
+import { API_URL } from '../constants/config';
 
-const BASE_URL = 'http://127.0.0.1:8000/planes';
+const BASE_URL = `${API_URL}/planes`;
 
 export const getPlanes = async (): Promise<PlanLimpieza[]> => {
     const res = await fetch(`${BASE_URL}/`);
