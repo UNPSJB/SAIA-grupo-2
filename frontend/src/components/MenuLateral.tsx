@@ -120,6 +120,7 @@ const SECCIONES: Seccion[] = [
                 icono: 'gear',
                 soloAdmin: true,
                 enlaces: [
+                    { etiqueta: 'Datos de la PYME', ruta: '/configuracion/empresa', exacta: true },
                     { etiqueta: 'Vista Pública', ruta: '/configuracion/vista-publica', exacta: true },
                 ],
             },

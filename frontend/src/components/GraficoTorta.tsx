@@ -84,6 +84,7 @@ interface GraficoTortaProps {
     onSeleccionar?: (clave: string) => void;
     unidad?: (valor: number) => string;
     alto?: number;
+    canvasId?: string;
 }
 
 export default function GraficoTorta({
@@ -94,13 +95,14 @@ export default function GraficoTorta({
     onSeleccionar,
     unidad = (valor) => String(valor),
     alto = 280,
+    canvasId,
 }: GraficoTortaProps) {
     const total = items.reduce((suma, item) => suma + item.valor, 0);
     const porcentajes = items.map((item) => (total > 0 ? Math.round((item.valor / total) * 100) : 0));
     const atenuado = (clave: string) => seleccionado !== null && seleccionado !== clave;
 
     return (
-        <div style={{ position: 'relative', height: `${alto}px`, width: '100%' }}>
+        <div id={canvasId} style={{ position: 'relative', height: `${alto}px`, width: '100%' }}>
             <Pie
                 data={{
                     labels: items.map((item) => item.etiqueta),

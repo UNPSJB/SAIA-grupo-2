@@ -74,6 +74,7 @@ import DocumentoVersionadoForm from './features/documentosVersionados/DocumentoV
 import DocumentosVigentesList from './features/documentosVersionados/DocumentosVigentesList';
 
 import ConfiguracionVistaPublica from './features/vistaPublica/ConfiguracionVistaPublica';
+import ConfiguracionEmpresa from './features/configuracionEmpresa/ConfiguracionEmpresa';
 import VistaPublica from './features/vistaPublica/VistaPublica';
 
 import './App.css';
@@ -234,6 +235,7 @@ function RutasProtegidas() {
             <Route path="/documentos/nuevo" element={<RutaAdmin><DocumentoVersionadoForm /></RutaAdmin>} />
             <Route path="/documentos/vigentes" element={<DocumentosVigentesList />} />
 
+            <Route path="/configuracion/empresa" element={<RutaAdmin><ConfiguracionEmpresa /></RutaAdmin>} />
             <Route path="/configuracion/vista-publica" element={<RutaAdmin><ConfiguracionVistaPublica /></RutaAdmin>} />
           </Routes>
         </main>
