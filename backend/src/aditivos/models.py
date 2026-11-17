@@ -17,7 +17,7 @@ class Aditivo(ModeloBase):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     nombre_completo: Mapped[str] = mapped_column(index=True)
-    clase_funcional: Mapped[int] = mapped_column(
+    clase_funcional_id: Mapped[int] = mapped_column(
         ForeignKey("clases_funcionales_aditivos.id"),
         nullable=False
     )

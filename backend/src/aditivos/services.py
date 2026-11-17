@@ -71,9 +71,9 @@ def validar_campos_aditivo(
 )-> Aditivo:
     if aditivo.nombre_completo is None:
         raise exceptions.NombreRequerido()
-    if aditivo.clase_funcional is None:
+    if aditivo.clase_funcional_id is None:
         raise exceptions.ClaseFuncionalRequerida()
-    aditivo.numero_ins = validar_ins_aditivo(db, aditivo.clase_funcional, aditivo.numero_ins)
+    aditivo.numero_ins = validar_ins_aditivo(db, aditivo.clase_funcional_id, aditivo.numero_ins)
     return aditivo
 
 def verificar_clase_sin_aditivos(
@@ -99,7 +99,7 @@ def listar_aditivos_de_clase(
     ) -> List [schemas.Aditivo]:
     aditivos = db.scalars(
         select(Aditivo)
-        .where(Aditivo.clase_funcional == clase_funcional_id)
+        .where(Aditivo.clase_funcional_id == clase_funcional_id)
     ).all()
     return aditivos
 

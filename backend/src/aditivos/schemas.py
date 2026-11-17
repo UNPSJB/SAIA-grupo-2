@@ -24,7 +24,7 @@ class ClaseFuncionalAditivo(ClaseFuncionalAditivoBase):
 # --- Aditivo ---
 class AditivoBase(BaseModel):
     nombre_completo: str
-    clase_funcional: int
+    clase_funcional_id: int
     numero_ins: Optional[str] = None
     
 
