@@ -8,6 +8,7 @@ from src.datos_nutricionales.constants import (
     UNIDAD_POR_DEFECTO,
     FuenteDatoNutricional,
     Nutriente,
+    EstadoTablaNutricional,
 )
 from src.documentacion.schemas import EmpleadoResumen
 from src.unidades_medida.constants import MagnitudUnidad
@@ -81,3 +82,32 @@ class ResumenNutricionalInsumo(BaseModel):
     modificados: int
     fuentes: List[FuenteDatoNutricional]
     ultima_actualizacion: Optional[datetime] = None
+
+
+
+class FilaNutricionalNormativa(BaseModel):
+    nutriente: Nutriente
+    nombre: str
+    subnivel: bool = False
+    obligatorio: bool = True
+    valor_100g: Optional[float] = None
+    valor_porcion: Optional[float] = None
+    porcentaje_vd: Optional[int] = None
+    completo: bool = True
+    
+    @computed_field
+    @property
+    def unidad(self) -> str:
+        return UNIDAD_NUTRIENTE.get(self.nutriente, UNIDAD_POR_DEFECTO)
+
+class InformacionNutricionalProducto(BaseModel):
+    producto_id: int
+    producto_nombre: str
+    unidad_base: str
+    porcion: Optional[float] = None
+    medida_casera: Optional[str] = None
+    estado: EstadoTablaNutricional
+    leyenda: str
+    nota_pie: str
+    insumos_sin_datos: List[str] = Field(default_factory=list)
+    filas: List[FilaNutricionalNormativa]

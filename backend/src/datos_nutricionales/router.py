@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -22,3 +22,15 @@ def read_datos_insumo(insumo_id: int, db: Session = Depends(get_db)):
 @router.put("/insumos/{insumo_id}/datos-nutricionales", response_model=schemas.DatosNutricionalesInsumo)
 def update_datos_insumo(insumo_id: int, carga: schemas.CargaDatosNutricionales, db: Session = Depends(get_db)):
     return services.cargar_datos(db, insumo_id, carga)
+
+
+@router.get("/productos/{producto_id}/informacion-nutricional", response_model=schemas.InformacionNutricionalProducto)
+def read_informacion_nutricional_producto(
+    producto_id: int,
+    porcion: Optional[float] = None,
+    medida_casera: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    return services.obtener_informacion_nutricional_producto(
+        db, producto_id, porcion=porcion, medida_casera=medida_casera
+    )

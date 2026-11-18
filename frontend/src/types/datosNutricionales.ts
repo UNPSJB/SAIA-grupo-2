@@ -74,3 +74,31 @@ export interface DatoNutricionalEntrada {
     alimento_codigo?: string | null;
     referencia?: string | null;
 }
+
+
+export type EstadoTablaNutricional = 'completa' | 'incompleta';
+
+export interface FilaNutricionalNormativa {
+    nutriente: Nutriente;
+    nombre: string;
+    unidad: string;
+    subnivel: boolean;
+    obligatorio: boolean;
+    valor_100g: number | null;
+    valor_porcion: number | null;
+    porcentaje_vd: number | null;
+    completo: boolean;
+}
+
+export interface InformacionNutricionalProducto {
+    producto_id: number;
+    producto_nombre: string;
+    unidad_base: string;
+    porcion: number | null;
+    medida_casera: string | null;
+    estado: EstadoTablaNutricional;
+    leyenda: string;
+    nota_pie: string;
+    insumos_sin_datos: string[];
+    filas: FilaNutricionalNormativa[];
+}
