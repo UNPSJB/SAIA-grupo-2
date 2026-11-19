@@ -24,20 +24,6 @@ def verificar_duplicado_clase_funcional(
     if CLASE_FUNCIONAL_DUPLICADA is not None:
         raise exceptions.ClaseFuncionalDuplicada()
 
-# Incluye verificacion de existencia
-def leer_clase_funcional_id(
-        db:Session,
-        clase_funcional_id:int
-    )-> ClaseFuncionalAditivo:
-    clase_funcional = db.scalar(
-        select(ClaseFuncionalAditivo)
-        .where(ClaseFuncionalAditivo.id == clase_funcional_id)
-    )
-    CLASE_FUNCIONAL_NO_EXISTE = clase_funcional is None
-    if CLASE_FUNCIONAL_NO_EXISTE:
-        raise exceptions.ClaseFuncionalNoEncontrada()
-    return clase_funcional
-
 def verificar_duplicado_ins(
         db:Session,
         aditivo_numero_ins:str
@@ -55,7 +41,7 @@ def validar_ins_aditivo(
         clase_funcional_id:int,
         aditivo_numero_ins: str | None
     )-> str | None:
-    clase_funcional = leer_clase_funcional_id(db, clase_funcional_id)
+    clase_funcional = leer_clase_funcional_orm(db, clase_funcional_id)
     if clase_funcional.necesita_ins:
         if aditivo_numero_ins is None:
             raise exceptions.NumeroINSRequerido()
@@ -64,6 +50,19 @@ def validar_ins_aditivo(
             return aditivo_numero_ins
     else:
         return None
+
+def leer_clase_funcional_orm(
+        db:Session,
+        clase_funcional_id:int
+    )-> ClaseFuncionalAditivo:
+    clase_funcional = db.scalar(
+        select(ClaseFuncionalAditivo)
+        .where(ClaseFuncionalAditivo.id == clase_funcional_id)
+    )
+    CLASE_FUNCIONAL_NO_EXISTE = clase_funcional is None
+    if CLASE_FUNCIONAL_NO_EXISTE:
+        raise exceptions.ClaseFuncionalNoEncontrada()
+    return clase_funcional
 
 def validar_campos_aditivo(
         db:Session,
@@ -103,6 +102,13 @@ def listar_aditivos_de_clase(
     ).all()
     return aditivos
 
+def leer_clase_funcional(
+    db:Session,
+    clase_funcional_id: int
+)->schemas.ClaseFuncionalAditivo:
+    clase = leer_clase_funcional_orm(db, clase_funcional_id)
+    return schemas.ClaseFuncionalAditivo.model_validate(clase)
+
 def crear_clase_funcional_aditivo(
         db: Session, 
         clase_funcional: schemas.ClaseFuncionalAditivoCreate
@@ -120,7 +126,7 @@ def modificar_clase_funcional(
         clase_funcional:schemas.ClaseFuncionalAditivoUpdate
     )->schemas.ClaseFuncionalAditivo:
         _clasefuncionaladitivo = ClaseFuncionalAditivo(**clase_funcional.model_dump())
-        db_clase_funcional = leer_clase_funcional_id(db, clase_funcional_id)
+        db_clase_funcional = leer_clase_funcional_orm(db, clase_funcional_id)
         verificar_clase_sin_aditivos(db, clase_funcional_id)
         if _clasefuncionaladitivo.nombre != db_clase_funcional.nombre:
             verificar_duplicado_clase_funcional(db,_clasefuncionaladitivo.nombre)
@@ -140,6 +146,18 @@ def listar_aditivos(
     logger.info ("Listando aditivos desde services")
     aditivos = db.scalars(select(Aditivo)).all()
     return aditivos
+
+def leer_aditivo(
+        db:Session,
+        aditivo_id: int
+    )->schemas.Aditivo:
+    aditivo = db.scalar(
+        select(Aditivo)
+        .where(Aditivo.id == aditivo_id)
+    )
+    if aditivo is None:
+        raise exceptions.AditivoNoEncontrado()
+    return schemas.Aditivo.model_validate(aditivo)
 
 def crear_aditivo(
         db:Session,

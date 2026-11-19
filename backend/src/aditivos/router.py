@@ -31,6 +31,10 @@ def listar_clases_funcionales_aditivos(db: Annotated[Session, Depends(get_db)]):
 def listar_aditivos_de_clase(db: Annotated[Session, Depends(get_db)], clase_funcional_id:int):
     return services.listar_aditivos_de_clase(db, clase_funcional_id)
 
+@router_clases_funcionales.get("/{clase_funcional_id}", response_model = schemas.ClaseFuncionalAditivo)
+def leer_clase_funcional(db:Annotated[Session, Depends(get_db)], clase_funcional_id:int):
+    return services.leer_clase_funcional(db, clase_funcional_id)
+
 @router_clases_funcionales.post(
     "/",
     response_model=schemas.ClaseFuncionalAditivo,
@@ -62,6 +66,10 @@ def update_clase_funcional(
 @router.get("/", response_model=list[schemas.Aditivo])
 def listar_aditivos(db: Annotated[Session, Depends(get_db)]):
     return services.listar_aditivos(db)
+
+@router.get("/{aditivo_id}", response_model=schemas.Aditivo)
+def leer_aditivo(db:Annotated[Session, Depends(get_db)], aditivo_id: int):
+    return services.leer_aditivo(db, aditivo_id)
 
 @router.post(
     "/",
