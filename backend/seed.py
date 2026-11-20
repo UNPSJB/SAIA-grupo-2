@@ -49,6 +49,9 @@ from src.datos_nutricionales import services as datos_nutricionales_services
 from src.datos_nutricionales.constants import FuenteDatoNutricional, Nutriente
 from src.datos_nutricionales.schemas import CargaDatosNutricionales
 
+from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
+from src.recetas.models import Receta, VersionReceta
+
 DIAS_DE_HISTORIAL = 90
 ZONA_PLANTA = timezone(timedelta(hours=-3))
 
