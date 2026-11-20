@@ -20,6 +20,7 @@ class LoteProduccionCreate(BaseModel):
     producto_id: int
     fecha: date
     cantidad: float
+    receta_id: Optional[int] = None
     receta_version_id: Optional[int] = None
     factor_escalado: Optional[float] = Field(default=None, gt=0)
     insumos: List[InsumoUtilizado] = Field(default_factory=list)
@@ -32,6 +33,7 @@ class LoteProduccion(BaseModel):
     producto_id: int
     fecha: date
     cantidad: float
+    receta_id: Optional[int] = None
     receta_version_id: Optional[int] = None
     factor_escalado: Optional[float] = None
     producto: ProductoResumen
