@@ -8,6 +8,7 @@ import Boton from '../../components/Boton';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 import LoteDetalleModal from '../lotesProduccion/LoteDetalleModal';
+import RotuladoFrontalProducto from '../rotuladoFrontal/RotuladoFrontalProducto';
 import { ETIQUETA_TIPO_PRODUCTO, formatearCantidad, formatearFecha } from './formatoProducto';
 import styles from '../../styles/shared.module.css';
 
@@ -197,6 +198,8 @@ export default function ProductoDetail() {
     )}
 </div>
 
+
+                <RotuladoFrontalProducto productoId={producto.id} />
 
                 <div className={styles.bloqueDetalle}>
                     <Link to="/productos">

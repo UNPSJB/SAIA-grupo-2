@@ -22,6 +22,8 @@ from src.vista_publica.models import ConfiguracionVistaPublica
 from src.alimentos_referencia.models import AlimentoReferencia
 from src.datos_nutricionales.models import DatoNutricionalInsumo
 from src.configuracion_empresa.models import ConfiguracionEmpresa
+from src.parametros_normativos.models import ConjuntoParametros, ModuloRotuladoFrontal
+from src.rotulado_frontal.models import EvaluacionAplicabilidad
 
 from src.config import settings
 from src.logger import setup_logging
@@ -47,6 +49,8 @@ from src.vista_publica.router import router as vista_publica_router
 from src.alimentos_referencia.router import router as alimentos_referencia_router
 from src.datos_nutricionales.router import router as datos_nutricionales_router
 from src.configuracion_empresa.router import router as configuracion_empresa_router
+from src.parametros_normativos.router import router as parametros_normativos_router
+from src.rotulado_frontal.router import router as rotulado_frontal_router
 from src.documentos_versionados.router import (
     router as documentos_versionados_router,
     router_documentos,
@@ -70,7 +74,6 @@ async def db_creation_lifespan(app: FastAPI):
 
 app = FastAPI(root_path=ROOT_PATH, lifespan=db_creation_lifespan)
 
-# Permitir orígenes de desarrollo local (localhost o 127.0.0.1 en cualquier puerto)
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -109,6 +112,8 @@ app.include_router(vista_publica_router)
 app.include_router(alimentos_referencia_router)
 app.include_router(datos_nutricionales_router)
 app.include_router(configuracion_empresa_router)
+app.include_router(parametros_normativos_router)
+app.include_router(rotulado_frontal_router)
 app.include_router(documentos_versionados_router)
 app.include_router(router_documentos)
 app.include_router(aditivos_router)

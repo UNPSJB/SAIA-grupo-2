@@ -75,6 +75,11 @@ import DocumentosVigentesList from './features/documentosVersionados/DocumentosV
 
 import ConfiguracionVistaPublica from './features/vistaPublica/ConfiguracionVistaPublica';
 import ConfiguracionEmpresa from './features/configuracionEmpresa/ConfiguracionEmpresa';
+import ParametrosNormativosList from './features/parametrosNormativos/ParametrosNormativosList';
+import ParametrosNormativosDetalle from './features/parametrosNormativos/ParametrosNormativosDetalle';
+import RotuladoFrontalList from './features/rotuladoFrontal/RotuladoFrontalList';
+import EvaluacionRotuladoFrontal from './features/rotuladoFrontal/EvaluacionRotuladoFrontal';
+import MarcasInsumos from './features/rotuladoFrontal/MarcasInsumos';
 import VistaPublica from './features/vistaPublica/VistaPublica';
 
 import './App.css';
@@ -225,6 +230,9 @@ function RutasProtegidas() {
             <Route path="/lotes-produccion/nuevo" element={<LoteForm />} />
             <Route path="/datos-nutricionales" element={<RutaAdmin><DatosNutricionalesList /></RutaAdmin>} />
             <Route path="/datos-nutricionales/:id" element={<RutaAdmin><DatosNutricionalesInsumo /></RutaAdmin>} />
+            <Route path="/rotulado-frontal" element={<RutaAdmin><RotuladoFrontalList /></RutaAdmin>} />
+            <Route path="/rotulado-frontal/insumos" element={<RutaAdmin><MarcasInsumos /></RutaAdmin>} />
+            <Route path="/rotulado-frontal/:id" element={<RutaAdmin><EvaluacionRotuladoFrontal /></RutaAdmin>} />
 
             <Route path="/incidentes/nuevo" element={<IncidenteForm />} />
             <Route path="/incidentes" element={<RutaAdmin><IncidentesList /></RutaAdmin>} />
@@ -237,6 +245,8 @@ function RutasProtegidas() {
 
             <Route path="/configuracion/empresa" element={<RutaAdmin><ConfiguracionEmpresa /></RutaAdmin>} />
             <Route path="/configuracion/vista-publica" element={<RutaAdmin><ConfiguracionVistaPublica /></RutaAdmin>} />
+            <Route path="/configuracion/parametros-normativos" element={<RutaAdmin><ParametrosNormativosList /></RutaAdmin>} />
+            <Route path="/configuracion/parametros-normativos/:id" element={<RutaAdmin><ParametrosNormativosDetalle /></RutaAdmin>} />
           </Routes>
         </main>
         

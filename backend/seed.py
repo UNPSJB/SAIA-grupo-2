@@ -48,6 +48,11 @@ from src.alimentos_referencia import services as alimentos_referencia_services
 from src.datos_nutricionales import services as datos_nutricionales_services
 from src.datos_nutricionales.constants import FuenteDatoNutricional, Nutriente
 from src.datos_nutricionales.schemas import CargaDatosNutricionales
+from src.parametros_normativos.models import ConjuntoParametros, ModuloRotuladoFrontal
+from src.parametros_normativos import services as parametros_normativos_services
+from src.rotulado_frontal.models import EvaluacionAplicabilidad
+from src.rotulado_frontal import services as rotulado_frontal_services
+from src.rotulado_frontal.schemas import ActualizacionMarcasInsumos, CambioMarcaInsumo, NuevaEvaluacion
 
 from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
 from src.recetas.models import Receta, VersionReceta
@@ -288,7 +293,6 @@ def generar_historial_checklists(db: Session) -> list:
     planes = db.query(Plan).all()
 
     checklists = []
-    # Generar ejecuciones para el historial (dias pasados + dia de hoy parcialmente completadas)
     for dias_atras in range(DIAS_DE_HISTORIAL, -1, -1):
         fecha = hoy - timedelta(days=dias_atras)
         mejora = 0.06 * (1 - dias_atras / DIAS_DE_HISTORIAL) - 0.03
@@ -314,7 +318,6 @@ def generar_historial_checklists(db: Session) -> list:
                         + mejora
                     )
 
-                # Si es HOY, forzar que algunas tareas queden completadas y otras pendientes
                 if dias_atras == 0:
                     if azar.random() > 0.45: # 45% completadas hoy, 55% pendientes hoy
                         continue
@@ -704,6 +707,65 @@ def crear_vista_publica_de_ejemplo(db: Session) -> None:
         contacto="Av. Fontana 123, Trelew · Lunes a sábado de 7 a 20 h",
     ))
     db.commit()
+
+
+EVALUACIONES_ROTULADO_FRONTAL = [
+    ("Pan francés", 20, {"envasado_en_ausencia_del_cliente": False}),
+    ("Pan lactal", 20, {"envasado_en_ausencia_del_cliente": True, "agrega_azucares": True, "agrega_grasas": True}),
+    (
+        "Pan lactal",
+        6,
+        {"envasado_en_ausencia_del_cliente": True, "agrega_azucares": True, "agrega_grasas": True, "agrega_sodio": True},
+    ),
+    ("Prepizza", 12, {"envasado_en_ausencia_del_cliente": True, "agrega_grasas": True, "agrega_sodio": True}),
+    ("Jugo de naranja exprimido", 9, {"envasado_en_ausencia_del_cliente": True}),
+]
+
+
+MARCAS_ROTULADO_INSUMOS = {
+    "Azúcar Blanca": {"agrega_azucares": True},
+    "Azúcar Morena": {"agrega_azucares": True},
+    "Miel": {"agrega_azucares": True},
+    "Sal Fina": {"agrega_sodio": True},
+    "Manteca": {"agrega_grasas": True},
+    "Margarina": {"agrega_grasas": True},
+    "Grasa Vacuna": {"agrega_grasas": True},
+    "Aceite de Girasol": {"agrega_grasas": True},
+    "Aceite de Oliva": {"agrega_grasas": True},
+    "Harina 000": {},
+    "Levadura Fresca": {},
+    "Leche Entera": {},
+    "Naranjas": {},
+}
+
+
+def cargar_rotulado_frontal_de_ejemplo(db: Session) -> int:
+    """Publica la version inicial de los parametros normativos y deja algunos productos ya evaluados.
+
+    El pan lactal tiene dos evaluaciones: la primera omitio la sal y se corrigio despues, para ver el historial.
+    Medialunas y galletitas quedan sin evaluar. Los insumos basicos quedan con sus marcas revisadas.
+    """
+    admin = db.query(Empleado).filter_by(legajo="EMP-1000").first()
+    parametros_normativos_services.importar_archivo(db, empleado_id=admin.id)
+    parametros_normativos_services.leer_modulo(db)
+    rotulado_frontal_services.actualizar_marcas_insumos(
+        db,
+        ActualizacionMarcasInsumos(
+            empleado_id=admin.id,
+            marcas=[
+                CambioMarcaInsumo(insumo_id=db.query(Insumo).filter_by(nombre=nombre).first().id, **marcas)
+                for nombre, marcas in MARCAS_ROTULADO_INSUMOS.items()
+            ],
+        ),
+    )
+    for nombre, dias_atras, respuestas in EVALUACIONES_ROTULADO_FRONTAL:
+        producto = db.query(Producto).filter_by(nombre=nombre).first()
+        evaluacion = rotulado_frontal_services.evaluar(
+            db, producto.id, NuevaEvaluacion(empleado_id=admin.id, **respuestas)
+        )
+        db.get(EvaluacionAplicabilidad, evaluacion.id).fecha = datetime.now() - timedelta(days=dias_atras, hours=3)
+    db.commit()
+    return len(EVALUACIONES_ROTULADO_FRONTAL)
 
 
 def seed_database(reset: bool = True):
@@ -1198,6 +1260,10 @@ def seed_database(reset: bool = True):
         if db.query(AlimentoReferencia).count() == 0:
             insumos_con_datos = cargar_datos_nutricionales_de_ejemplo(db)
             print(f"Base de referencia SARA importada y datos nutricionales de {insumos_con_datos} insumos cargados.")
+
+        if db.query(ConjuntoParametros).count() == 0:
+            evaluaciones = cargar_rotulado_frontal_de_ejemplo(db)
+            print(f"Parametros normativos v1 publicados y {evaluaciones} evaluaciones de rotulado frontal cargadas.")
 
         print("Base de datos poblada exitosamente con datos de prueba enriquecidos para SAIA!")
 
