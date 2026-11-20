@@ -6,11 +6,11 @@ from src.recetas.constants import TipoUsoInsumo
 detalle_receta = Table(
     "detalle_receta",
     ModeloBase.metadata,
-    Column("documento_id", Integer, primary_key=True, nullable=False),
-    Column("version", Integer, primary_key=True, nullable=False),
+    Column("receta_id", Integer, primary_key=True, nullable=False),
+    Column("nro_version", Integer, primary_key=True, nullable=False),
     ForeignKeyConstraint(
-        ["documento_id","version"],
-        ["version_receta.documento_id","version_receta.version"],
+        ["receta_id","nro_version"],
+        ["version_receta.receta_id","version_receta.version"],
         ondelete="RESTRICT"
     ),
     Column(

@@ -275,6 +275,8 @@ label {
 input[type="text"], 
 input[type="number"], 
 input[type="password"],
+input[type="email"],
+input[type="date"],
 select {
     background-color: var(--input-bg);
     color: var(--text-h);
@@ -722,6 +724,8 @@ input[type="date"].filtroFecha::-webkit-calendar-picker-indicator {
     input[type="text"],
     input[type="number"],
     input[type="password"],
+    input[type="email"],
+    input[type="date"],
     select {
         padding: 8px 10px;
         font-size: 0.85rem;

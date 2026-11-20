@@ -6,6 +6,7 @@ import type { GraficoCumplimientoItem, GranularidadCumplimiento } from '../../ty
 import { getGraficoCumplimiento } from '../../services/tableroServices';
 import IndicadoresResumen from '../../components/IndicadoresResumen';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
+import BotonExportar from '../../components/BotonExportar';
 import estilos from '../../components/Estadisticas.module.css';
 import styles from '../../styles/shared.module.css';
 
@@ -96,11 +97,13 @@ function GraficoBarras({
     granularidad,
     enCurso,
     limites,
+    canvasId = 'barras-cumplimiento-limpieza',
 }: {
     serie: GraficoCumplimientoItem[];
     granularidad: GranularidadCumplimiento;
     enCurso: (item: GraficoCumplimientoItem) => boolean;
     limites: { desde: string; hasta: string };
+    canvasId?: string;
 }) {
     const resumenAccesible = serie
         .map((item) =>
@@ -111,7 +114,7 @@ function GraficoBarras({
         .join('; ');
 
     return (
-        <div className={estilos.lienzoGrafico}>
+        <div id={canvasId} className={estilos.lienzoGrafico}>
             <Bar
                 role="img"
                 aria-label={resumenAccesible}
@@ -332,7 +335,15 @@ export default function GraficoCumplimiento() {
                                 <p className={estilos.vacio}>No hay tareas de limpieza programadas en el período.</p>
                             ) : (
                                 <>
-                                    <GraficoBarras serie={serie} granularidad={granularidad} enCurso={enCurso} limites={limites} />
+                                    <GraficoBarras serie={serie} granularidad={granularidad} enCurso={enCurso} limites={limites} canvasId="barras-cumplimiento-limpieza" />
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                                        <BotonExportar canvasId="barras-cumplimiento-limpieza" filename={`cumplimiento_limpieza_${fechaDesde}_a_${fechaHasta}`} />
+                                    </div>
+                                </>
+                            )}
+
+                            {!cargando && !serie.every((item) => item.porcentaje === null) && (
+                                <>
                                     <p className={estilos.notaGrafico}>
                                         Pasá el cursor por una barra para ver cuántas tareas se hicieron.
                                         {hayEnCurso &&

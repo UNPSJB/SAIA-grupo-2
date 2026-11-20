@@ -41,7 +41,8 @@
     background-color: var(--gris-estandar);
 }  
 
-.documentos {
+.documentos,
+.descargar {
     background-color: var(--celeste-estandar);
 }
 

@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-
+import { getConfiguracionEmpresa } from '../services/configuracionEmpresaServices';
 
 function dataUrlABlob(dataUrl: string): Blob {
     const [encabezado, datos] = dataUrl.split(',');
@@ -42,9 +42,6 @@ export function abrirArchivoEnPestania(url: string, nombre?: string | null): voi
     }
 }
 
-
-
-//funciones para exportar tablas. desde el componente tabla paginada
 export function exportarACSV(nombreArchivo: string, encabezados: string[], filas: string[][]): void {
     const escapar = (texto: string) => `"${String(texto ?? '').replace(/"/g, '""')}"`;
     
@@ -63,38 +60,100 @@ export function exportarACSV(nombreArchivo: string, encabezados: string[], filas
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+export async function exportarAPDF(titulo: string, encabezados: string[], filas: string[][]): Promise<void> {
+    let empresaConfig = null;
+    try {
+        empresaConfig = await getConfiguracionEmpresa();
+    } catch {
+        // Fallback si la API no está disponible
+    }
 
-
-export function exportarAPDF(titulo: string, encabezados: string[], filas: string[][]): void {
-    const doc = new jsPDF();
-    const fecha = new Date().toLocaleDateString('es-AR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
+    const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'a4'
     });
-    doc.setFontSize(16);
-    doc.setTextColor(33, 37, 41);
-    doc.text(titulo, 14, 15);
-    doc.setFontSize(10);
-    doc.setTextColor(108, 117, 125);
-    doc.text(`Fecha de emisión: ${fecha}`, 14, 22);
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 40;
+
+    let headerY = margin;
+
+    if (empresaConfig?.logo_base64 && empresaConfig.logo_base64.startsWith('data:image')) {
+        try {
+            doc.addImage(empresaConfig.logo_base64, 'PNG', margin, headerY, 50, 50);
+        } catch {
+            // Si falla la imagen continua limpiamente
+        }
+    }
+
+    const startTextX = empresaConfig?.logo_base64 ? margin + 60 : margin;
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(30, 41, 59);
+    doc.text(empresaConfig?.nombre_empresa || 'SAIA - Control de Calidad', startTextX, headerY + 14);
+
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`CUIT: ${empresaConfig?.cuit || '30-00000000-0'}`, startTextX, headerY + 26);
+    doc.text(`Domicilio: ${empresaConfig?.domicilio || 'Sin especificar'}`, startTextX, headerY + 36);
+    doc.text(`Contacto: ${empresaConfig?.telefono || ''} | ${empresaConfig?.email || ''}`, startTextX, headerY + 46);
+
+    const fechaStr = new Date().toLocaleDateString('es-AR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+    doc.setFontSize(8);
+    doc.text(`Fecha de emisión: ${fechaStr}`, pageWidth - margin, headerY + 14, { align: 'right' });
+
+    headerY += 60;
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(1);
+    doc.line(margin, headerY, pageWidth - margin, headerY);
+
+    headerY += 20;
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(15, 23, 42);
+    doc.text(titulo, margin, headerY);
+
     autoTable(doc, {
         head: [encabezados],
         body: filas,
-        startY: 27,
+        startY: headerY + 10,
+        margin: { left: margin, right: margin, bottom: 40 },
         styles: {
-            fontSize: 9,
-            cellPadding: 3
+            font: 'Helvetica',
+            fontSize: 8,
+            cellPadding: 5,
+            textColor: [30, 41, 59],
+            valign: 'middle',
         },
         headStyles: {
-            fillColor: [44, 62, 80], 
-            textColor: 255,
-            fontStyle: 'bold'
+            fillColor: [30, 41, 59],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
         },
         alternateRowStyles: {
-            fillColor: [248, 249, 250] 
+            fillColor: [248, 250, 252],
+        },
+        didDrawPage: (data) => {
+            const totalPages = (doc as any).internal.getNumberOfPages();
+            doc.setFont('Helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.setTextColor(148, 163, 184);
+            doc.text(
+                `Página ${data.pageNumber} de ${totalPages} - Generado por SAIA 2 Sistema de Aseguramiento de Inocuidad Alimentaria`,
+                pageWidth / 2,
+                pageHeight - 20,
+                { align: 'center' }
+            );
         }
     });
+
     const nombreLimpio = titulo.toLowerCase().replace(/\s+/g, '_');
     doc.save(`${nombreLimpio}.pdf`);
 }

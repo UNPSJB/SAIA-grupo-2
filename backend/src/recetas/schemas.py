@@ -1,29 +1,58 @@
-from typing import List, Optional
-from pydantic import BaseModel, Field
+from typing import Optional
+from datetime import date
 
-class RecetaEscaladaBase(BaseModel):
-    factor: Optional[float] = Field(None, gt=0)
-    cantidad_objetivo: Optional[float] = Field(None, gt=0)
+from pydantic import BaseModel, ConfigDict
 
+from src.productos.schemas import Producto
+from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo
 
-
-class RenglonEscalado(BaseModel):
+# --- Detalle Receta ---
+class DetalleRecetaBase(BaseModel):
     insumo_id: int
-    insumo_nombre: str
-    unidad_medida_id: int
-    unidad_medida_nombre: str
-    magnitud: str
-    cantidad_original: float
-    cantidad_escalada: float
-    stock_disponible: float
-    stock_suficiente: bool
+    cantidad_gramos: float
+    tipo_uso: TipoUsoInsumo
+    aditivo_id: Optional[int] = None
 
+class DetalleRecetaCreate(DetalleRecetaBase):
+    pass
 
-class RecetaEscalada(BaseModel):
-    receta_version_id: int
+class DetalleReceta(DetalleRecetaBase):
+    receta_id: int
+    nro_version: int
+    renglon: int
+    model_config = ConfigDict(from_attributes=True)
+
+# --- Receta ---
+class RecetaBase(BaseModel):
     producto_id: int
-    rendimiento_original: float
-    rendimiento_esperado: float
-    unidad_producto_nombre: str
-    factor_aplicado: float
-    renglones: List[RenglonEscalado]
+
+class RecetaCreate(RecetaBase):
+    version_inicial: VersionRecetaInicialCreate
+
+class Receta(RecetaBase):
+    id: int
+    producto: Producto
+    model_config = ConfigDict(from_attributes=True)
+
+# --- Version Receta ---
+class VersionRecetaInicialCreate(BaseModel):
+    rendimiento_final_gramos: float
+    unidad_venta_gramos: float
+    fecha_vigencia: Optional[date] = None
+    detalles: list[DetalleRecetaCreate]
+
+class VersionRecetaBase(BaseModel):
+    receta_id: int
+    version: int
+    rendimiento_final_gramos: float
+    unidad_venta_gramos: float
+    fecha_vigencia: Optional[date] = None
+
+class VersionRecetaCreate(VersionRecetaBase):
+    detalles: list[DetalleRecetaCreate]
+    pass
+
+class VersionReceta(VersionRecetaBase):
+    estado: EstadoVersionReceta
+    model_config = ConfigDict(from_attributes=True)
+

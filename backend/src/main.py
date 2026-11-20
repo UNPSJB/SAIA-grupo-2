@@ -21,6 +21,7 @@ from src.lotes_produccion.models import LoteProduccion
 from src.vista_publica.models import ConfiguracionVistaPublica
 from src.alimentos_referencia.models import AlimentoReferencia
 from src.datos_nutricionales.models import DatoNutricionalInsumo
+from src.configuracion_empresa.models import ConfiguracionEmpresa
 
 from src.config import settings
 from src.logger import setup_logging
@@ -45,9 +46,14 @@ from src.lotes_produccion.router import router as lotes_produccion_router
 from src.vista_publica.router import router as vista_publica_router
 from src.alimentos_referencia.router import router as alimentos_referencia_router
 from src.datos_nutricionales.router import router as datos_nutricionales_router
+from src.configuracion_empresa.router import router as configuracion_empresa_router
 from src.documentos_versionados.router import (
     router as documentos_versionados_router,
     router_documentos,
+)
+from src.aditivos.router import(
+    router as aditivos_router,
+    router_clases_funcionales as clases_funcionales_router
 )
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -102,5 +108,11 @@ app.include_router(lotes_produccion_router)
 app.include_router(vista_publica_router)
 app.include_router(alimentos_referencia_router)
 app.include_router(datos_nutricionales_router)
+app.include_router(configuracion_empresa_router)
 app.include_router(documentos_versionados_router)
 app.include_router(router_documentos)
+<<<<<<< HEAD
+=======
+app.include_router(aditivos_router)
+app.include_router(clases_funcionales_router)
+>>>>>>> feat/receta-versionada

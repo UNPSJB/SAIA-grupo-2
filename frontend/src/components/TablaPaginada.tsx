@@ -2,17 +2,14 @@ import { useState, useMemo } from 'react';
 import Boton from './Boton';
 import sharedStyles from '../styles/shared.module.css';
 import localStyles from './TablaPaginada.module.css';
-import {exportarACSV, exportarAPDF} from '../utils/archivos'; 
+import { exportarACSV, exportarAPDF } from '../utils/archivos';
 
-// Interfaz para definir cómo será cada columna
 export interface Columna<T> {
-    key: string;            // Identificador único (suele ser el nombre de la propiedad)
-    encabezado: string;     // Lo que dice en el título de la tabla
-    ordenable?: boolean;    // ¿Se puede hacer clic para ordenar?
-    // Función opcional para celdas personalizadas (botones, fechas, badges)
+    key: string;
+    encabezado: string;
+    ordenable?: boolean;
     render?: (item: T) => React.ReactNode; 
-    // Función opcional para extraer el valor real a ordenar (útil en objetos anidados)
-    valorOrdenamiento?: (item: T) => any; 
+    valorOrdenamiento?: (item: T) => any;
     variant?: string | ((item: T) => string);
 }
 
@@ -36,23 +33,19 @@ export default function TablaPaginada<T>({
     mensajeVacio = "No hay registros para mostrar.",
     columnaOrdenInicial = '',
     ordenAscInicial = true,
-    tituloExportacion= 'listado',
-    permitirExportar= true
-    
+    tituloExportacion = 'listado',
+    permitirExportar = true
 }: TablaPaginadaProps<T>) {
     
-    // Estados internos
     const [paginaActual, setPaginaActual] = useState(1);
     const [columnaOrden, setColumnaOrden] = useState<string>(columnaOrdenInicial);
     const [ordenAsc, setOrdenAsc] = useState<boolean>(ordenAscInicial);
     const [modalExportar, setModalExportar] = useState(false); 
 
-
     const minWidthFila = useMemo(() => {
         return `${Math.max(450, columnas.length * 100)}px`;
     }, [columnas.length]);
 
-    // 1. Manejo del Ordenamiento
     const handleSort = (columnaKey: string) => {
         if (columnaOrden === columnaKey) {
             setOrdenAsc(!ordenAsc);
@@ -62,7 +55,6 @@ export default function TablaPaginada<T>({
         }
     };
 
-    // 2. Procesar Datos (Ordenar)
     const datosOrdenados = useMemo(() => {
         if (!columnaOrden) return datos;
 
@@ -79,58 +71,48 @@ export default function TablaPaginada<T>({
         });
     }, [datos, columnaOrden, ordenAsc, columnas]);
 
-    // 3. Procesar Datos (Paginar)
     const totalPaginas = Math.ceil(datosOrdenados.length / itemsPorPagina) || 1;
     const indiceUltimo = paginaActual * itemsPorPagina;
     const indicePrimer = indiceUltimo - itemsPorPagina;
     
-    // Si la data cambia y nos quedamos en una página vacía, volvemos a la 1
     const itemsPaginados = datosOrdenados.slice(indicePrimer, indiceUltimo);
     if (itemsPaginados.length === 0 && paginaActual > 1) {
         setPaginaActual(1);
-        
     }
 
-
-
-    //para extraer el texto que se muestra en la tabla por que en algunas exportaciones se mostraba "zzz" que era un truco para el ordenamiento xD
     function extraerTextoDeNodo(nodo: React.ReactNode): string {
-    if (nodo === null || nodo === undefined || typeof nodo === 'boolean') {
+        if (nodo === null || nodo === undefined || typeof nodo === 'boolean') {
+            return '';
+        }
+        if (typeof nodo === 'string' || typeof nodo === 'number') {
+            return String(nodo);
+        }
+        if (Array.isArray(nodo)) {
+            return nodo.map(extraerTextoDeNodo).filter(Boolean).join(' ');
+        }
+        if (typeof nodo === 'object' && 'props' in nodo) {
+            return extraerTextoDeNodo((nodo as any).props?.children);
+        }
         return '';
     }
-    if (typeof nodo === 'string' || typeof nodo === 'number') {
-        return String(nodo);
-    }
-    if (Array.isArray(nodo)) {
-        return nodo.map(extraerTextoDeNodo).filter(Boolean).join(' ');
-    }
-    if (typeof nodo === 'object' && 'props' in nodo) {
-        return extraerTextoDeNodo((nodo as any).props?.children);
-    }
-    return '';
-}
 
-
-    const handleExportar = (formato: 'csv' | 'pdf') => {
-    // Filtramos la columna de acciones para no incluir botones en el reporte
-    const columnasExportables = columnas.filter(c => 
-        c.key !== 'acciones' && 
-        c.variant !== 'acciones' && 
-        !c.encabezado.toLowerCase().includes('accion')
-    );
-    const encabezados = columnasExportables.map(c => c.encabezado);
-       const filas = datosOrdenados.map(item => {
+    const handleExportar = async (formato: 'csv' | 'pdf') => {
+        const columnasExportables = columnas.filter(c =>
+            c.key !== 'acciones' &&
+            c.variant !== 'acciones' &&
+            !c.encabezado.toLowerCase().includes('accion')
+        );
+        const encabezados = columnasExportables.map(c => c.encabezado);
+        const filas = datosOrdenados.map(item => {
             return columnasExportables.map(col => {
-                // 1. Si la columna tiene render, extraemos el texto visual (ej: "Sin límite", "Sin sector", etc.)
                 if (col.render) {
                     try {
                         const texto = extraerTextoDeNodo(col.render(item));
                         if (texto) return texto;
                     } catch {
-                        // Si falla, pasamos al fallback directo
+                        // Fallback en caso de error
                     }
                 }
-                // 2. Si no tiene render o devolvió vacío, tomamos el valor directo de la propiedad
                 const valDirecto = (item as any)[col.key];
                 if (valDirecto !== undefined && valDirecto !== null && typeof valDirecto !== 'object') {
                     return String(valDirecto);
@@ -138,18 +120,14 @@ export default function TablaPaginada<T>({
                 return '';
             });
         });
-    if (formato === 'csv') {
-        exportarACSV(tituloExportacion, encabezados, filas);
-    } else {
-        exportarAPDF(tituloExportacion, encabezados, filas);
-    }
-    setModalExportar(false);
+
+        if (formato === 'csv') {
+            exportarACSV(tituloExportacion, encabezados, filas);
+        } else {
+            await exportarAPDF(tituloExportacion, encabezados, filas);
+        }
+        setModalExportar(false);
     };
-
-
-
-
-
 
     return (
         <>
@@ -176,7 +154,6 @@ export default function TablaPaginada<T>({
                     itemsPaginados.map((item, index) => (
                         <div key={index} className={sharedStyles.filaItem} style={{ gridTemplateColumns, minWidth: minWidthFila }}>
                             {columnas.map((col) => {
-                                // Evaluamos si la variante es una función (y le pasamos el item) o un string fijo
                                 const nombreVariante = typeof col.variant === 'function' ? col.variant(item) : col.variant;
                                 
                                 return (
@@ -190,7 +167,7 @@ export default function TablaPaginada<T>({
                 )}
             </div>
 
-    {datos.length > 0 && (
+            {datos.length > 0 && (
                 <div className={localStyles.pieTabla}>
                     <div></div>
                     <div>
@@ -219,26 +196,25 @@ export default function TablaPaginada<T>({
             )}
 
             {modalExportar && (
-        <div className={sharedStyles.modalOverlay} onClick={() => setModalExportar(false)}>
-        <div className={sharedStyles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', textAlign: 'center' }}>
-            <h3>Exportar Listado</h3>
-            <p>Elegí en qué formato querés descargar los registros:</p>
-            
-            <div className={sharedStyles.filaBotones} style={{ justifyContent: 'center', marginTop: '20px' }}>
-                <Boton variant="documentos" onClick={() => handleExportar('csv')}>
-                    CSV (Excel)
-                </Boton>
-                <Boton variant="documentos" onClick={() => handleExportar('pdf')}>
-                    PDF (Imprimir)
-                </Boton>
-                <Boton variant="volver" onClick={() => setModalExportar(false)}>
-                    Cancelar
-                </Boton>
-            </div>
-        </div>
-    </div>
-)}
+                <div className={sharedStyles.modalOverlay} onClick={() => setModalExportar(false)}>
+                    <div className={sharedStyles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', textAlign: 'center' }}>
+                        <h3>Exportar Listado</h3>
+                        <p>Elegí en qué formato querés descargar los registros:</p>
 
+                        <div className={sharedStyles.filaBotones} style={{ justifyContent: 'center', marginTop: '20px' }}>
+                            <Boton variant="documentos" onClick={() => handleExportar('csv')}>
+                                CSV (Excel)
+                            </Boton>
+                            <Boton variant="documentos" onClick={() => handleExportar('pdf')}>
+                                PDF (Imprimir)
+                            </Boton>
+                            <Boton variant="volver" onClick={() => setModalExportar(false)}>
+                                Cancelar
+                            </Boton>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

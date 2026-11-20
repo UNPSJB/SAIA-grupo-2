@@ -5,7 +5,6 @@ import type { Incidente, TipoIncidente } from '../../types/incidentes';
 import { getEstadisticasIncidentes, getIncidentes } from '../../services/incidentesServices';
 import type { EstadisticaIncidente } from '../../services/incidentesServices';
 import {
-    //COLOR_ESTADO,
     COLOR_TIPO,
     ETIQUETA_ESTADO,
     ETIQUETA_TIPO,
@@ -17,6 +16,7 @@ import GraficoBarrasHorizontales from '../../components/GraficoBarrasHorizontale
 import GraficoTorta from '../../components/GraficoTorta';
 import IndicadoresResumen from '../../components/IndicadoresResumen';
 import Boton from '../../components/Boton';
+import BotonExportar from '../../components/BotonExportar';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
 import estilos from '../../components/Estadisticas.module.css';
 import styles from '../../styles/shared.module.css';
@@ -155,8 +155,7 @@ export default function EstadisticaIncidentes() {
         setTipoSeleccionado((actual) => (actual === tipo ? null : tipo));
     };
 
-
-      const columnasDetalle: Columna<Incidente>[] = [
+    const columnasDetalle: Columna<Incidente>[] = [
         {
             key: 'fecha_hora_reporte',
             encabezado: 'Fecha',
@@ -196,7 +195,6 @@ export default function EstadisticaIncidentes() {
             )
         }
     ];
-
 
     return (
         <div className={styles.contenedorPrincipal}>
@@ -321,14 +319,23 @@ export default function EstadisticaIncidentes() {
                                 ) : total === 0 ? (
                                     <p className={estilos.vacio}>No hay incidentes en el período.</p>
                                 ) : (
-                                    <GraficoTorta
-                                        items={conteos}
-                                        colores={COLOR_TIPO}
-                                        colorTexto={TEXTO_SOBRE_COLOR_TIPO}
-                                        seleccionado={tipoSeleccionado}
-                                        onSeleccionar={alternarTipo}
-                                        unidad={unidadIncidentes}
-                                    />
+                                    <>
+                                        <GraficoTorta
+                                            canvasId="torta-distribucion-incidentes"
+                                            items={conteos}
+                                            colores={COLOR_TIPO}
+                                            colorTexto={TEXTO_SOBRE_COLOR_TIPO}
+                                            seleccionado={tipoSeleccionado}
+                                            onSeleccionar={alternarTipo}
+                                            unidad={unidadIncidentes}
+                                        />
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                                            <BotonExportar
+                                                canvasId="torta-distribucion-incidentes"
+                                                filename={`distribucion_incidentes_${fechaDesde}_a_${fechaHasta}`}
+                                            />
+                                        </div>
+                                    </>
                                 )}
                             </section>
                         </div>
@@ -344,8 +351,6 @@ export default function EstadisticaIncidentes() {
                             </Boton>
                         </div>
 
-
-                    
                         {cargandoDetalle ? (
                             <p className={estilos.vacio}>Cargando incidentes…</p>
                         ) : detalle?.error ? (
@@ -353,38 +358,6 @@ export default function EstadisticaIncidentes() {
                         ) : !detalle || detalle.datos.length === 0 ? (
                             <p className={estilos.vacio}>No hay incidentes de este tipo en el período.</p>
                         ) : (
-
-                            // <div className={styles.contenedorTabla} style={{ marginTop: 0 }}>
-                            //     <div className={styles.filaHeader} style={{ gridTemplateColumns: '1.1fr 2.4fr 0.9fr 0.5fr' }}>
-                            //         <div>Fecha</div>
-                            //         <div>Descripción</div>
-                            //         <div>Estado</div>
-                            //         <div>Acciones</div>
-                            //     </div>
-                            //     {detalle.datos.map((incidente) => (
-                            //         <div
-                            //             key={incidente.id}
-                            //             className={styles.filaItem}
-                            //             style={{ gridTemplateColumns: '1.1fr 2.4fr 0.9fr 0.5fr', textAlign: 'left' }}
-                            //         >
-                            //             <div>{formatearFechaHora(incidente.fecha_hora_reporte)}</div>
-                            //             <div style={{ overflowWrap: 'anywhere' }}>{incidente.descripcion}</div>
-                            //             <div className={estilos.estado}>
-                            //                 <span
-                            //                     className={estilos.estadoPunto}
-                            //                     style={{ backgroundColor: COLOR_ESTADO[incidente.estado] }}
-                            //                     aria-hidden="true"
-                            //                 />
-                            //                 {ETIQUETA_ESTADO[incidente.estado]}
-                            //             </div>
-                            //             <div style={{ textAlign: 'right' }}>
-                            //                 <Link to={`/incidentes/${incidente.id}`} title="Ver detalle del incidente">
-                            //                     <Boton variant="ver" style={{ padding: '6px 10px' }} />
-                            //                 </Link>
-                            //             </div>
-                            //         </div>
-                            //     ))}
-                            // </div>
                             <TablaPaginada
                                 datos={detalle?.datos ?? []}
                                 columnas={columnasDetalle}
@@ -394,10 +367,7 @@ export default function EstadisticaIncidentes() {
                                 columnaOrdenInicial="fecha_hora_reporte"
                                 ordenAscInicial={false}
                             />
-
                         )}
-
-                        
                     </section>
                 )}
             </div>
