@@ -11,13 +11,26 @@ from src.datos_nutricionales.constants import (
     FuenteDatoNutricional,
     Nutriente,
 )
-from src.datos_nutricionales.models import DatoNutricionalInsumo
+from src.datos_nutricionales.models import DatoNutricionalInsumo, ValorDiarioReferencia
 from src.empleados import services as empleados_services
 from src.empleados.models import Empleado
 from src.insumos import services as insumos_services
 from src.insumos.models import Insumo
 
 ORDEN_NUTRIENTES = {nutriente: posicion for posicion, nutriente in enumerate(Nutriente)}
+
+VALORES_DIARIOS_DEFAULT = [
+    (Nutriente.ENERGIA, 2000.0, "kcal", 4.0, 0),
+    (Nutriente.CARBOHIDRATOS, 300.0, "g", 0.5, 1),
+    (Nutriente.AZUCARES_TOTALES, None, "g", 0.5, 1),
+    (Nutriente.AZUCARES_ANADIDOS, 50.0, "g", 0.5, 1),
+    (Nutriente.PROTEINAS, 50.0, "g", 0.5, 1),
+    (Nutriente.GRASAS_TOTALES, 55.0, "g", 0.5, 1),
+    (Nutriente.GRASAS_SATURADAS, 22.0, "g", 0.5, 1),
+    (Nutriente.GRASAS_TRANS, None, "g", 0.1, 1),
+    (Nutriente.FIBRA_ALIMENTARIA, 25.0, "g", 0.5, 1),
+    (Nutriente.SODIO, 2000.0, "mg", 5.0, 0),
+]
 
 
 def _distintos(a: float, b: float) -> bool:
@@ -44,7 +57,6 @@ def obtener_datos_insumo(db: Session, insumo_id: int) -> schemas.DatosNutriciona
 
 
 def _origen(entrada: schemas.DatoNutricionalEntrada) -> tuple:
-    """Identifica de donde sale el dato: misma fuente y misma referencia es la misma carga."""
     if entrada.fuente == FuenteDatoNutricional.SARA:
         return (entrada.fuente, entrada.alimento_codigo, None)
     return (entrada.fuente, None, entrada.referencia or None)
@@ -69,11 +81,6 @@ def _registrar_modificacion(dato: DatoNutricionalInsumo, empleado: Empleado, mom
 def cargar_datos(
     db: Session, insumo_id: int, carga: schemas.CargaDatosNutricionales
 ) -> schemas.DatosNutricionalesInsumo:
-    """Carga, corrige o borra datos nutricionales del insumo dejando registro de fuente, fecha y autor.
-
-    Si cambia la fuente o la referencia, es una carga nueva: el valor informado pasa a ser el de
-    la fuente. Si se mantiene la fuente y cambia el valor, es una modificacion manual.
-    """
     insumos_services.leer_insumo(db, insumo_id)
     empleado = empleados_services.leer_empleado(db, carga.empleado_id)
 
@@ -131,7 +138,6 @@ def cargar_datos(
 
 
 def resumen_por_insumo(db: Session) -> List[schemas.ResumenNutricionalInsumo]:
-    """Estado de la carga nutricional de cada insumo activo, para ver de un vistazo que falta."""
     insumos = db.scalars(select(Insumo).where(Insumo.activo.is_(True)).order_by(Insumo.nombre)).all()
     datos_por_insumo: Dict[int, List[DatoNutricionalInsumo]] = {}
     for dato in db.scalars(select(DatoNutricionalInsumo)).all():
@@ -153,3 +159,42 @@ def resumen_por_insumo(db: Session) -> List[schemas.ResumenNutricionalInsumo]:
             )
         )
     return resumen
+
+
+def obtener_valores_diarios_referencia(db: Session) -> List[ValorDiarioReferencia]:
+    vds = db.scalars(select(ValorDiarioReferencia)).all()
+    if not vds:
+        for nut, vd_val, un, umbral, dec in VALORES_DIARIOS_DEFAULT:
+            db.add(ValorDiarioReferencia(
+                nutriente=nut,
+                valor_diario=vd_val,
+                unidad=un,
+                umbral_no_significativo=umbral,
+                decimales=dec
+            ))
+        db.commit()
+        vds = db.scalars(select(ValorDiarioReferencia)).all()
+    return sorted(vds, key=lambda x: ORDEN_NUTRIENTES[x.nutriente])
+
+
+def actualizar_valor_diario_referencia(
+    db: Session, nutriente: Nutriente, datos: schemas.ValorDiarioReferenciaUpdate
+) -> ValorDiarioReferencia:
+    vds = {v.nutriente: v for v in obtener_valores_diarios_referencia(db)}
+    vd = vds.get(nutriente)
+    if not vd:
+        vd = ValorDiarioReferencia(nutriente=nutriente)
+        db.add(vd)
+
+    if datos.valor_diario is not None:
+        vd.valor_diario = datos.valor_diario
+    if datos.unidad is not None:
+        vd.unidad = datos.unidad
+    if datos.umbral_no_significativo is not None:
+        vd.umbral_no_significativo = datos.umbral_no_significativo
+    if datos.decimales is not None:
+        vd.decimales = datos.decimales
+
+    db.commit()
+    db.refresh(vd)
+    return vd

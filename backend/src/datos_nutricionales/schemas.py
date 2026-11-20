@@ -16,8 +16,6 @@ TextoReferencia = Annotated[str, StringConstraints(strip_whitespace=True, max_le
 
 
 class DatoNutricionalEntrada(BaseModel):
-    """Un nutriente a cargar. Un valor nulo borra el dato cargado para ese nutriente."""
-
     nutriente: Nutriente
     valor: Optional[float] = None
     fuente: FuenteDatoNutricional
@@ -61,8 +59,6 @@ class DatoNutricional(BaseModel):
 
 
 class InsumoResumen(BaseModel):
-    """magnitud indica si los datos del insumo se expresan cada 100 g (masa) o cada 100 ml (volumen)."""
-
     id: int
     nombre: str
     activo: bool
@@ -81,3 +77,22 @@ class ResumenNutricionalInsumo(BaseModel):
     modificados: int
     fuentes: List[FuenteDatoNutricional]
     ultima_actualizacion: Optional[datetime] = None
+
+
+class ValorDiarioReferenciaBase(BaseModel):
+    valor_diario: Optional[float] = None
+    unidad: str = "g"
+    umbral_no_significativo: float = 0.0
+    decimales: int = 1
+
+
+class ValorDiarioReferenciaUpdate(BaseModel):
+    valor_diario: Optional[float] = None
+    unidad: Optional[str] = None
+    umbral_no_significativo: Optional[float] = None
+    decimales: Optional[int] = None
+
+
+class ValorDiarioReferencia(ValorDiarioReferenciaBase):
+    nutriente: Nutriente
+    model_config = ConfigDict(from_attributes=True)

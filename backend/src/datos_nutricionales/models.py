@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, String, UniqueConstraint
+from sqlalchemy import Enum as SQLEnum, Float, Integer, String, UniqueConstraint
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.datos_nutricionales.constants import FuenteDatoNutricional, Nutriente
@@ -10,12 +10,6 @@ from src.models import ModeloBase
 
 
 class DatoNutricionalInsumo(ModeloBase):
-    """Valor de un nutriente cada 100 g (o 100 ml) de un insumo, con la fuente de la que surgio y su auditoria.
-
-    valor_fuente guarda lo que informa la fuente al momento de la carga; si el valor vigente
-    difiere, el dato queda marcado como modificado y se registra quien y cuando lo cambio.
-    """
-
     __tablename__ = "datos_nutricionales_insumo"
     __table_args__ = (UniqueConstraint("insumo_id", "nutriente", name="uq_dato_nutricional_insumo"),)
 
@@ -46,3 +40,16 @@ class DatoNutricionalInsumo(ModeloBase):
     modificado_por: Mapped[Optional["src.empleados.models.Empleado"]] = relationship(
         "src.empleados.models.Empleado", foreign_keys=[modificado_por_id], lazy="selectin"
     )
+
+
+class ValorDiarioReferencia(ModeloBase):
+    __tablename__ = "valores_diarios_referencia"
+
+    nutriente: Mapped[Nutriente] = mapped_column(
+        SQLEnum(Nutriente, values_callable=lambda x: [e.value for e in x], create_constraint=True),
+        primary_key=True,
+    )
+    valor_diario: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    unidad: Mapped[str] = mapped_column(String(20), default="g")
+    umbral_no_significativo: Mapped[float] = mapped_column(Float, default=0.0)
+    decimales: Mapped[int] = mapped_column(Integer, default=1)
