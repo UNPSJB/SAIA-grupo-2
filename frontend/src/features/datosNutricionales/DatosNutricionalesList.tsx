@@ -153,6 +153,9 @@ export default function DatosNutricionalesList() {
 
             <div className={styles.filaBotonesSuperiores}>
                 <BuscadorTexto valor={busqueda} onCambio={setBusqueda} placeholder="Buscar insumo..." />
+                <Link to="/datos-nutricionales/valores-diarios">
+                    <Boton variant="valoresDiarios">Valores Diarios de Referencia (VD)</Boton>
+                </Link>
             </div>
 
             <TablaPaginada
