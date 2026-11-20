@@ -1,12 +1,29 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import date
-
 from pydantic import BaseModel, ConfigDict
-
 from src.productos.schemas import Producto
+from src.equipos.schemas import Equipo
 from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo
 
-# --- Detalle Receta ---
+class PasoRecetaBase(BaseModel):
+    orden: int = 1
+    nombre_paso: str
+    procedimiento: str
+    equipo_id: Optional[int] = None
+    tiempo_minutos: Optional[int] = None
+    temperatura_celsius: Optional[float] = None
+    es_punto_control: bool = False
+
+class PasoRecetaCreate(PasoRecetaBase):
+    pass
+
+class PasoReceta(PasoRecetaBase):
+    id: int
+    receta_id: int
+    version: int
+    equipo: Optional[Equipo] = None
+    model_config = ConfigDict(from_attributes=True)
+
 class DetalleRecetaBase(BaseModel):
     insumo_id: int
     cantidad_gramos: float
@@ -22,7 +39,36 @@ class DetalleReceta(DetalleRecetaBase):
     renglon: int
     model_config = ConfigDict(from_attributes=True)
 
-# --- Receta ---
+class VersionRecetaInicialCreate(BaseModel):
+    rendimiento_final_gramos: float
+    unidad_venta_gramos: float
+    medida_casera: Optional[str] = None
+    motivo_cambio: Optional[str] = "Creación inicial de la receta"
+    creado_por_id: Optional[int] = None
+    fecha_vigencia: Optional[date] = None
+    detalles: List[DetalleRecetaCreate] = []
+    pasos: List[PasoRecetaCreate] = []
+
+class VersionRecetaBase(BaseModel):
+    rendimiento_final_gramos: float
+    unidad_venta_gramos: float
+    medida_casera: Optional[str] = None
+    motivo_cambio: Optional[str] = None
+    creado_por_id: Optional[int] = None
+    fecha_vigencia: Optional[date] = None
+
+class VersionRecetaCreate(VersionRecetaBase):
+    detalles: List[DetalleRecetaCreate] = []
+    pasos: List[PasoRecetaCreate] = []
+
+class VersionReceta(VersionRecetaBase):
+    receta_id: int
+    version: int
+    estado: EstadoVersionReceta
+    detalles: List[DetalleReceta] = []
+    pasos: List[PasoReceta] = []
+    model_config = ConfigDict(from_attributes=True)
+
 class RecetaBase(BaseModel):
     producto_id: int
 
@@ -33,26 +79,3 @@ class Receta(RecetaBase):
     id: int
     producto: Producto
     model_config = ConfigDict(from_attributes=True)
-
-# --- Version Receta ---
-class VersionRecetaInicialCreate(BaseModel):
-    rendimiento_final_gramos: float
-    unidad_venta_gramos: float
-    fecha_vigencia: Optional[date] = None
-    detalles: list[DetalleRecetaCreate]
-
-class VersionRecetaBase(BaseModel):
-    receta_id: int
-    version: int
-    rendimiento_final_gramos: float
-    unidad_venta_gramos: float
-    fecha_vigencia: Optional[date] = None
-
-class VersionRecetaCreate(VersionRecetaBase):
-    detalles: list[DetalleRecetaCreate]
-    pass
-
-class VersionReceta(VersionRecetaBase):
-    estado: EstadoVersionReceta
-    model_config = ConfigDict(from_attributes=True)
-
