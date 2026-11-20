@@ -11,10 +11,17 @@ import LoteDetalleModal from '../lotesProduccion/LoteDetalleModal';
 import { ETIQUETA_TIPO_PRODUCTO, formatearCantidad, formatearFecha } from './formatoProducto';
 import styles from '../../styles/shared.module.css';
 
+
+import type { InformacionNutricionalProducto } from '../../types/datosNutricionales';
+import { getInformacionNutricionalProducto } from '../../services/datosNutricionalesServices';
+import TablaNutricional from '../datosNutricionales/TablaNutricional';
+import estilosNutricionales from '../datosNutricionales/DatosNutricionales.module.css';
+
 interface Respuesta {
     clave: string;
     producto: Producto | null;
     lotes: LoteProduccion[];
+    infoNutricional?: InformacionNutricionalProducto | null;
     error: boolean;
 }
 
@@ -22,17 +29,18 @@ export default function ProductoDetail() {
     const { id = '' } = useParams();
     const [respuesta, setRespuesta] = useState<Respuesta | null>(null);
     const [loteAbierto, setLoteAbierto] = useState<LoteProduccion | null>(null);
+    
 
     useEffect(() => {
         let cancelado = false;
 
-        Promise.all([getProductoById(id), getLotesDeProducto(id)])
-            .then(([producto, lotes]) => {
-                if (!cancelado) setRespuesta({ clave: id, producto, lotes, error: false });
+        Promise.all([getProductoById(id), getLotesDeProducto(id), getInformacionNutricionalProducto(id)])
+            .then(([producto, lotes, infoNutricional]) => {
+                if (!cancelado) setRespuesta({ clave: id, producto, lotes, infoNutricional, error: false });
             })
             .catch((problema) => {
                 console.error('Error al cargar el producto:', problema);
-                if (!cancelado) setRespuesta({ clave: id, producto: null, lotes: [], error: true });
+                if (!cancelado) setRespuesta({ clave: id, producto: null, lotes: [], infoNutricional: null, error: true });
             });
 
         return () => {
@@ -45,6 +53,7 @@ export default function ProductoDetail() {
     const lotes = actual?.lotes ?? [];
     const unidad = producto?.unidad_medida.nombre;
     const totalProducido = lotes.reduce((suma, lote) => suma + lote.cantidad, 0);
+    const infoNutricional = actual?.infoNutricional ?? null;
 
     const columnas: Columna<LoteProduccion>[] = [
         {
@@ -159,6 +168,33 @@ export default function ProductoDetail() {
                                 ordenAscInicial={false}
                             />
                         </div>
+                        <div className={styles.accordion}>
+                        {infoNutricional && (
+                            <details className={styles.accordionItem} open>
+                                <summary className={`${styles.accordionHeader} ${estilosNutricionales.ocultarEnImpresion}`}>
+                                    <strong>Tabla nutricional (formato normativo)</strong>{' '}
+                                    <svg
+                                        className={styles.accordionIcon}
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 16 16"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        aria-hidden="true"
+                                    >
+                                        <path d="m2 5 6 6 6-6" />
+                                    </svg>
+                                </summary>
+                                <div className={styles.accordionBody}>
+                                    <TablaNutricional datos={infoNutricional} />
+                                </div>
+        </details>
+    )}
+    {/* El details de lotes producidos que ya tenías */}
+</div>
                     </details>
                 </div>
 

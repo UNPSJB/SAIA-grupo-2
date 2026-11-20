@@ -4,6 +4,7 @@ import type {
     DatoNutricionalEntrada,
     DatosNutricionalesInsumo,
     ResumenNutricionalInsumo,
+    InformacionNutricionalProducto
 } from '../types/datosNutricionales';
 import { mensajeDeError } from '../utils/errores';
 
@@ -37,5 +38,13 @@ export const buscarAlimentosReferencia = async (busqueda: string): Promise<Alime
     const parametros = new URLSearchParams({ busqueda, limite: '20' });
     const res = await fetch(`${API_URL}/alimentos-referencia/?${parametros.toString()}`);
     if (!res.ok) throw new Error(await mensajeDeError(res, 'Error al buscar en la base de referencia'));
+    return res.json();
+};
+
+export const getInformacionNutricionalProducto = async (
+    productoId: number | string,
+): Promise<InformacionNutricionalProducto> => {
+    const res = await fetch(`${API_URL}/productos/${productoId}/informacion-nutricional`);
+    if (!res.ok) throw new Error(await mensajeDeError(res, 'Error al cargar la tabla nutricional del producto'));
     return res.json();
 };
