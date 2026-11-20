@@ -75,7 +75,6 @@ export interface DatoNutricionalEntrada {
     referencia?: string | null;
 }
 
-
 export type EstadoTablaNutricional = 'completa' | 'incompleta';
 
 export interface FilaNutricionalNormativa {
@@ -101,4 +100,32 @@ export interface InformacionNutricionalProducto {
     nota_pie: string;
     insumos_sin_datos: string[];
     filas: FilaNutricionalNormativa[];
+}
+
+export interface ValorDiarioReferencia {
+    nutriente: Nutriente;
+    valor_diario: number | null;
+    unidad: string;
+    umbral_no_significativo: number;
+    decimales: number;
+}
+
+export interface ItemInformacionNutricional {
+    nutriente: string;
+    unidad: string;
+    valor_100g_raw: number;
+    valor_100g_expresado: string;
+    valor_porcion_raw: number;
+    valor_porcion_expresado: string;
+    porcentaje_vd: number | null;
+    porcentaje_vd_expresado: string;
+}
+
+export interface TablaNutricionalReceta {
+    receta_id: number;
+    version: number;
+    rendimiento_final_gramos: number;
+    unidad_venta_gramos: number;
+    medida_casera: string | null;
+    items: ItemInformacionNutricional[];
 }

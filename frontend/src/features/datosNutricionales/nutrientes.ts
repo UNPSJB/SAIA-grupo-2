@@ -21,6 +21,19 @@ export const NUTRIENTES: DefinicionNutriente[] = [
     { id: 'sodio', etiqueta: 'Sodio', unidad: 'mg', subnivel: false },
 ];
 
+export const ETIQUETA_NUTRIENTE: Record<Nutriente, string> = {
+    energia: 'Valor energético',
+    carbohidratos: 'Carbohidratos',
+    azucares_totales: 'Azúcares totales',
+    azucares_anadidos: 'Azúcares añadidos',
+    proteinas: 'Proteínas',
+    grasas_totales: 'Grasas totales',
+    grasas_saturadas: 'Grasas saturadas',
+    grasas_trans: 'Grasas trans',
+    fibra_alimentaria: 'Fibra alimentaria',
+    sodio: 'Sodio',
+};
+
 export const NUTRIENTES_SARA2: Nutriente[] = ['azucares_totales', 'azucares_anadidos', 'grasas_trans'];
 
 export const FUENTES: FuenteDatoNutricional[] = ['sara', 'rotulo_proveedor', 'bibliografia', 'valor_propio'];

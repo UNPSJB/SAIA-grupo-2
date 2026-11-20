@@ -63,6 +63,9 @@ import LotesList from './features/lotesProduccion/LotesList';
 import LoteForm from './features/lotesProduccion/LoteForm';
 import DatosNutricionalesList from './features/datosNutricionales/DatosNutricionalesList';
 import DatosNutricionalesInsumo from './features/datosNutricionales/DatosNutricionalesInsumo';
+import ValoresDiariosList from './features/datosNutricionales/ValoresDiariosList';
+
+import AditivosList from './features/aditivos/AditivosList';
 
 import IncidentesList from './features/incidentes/IncidentesList';
 import IncidenteForm from './features/incidentes/IncidenteForm';
@@ -226,9 +229,13 @@ function RutasProtegidas() {
             <Route path="/productos/nuevo" element={<RutaAdmin><ProductoElaboradoForm /></RutaAdmin>} />
             <Route path="/productos/editar/:id" element={<RutaAdmin><ProductoElaboradoForm /></RutaAdmin>} />
             <Route path="/productos/:id" element={<RutaAdmin><ProductoElaboradoDetail /></RutaAdmin>} />
+
+            <Route path="/aditivos" element={<RutaAdmin><AditivosList /></RutaAdmin>} />
+
             <Route path="/lotes-produccion" element={<RutaAdmin><LotesList /></RutaAdmin>} />
             <Route path="/lotes-produccion/nuevo" element={<LoteForm />} />
             <Route path="/datos-nutricionales" element={<RutaAdmin><DatosNutricionalesList /></RutaAdmin>} />
+            <Route path="/datos-nutricionales/valores-diarios" element={<RutaAdmin><ValoresDiariosList /></RutaAdmin>} />
             <Route path="/datos-nutricionales/:id" element={<RutaAdmin><DatosNutricionalesInsumo /></RutaAdmin>} />
             <Route path="/rotulado-frontal" element={<RutaAdmin><RotuladoFrontalList /></RutaAdmin>} />
             <Route path="/rotulado-frontal/insumos" element={<RutaAdmin><MarcasInsumos /></RutaAdmin>} />
@@ -247,6 +254,7 @@ function RutasProtegidas() {
             <Route path="/configuracion/vista-publica" element={<RutaAdmin><ConfiguracionVistaPublica /></RutaAdmin>} />
             <Route path="/configuracion/parametros-normativos" element={<RutaAdmin><ParametrosNormativosList /></RutaAdmin>} />
             <Route path="/configuracion/parametros-normativos/:id" element={<RutaAdmin><ParametrosNormativosDetalle /></RutaAdmin>} />
+            <Route path="/configuracion/valores-diarios" element={<RutaAdmin><ValoresDiariosList /></RutaAdmin>} />
           </Routes>
         </main>
         

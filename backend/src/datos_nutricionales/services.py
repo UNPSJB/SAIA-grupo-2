@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.alimentos_referencia import services as alimentos_services
@@ -10,29 +10,27 @@ from src.datos_nutricionales.constants import (
     TOLERANCIA_MODIFICACION,
     FuenteDatoNutricional,
     Nutriente,
-    LEYENDA_TABLA_NUTRICIONAL,
-    NOTA_PIE_VALORES_DIARIOS,
-    NUTRIENTES_TABLA_NORMATIVA,
-    EstadoTablaNutricional,
 )
-from src.datos_nutricionales.models import DatoNutricionalInsumo
+from src.datos_nutricionales.models import DatoNutricionalInsumo, ValorDiarioReferencia
 from src.empleados import services as empleados_services
 from src.empleados.models import Empleado
 from src.insumos import services as insumos_services
 from src.insumos.models import Insumo
 
-from src.asociaciones.lote_insumos import lote_insumo
-from src.lotes_produccion.models import LoteProduccion
-from src.productos import services as productos_services
-from src.productos.constants import TipoProducto
-
-
-from src.asociaciones.detalle_receta import detalle_receta
-from src.recetas.constants import EstadoVersionReceta
-from src.recetas.models import Receta, VersionReceta
-
-
 ORDEN_NUTRIENTES = {nutriente: posicion for posicion, nutriente in enumerate(Nutriente)}
+
+VALORES_DIARIOS_DEFAULT = [
+    (Nutriente.ENERGIA, 2000.0, "kcal", 4.0, 0),
+    (Nutriente.CARBOHIDRATOS, 300.0, "g", 0.5, 1),
+    (Nutriente.AZUCARES_TOTALES, None, "g", 0.5, 1),
+    (Nutriente.AZUCARES_ANADIDOS, 50.0, "g", 0.5, 1),
+    (Nutriente.PROTEINAS, 50.0, "g", 0.5, 1),
+    (Nutriente.GRASAS_TOTALES, 55.0, "g", 0.5, 1),
+    (Nutriente.GRASAS_SATURADAS, 22.0, "g", 0.5, 1),
+    (Nutriente.GRASAS_TRANS, None, "g", 0.1, 1),
+    (Nutriente.FIBRA_ALIMENTARIA, 25.0, "g", 0.5, 1),
+    (Nutriente.SODIO, 2000.0, "mg", 5.0, 0),
+]
 
 
 def _distintos(a: float, b: float) -> bool:
@@ -59,7 +57,6 @@ def obtener_datos_insumo(db: Session, insumo_id: int) -> schemas.DatosNutriciona
 
 
 def _origen(entrada: schemas.DatoNutricionalEntrada) -> tuple:
-    """Identifica de donde sale el dato: misma fuente y misma referencia es la misma carga."""
     if entrada.fuente == FuenteDatoNutricional.SARA:
         return (entrada.fuente, entrada.alimento_codigo, None)
     return (entrada.fuente, None, entrada.referencia or None)
@@ -84,11 +81,6 @@ def _registrar_modificacion(dato: DatoNutricionalInsumo, empleado: Empleado, mom
 def cargar_datos(
     db: Session, insumo_id: int, carga: schemas.CargaDatosNutricionales
 ) -> schemas.DatosNutricionalesInsumo:
-    """Carga, corrige o borra datos nutricionales del insumo dejando registro de fuente, fecha y autor.
-
-    Si cambia la fuente o la referencia, es una carga nueva: el valor informado pasa a ser el de
-    la fuente. Si se mantiene la fuente y cambia el valor, es una modificacion manual.
-    """
     insumos_services.leer_insumo(db, insumo_id)
     empleado = empleados_services.leer_empleado(db, carga.empleado_id)
 
@@ -146,7 +138,6 @@ def cargar_datos(
 
 
 def resumen_por_insumo(db: Session) -> List[schemas.ResumenNutricionalInsumo]:
-    """Estado de la carga nutricional de cada insumo activo, para ver de un vistazo que falta."""
     insumos = db.scalars(select(Insumo).where(Insumo.activo.is_(True)).order_by(Insumo.nombre)).all()
     datos_por_insumo: Dict[int, List[DatoNutricionalInsumo]] = {}
     for dato in db.scalars(select(DatoNutricionalInsumo)).all():
@@ -170,170 +161,40 @@ def resumen_por_insumo(db: Session) -> List[schemas.ResumenNutricionalInsumo]:
     return resumen
 
 
+def obtener_valores_diarios_referencia(db: Session) -> List[ValorDiarioReferencia]:
+    vds = db.scalars(select(ValorDiarioReferencia)).all()
+    if not vds:
+        for nut, vd_val, un, umbral, dec in VALORES_DIARIOS_DEFAULT:
+            db.add(ValorDiarioReferencia(
+                nutriente=nut,
+                valor_diario=vd_val,
+                unidad=un,
+                umbral_no_significativo=umbral,
+                decimales=dec
+            ))
+        db.commit()
+        vds = db.scalars(select(ValorDiarioReferencia)).all()
+    return sorted(vds, key=lambda x: ORDEN_NUTRIENTES[x.nutriente])
 
 
+def actualizar_valor_diario_referencia(
+    db: Session, nutriente: Nutriente, datos: schemas.ValorDiarioReferenciaUpdate
+) -> ValorDiarioReferencia:
+    vds = {v.nutriente: v for v in obtener_valores_diarios_referencia(db)}
+    vd = vds.get(nutriente)
+    if not vd:
+        vd = ValorDiarioReferencia(nutriente=nutriente)
+        db.add(vd)
 
-def _composicion_producto(
-    db: Session, producto_id: int
-) -> Tuple[List[Tuple[Insumo, float]], float, Optional[float]]:
-    # 1. Buscamos si el producto tiene receta
-    receta = db.scalar(select(Receta).where(Receta.producto_id == producto_id))
-    if receta is not None:
-        version_activa = db.scalar(
-            select(VersionReceta)
-            .where(
-                VersionReceta.receta_id == receta.id,
-                VersionReceta.estado == EstadoVersionReceta.ACTIVO,
-            )
-            .order_by(VersionReceta.version.desc())
-        )
-        if version_activa is None:
-            return [], 0.0, None
+    if datos.valor_diario is not None:
+        vd.valor_diario = datos.valor_diario
+    if datos.unidad is not None:
+        vd.unidad = datos.unidad
+    if datos.umbral_no_significativo is not None:
+        vd.umbral_no_significativo = datos.umbral_no_significativo
+    if datos.decimales is not None:
+        vd.decimales = datos.decimales
 
-        filas_receta = db.execute(
-            select(Insumo, func.sum(detalle_receta.c.cantidad_gramos))
-            .join(detalle_receta, Insumo.id == detalle_receta.c.insumo_id)
-            .where(
-                detalle_receta.c.receta_id == receta.id,
-                detalle_receta.c.nro_version == version_activa.version,
-            )
-            .group_by(Insumo.id)
-            .order_by(Insumo.nombre)
-        ).all()
-        items = [(ins, float(cant)) for ins, cant in filas_receta if cant and cant > 0]
-        rendimiento = float(version_activa.rendimiento_final_gramos or 0.0)
-        if not items or rendimiento <= 0:
-            return [], 0.0, None
-
-        # Acá se extrae la porción por defecto (unidad_venta_gramos)
-        unidad_venta = (
-            float(version_activa.unidad_venta_gramos)
-            if version_activa.unidad_venta_gramos and version_activa.unidad_venta_gramos > 0
-            else None
-        )
-        return items, rendimiento, unidad_venta
-
-    # 2. Si no tiene receta, hace el fallback histórico a lotes
-    consulta = (
-        select(Insumo, func.sum(lote_insumo.c.cantidad_utilizada))
-        .join(lote_insumo, Insumo.id == lote_insumo.c.insumo_id)
-        .join(LoteProduccion, LoteProduccion.nro_lote == lote_insumo.c.lote_id)
-        .where(LoteProduccion.producto_id == producto_id)
-        .group_by(Insumo.id)
-        .order_by(Insumo.nombre)
-    )
-    items_lote = [(insumo, float(cantidad)) for insumo, cantidad in db.execute(consulta).all() if cantidad and cantidad > 0]
-    peso_total = sum(cantidad for _, cantidad in items_lote)
-    return items_lote, peso_total, None
-
-    
-
-def obtener_informacion_nutricional_producto(
-    db: Session,
-    producto_id: int,
-    porcion: Optional[float] = None,
-    medida_casera: Optional[str] = None,
-) -> schemas.InformacionNutricionalProducto:
-    producto = productos_services.leer_producto(db, producto_id)
-    unidad_base = "ml" if producto.tipo == TipoProducto.BEBIDA else "g"
-    composicion, rendimiento_gramos, unidad_venta_receta = _composicion_producto(db, producto_id)
-
-    porcion_declarada = (
-        porcion
-        if (porcion is not None and porcion > 0)
-        else (
-            unidad_venta_receta
-            if (unidad_venta_receta and unidad_venta_receta > 0)
-            else getattr(producto, "porcion", None)
-        )
-    )
-    medida_casera_declarada = (
-        medida_casera.strip()
-        if (medida_casera and medida_casera.strip())
-        else getattr(producto, "medida_casera", None)
-    )
-
-    ids_insumos = [insumo.id for insumo, _ in composicion]
-    datos_por_insumo: Dict[int, Dict[Nutriente, float]] = {insumo_id: {} for insumo_id in ids_insumos}
-    if ids_insumos:
-        registros = db.scalars(
-            select(DatoNutricionalInsumo).where(DatoNutricionalInsumo.insumo_id.in_(ids_insumos))
-        ).all()
-        for reg in registros:
-            datos_por_insumo.setdefault(reg.insumo_id, {})[reg.nutriente] = reg.valor
-
-    nutrientes_obligatorios = [cfg["nutriente"] for cfg in NUTRIENTES_TABLA_NORMATIVA if cfg["obligatorio"]]
-    insumos_sin_datos = [
-        insumo.nombre
-        for insumo, _ in composicion
-        if any(nut not in datos_por_insumo.get(insumo.id, {}) for nut in nutrientes_obligatorios)
-    ]
-
-    filas: List[schemas.FilaNutricionalNormativa] = []
-    for cfg in NUTRIENTES_TABLA_NORMATIVA:
-        nutriente = cfg["nutriente"]
-        vd = cfg["valor_diario"]
-
-        if rendimiento_gramos <= 0:
-            filas.append(
-                schemas.FilaNutricionalNormativa(
-                    nutriente=nutriente,
-                    nombre=cfg["nombre"],
-                    subnivel=cfg["subnivel"],
-                    obligatorio=cfg["obligatorio"],
-                    completo=False,
-                )
-            )
-            continue
-
-        todos_tienen = all(nutriente in datos_por_insumo.get(insumo.id, {}) for insumo, _ in composicion)
-        alguno_tiene = any(nutriente in datos_por_insumo.get(insumo.id, {}) for insumo, _ in composicion)
-
-        valor_100g: Optional[float] = None
-        valor_porcion: Optional[float] = None
-        porcentaje_vd: Optional[int] = None
-
-        if alguno_tiene:
-            aporte_total = sum(
-                (cantidad / 100.0) * datos_por_insumo.get(insumo.id, {}).get(nutriente, 0.0)
-                for insumo, cantidad in composicion
-            )
-            valor_100g = round((aporte_total / rendimiento_gramos) * 100.0, 2)
-            if porcion_declarada and porcion_declarada > 0:
-                valor_porcion = round(valor_100g * (porcion_declarada / 100.0), 2)
-                if vd:
-                    porcentaje_vd = round((valor_porcion / vd) * 100)
-
-        filas.append(
-            schemas.FilaNutricionalNormativa(
-                nutriente=nutriente,
-                nombre=cfg["nombre"],
-                subnivel=cfg["subnivel"],
-                obligatorio=cfg["obligatorio"],
-                valor_100g=valor_100g,
-                valor_porcion=valor_porcion,
-                porcentaje_vd=porcentaje_vd,
-                completo=todos_tienen,
-            )
-        )
-
-    tabla_completa = (
-        rendimiento_gramos > 0
-        and porcion_declarada is not None
-        and porcion_declarada > 0
-        # and bool(medida_casera_declarada) # no se si es de caracter obligatorio
-        and all(fila.completo for fila in filas if fila.obligatorio)
-    )
-
-    return schemas.InformacionNutricionalProducto(
-        producto_id=producto.id,
-        producto_nombre=producto.nombre,
-        unidad_base=unidad_base,
-        porcion=porcion_declarada,
-        medida_casera=medida_casera_declarada,
-        estado=EstadoTablaNutricional.COMPLETA if tabla_completa else EstadoTablaNutricional.INCOMPLETA,
-        leyenda=LEYENDA_TABLA_NUTRICIONAL,
-        nota_pie=NOTA_PIE_VALORES_DIARIOS,
-        insumos_sin_datos=insumos_sin_datos,
-        filas=filas,
-    )
+    db.commit()
+    db.refresh(vd)
+    return vd

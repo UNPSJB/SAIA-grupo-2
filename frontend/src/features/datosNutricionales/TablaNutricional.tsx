@@ -18,7 +18,7 @@ function textoPorcion(datos: InformacionNutricionalProducto): string {
     return datos.medida_casera ? `${base} (${datos.medida_casera})` : base;
 }
 
-function formatearCeldaValor(valor: number | null, unidad: string, completo: boolean): string {
+export function formatearCeldaValor(valor: number | null, unidad: string, completo: boolean): string {
     if (valor === null) return 'Sin dato';
     const texto = `${formatearValor(valor)} ${unidad}`;
     return completo ? texto : `${texto} *`;

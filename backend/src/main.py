@@ -20,8 +20,10 @@ from src.productos.models import Producto
 from src.lotes_produccion.models import LoteProduccion
 from src.vista_publica.models import ConfiguracionVistaPublica
 from src.alimentos_referencia.models import AlimentoReferencia
-from src.datos_nutricionales.models import DatoNutricionalInsumo
+from src.datos_nutricionales.models import DatoNutricionalInsumo, ValorDiarioReferencia
 from src.configuracion_empresa.models import ConfiguracionEmpresa
+from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
+from src.recetas.models import Receta, VersionReceta, PasoReceta
 from src.parametros_normativos.models import ConjuntoParametros, ModuloRotuladoFrontal
 from src.rotulado_frontal.models import EvaluacionAplicabilidad
 
@@ -55,10 +57,11 @@ from src.documentos_versionados.router import (
     router as documentos_versionados_router,
     router_documentos,
 )
-from src.aditivos.router import(
+from src.aditivos.router import (
     router as aditivos_router,
     router_clases_funcionales as clases_funcionales_router
 )
+from src.recetas.router import router as recetas_router
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -90,7 +93,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 app.include_router(unidades_medida_router)
 app.include_router(insumos_router)
 app.include_router(empleados_router)
@@ -118,3 +120,4 @@ app.include_router(documentos_versionados_router)
 app.include_router(router_documentos)
 app.include_router(aditivos_router)
 app.include_router(clases_funcionales_router)
+app.include_router(recetas_router)
