@@ -27,6 +27,11 @@ from src.productos import services as productos_services
 from src.productos.constants import TipoProducto
 
 
+from src.asociaciones.detalle_receta import detalle_receta
+from src.recetas.constants import EstadoVersionReceta
+from src.recetas.models import Receta, VersionReceta
+
+
 ORDEN_NUTRIENTES = {nutriente: posicion for posicion, nutriente in enumerate(Nutriente)}
 
 
@@ -167,74 +172,48 @@ def resumen_por_insumo(db: Session) -> List[schemas.ResumenNutricionalInsumo]:
 
 
 
+
 def _composicion_producto(
     db: Session, producto_id: int
 ) -> Tuple[List[Tuple[Insumo, float]], float, Optional[float]]:
-    try:
-        import importlib
+    # 1. Buscamos si el producto tiene receta
+    receta = db.scalar(select(Receta).where(Receta.producto_id == producto_id))
+    if receta is not None:
+        version_activa = db.scalar(
+            select(VersionReceta)
+            .where(
+                VersionReceta.receta_id == receta.id,
+                VersionReceta.estado == EstadoVersionReceta.ACTIVO,
+            )
+            .order_by(VersionReceta.version.desc())
+        )
+        if version_activa is None:
+            return [], 0.0, None
 
-        recetas_models = importlib.import_module("src.recetas.models")
-        detalle_mod = importlib.import_module("src.asociaciones.detalle_receta")
-        Receta = getattr(recetas_models, "Receta")
-        VersionReceta = getattr(recetas_models, "VersionReceta")
-        detalle_receta = getattr(detalle_mod, "detalle_receta")
+        filas_receta = db.execute(
+            select(Insumo, func.sum(detalle_receta.c.cantidad_gramos))
+            .join(detalle_receta, Insumo.id == detalle_receta.c.insumo_id)
+            .where(
+                detalle_receta.c.receta_id == receta.id,
+                detalle_receta.c.nro_version == version_activa.version,
+            )
+            .group_by(Insumo.id)
+            .order_by(Insumo.nombre)
+        ).all()
+        items = [(ins, float(cant)) for ins, cant in filas_receta if cant and cant > 0]
+        rendimiento = float(version_activa.rendimiento_final_gramos or 0.0)
+        if not items or rendimiento <= 0:
+            return [], 0.0, None
 
-        receta = db.scalar(select(Receta).where(Receta.producto_id == producto_id))
-        if receta is not None:
-            receta_pk = getattr(receta, "id", getattr(receta, "documento_id", None))
-            fk_col = getattr(VersionReceta, "receta_id", getattr(VersionReceta, "documento_id", None))
-            consulta_version = select(VersionReceta).where(fk_col == receta_pk)
-            if hasattr(VersionReceta, "estado"):
-                consulta_version = consulta_version.where(VersionReceta.estado == "activo")
-            version_activa = db.scalar(consulta_version.order_by(VersionReceta.version.desc()))
-            if version_activa is not None:
-                fk_det_receta = (
-                    detalle_receta.c.receta_id
-                    if "receta_id" in detalle_receta.c
-                    else detalle_receta.c.documento_id
-                )
-                fk_det_version = (
-                    detalle_receta.c.nro_version
-                    if "nro_version" in detalle_receta.c
-                    else detalle_receta.c.version
-                )
-                cant_col = (
-                    detalle_receta.c.cantidad_en_gramos
-                    if "cantidad_en_gramos" in detalle_receta.c
-                    else detalle_receta.c.cantidad_gramos
-                )
-                filas_receta = db.execute(
-                    select(Insumo, func.sum(cant_col))
-                    .join(detalle_receta, Insumo.id == detalle_receta.c.insumo_id)
-                    .where(
-                        fk_det_receta == receta_pk,
-                        fk_det_version == version_activa.version,
-                    )
-                    .group_by(Insumo.id)
-                    .order_by(Insumo.nombre)
-                ).all()
-                items = [(ins, float(cant)) for ins, cant in filas_receta if cant and cant > 0]
-                rendimiento = float(
-                    getattr(
-                        version_activa,
-                        "rendimiento_final_en_gramos",
-                        getattr(version_activa, "rendimiento_final_gramos", 0.0),
-                    )
-                )
-                unidad_venta = getattr(
-                    version_activa,
-                    "unidad_de_venta_en_gramos",
-                    getattr(
-                        version_activa,
-                        "unidad_venta_gramos",
-                        getattr(version_activa, "unidad_venta", None),
-                    ),
-                )
-                if items and rendimiento > 0:
-                    return items, rendimiento, (float(unidad_venta) if unidad_venta else None)
-    except Exception:
-        pass
+        # Acá se extrae la porción por defecto (unidad_venta_gramos)
+        unidad_venta = (
+            float(version_activa.unidad_venta_gramos)
+            if version_activa.unidad_venta_gramos and version_activa.unidad_venta_gramos > 0
+            else None
+        )
+        return items, rendimiento, unidad_venta
 
+    # 2. Si no tiene receta, hace el fallback histórico a lotes
     consulta = (
         select(Insumo, func.sum(lote_insumo.c.cantidad_utilizada))
         .join(lote_insumo, Insumo.id == lote_insumo.c.insumo_id)
@@ -247,7 +226,7 @@ def _composicion_producto(
     peso_total = sum(cantidad for _, cantidad in items_lote)
     return items_lote, peso_total, None
 
-
+    
 
 def obtener_informacion_nutricional_producto(
     db: Session,
@@ -342,7 +321,7 @@ def obtener_informacion_nutricional_producto(
         rendimiento_gramos > 0
         and porcion_declarada is not None
         and porcion_declarada > 0
-        and bool(medida_casera_declarada)
+        # and bool(medida_casera_declarada) # no se si es de caracter obligatorio
         and all(fila.completo for fila in filas if fila.obligatorio)
     )
 

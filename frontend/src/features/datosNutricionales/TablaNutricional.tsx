@@ -70,8 +70,8 @@ export default function TablaNutricional({ datos, mostrarAcciones = true }: Tabl
                         <strong>Tabla incompleta:</strong>{' '}
                         {datos.insumos_sin_datos.length > 0
                             ? `Faltan datos nutricionales en: ${datos.insumos_sin_datos.join(', ')}.`
-                            : !datos.porcion || !datos.medida_casera
-                              ? 'Falta declarar la porción o la medida casera del producto.'
+                            : !datos.porcion
+                              ? 'Falta declarar la porción.'
                               : 'El producto todavía no tiene lotes con insumos registrados.'}
                     </div>
                 )}

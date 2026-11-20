@@ -111,8 +111,5 @@ app.include_router(datos_nutricionales_router)
 app.include_router(configuracion_empresa_router)
 app.include_router(documentos_versionados_router)
 app.include_router(router_documentos)
-<<<<<<< HEAD
-=======
 app.include_router(aditivos_router)
 app.include_router(clases_funcionales_router)
->>>>>>> feat/receta-versionada
