@@ -22,6 +22,8 @@ from src.vista_publica.models import ConfiguracionVistaPublica
 from src.alimentos_referencia.models import AlimentoReferencia
 from src.datos_nutricionales.models import DatoNutricionalInsumo
 from src.configuracion_empresa.models import ConfiguracionEmpresa
+from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
+from src.recetas.models import Receta, VersionReceta
 
 from src.config import settings
 from src.logger import setup_logging
@@ -51,6 +53,11 @@ from src.documentos_versionados.router import (
     router as documentos_versionados_router,
     router_documentos,
 )
+from src.aditivos.router import (
+    router as aditivos_router,
+    router_clases_funcionales as clases_funcionales_router
+)
+from src.recetas.router import router as recetas_router
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -66,7 +73,6 @@ async def db_creation_lifespan(app: FastAPI):
 
 app = FastAPI(root_path=ROOT_PATH, lifespan=db_creation_lifespan)
 
-# Permitir orígenes de desarrollo local (localhost o 127.0.0.1 en cualquier puerto)
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -82,7 +88,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 app.include_router(unidades_medida_router)
 app.include_router(insumos_router)
@@ -107,3 +112,6 @@ app.include_router(datos_nutricionales_router)
 app.include_router(configuracion_empresa_router)
 app.include_router(documentos_versionados_router)
 app.include_router(router_documentos)
+app.include_router(aditivos_router)
+app.include_router(clases_funcionales_router)
+app.include_router(recetas_router)
