@@ -1,17 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
-import type { RecetaEscalada } from "../../types/recetas";
+import type { EscalarRecetaProps, RecetaEscalada } from "../../types/recetas";
 import type { EstadoLoteDesdeReceta } from "../../types/lotesProduccion";
 import { escalarRecetaProducto } from "../../services/recetasServices";
 import { formatearStock } from "../insumos/cantidades";
 import Boton from "../../components/Boton";
 import styles from '../../styles/shared.module.css';
 
-interface EscalarRecetaProps {
-    productoId: number;
-    rutaNuevoLote?: string;
-}
 
 type ModoEscalado = 'cantidad' | 'factor';
 
@@ -58,6 +54,7 @@ export default function EscalarReceta({
         const estadoLote: EstadoLoteDesdeReceta = {
             producto_id: resultado.producto_id,
             cantidad: resultado.rendimiento_esperado,
+            receta_id: resultado.receta_id,
             receta_version_id: resultado.receta_version_id,
             factor_escalado: resultado.factor_aplicado,
             insumos: resultado.renglones.map((r) => ({
@@ -93,6 +90,7 @@ export default function EscalarReceta({
                         onChange={(e) => {
                             setModo(e.target.value as ModoEscalado);
                             setValor('');
+                            setResultado(null);
                             setError(null);
                         }}
                     >
@@ -112,7 +110,10 @@ export default function EscalarReceta({
                         step="any"
                         placeholder={modo === 'factor' ? 'Ej: 2' : 'Ej: 2500'}
                         value={valor}
-                        onChange={(e) => setValor(e.target.value)}
+                        onChange={(e) => {
+                            setValor(e.target.value);
+                            setResultado(null);
+                        }}
                     />
                 </div>
 

@@ -18,6 +18,7 @@ export interface RenglonEscalado {
 }
 
 export interface RecetaEscalada {
+    receta_id: number;
     receta_version_id: number;
     producto_id: number;
     rendimiento_original: number;
@@ -25,4 +26,9 @@ export interface RecetaEscalada {
     unidad_producto_nombre: string;
     factor_aplicado: number;
     renglones: RenglonEscalado[];
+}
+
+export interface EscalarRecetaProps {
+    productoId: number;
+    rutaNuevoLote?: string;
 }

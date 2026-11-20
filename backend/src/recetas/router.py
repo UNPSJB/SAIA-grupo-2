@@ -29,6 +29,28 @@ def escalar_receta_producto(
     db: Annotated[Session, Depends(get_db)]
 ):
     return services.calcular_receta_escalada(db, producto_id, payload)
+@router.get(
+    "/{receta_id}/versiones/vigente/nutricion",
+    response_model=schemas.TablaNutricionalRecetaResponse,
+    summary="Obtener calculo de información nutricional de la versión vigente"
+)
+def obtener_nutricion_version_vigente(
+    receta_id: int,
+    db: Annotated[Session, Depends(get_db)]
+):
+    return services.calcular_informacion_nutricional_receta(db, receta_id=receta_id)
+
+@router.get(
+    "/{receta_id}/versiones/{nro_version}/nutricion",
+    response_model=schemas.TablaNutricionalRecetaResponse,
+    summary="Obtener calculo de información nutricional de una versión específica"
+)
+def obtener_nutricion_version_especifica(
+    receta_id: int,
+    nro_version: int,
+    db: Annotated[Session, Depends(get_db)]
+):
+    return services.calcular_informacion_nutricional_receta(db, receta_id=receta_id, nro_version=nro_version)
 
 @router.get(
     "/{receta_id}/versiones/vigente",

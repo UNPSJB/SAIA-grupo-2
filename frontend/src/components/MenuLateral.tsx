@@ -94,6 +94,8 @@ const SECCIONES: Seccion[] = [
                     { etiqueta: 'Productos', ruta: '/productos' },
                     { etiqueta: 'Historial de lotes', ruta: '/lotes-produccion', exacta: true },
                     { etiqueta: 'Datos nutricionales', ruta: '/datos-nutricionales' },
+                    { etiqueta: 'Valores diarios (VD)', ruta: '/datos-nutricionales/valores-diarios', exacta: true },
+                    { etiqueta: 'Rotulado frontal', ruta: '/rotulado-frontal' },
                 ],
             },
             {
@@ -122,6 +124,7 @@ const SECCIONES: Seccion[] = [
                 enlaces: [
                     { etiqueta: 'Datos de la PYME', ruta: '/configuracion/empresa', exacta: true },
                     { etiqueta: 'Vista Pública', ruta: '/configuracion/vista-publica', exacta: true },
+                    { etiqueta: 'Parámetros normativos', ruta: '/configuracion/parametros-normativos' },
                 ],
             },
         ],

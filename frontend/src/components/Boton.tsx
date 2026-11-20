@@ -3,7 +3,7 @@ import styles from './Boton.module.css';
 
 interface BotonProps {
     children?: React.ReactNode; 
-    variant: 'guardar' | 'eliminar' | 'editar' | 'crear' | 'ver' | 'volver' | 'siguiente' | 'buscar' | 'documentos' | 'limpiar' | 'pausar'| 'reanudar' | 'descargar';
+    variant: 'guardar' | 'eliminar' | 'editar' | 'crear' | 'ver' | 'volver' | 'siguiente' | 'buscar' | 'documentos' | 'limpiar' | 'pausar'| 'reanudar' | 'descargar' | 'valoresDiarios';
     onClick?: () => void;
     type?: 'button' | 'submit';
     disabled?: boolean;
@@ -37,6 +37,8 @@ export default function Boton({ children, variant, onClick, type = 'button', dis
                 return <i className="bi bi-file-earmark" style={estiloIcono}></i>;
             case 'descargar':
                 return <i className="bi bi-download" style={estiloIcono}></i>;
+            case 'valoresDiarios':
+                return <i className="bi bi-sliders" style={estiloIcono}></i>;
             case 'limpiar':
                 return <i className="bi bi-eraser" style={estiloIcono}></i>;
             case 'pausar':

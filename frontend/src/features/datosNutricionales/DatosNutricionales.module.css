@@ -117,8 +117,8 @@
 }
 
 .subnivel {
-    padding-left: 18px;
-    font-weight: 400;
+    padding-left: 0;
+    font-weight: 600;
 }
 
 .campoValor {
@@ -237,4 +237,178 @@
 .advertencia ul {
     margin: 6px 0 0;
     padding-left: 18px;
+}
+
+
+
+
+.contenedorRotulo {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.encabezadoAccionesRotulo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.estadoRotulo {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.estadoCompleta {
+    background: rgba(34, 197, 94, 0.15);
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.estadoIncompleta {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.cuadroNormativo {
+    border: 2px solid var(--text-h);
+    border-radius: 6px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+}
+
+.tituloNormativo {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-h);
+}
+
+.porcionNormativa {
+    margin: 6px 0 10px;
+    font-size: 0.9rem;
+    color: var(--text);
+    border-bottom: 3px solid var(--text-h);
+    padding-bottom: 8px;
+}
+
+.marcaIncompletaImpresa {
+    margin: 0 0 10px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(245, 158, 11, 0.55);
+    color: #f59e0b;
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.tablaNormativa {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.tablaNormativa th,
+.tablaNormativa td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+    text-align: right;
+}
+
+.tablaNormativa th:first-child,
+.tablaNormativa td:first-child {
+    text-align: left;
+}
+
+.tablaNormativa thead th {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--text-h);
+}
+
+.celdaSubnivel {
+    padding-left: 20px !important;
+    font-weight: 400;
+    color: var(--text);
+}
+
+.celdaPrincipal {
+    font-weight: 600;
+    color: var(--text-h);
+}
+
+.datoFaltante {
+    color: #f59e0b;
+    font-style: italic;
+    font-size: 0.8rem;
+}
+
+.notaPieNormativa {
+    margin: 10px 0 0;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    line-height: 1.35;
+}
+
+.leyendaNormativa {
+    margin: 10px 0 0;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-h);
+    line-height: 1.4;
+}
+
+@media print {
+    :global(.sidebar),
+    :global(.mobileHeader),
+    :global(.sidebarOverlay),
+    .ocultarEnImpresion {
+        display: none !important;
+    }
+
+    .cuadroNormativo {
+        border: 2px solid #000000 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+    }
+
+    .tituloNormativo,
+    .celdaPrincipal,
+    .leyendaNormativa {
+        color: #000000 !important;
+    }
+
+    .porcionNormativa,
+    .celdaSubnivel,
+    .tablaNormativa thead th,
+    .notaPieNormativa {
+        color: #222222 !important;
+        border-color: #000000 !important;
+    }
+
+    .tablaNormativa th,
+    .tablaNormativa td {
+        border-bottom: 1px solid #cccccc !important;
+        color: #000000 !important;
+    }
+
+    .marcaIncompletaImpresa {
+        border: 1px solid #b45309 !important;
+        color: #b45309 !important;
+    }
 }

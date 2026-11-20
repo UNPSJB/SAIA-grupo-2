@@ -42,7 +42,8 @@
 }  
 
 .documentos,
-.descargar {
+.descargar,
+.valoresDiarios {
     background-color: var(--celeste-estandar);
 }
 

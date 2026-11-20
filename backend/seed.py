@@ -48,11 +48,14 @@ from src.alimentos_referencia import services as alimentos_referencia_services
 from src.datos_nutricionales import services as datos_nutricionales_services
 from src.datos_nutricionales.constants import FuenteDatoNutricional, Nutriente
 from src.datos_nutricionales.schemas import CargaDatosNutricionales
-from src.configuracion_empresa.models import ConfiguracionEmpresa
-from src.aditivos.models import ClaseFuncionalAditivo, Aditivo
-from src.recetas.models import Receta, VersionReceta, PasoReceta, DetalleReceta
-from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo
-from src.asociaciones.detalle_receta import detalle_receta
+from src.parametros_normativos.models import ConjuntoParametros, ModuloRotuladoFrontal
+from src.parametros_normativos import services as parametros_normativos_services
+from src.rotulado_frontal.models import EvaluacionAplicabilidad
+from src.rotulado_frontal import services as rotulado_frontal_services
+from src.rotulado_frontal.schemas import ActualizacionMarcasInsumos, CambioMarcaInsumo, NuevaEvaluacion
+
+from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
+from src.recetas.models import Receta, VersionReceta
 
 DIAS_DE_HISTORIAL = 90
 ZONA_PLANTA = timezone(timedelta(hours=-3))
@@ -290,7 +293,6 @@ def generar_historial_checklists(db: Session) -> list:
     planes = db.query(Plan).all()
 
     checklists = []
-    # Generar ejecuciones para el historial (dias pasados + dia de hoy parcialmente completadas)
     for dias_atras in range(DIAS_DE_HISTORIAL, -1, -1):
         fecha = hoy - timedelta(days=dias_atras)
         mejora = 0.06 * (1 - dias_atras / DIAS_DE_HISTORIAL) - 0.03
@@ -316,7 +318,6 @@ def generar_historial_checklists(db: Session) -> list:
                         + mejora
                     )
 
-                # Si es HOY, forzar que algunas tareas queden completadas y otras pendientes
                 if dias_atras == 0:
                     if azar.random() > 0.45: # 45% completadas hoy, 55% pendientes hoy
                         continue
@@ -706,6 +707,65 @@ def crear_vista_publica_de_ejemplo(db: Session) -> None:
         contacto="Av. Fontana 123, Trelew · Lunes a sábado de 7 a 20 h",
     ))
     db.commit()
+
+
+EVALUACIONES_ROTULADO_FRONTAL = [
+    ("Pan francés", 20, {"envasado_en_ausencia_del_cliente": False}),
+    ("Pan lactal", 20, {"envasado_en_ausencia_del_cliente": True, "agrega_azucares": True, "agrega_grasas": True}),
+    (
+        "Pan lactal",
+        6,
+        {"envasado_en_ausencia_del_cliente": True, "agrega_azucares": True, "agrega_grasas": True, "agrega_sodio": True},
+    ),
+    ("Prepizza", 12, {"envasado_en_ausencia_del_cliente": True, "agrega_grasas": True, "agrega_sodio": True}),
+    ("Jugo de naranja exprimido", 9, {"envasado_en_ausencia_del_cliente": True}),
+]
+
+
+MARCAS_ROTULADO_INSUMOS = {
+    "Azúcar Blanca": {"agrega_azucares": True},
+    "Azúcar Morena": {"agrega_azucares": True},
+    "Miel": {"agrega_azucares": True},
+    "Sal Fina": {"agrega_sodio": True},
+    "Manteca": {"agrega_grasas": True},
+    "Margarina": {"agrega_grasas": True},
+    "Grasa Vacuna": {"agrega_grasas": True},
+    "Aceite de Girasol": {"agrega_grasas": True},
+    "Aceite de Oliva": {"agrega_grasas": True},
+    "Harina 000": {},
+    "Levadura Fresca": {},
+    "Leche Entera": {},
+    "Naranjas": {},
+}
+
+
+def cargar_rotulado_frontal_de_ejemplo(db: Session) -> int:
+    """Publica la version inicial de los parametros normativos y deja algunos productos ya evaluados.
+
+    El pan lactal tiene dos evaluaciones: la primera omitio la sal y se corrigio despues, para ver el historial.
+    Medialunas y galletitas quedan sin evaluar. Los insumos basicos quedan con sus marcas revisadas.
+    """
+    admin = db.query(Empleado).filter_by(legajo="EMP-1000").first()
+    parametros_normativos_services.importar_archivo(db, empleado_id=admin.id)
+    parametros_normativos_services.leer_modulo(db)
+    rotulado_frontal_services.actualizar_marcas_insumos(
+        db,
+        ActualizacionMarcasInsumos(
+            empleado_id=admin.id,
+            marcas=[
+                CambioMarcaInsumo(insumo_id=db.query(Insumo).filter_by(nombre=nombre).first().id, **marcas)
+                for nombre, marcas in MARCAS_ROTULADO_INSUMOS.items()
+            ],
+        ),
+    )
+    for nombre, dias_atras, respuestas in EVALUACIONES_ROTULADO_FRONTAL:
+        producto = db.query(Producto).filter_by(nombre=nombre).first()
+        evaluacion = rotulado_frontal_services.evaluar(
+            db, producto.id, NuevaEvaluacion(empleado_id=admin.id, **respuestas)
+        )
+        db.get(EvaluacionAplicabilidad, evaluacion.id).fecha = datetime.now() - timedelta(days=dias_atras, hours=3)
+    db.commit()
+    return len(EVALUACIONES_ROTULADO_FRONTAL)
 
 
 def seed_database(reset: bool = True):
@@ -1201,67 +1261,9 @@ def seed_database(reset: bool = True):
             insumos_con_datos = cargar_datos_nutricionales_de_ejemplo(db)
             print(f"Base de referencia SARA importada y datos nutricionales de {insumos_con_datos} insumos cargados.")
 
-        if db.query(ClaseFuncionalAditivo).count() == 0:
-            cf1 = ClaseFuncionalAditivo(nombre="Conservante", necesita_ins=True)
-            cf2 = ClaseFuncionalAditivo(nombre="Antioxidante", necesita_ins=True)
-            cf3 = ClaseFuncionalAditivo(nombre="Colorante", necesita_ins=True)
-            cf4 = ClaseFuncionalAditivo(nombre="Aromatizante / Saborizante", necesita_ins=False)
-            db.add_all([cf1, cf2, cf3, cf4])
-            db.commit()
-
-            ad1 = Aditivo(nombre_completo="Benzoato de Sodio", clase_funcional_id=cf1.id, numero_ins="211")
-            ad2 = Aditivo(nombre_completo="Ácido Ascórbico (Vitamina C)", clase_funcional_id=cf2.id, numero_ins="300")
-            ad3 = Aditivo(nombre_completo="Aroma Natural de Vainilla", clase_funcional_id=cf4.id, numero_ins=None)
-            db.add_all([ad1, ad2, ad3])
-            db.commit()
-            print("Clases funcionales y Aditivos de referencia creados.")
-
-        if db.query(Receta).count() == 0:
-            producto = db.query(Producto).first()
-            insumo = db.query(Insumo).first()
-            if producto and insumo:
-                rec = Receta(producto_id=producto.id)
-                db.add(rec)
-                db.commit()
-                db.refresh(rec)
-
-                ver = VersionReceta(
-                    receta_id=rec.id,
-                    version=1,
-                    rendimiento_final_gramos=1000.0,
-                    unidad_venta_gramos=250.0,
-                    medida_casera="1 porción (250g)",
-                    motivo_cambio="Fórmula original estandarizada",
-                    estado=EstadoVersionReceta.ACTIVO,
-                    fecha_vigencia=date.today()
-                )
-                db.add(ver)
-                db.flush()
-
-                db.execute(
-                    insert(detalle_receta).values(
-                        receta_id=rec.id,
-                        nro_version=1,
-                        renglon=1,
-                        insumo_id=insumo.id,
-                        cantidad_gramos=1000.0,
-                        tipo_uso=TipoUsoInsumo.INGREDIENTE.value,
-                        aditivo_id=None
-                    )
-                )
-
-                paso = PasoReceta(
-                    receta_id=rec.id,
-                    version=1,
-                    orden=1,
-                    nombre_paso="Mezclado de Ingredientes",
-                    procedimiento="Incorporar insumos a temperatura ambiente y homogeneizar.",
-                    tiempo_minutos=15,
-                    es_punto_control=True
-                )
-                db.add(paso)
-                db.commit()
-                print("Receta y Versión 1 inicial creadas.")
+        if db.query(ConjuntoParametros).count() == 0:
+            evaluaciones = cargar_rotulado_frontal_de_ejemplo(db)
+            print(f"Parametros normativos v1 publicados y {evaluaciones} evaluaciones de rotulado frontal cargadas.")
 
         print("Base de datos poblada exitosamente con datos de prueba enriquecidos para SAIA!")
 

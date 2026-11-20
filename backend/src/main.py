@@ -20,10 +20,12 @@ from src.productos.models import Producto
 from src.lotes_produccion.models import LoteProduccion
 from src.vista_publica.models import ConfiguracionVistaPublica
 from src.alimentos_referencia.models import AlimentoReferencia
-from src.datos_nutricionales.models import DatoNutricionalInsumo
+from src.datos_nutricionales.models import DatoNutricionalInsumo, ValorDiarioReferencia
 from src.configuracion_empresa.models import ConfiguracionEmpresa
 from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
-from src.recetas.models import Receta, VersionReceta, PasoReceta, DetalleReceta
+from src.recetas.models import Receta, VersionReceta, PasoReceta
+from src.parametros_normativos.models import ConjuntoParametros, ModuloRotuladoFrontal
+from src.rotulado_frontal.models import EvaluacionAplicabilidad
 
 from src.config import settings
 from src.logger import setup_logging
@@ -49,6 +51,8 @@ from src.vista_publica.router import router as vista_publica_router
 from src.alimentos_referencia.router import router as alimentos_referencia_router
 from src.datos_nutricionales.router import router as datos_nutricionales_router
 from src.configuracion_empresa.router import router as configuracion_empresa_router
+from src.parametros_normativos.router import router as parametros_normativos_router
+from src.rotulado_frontal.router import router as rotulado_frontal_router
 from src.documentos_versionados.router import (
     router as documentos_versionados_router,
     router_documentos,
@@ -110,13 +114,10 @@ app.include_router(vista_publica_router)
 app.include_router(alimentos_referencia_router)
 app.include_router(datos_nutricionales_router)
 app.include_router(configuracion_empresa_router)
+app.include_router(parametros_normativos_router)
+app.include_router(rotulado_frontal_router)
 app.include_router(documentos_versionados_router)
 app.include_router(router_documentos)
-
-app.include_router(aditivos_router)
-app.include_router(clases_funcionales_router)
-
 app.include_router(aditivos_router)
 app.include_router(clases_funcionales_router)
 app.include_router(recetas_router)
-

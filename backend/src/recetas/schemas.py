@@ -1,6 +1,6 @@
 from typing import Optional, List
 from datetime import date
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 from src.productos.schemas import Producto
 from src.equipos.schemas import Equipo
 from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo
@@ -104,3 +104,20 @@ class RecetaEscalada(BaseModel):
     unidad_producto_nombre: str
     factor_aplicado: float
     renglones: List[RenglonEscalado]
+class ItemInformacionNutricionalResponse(BaseModel):
+    nutriente: str
+    unidad: str
+    valor_100g_raw: float
+    valor_100g_expresado: str
+    valor_porcion_raw: float
+    valor_porcion_expresado: str
+    porcentaje_vd: Optional[float] = None
+    porcentaje_vd_expresado: str = "-"
+
+class TablaNutricionalRecetaResponse(BaseModel):
+    receta_id: int
+    version: int
+    rendimiento_final_gramos: float
+    unidad_venta_gramos: float
+    medida_casera: Optional[str] = None
+    items: List[ItemInformacionNutricionalResponse] = []

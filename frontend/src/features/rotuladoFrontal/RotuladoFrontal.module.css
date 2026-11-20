@@ -1,0 +1,391 @@
+.panel {
+    width: 100%;
+    max-width: 900px;
+    box-sizing: border-box;
+    margin-bottom: 18px;
+    text-align: left;
+}
+
+.panel h3 {
+    margin: 0 0 4px;
+    color: var(--text-h);
+    font-size: 1.05rem;
+}
+
+.ayuda {
+    margin: 0 0 14px;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+}
+
+.pregunta {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+}
+
+.pregunta:first-of-type {
+    border-top: none;
+    padding-top: 4px;
+}
+
+.pregunta > strong {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--text-h);
+    font-weight: 600;
+}
+
+.opciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.opcion {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text);
+    font-weight: 400;
+}
+
+.opcion input {
+    margin: 0;
+    width: 16px;
+    height: 16px;
+}
+
+.opcionMarcada {
+    border-color: var(--accent-border);
+    background: var(--accent-bg);
+    color: var(--text-h);
+}
+
+.pregunta select {
+    width: 100%;
+    max-width: 640px;
+    margin: 0;
+}
+
+.resultado {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+
+.resultado > i {
+    font-size: 1.6rem;
+    line-height: 1;
+}
+
+.resultado strong {
+    display: block;
+    color: var(--text-h);
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+
+.resultado p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+}
+
+.tono_alerta {
+    border-color: rgba(245, 158, 11, 0.45);
+}
+
+.tono_alerta > i {
+    color: #f59e0b;
+}
+
+.tono_exito {
+    border-color: rgba(34, 197, 94, 0.4);
+}
+
+.tono_exito > i {
+    color: #22c55e;
+}
+
+.tono_neutro > i {
+    color: var(--gris-texto);
+}
+
+.grupoSellos {
+    margin-top: 12px;
+}
+
+.grupoSellos > span {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.sellos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.sello {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: #111;
+    border: 1px solid #e2e8f0;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.leyenda {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    color: var(--text-h);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.meta {
+    margin-top: 12px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.pastilla {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.pastilla_alerta {
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.45);
+}
+
+.pastilla_exito {
+    color: #22c55e;
+    border-color: rgba(34, 197, 94, 0.4);
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+
+.chip {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--text-h);
+    white-space: nowrap;
+}
+
+.aviso {
+    width: 100%;
+    max-width: 1100px;
+    box-sizing: border-box;
+    margin: 0 0 16px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.aviso strong {
+    color: var(--text-h);
+}
+
+.aviso a {
+    color: var(--azul-texto);
+}
+
+.mensajeError {
+    color: var(--rojo-texto);
+    margin: 10px 0 0;
+}
+
+.mensajeExito {
+    color: #22c55e;
+    margin: 10px 0 0;
+}
+
+.acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.seccionProducto {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.seccionProductoEncabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.seccionProductoEncabezado strong {
+    color: var(--text-h);
+}
+
+.propuesta {
+    margin: 0 0 14px;
+    padding: 12px 14px;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    color: var(--text);
+}
+
+.propuesta p {
+    margin: 8px 0 0;
+}
+
+.propuestaEncabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    color: var(--text-h);
+    font-weight: 600;
+}
+
+.origenes {
+    margin: 8px 0 0;
+    padding-left: 18px;
+    line-height: 1.6;
+}
+
+.advertencia {
+    color: #f59e0b;
+}
+
+.advertencia a {
+    color: var(--azul-texto);
+}
+
+.botonTexto {
+    background: none;
+    border: none;
+    padding: 2px 0;
+    color: var(--azul-texto);
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.etiquetaReceta {
+    margin-left: 2px;
+    padding: 0 6px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.tablaMarcas {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.tablaMarcas th {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 0 8px 10px;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+}
+
+.tablaMarcas th:first-child,
+.tablaMarcas td:first-child {
+    text-align: left;
+    padding-left: 0;
+}
+
+.tablaMarcas td {
+    padding: 9px 8px;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    color: var(--text);
+}
+
+.tablaMarcas td:first-child {
+    color: var(--text-h);
+    font-weight: 600;
+}
+
+.tablaMarcas input[type='checkbox'] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.filaModificada td {
+    background: var(--accent-bg);
+}
+
+.desplazable {
+    overflow-x: auto;
+}
+
+.barraMarcas {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.barraMarcas label {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    color: var(--text);
+    font-size: 0.88rem;
+    margin: 0;
+}

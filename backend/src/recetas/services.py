@@ -4,13 +4,14 @@ from typing import List, Optional
 from sqlalchemy import select, func, update, insert
 from sqlalchemy.orm import Session
 
-from src.recetas.models import Receta, VersionReceta, PasoReceta, DetalleReceta, detalle_receta 
+from src.recetas.models import Receta, VersionReceta, PasoReceta, detalle_receta
 from src.recetas import schemas, exceptions
-from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo, DECIMALES_ESCALADO, DECIMALES_FACTOR
+from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo
 from src.productos.models import Producto
 from src.insumos.models import Insumo
-from src.unidades_medida import services as unidades_services
-from src.unidades_medida.constants import MagnitudUnidad
+from src.datos_nutricionales.models import DatoNutricionalInsumo, ValorDiarioReferencia
+from src.datos_nutricionales.constants import Nutriente
+from src.datos_nutricionales import services as datos_nutricionales_services
 
 logger = logging.getLogger(__name__)
 
@@ -300,3 +301,87 @@ def calcular_receta_escalada(
             factor_aplicado=round(factor, DECIMALES_FACTOR),
             renglones=renglones_escalados
         )
+def _expresar_valor(valor: float, umbral: float, decimales: int, unidad: str) -> str:
+    if valor < umbral:
+        return "0 " + unidad if unidad else "0"
+    if decimales == 0:
+        return f"{int(round(valor))} {unidad}".strip()
+    return f"{round(valor, decimales)} {unidad}".strip()
+
+def calcular_informacion_nutricional_receta(
+    db: Session, receta_id: int, nro_version: Optional[int] = None
+) -> schemas.TablaNutricionalRecetaResponse:
+    if nro_version is not None:
+        version_obj = leer_version_receta(db, receta_id, nro_version)
+    else:
+        version_obj = obtener_version_vigente(db, receta_id)
+
+    stmt_detalles = select(detalle_receta).where(
+        detalle_receta.c.receta_id == receta_id,
+        detalle_receta.c.nro_version == version_obj.version
+    )
+    renglones = db.execute(stmt_detalles).fetchall()
+
+    vds = {v.nutriente: v for v in datos_nutricionales_services.obtener_valores_diarios_referencia(db)}
+    aportes_totales = {nut: 0.0 for nut in Nutriente}
+
+    for r in renglones:
+        insumo_id = r.insumo_id
+        cantidad_g = r.cantidad_gramos
+        datos_insumo = db.scalars(
+            select(DatoNutricionalInsumo).where(DatoNutricionalInsumo.insumo_id == insumo_id)
+        ).all()
+        for dato in datos_insumo:
+            if dato.nutriente in aportes_totales and dato.valor:
+                aportes_totales[dato.nutriente] += (cantidad_g / 100.0) * dato.valor
+
+    rendimiento = version_obj.rendimiento_final_gramos or 1000.0
+    porcion = version_obj.unidad_venta_gramos or 250.0
+
+    items_res: List[schemas.ItemInformacionNutricionalResponse] = []
+
+    for nut in Nutriente:
+        vd_config = vds.get(nut)
+        unidad = vd_config.unidad if vd_config else "g"
+        umbral = vd_config.umbral_no_significativo if vd_config else 0.0
+        decimales = vd_config.decimales if vd_config else 1
+        vd_ref = vd_config.valor_diario if vd_config else None
+
+        tot_aporte = aportes_totales.get(nut, 0.0)
+
+        val_100g_raw = (tot_aporte / rendimiento) * 100.0
+        val_100g_exp = _expresar_valor(val_100g_raw, umbral, decimales, unidad)
+
+        val_porcion_raw = (val_100g_raw / 100.0) * porcion
+        val_porcion_exp = _expresar_valor(val_porcion_raw, umbral, decimales, unidad)
+
+        pct_vd = None
+        pct_vd_exp = "-"
+        if vd_ref and vd_ref > 0:
+            pct_vd = (val_porcion_raw / vd_ref) * 100.0
+            if val_porcion_raw < umbral:
+                pct_vd_exp = "0%"
+            else:
+                pct_vd_exp = f"{int(round(pct_vd))}%"
+
+        items_res.append(
+            schemas.ItemInformacionNutricionalResponse(
+                nutriente=nut.value,
+                unidad=unidad,
+                valor_100g_raw=round(val_100g_raw, 4),
+                valor_100g_expresado=val_100g_exp,
+                valor_porcion_raw=round(val_porcion_raw, 4),
+                valor_porcion_expresado=val_porcion_exp,
+                porcentaje_vd=round(pct_vd, 2) if pct_vd is not None else None,
+                porcentaje_vd_expresado=pct_vd_exp
+            )
+        )
+
+    return schemas.TablaNutricionalRecetaResponse(
+        receta_id=receta_id,
+        version=version_obj.version,
+        rendimiento_final_gramos=rendimiento,
+        unidad_venta_gramos=porcion,
+        medida_casera=version_obj.medida_casera,
+        items=items_res
+    )

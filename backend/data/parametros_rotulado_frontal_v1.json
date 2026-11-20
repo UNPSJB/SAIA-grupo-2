@@ -1,0 +1,213 @@
+{
+  "norma_origen": "Ley 27.642 y Decreto 151/2022 (Anexo I, art. 6°), según la Guía de Rotulado para Alimentos Envasados de ANMAT (actualización enero 2025)",
+  "fecha_vigencia": "2025-01-01",
+  "notas": "Puntos de corte del perfil de nutrientes de OPS adoptado por la Ley 27.642. Los sellos de exceso solo se evalúan para los nutrientes que el producto tiene agregados.",
+  "textos": [
+    {
+      "sello": "exceso_azucares",
+      "texto": "EXCESO EN AZÚCARES"
+    },
+    {
+      "sello": "exceso_grasas_totales",
+      "texto": "EXCESO EN GRASAS TOTALES"
+    },
+    {
+      "sello": "exceso_grasas_saturadas",
+      "texto": "EXCESO EN GRASAS SATURADAS"
+    },
+    {
+      "sello": "exceso_sodio",
+      "texto": "EXCESO EN SODIO"
+    },
+    {
+      "sello": "exceso_calorias",
+      "texto": "EXCESO EN CALORÍAS"
+    },
+    {
+      "sello": "contiene_edulcorantes",
+      "texto": "CONTIENE EDULCORANTES, NO RECOMENDABLE EN NIÑOS/AS."
+    },
+    {
+      "sello": "contiene_cafeina",
+      "texto": "CONTIENE CAFEÍNA. EVITAR EN NIÑOS/AS."
+    }
+  ],
+  "criterios": [
+    {
+      "sello": "exceso_azucares",
+      "tipo_producto": "alimento",
+      "forma": "porcentaje_energia",
+      "nutriente": "azucares_anadidos",
+      "limite": 10,
+      "unidad": "% de la energía",
+      "factor_energetico": 4
+    },
+    {
+      "sello": "exceso_grasas_totales",
+      "tipo_producto": "alimento",
+      "forma": "porcentaje_energia",
+      "nutriente": "grasas_totales",
+      "limite": 30,
+      "unidad": "% de la energía",
+      "factor_energetico": 9
+    },
+    {
+      "sello": "exceso_grasas_saturadas",
+      "tipo_producto": "alimento",
+      "forma": "porcentaje_energia",
+      "nutriente": "grasas_saturadas",
+      "limite": 10,
+      "unidad": "% de la energía",
+      "factor_energetico": 9
+    },
+    {
+      "sello": "exceso_sodio",
+      "tipo_producto": "alimento",
+      "forma": "mg_por_kcal",
+      "nutriente": "sodio",
+      "limite": 1,
+      "unidad": "mg por kcal"
+    },
+    {
+      "sello": "exceso_sodio",
+      "tipo_producto": "alimento",
+      "forma": "cantidad_cada_100",
+      "nutriente": "sodio",
+      "limite": 300,
+      "unidad": "mg cada 100 g"
+    },
+    {
+      "sello": "exceso_calorias",
+      "tipo_producto": "alimento",
+      "forma": "cantidad_cada_100",
+      "nutriente": "energia",
+      "limite": 275,
+      "unidad": "kcal cada 100 g",
+      "condicion": "con_sello_de_energia"
+    },
+    {
+      "sello": "exceso_azucares",
+      "tipo_producto": "bebida",
+      "forma": "porcentaje_energia",
+      "nutriente": "azucares_anadidos",
+      "limite": 10,
+      "unidad": "% de la energía",
+      "factor_energetico": 4
+    },
+    {
+      "sello": "exceso_grasas_totales",
+      "tipo_producto": "bebida",
+      "forma": "porcentaje_energia",
+      "nutriente": "grasas_totales",
+      "limite": 30,
+      "unidad": "% de la energía",
+      "factor_energetico": 9
+    },
+    {
+      "sello": "exceso_grasas_saturadas",
+      "tipo_producto": "bebida",
+      "forma": "porcentaje_energia",
+      "nutriente": "grasas_saturadas",
+      "limite": 10,
+      "unidad": "% de la energía",
+      "factor_energetico": 9
+    },
+    {
+      "sello": "exceso_sodio",
+      "tipo_producto": "bebida",
+      "forma": "mg_por_kcal",
+      "nutriente": "sodio",
+      "limite": 1,
+      "unidad": "mg por kcal"
+    },
+    {
+      "sello": "exceso_sodio",
+      "tipo_producto": "bebida",
+      "forma": "cantidad_cada_100",
+      "nutriente": "sodio",
+      "limite": 300,
+      "unidad": "mg cada 100 ml"
+    },
+    {
+      "sello": "exceso_sodio",
+      "tipo_producto": "bebida",
+      "forma": "cantidad_cada_100",
+      "nutriente": "sodio",
+      "limite": 40,
+      "unidad": "mg cada 100 ml",
+      "condicion": "sin_aporte_energetico"
+    },
+    {
+      "sello": "exceso_calorias",
+      "tipo_producto": "bebida",
+      "forma": "cantidad_cada_100",
+      "nutriente": "energia",
+      "limite": 25,
+      "unidad": "kcal cada 100 ml",
+      "condicion": "con_sello_de_energia"
+    }
+  ],
+  "reglas": [
+    {
+      "agregado": "azucares",
+      "sellos": [
+        "exceso_azucares",
+        "exceso_calorias"
+      ]
+    },
+    {
+      "agregado": "grasas",
+      "sellos": [
+        "exceso_grasas_totales",
+        "exceso_grasas_saturadas",
+        "exceso_calorias"
+      ]
+    },
+    {
+      "agregado": "sodio",
+      "sellos": [
+        "exceso_sodio"
+      ]
+    },
+    {
+      "agregado": "edulcorantes",
+      "sellos": [
+        "contiene_edulcorantes"
+      ]
+    },
+    {
+      "agregado": "cafeina",
+      "sellos": [
+        "contiene_cafeina"
+      ]
+    }
+  ],
+  "clases_aditivo": [
+    {
+      "agregado": "edulcorantes",
+      "clases": [
+        "edulcorante"
+      ]
+    }
+  ],
+  "excepciones": [
+    "Los alimentos para propósitos médicos específicos.",
+    "Los suplementos dietarios.",
+    "Las fórmulas para lactantes, niños y niñas hasta los 36 meses de edad.",
+    "Los productos no envasados para la venta al consumidor.",
+    "Los productos no acondicionados para la venta al consumidor (uso industrial y/o servicios de alimentación).",
+    "Los alimentos preparados en restaurantes o comercios gastronómicos.",
+    "Los productos fraccionados al peso en mostrador a la vista de los consumidores.",
+    "Los alimentos acondicionados para la venta al público constituidos por un único ingrediente, sin procesamiento o mínimamente procesados, que no poseen agregado de nutrientes críticos.",
+    "Los vegetales en estado natural, las carnes frescas, el huevo fresco de gallina y de otras especies, las legumbres o los cereales secos, siempre que no hayan sido adicionados con azúcares, sodio y/o grasas.",
+    "Azúcar, aceites vegetales, frutos secos y sal común de mesa."
+  ],
+  "parametros_generales": [
+    {
+      "clave": "kcal_bebida_sin_aporte_energetico",
+      "valor": 4,
+      "unidad": "kcal por porción",
+      "descripcion": "Una bebida analcohólica no tiene aporte energético si aporta hasta este valor por porción."
+    }
+  ]
+}

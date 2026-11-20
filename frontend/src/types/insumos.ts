@@ -7,10 +7,14 @@ export interface Insumo {
     unidad_medida: UnidadMedida;
     activo: boolean;
     cantidad: number;
+    es_aditivo?: boolean;
+    aditivo_referencia_id?: number | null;
 }
 
 export interface InsumoPayload {
     nombre: string;
     unidad_medida_id: number;
     activo?: boolean;
+    es_aditivo?: boolean;
+    aditivo_referencia_id?: number | null;
 }
