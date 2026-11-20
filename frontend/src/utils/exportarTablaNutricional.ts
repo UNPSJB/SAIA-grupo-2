@@ -39,23 +39,24 @@ export async function exportarTablaNutricionalPDF(datos: InformacionNutricionalP
     const margin = 40;
     let headerY = margin;
 
+    // Logo opcional
     if (empresaConfig?.logo_base64 && empresaConfig.logo_base64.startsWith('data:image')) {
         try {
             doc.addImage(empresaConfig.logo_base64, 'PNG', margin, headerY, 45, 45);
         } catch {
-            // Continua si falla la imagen
         }
     }
 
+
     const startTextX = empresaConfig?.logo_base64 ? margin + 55 : margin;
     doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
     doc.text(empresaConfig?.nombre_empresa || 'SAIA - Control de Calidad', startTextX, headerY + 14);
 
     doc.setFont('Helvetica', 'normal');
     doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
+    doc.setTextColor(50, 50, 50);
     doc.text(`CUIT: ${empresaConfig?.cuit || '30-00000000-0'}`, startTextX, headerY + 26);
     doc.text(`Domicilio: ${empresaConfig?.domicilio || 'Sin especificar'}`, startTextX, headerY + 36);
 
@@ -66,36 +67,38 @@ export async function exportarTablaNutricionalPDF(datos: InformacionNutricionalP
     });
     doc.text(`Fecha de emisión: ${fechaStr}`, pageWidth - margin, headerY + 14, { align: 'right' });
 
-    headerY += 50;
-    doc.setDrawColor(226, 232, 240);
-    doc.setLineWidth(1);
+    headerY += 46;
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.5);
     doc.line(margin, headerY, pageWidth - margin, headerY);
 
+    // Titulo
     headerY += 18;
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(11);
-    doc.setTextColor(15, 23, 42);
+    doc.setTextColor(0, 0, 0);
     doc.text(`INFORMACIÓN NUTRICIONAL — ${datos.producto_nombre}`, margin, headerY);
 
     headerY += 14;
     doc.setFont('Helvetica', 'normal');
     doc.setFontSize(9);
-    doc.setTextColor(71, 85, 105);
+    doc.setTextColor(0, 0, 0);
     doc.text(`Porción: ${obtenerTextoPorcion(datos)}`, margin, headerY);
 
+    // Marca si la tabla está incompleta
     const esCompleta = datos.estado === 'completa';
     if (!esCompleta) {
         headerY += 13;
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(8.5);
-        doc.setTextColor(180, 83, 9);
+        doc.setTextColor(0, 0, 0);
         const detalleIncompleta =
             datos.insumos_sin_datos.length > 0
                 ? `Tabla incompleta: faltan datos en ${datos.insumos_sin_datos.join(', ')}.`
-                : !datos.porcion || !datos.medida_casera
-                  ? 'Tabla incompleta: falta declarar porción o medida casera.'
+                : !datos.porcion
+                  ? 'Tabla incompleta: falta declarar la porción del producto.'
                   : 'Tabla incompleta: sin insumos cargados.';
-        doc.text(detalleIncompleta, margin, headerY);
+        doc.text(`[!] ${detalleIncompleta}`, margin, headerY);
     }
 
     const encabezadoCien = `Por 100 ${datos.unidad_base}`;
@@ -115,24 +118,29 @@ export async function exportarTablaNutricionalPDF(datos: InformacionNutricionalP
             font: 'Helvetica',
             fontSize: 8,
             cellPadding: 4,
-            textColor: [30, 41, 59],
+            textColor: [0, 0, 0],
             valign: 'middle',
+            fillColor: [255, 255, 255], 
+            lineColor: [200, 200, 200],
+            lineWidth: { top: 0.25, bottom: 0.25, left: 0, right: 0 }, 
         },
         headStyles: {
-            fillColor: [30, 41, 59],
-            textColor: [255, 255, 255],
+            fillColor: [255, 255, 255], 
+            textColor: [0, 0, 0],       
             fontStyle: 'bold',
+            lineColor: [0, 0, 0],       
+            lineWidth: { top: 1.5, bottom: 1, left: 0, right: 0 }, 
         },
         alternateRowStyles: {
-            fillColor: [248, 250, 252],
+            fillColor: [255, 255, 255], 
         },
         didDrawPage: (data) => {
             const totalPages = (doc as any).internal.getNumberOfPages();
             doc.setFont('Helvetica', 'normal');
             doc.setFontSize(7);
-            doc.setTextColor(148, 163, 184);
+            doc.setTextColor(100, 100, 100);
             doc.text(
-                `Página ${data.pageNumber} de ${totalPages} - Generado por SAIA 2 Sistema de Aseguramiento de Inocuidad Alimentaria`,
+                `Página ${data.pageNumber} de ${totalPages} - Generado por SAIA`,
                 pageWidth / 2,
                 pageHeight - 20,
                 { align: 'center' }
@@ -140,17 +148,24 @@ export async function exportarTablaNutricionalPDF(datos: InformacionNutricionalP
         },
     });
 
-    let pieY = ((doc as any).lastAutoTable?.finalY ?? (headerY + 120)) + 12;
+
+    const tableFinalY = (doc as any).lastAutoTable?.finalY ?? (headerY + 120);
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(1.5);
+    doc.line(margin, tableFinalY, pageWidth - margin, tableFinalY);
+
+
+    let pieY = tableFinalY + 10;
     doc.setFont('Helvetica', 'normal');
     doc.setFontSize(7.5);
-    doc.setTextColor(100, 116, 139);
+    doc.setTextColor(0, 0, 0);
     const lineasNota = doc.splitTextToSize(datos.nota_pie, pageWidth - margin * 2);
     doc.text(lineasNota, margin, pieY);
     pieY += lineasNota.length * 9 + 4;
 
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(8);
-    doc.setTextColor(30, 41, 59);
+    doc.setTextColor(0, 0, 0);
     const lineasLeyenda = doc.splitTextToSize(datos.leyenda, pageWidth - margin * 2);
     doc.text(lineasLeyenda, margin, pieY);
 
