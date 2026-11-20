@@ -18,6 +18,18 @@ def verificar_acceso_operario_o_admin(x_user_role: Optional[str] = Header(None, 
     if not x_user_role or x_user_role.lower() not in ("operario", "admin"):
         raise PermisoDenegadoAdmin()
 
+@router.post(
+        "/producto/{producto_id}/escalar",
+        response_model=schemas.RecetaEscalada,
+        summary="Calcular receta vigente escalada para un lote de producción",
+)
+def escalar_receta_producto(
+    producto_id: int,
+    payload: schemas.RecetaEscaladaBase,
+    db: Annotated[Session, Depends(get_db)]
+):
+    return services.calcular_receta_escalada(db, producto_id, payload)
+
 @router.get(
     "/{receta_id}/versiones/vigente",
     response_model=schemas.VersionReceta

@@ -23,7 +23,7 @@ from src.alimentos_referencia.models import AlimentoReferencia
 from src.datos_nutricionales.models import DatoNutricionalInsumo
 from src.configuracion_empresa.models import ConfiguracionEmpresa
 from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
-from src.recetas.models import Receta, VersionReceta
+from src.recetas.models import Receta, VersionReceta, PasoReceta, DetalleReceta
 
 from src.config import settings
 from src.logger import setup_logging

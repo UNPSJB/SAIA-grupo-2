@@ -4,11 +4,13 @@ from typing import List, Optional
 from sqlalchemy import select, func, update, insert
 from sqlalchemy.orm import Session
 
-from src.recetas.models import Receta, VersionReceta, PasoReceta, detalle_receta
+from src.recetas.models import Receta, VersionReceta, PasoReceta, DetalleReceta, detalle_receta 
 from src.recetas import schemas, exceptions
-from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo
+from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo, DECIMALES_ESCALADO, DECIMALES_FACTOR
 from src.productos.models import Producto
 from src.insumos.models import Insumo
+from src.unidades_medida import services as unidades_services
+from src.unidades_medida.constants import MagnitudUnidad
 
 logger = logging.getLogger(__name__)
 
@@ -219,3 +221,82 @@ def marcar_version_receta_vigente(db: Session, receta_id: int, nro_version: int)
     db.commit()
     db.refresh(version)
     return version
+
+def _obtener_receta_vigente(db: Session, producto_id: int) -> VersionReceta:
+    consulta= (
+        select(VersionReceta)
+        .join(Receta, VersionReceta.receta_id == Receta.id)
+        .where(
+            Receta.producto_id == producto_id,
+            VersionReceta.estado == EstadoVersionReceta.ACTIVO
+        )
+    )
+    version_vigente = db.scalars(consulta).first()
+
+    if not version_vigente:
+        raise exceptions.RecetaVigenteNoEncontrada()
+    
+    return version_vigente
+
+def calcular_receta_escalada(
+        db: Session, producto_id: int, payload: schemas.RecetaEscaladaBase
+) -> schemas.RecetaEscalada:
+    version_receta = _obtener_receta_vigente(db, producto_id)
+    unidad_gramos = unidades_services.unidad_base(db, MagnitudUnidad.MASA)
+
+    rendimiento_base = version_receta.rendimiento_final_gramos
+    if(payload.factor is None) == (payload.cantidad_objetivo is None):
+        raise exceptions.ParametrosEscaladoInvalidos()
+
+    if rendimiento_base <= 0:
+        raise exceptions.RendimientoFinalInvalido()
+
+    if payload.cantidad_objetivo is not None:
+        factor = payload.cantidad_objetivo / rendimiento_base
+        rendimiento_esperado = round(payload.cantidad_objetivo, DECIMALES_ESCALADO)
+    elif payload.factor is not None:
+        factor = payload.factor
+        rendimiento_esperado = round(rendimiento_base * factor, DECIMALES_ESCALADO)
+    else: raise exceptions.ParametrosEscaladoInvalidos()
+
+    consulta_detalles = (
+        select(DetalleReceta, Insumo)
+        .join(Insumo, DetalleReceta.insumo_id == Insumo.id)
+        .where(
+            DetalleReceta.receta_id == version_receta.receta_id,
+            DetalleReceta.nro_version == version_receta.version
+        )
+        .order_by(DetalleReceta.renglon)
+    )
+    filas_detalle = db.execute(consulta_detalles).all()
+
+    renglones_escalados = []
+    for detalle, insumo in filas_detalle:
+        cantidad_orig= detalle.cantidad_gramos
+        cantidad_escalada = round(cantidad_orig * factor, DECIMALES_ESCALADO)
+        stock_disponible = round(insumo.cantidad or 0.0, DECIMALES_ESCALADO)
+
+        renglones_escalados.append(
+            schemas.RenglonEscalado(
+                insumo_id=insumo.id,
+                insumo_nombre=insumo.nombre,
+                unidad_medida_id=unidad_gramos.id,
+                unidad_medida_nombre=unidad_gramos.nombre,
+                magnitud=unidad_gramos.magnitud,
+                cantidad_original=round(cantidad_orig, DECIMALES_ESCALADO),
+                cantidad_escalada=cantidad_escalada,
+                stock_disponible=stock_disponible,
+                stock_suficiente=stock_disponible >= cantidad_escalada
+            )
+        )
+
+        return schemas.RecetaEscalada(
+            receta_id=version_receta.receta_id,
+            receta_version_id=version_receta.version,
+            producto_id=producto_id,
+            rendimiento_original=round(rendimiento_base, DECIMALES_ESCALADO),
+            rendimiento_esperado=rendimiento_esperado,
+            unidad_producto_nombre=unidad_gramos.nombre,
+            factor_aplicado=round(factor, DECIMALES_FACTOR),
+            renglones=renglones_escalados
+        )
