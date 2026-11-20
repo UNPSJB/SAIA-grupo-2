@@ -72,6 +72,9 @@ import EstadisticaIncidentes from './features/incidentes/EstadisticaIncidentes';
 import DocumentosVersionadosList from './features/documentosVersionados/DocumentosVersionadosList';
 import DocumentoVersionadoForm from './features/documentosVersionados/DocumentoVersionadoForm';
 import DocumentosVigentesList from './features/documentosVersionados/DocumentosVigentesList';
+import RecetaList from './features/recetas/RecetaList';
+import RecetaForm from './features/recetas/RecetaForm';
+import RecetaDetail from './features/recetas/RecetaDetail';
 
 import ConfiguracionVistaPublica from './features/vistaPublica/ConfiguracionVistaPublica';
 import ConfiguracionEmpresa from './features/configuracionEmpresa/ConfiguracionEmpresa';
@@ -234,6 +237,9 @@ function RutasProtegidas() {
             <Route path="/documentos" element={<RutaAdmin><DocumentosVersionadosList /></RutaAdmin>} />
             <Route path="/documentos/nuevo" element={<RutaAdmin><DocumentoVersionadoForm /></RutaAdmin>} />
             <Route path="/documentos/vigentes" element={<DocumentosVigentesList />} />
+            <Route path="/recetas" element={<RecetaList />} />
+            <Route path="/recetas/nueva" element={<RutaAdmin><RecetaForm /></RutaAdmin>} />
+            <Route path="/recetas/:id" element={<RecetaDetail />} />
 
             <Route path="/configuracion/empresa" element={<RutaAdmin><ConfiguracionEmpresa /></RutaAdmin>} />
             <Route path="/configuracion/vista-publica" element={<RutaAdmin><ConfiguracionVistaPublica /></RutaAdmin>} />
