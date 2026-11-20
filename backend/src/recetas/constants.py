@@ -3,3 +3,7 @@ from enum import Enum
 class TipoUsoInsumo(str, Enum):
     INGREDIENTE = "ingrediente"
     ADITIVO = "aditivo"
+
+
+DECIMALES_ESCALADO = 2
+DECIMALES_FACTOR = 4

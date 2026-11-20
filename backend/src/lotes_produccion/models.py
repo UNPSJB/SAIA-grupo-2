@@ -22,6 +22,8 @@ class LoteProduccion(ModeloBase):
     producto_id: Mapped[int] = mapped_column(ForeignKey("productos.id"), index=True)
     fecha: Mapped[date] = mapped_column(index=True)
     cantidad: Mapped[float]
+    receta_version_id: Mapped[Optional[int]] = mapped_column(nullable=True)
+    factor_escalado: Mapped[Optional[float]] = mapped_column(nullable=True) 
     fecha_registro: Mapped[datetime] = mapped_column(default=datetime.now)
     fecha_cierre: Mapped[Optional[datetime]]
     cerrado_por_id: Mapped[Optional[int]] = mapped_column(ForeignKey("empleados.id"))
