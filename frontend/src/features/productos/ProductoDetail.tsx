@@ -34,7 +34,7 @@ export default function ProductoDetail() {
     useEffect(() => {
         let cancelado = false;
 
-        Promise.all([getProductoById(id), getLotesDeProducto(id), getInformacionNutricionalProducto(id)])
+        Promise.all([getProductoById(id), getLotesDeProducto(id), getInformacionNutricionalProducto(id).catch(()=> null)])
             .then(([producto, lotes, infoNutricional]) => {
                 if (!cancelado) setRespuesta({ clave: id, producto, lotes, infoNutricional, error: false });
             })
@@ -168,7 +168,8 @@ export default function ProductoDetail() {
                                 ordenAscInicial={false}
                             />
                         </div>
-                        <div className={styles.accordion}>
+                    </details>
+
                         {infoNutricional && (
                             <details className={styles.accordionItem} open>
                                 <summary className={`${styles.accordionHeader} ${estilosNutricionales.ocultarEnImpresion}`}>
@@ -191,12 +192,11 @@ export default function ProductoDetail() {
                                 <div className={styles.accordionBody}>
                                     <TablaNutricional datos={infoNutricional} />
                                 </div>
-        </details>
+                            </details>
+        
     )}
-    {/* El details de lotes producidos que ya tenías */}
 </div>
-                    </details>
-                </div>
+
 
                 <div className={styles.bloqueDetalle}>
                     <Link to="/productos">
