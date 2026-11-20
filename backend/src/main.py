@@ -51,6 +51,10 @@ from src.documentos_versionados.router import (
     router as documentos_versionados_router,
     router_documentos,
 )
+from src.aditivos.router import(
+    router as aditivos_router,
+    router_clases_funcionales as clases_funcionales_router
+)
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -107,3 +111,8 @@ app.include_router(datos_nutricionales_router)
 app.include_router(configuracion_empresa_router)
 app.include_router(documentos_versionados_router)
 app.include_router(router_documentos)
+<<<<<<< HEAD
+=======
+app.include_router(aditivos_router)
+app.include_router(clases_funcionales_router)
+>>>>>>> feat/receta-versionada
