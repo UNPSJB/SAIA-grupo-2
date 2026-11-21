@@ -54,8 +54,11 @@ from src.rotulado_frontal.models import EvaluacionAplicabilidad
 from src.rotulado_frontal import services as rotulado_frontal_services
 from src.rotulado_frontal.schemas import ActualizacionMarcasInsumos, CambioMarcaInsumo, NuevaEvaluacion
 
+from src.configuracion_empresa.models import ConfiguracionEmpresa
 from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
-from src.recetas.models import Receta, VersionReceta
+from src.recetas.models import Receta, VersionReceta, PasoReceta, DetalleReceta
+from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo
+from src.asociaciones.detalle_receta import detalle_receta
 
 DIAS_DE_HISTORIAL = 90
 ZONA_PLANTA = timezone(timedelta(hours=-3))
@@ -1264,6 +1267,68 @@ def seed_database(reset: bool = True):
         if db.query(ConjuntoParametros).count() == 0:
             evaluaciones = cargar_rotulado_frontal_de_ejemplo(db)
             print(f"Parametros normativos v1 publicados y {evaluaciones} evaluaciones de rotulado frontal cargadas.")
+
+        if db.query(ClaseFuncionalAditivo).count() == 0:
+            cf1 = ClaseFuncionalAditivo(nombre="Conservante", necesita_ins=True)
+            cf2 = ClaseFuncionalAditivo(nombre="Antioxidante", necesita_ins=True)
+            cf3 = ClaseFuncionalAditivo(nombre="Colorante", necesita_ins=True)
+            cf4 = ClaseFuncionalAditivo(nombre="Aromatizante / Saborizante", necesita_ins=False)
+            db.add_all([cf1, cf2, cf3, cf4])
+            db.commit()
+
+            ad1 = Aditivo(nombre_completo="Benzoato de Sodio", clase_funcional_id=cf1.id, numero_ins="211")
+            ad2 = Aditivo(nombre_completo="Ácido Ascórbico (Vitamina C)", clase_funcional_id=cf2.id, numero_ins="300")
+            ad3 = Aditivo(nombre_completo="Aroma Natural de Vainilla", clase_funcional_id=cf4.id, numero_ins=None)
+            db.add_all([ad1, ad2, ad3])
+            db.commit()
+            print("Clases funcionales y Aditivos de referencia creados.")
+
+        if db.query(Receta).count() == 0:
+            producto = db.query(Producto).first()
+            insumo = db.query(Insumo).first()
+            if producto and insumo:
+                rec = Receta(producto_id=producto.id)
+                db.add(rec)
+                db.commit()
+                db.refresh(rec)
+
+                ver = VersionReceta(
+                    receta_id=rec.id,
+                    version=1,
+                    rendimiento_final_gramos=1000.0,
+                    unidad_venta_gramos=250.0,
+                    medida_casera="1 porción (250g)",
+                    motivo_cambio="Fórmula original estandarizada",
+                    estado=EstadoVersionReceta.ACTIVO,
+                    fecha_vigencia=date.today()
+                )
+                db.add(ver)
+                db.flush()
+
+                db.execute(
+                    insert(detalle_receta).values(
+                        receta_id=rec.id,
+                        nro_version=1,
+                        renglon=1,
+                        insumo_id=insumo.id,
+                        cantidad_gramos=1000.0,
+                        tipo_uso=TipoUsoInsumo.INGREDIENTE.value,
+                        aditivo_id=None
+                    )
+                )
+
+                paso = PasoReceta(
+                    receta_id=rec.id,
+                    version=1,
+                    orden=1,
+                    nombre_paso="Mezclado de Ingredientes",
+                    procedimiento="Incorporar insumos a temperatura ambiente y homogeneizar.",
+                    tiempo_minutos=15,
+                    es_punto_control=True
+                )
+                db.add(paso)
+                db.commit()
+                print("Receta y Versión 1 inicial creadas.")
 
         print("Base de datos poblada exitosamente con datos de prueba enriquecidos para SAIA!")
 

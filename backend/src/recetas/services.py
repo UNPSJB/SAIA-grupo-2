@@ -222,7 +222,6 @@ def marcar_version_receta_vigente(db: Session, receta_id: int, nro_version: int)
     db.commit()
     db.refresh(version)
     return version
-
 def _expresar_valor(valor: float, umbral: float, decimales: int, unidad: str) -> str:
     if valor < umbral:
         return "0 " + unidad if unidad else "0"
