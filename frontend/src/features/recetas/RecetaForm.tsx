@@ -363,9 +363,20 @@ export default function RecetaForm() {
             }
         }
 
+        if (!usuario?.id) {
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'No se pudo registrar',
+                mensaje: 'No se pudo identificar al usuario que registra la receta. Volvé a iniciar sesión.',
+                exitoRedireccion: false,
+                idRecetaRedireccion: '',
+            });
+            return;
+        }
+
         try {
             setGuardando(true);
-            const rol = usuario?.rol || 'admin';
+            const rol = usuario.rol;
 
             const payloadDetalles: DetalleRecetaPayload[] = detalles.map((d) => ({
                 insumo_id: Number(d.insumo_id),
@@ -389,6 +400,7 @@ export default function RecetaForm() {
                 unidad_venta_gramos: Number(unidadVentaGramos),
                 medida_casera: medidaCasera.trim() || null,
                 motivo_cambio: motivoCambio.trim() || (esNuevaVersion ? 'Actualización de receta' : 'Creación inicial de la receta'),
+                creado_por_id: usuario.id,
                 detalles: payloadDetalles,
                 pasos: payloadPasos,
             };
