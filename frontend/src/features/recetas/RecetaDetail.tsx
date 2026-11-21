@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Bar } from 'react-chartjs-2';
+import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Tooltip } from 'chart.js';
 
 import { useAuth } from '../../context/AuthContext';
 import Boton from '../../components/Boton';
@@ -20,6 +22,13 @@ import type { Equipo } from '../../types/equipos';
 import type { ComposicionReceta, Receta, VersionReceta } from '../../types/receta';
 import EscalarReceta from './EscalarReceta';
 import styles from '../../styles/shared.module.css';
+import estilos from '../../components/Estadisticas.module.css';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
+
+const COLOR_BARRA = '#4e96e2';
+const COLOR_GRILLA = 'rgba(226, 232, 240, 0.08)';
+const COLOR_TEXTO_EJE = '#8b939b';
 
 interface RespuestaDetalle {
     clave: string;
@@ -146,7 +155,11 @@ export default function RecetaDetail() {
         if (!versiones || versiones.length === 0) return null;
         return versiones.find((v) => v.version === nroVersionSeleccionada) || versiones[0];
     }, [versiones, nroVersionSeleccionada]);
-
+    
+    const componentesComposicion = composicion
+            ? [...composicion.ingredientes, ...composicion.aditivos]
+            : [];
+    
     useEffect(() => {
         if (!esAdmin || !version) {
             setComposicion(null);
@@ -379,24 +392,15 @@ export default function RecetaDetail() {
                         </section>
 
                         {esAdmin && (
-                            <section
-                                className={styles.bloqueDetalle}
-                                aria-labelledby="receta-composicion"
-                            >
-                                <h3 id="receta-composicion">
-                                    Composición porcentual
-                                </h3>
+                            <section className={styles.bloqueDetalle} aria-labelledby="receta-composicion">
+                                <h3 id="receta-composicion">Composición porcentual</h3>
 
                                 {cargandoComposicion && (
-                                    <p className={styles.textMuted}>
-                                        Calculando composición...
-                                    </p>
+                                    <p>Calculando composición...</p>
                                 )}
 
                                 {errorComposicion && (
-                                    <p className={styles.textDanger} role="alert">
-                                        {errorComposicion}
-                                    </p>
+                                    <p role="alert">{errorComposicion}</p>
                                 )}
 
                                 {composicion && (
@@ -406,45 +410,154 @@ export default function RecetaDetail() {
                                             {formatearGramos(composicion.total_gramos)}
                                         </p>
 
-                                        <h4>Ingredientes</h4>
+                                        {componentesComposicion.length > 0 && (
+                                            <>
+                                                <h4>Distribución porcentual</h4>
 
-                                        {composicion.ingredientes.length === 0 ? (
-                                            <p className={styles.textMuted}>
-                                                No hay ingredientes registrados.
-                                            </p>
-                                        ) : (
-                                            <ul>
-                                                {composicion.ingredientes.map((item) => (
-                                                    <li key={item.renglon}>
-                                                        <strong>{item.nombre_insumo}</strong>
-                                                        {' — '}
-                                                        {formatearGramos(item.cantidad_gramos)}
-                                                        {' — '}
-                                                        {formatearPorcentaje(item.porcentaje)}
-                                                    </li>
-                                                ))}
-                                            </ul>
+                                                <div className={estilos.lienzoGrafico}>
+                                                    <Bar
+                                                        role="img"
+                                                        aria-label={`Composición de la receta: ${componentesComposicion
+                                                            .map(
+                                                                (item) =>
+                                                                    `${item.nombre_insumo}: ${formatearPorcentaje(item.porcentaje)}`,
+                                                            )
+                                                            .join('; ')}`}
+                                                        data={{
+                                                            labels: componentesComposicion.map(
+                                                                (item) => item.nombre_insumo,
+                                                            ),
+                                                            datasets: [
+                                                                {
+                                                                    label: 'Porcentaje',
+                                                                    data: componentesComposicion.map(
+                                                                        (item) => item.porcentaje,
+                                                                    ),
+                                                                    backgroundColor: COLOR_BARRA,
+                                                                    hoverBackgroundColor: COLOR_BARRA,
+                                                                    borderRadius: {
+                                                                        topLeft: 4,
+                                                                        topRight: 4,
+                                                                        bottomLeft: 0,
+                                                                        bottomRight: 0,
+                                                                    },
+                                                                    borderSkipped: 'bottom',
+                                                                    maxBarThickness: 32,
+                                                                },
+                                                            ],
+                                                        }}
+                                                        options={{
+                                                            responsive: true,
+                                                            maintainAspectRatio: false,
+                                                            animation: { duration: 250 },
+                                                            interaction: { mode: 'index', intersect: false },
+                                                            plugins: {
+                                                                legend: { display: false },
+                                                                tooltip: {
+                                                                    displayColors: false,
+                                                                    callbacks: {
+                                                                        title: (elementos) =>
+                                                                            componentesComposicion[
+                                                                                elementos[0].dataIndex
+                                                                            ]?.nombre_insumo ?? '',
+                                                                        label: (contexto) => {
+                                                                            const item =
+                                                                                componentesComposicion[
+                                                                                    contexto.dataIndex
+                                                                                ];
+
+                                                                            if (!item) return '';
+
+                                                                            return `${formatearPorcentaje(item.porcentaje)} · ${formatearGramos(item.cantidad_gramos)}`;
+                                                                        },
+                                                                    },
+                                                                },
+                                                            },
+                                                            scales: {
+                                                                y: {
+                                                                    beginAtZero: true,
+                                                                    border: { display: false },
+                                                                    grid: { color: COLOR_GRILLA },
+                                                                    ticks: {
+                                                                        color: COLOR_TEXTO_EJE,
+                                                                        callback: (valor) => `${valor}%`,
+                                                                    },
+                                                                },
+                                                                x: {
+                                                                    grid: { display: false },
+                                                                    border: { color: COLOR_GRILLA },
+                                                                    ticks: {
+                                                                        color: COLOR_TEXTO_EJE,
+                                                                        autoSkip: false,
+                                                                        maxRotation: 45,
+                                                                        minRotation: 0,
+                                                                    },
+                                                                },
+                                                            },
+                                                        }}
+                                                    />
+                                                </div>
+
+                                                <p className={estilos.notaGrafico}>
+                                                    Pasá el cursor por cada barra para consultar el porcentaje y la
+                                                    cantidad en gramos del componente.
+                                                </p>
+                                            </>
                                         )}
 
-                                        <h4>Aditivos</h4>
+                                        <div className={estilos.datosTabla}>
+                                            <h4>Ingredientes</h4>
 
-                                        {composicion.aditivos.length === 0 ? (
-                                            <p className={styles.textMuted}>
-                                                No hay aditivos registrados.
-                                            </p>
-                                        ) : (
-                                            <ul>
-                                                {composicion.aditivos.map((item) => (
-                                                    <li key={item.renglon}>
-                                                        <strong>{item.nombre_insumo}</strong>
-                                                        {' — '}
-                                                        {formatearGramos(item.cantidad_gramos)}
-                                                        {' — '}
-                                                        {formatearPorcentaje(item.porcentaje)}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
+                                            {composicion.ingredientes.length === 0 ? (
+                                                <p>No hay ingredientes registrados.</p>
+                                            ) : (
+                                                <table>
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col">Ingrediente</th>
+                                                            <th scope="col">Cantidad (g)</th>
+                                                            <th scope="col">Porcentaje</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {composicion.ingredientes.map((item) => (
+                                                            <tr key={item.renglon}>
+                                                                <th scope="row">{item.nombre_insumo}</th>
+                                                                <td>{formatearGramos(item.cantidad_gramos)}</td>
+                                                                <td>{formatearPorcentaje(item.porcentaje)}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            )}
+                                        </div>
+
+                                        <div className={estilos.datosTabla}>
+                                            <h4>Aditivos</h4>
+
+                                            {composicion.aditivos.length === 0 ? (
+                                                <p>No hay aditivos registrados.</p>
+                                            ) : (
+                                                <table>
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col">Aditivo</th>
+                                                            <th scope="col">Cantidad (g)</th>
+                                                            <th scope="col">Porcentaje</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {composicion.aditivos.map((item) => (
+                                                            <tr key={item.renglon}>
+                                                                <th scope="row">{item.nombre_insumo}</th>
+                                                                <td>{formatearGramos(item.cantidad_gramos)}</td>
+                                                                <td>{formatearPorcentaje(item.porcentaje)}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            )}
+                                        </div>
 
                                         <p>
                                             <strong>Suma de porcentajes:</strong>{' '}
