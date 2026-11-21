@@ -3,8 +3,10 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import type { MagnitudUnidad, UnidadMedida } from '../../types/unidadesMedida';
 import type { InsumoPayload } from '../../types/insumos';
+import type { Aditivo } from '../../types/aditivos';
 import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
 import { getInsumoById, saveInsumo } from '../../services/insumosServices';
+import { getAditivos } from '../../services/aditivosServices';
 import Boton from '../../components/Boton';
 import ModalAlerta from '../../components/alerta';
 import styles from '../../styles/shared.module.css';
@@ -14,10 +16,13 @@ import { esUnidadDeInsumo } from './cantidades';
 interface FormValues {
     nombre: string;
     unidad_medida_id: number;
+    es_aditivo: boolean;
+    aditivo_referencia_id: number | '';
 }
 
 export default function InsumoForm() {
     const [unidadesDisponibles, setUnidadesDisponibles] = useState<UnidadMedida[]>([]);
+    const [aditivosDisponibles, setAditivosDisponibles] = useState<Aditivo[]>([]);
     const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
     const [magnitudFija, setMagnitudFija] = useState<MagnitudUnidad | null>(null);
 
@@ -25,23 +30,31 @@ export default function InsumoForm() {
     const { id } = useParams();
     const editando = Boolean(id);
 
-    const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+    const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormValues>({
         defaultValues: {
-            nombre: ''
+            nombre: '',
+            es_aditivo: false,
+            aditivo_referencia_id: '',
         }
     });
 
+    const esAditivoMarcado = watch('es_aditivo');
+
     useEffect(() => {
-        const cargarUnidades = async () => {
+        const cargarCatalogos = async () => {
             try {
-                const data = await getUnidadesMedida();
-                setUnidadesDisponibles(data);
+                const [unidadesData, aditivosData] = await Promise.all([
+                    getUnidadesMedida(),
+                    getAditivos(),
+                ]);
+                setUnidadesDisponibles(unidadesData);
+                setAditivosDisponibles(aditivosData);
             } catch (err) {
-                console.error("Error al cargar unidades de medida:", err);
+                console.error("Error al cargar catálogos:", err);
             }
         };
-        cargarUnidades(); 
-    }, [editando, id, reset]);
+        cargarCatalogos();
+    }, []);
 
     useEffect(() => {
         if (editando && id) {
@@ -50,7 +63,9 @@ export default function InsumoForm() {
                     const data = await getInsumoById(id);
                     reset({
                         nombre: data.nombre,
-                        unidad_medida_id: data.unidad_medida_id
+                        unidad_medida_id: data.unidad_medida_id,
+                        es_aditivo: Boolean(data.es_aditivo),
+                        aditivo_referencia_id: data.aditivo_referencia_id ?? '',
                     });
                     setMagnitudFija(data.cantidad > 0 ? data.unidad_medida.magnitud : null);
                 } catch (err) {
@@ -67,7 +82,9 @@ export default function InsumoForm() {
 
         const datos: InsumoPayload = { 
             nombre: nombreLimpio, 
-            unidad_medida_id: Number(data.unidad_medida_id)
+            unidad_medida_id: Number(data.unidad_medida_id),
+            es_aditivo: Boolean(data.es_aditivo),
+            aditivo_referencia_id: data.es_aditivo && data.aditivo_referencia_id ? Number(data.aditivo_referencia_id) : null,
         };
 
         try {
@@ -137,6 +154,41 @@ export default function InsumoForm() {
                                 : 'Es la unidad en la que se compra. El stock se registra en gramos, o en litros si es líquido.'}
                         </span>
                     </div>
+
+                    <div className={styles.formGroup} style={{ marginTop: '10px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                            <input
+                                type="checkbox"
+                                {...register('es_aditivo')}
+                                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                            />
+                            <span>Este insumo es un Aditivo de Referencia</span>
+                        </label>
+                    </div>
+
+                    {esAditivoMarcado && (
+                        <div className={styles.formGroup}>
+                            <label>Aditivo de Referencia INS (Catálogo Oficial):</label>
+                            <select
+                                {...register('aditivo_referencia_id', {
+                                    required: esAditivoMarcado ? "Debe seleccionar el aditivo de referencia" : false,
+                                })}
+                                style={errors.aditivo_referencia_id ? { borderColor: '#ef4444', outline: 'none' } : {}}
+                            >
+                                <option value="">Seleccione un aditivo del catálogo...</option>
+                                {aditivosDisponibles.map((aditivo) => (
+                                    <option key={aditivo.id} value={aditivo.id}>
+                                        {aditivo.nombre_completo} {aditivo.numero_ins ? `(INS ${aditivo.numero_ins})` : '(Sin INS)'}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.aditivo_referencia_id && (
+                                <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>
+                                    {errors.aditivo_referencia_id.message}
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div className={styles.filaBotones} style={{ marginTop: '20px' }}>

@@ -22,3 +22,15 @@ class TipoUsoInvalido(BadRequest):
     DETAIL = ErrorCode.TIPO_USO_INVALIDO
 class ParametrosEscaladoInvalidos(BadRequest):
     DETAIL = ErrorCode.PARAMETROS_ESCALADO_INVALIDOS
+
+class InsumoDuplicado(BadRequest):
+    DETAIL = ErrorCode.INSUMO_DUPLICADO
+
+class InsumoInactivo(BadRequest):
+    DETAIL = ErrorCode.INSUMO_INACTIVO
+
+class ProductoInactivo(BadRequest):
+    DETAIL = ErrorCode.PRODUCTO_INACTIVO
+
+class AditivoRequerido(BadRequest):
+    DETAIL = ErrorCode.ADITIVO_REQUERIDO

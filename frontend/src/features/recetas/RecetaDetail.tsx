@@ -11,14 +11,13 @@ import {
     getComposicionReceta,
     getRecetaById,
     getVersionesReceta,
-    //getVersionVigenteReceta,
     RecetasApiError,
 } from '../../services/recetasServices';
 import { exportarRecetaPDF } from '../../utils/exportarRecetaPdf';
 import type { Aditivo } from '../../types/aditivos';
 import type { Insumo } from '../../types/insumos';
 import type { Equipo } from '../../types/equipos';
-import type {ComposicionReceta, Receta, VersionReceta,} from '../../types/receta';
+import type { ComposicionReceta, Receta, VersionReceta } from '../../types/receta';
 import EscalarReceta from './EscalarReceta';
 import styles from '../../styles/shared.module.css';
 
@@ -55,6 +54,12 @@ export default function RecetaDetail() {
     const { usuario } = useAuth();
     const esAdmin = usuario?.rol === 'admin';
     const { id = '' } = useParams();
+
+    const [respuesta, setRespuesta] = useState<RespuestaDetalle | null>(null);
+    const [nroVersionSeleccionada, setNroVersionSeleccionada] = useState<number | null>(null);
+    const [composicion, setComposicion] = useState<ComposicionReceta | null>(null);
+    const [cargandoComposicion, setCargandoComposicion] = useState(false);
+    const [errorComposicion, setErrorComposicion] = useState<string | null>(null);
 
     const [respuesta, setRespuesta] = useState<RespuestaDetalle | null>(null);
     const [nroVersionSeleccionada, setNroVersionSeleccionada] = useState<number | null>(null);
@@ -362,6 +367,15 @@ export default function RecetaDetail() {
                                 </ul>
                             )}
                         </section>
+                        {esAdmin && (
+                            <section
+                                className={styles.bloqueDetalle}
+                                aria-labelledby="receta-composicion"
+                            >
+                                <h3 id="receta-composicion">
+                                    Composición porcentual
+                                </h3>
+
                         {esAdmin && (
                             <section
                                 className={styles.bloqueDetalle}

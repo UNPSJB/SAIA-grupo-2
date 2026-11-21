@@ -10,6 +10,10 @@ class ErrorCode:
     UNIDAD_VENTA_INVALIDA = "La unidad de venta de la version debe tener un valor mayor que cero"
 
     TIPO_USO_INVALIDO = "El tipo de uso especificado no es valido"
+    INSUMO_DUPLICADO = "No se permiten insumos repetidos en los renglones de la receta"
+    INSUMO_INACTIVO = "No se puede utilizar un insumo dado de baja o inactivo"
+    PRODUCTO_INACTIVO = "No se puede crear o modificar la receta de un producto dado de baja"
+    ADITIVO_REQUERIDO = "Los renglones clasificados como aditivo deben especificar un aditivo de referencia válido"
     PARAMETROS_ESCALADO_INVALIDOS = "Debe indicar un factor multiplicador o una cantidad objetivo, pero no ambos"
 
 class EstadoVersionReceta(str, Enum):

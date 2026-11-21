@@ -6,22 +6,25 @@ import EncabezadoPagina from '../../components/EncabezadoPagina';
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 import Boton from '../../components/Boton';
 import { useAuth } from '../../context/AuthContext';
+import { getProductos } from '../../services/productosServices';
 import {
     getRecetas,
     getVersionVigenteReceta,
     RecetasApiError,
 } from '../../services/recetasServices';
+import type { Producto } from '../../types/productos';
 import type { Receta, VersionReceta } from '../../types/receta';
 import { filtrarPorTexto } from '../../utils/texto';
 import styles from '../../styles/shared.module.css';
 
-interface RecetaConVersion {
-    receta: Receta;
+interface ProductoConEstadoReceta {
+    producto: Producto;
+    receta: Receta | null;
     version: VersionReceta | null;
 }
 
 interface RespuestaRecetas {
-    datos: RecetaConVersion[];
+    datos: ProductoConEstadoReceta[];
     cargando: boolean;
     error: string | null;
 }
@@ -46,18 +49,34 @@ export default function RecetaList() {
 
         const cargarRecetas = async () => {
             try {
-                const recetas = await getRecetas();
+                const [productos, recetas] = await Promise.all([
+                    getProductos(),
+                    getRecetas(),
+                ]);
+
+                const recetasPorProducto = new Map<number, Receta>(
+                    recetas.map((r) => [r.producto_id, r]),
+                );
+
                 const datos = await Promise.all(
-                    recetas.map(async (receta): Promise<RecetaConVersion> => {
-                        try {
-                            const version = await getVersionVigenteReceta(receta.id);
-                            return { receta, version };
-                        } catch (problema) {
-                            if (problema instanceof RecetasApiError && problema.status === 404) {
-                                return { receta, version: null };
+                    productos.map(async (producto): Promise<ProductoConEstadoReceta> => {
+                        const receta = recetasPorProducto.get(producto.id) ?? null;
+                        let version: VersionReceta | null = null;
+
+                        if (receta) {
+                            try {
+                                version = await getVersionVigenteReceta(receta.id);
+                            } catch (problema) {
+                                if (
+                                    problema instanceof RecetasApiError
+                                    && problema.status !== 404
+                                ) {
+                                    throw problema;
+                                }
                             }
-                            throw problema;
                         }
+
+                        return { producto, receta, version };
                     }),
                 );
 
@@ -72,7 +91,7 @@ export default function RecetaList() {
                         cargando: false,
                         error: problema instanceof Error
                             ? problema.message
-                            : 'No se pudieron cargar las recetas.',
+                            : 'No se pudieron cargar los productos y recetas.',
                     });
                 }
             }
@@ -86,35 +105,46 @@ export default function RecetaList() {
     }, []);
 
     const filtradas = filtrarPorTexto(respuesta.datos, busqueda, (item) => [
-        item.receta.producto.nombre,
-        item.receta.producto.tipo,
-        item.receta.producto.unidad_medida.nombre,
-        item.version?.version,
-        item.version?.estado,
+        item.producto.nombre,
+        item.producto.tipo,
+        item.producto.unidad_medida.nombre,
+        item.version ? `v${item.version.version}` : 'Sin receta',
     ]);
 
-    const columnas: Columna<RecetaConVersion>[] = [
+    const columnas: Columna<ProductoConEstadoReceta>[] = [
         {
             key: 'producto',
             encabezado: 'Producto',
             ordenable: true,
             variant: 'titulo',
-            valorOrdenamiento: ({ receta }) => receta.producto.nombre,
-            render: ({ receta }) => receta.producto.nombre,
+            valorOrdenamiento: ({ producto }) => producto.nombre,
+            render: ({ producto }) => (
+                <span style={{ fontWeight: 600 }}>{producto.nombre}</span>
+            ),
         },
         {
             key: 'tipo',
             encabezado: 'Tipo',
             ordenable: true,
-            valorOrdenamiento: ({ receta }) => receta.producto.tipo,
-            render: ({ receta }) => receta.producto.tipo === 'alimento' ? 'Alimento' : 'Bebida',
+            valorOrdenamiento: ({ producto }) => producto.tipo,
+            render: ({ producto }) => producto.tipo === 'alimento' ? 'Alimento' : 'Bebida',
         },
         {
             key: 'version',
             encabezado: 'Versión vigente',
             ordenable: true,
             valorOrdenamiento: ({ version }) => version?.version ?? 0,
-            render: ({ version }) => version ? `v${version.version}` : 'Sin versión vigente',
+            render: ({ version }) => (
+                version ? (
+                    <span style={{ fontWeight: 600, color: 'var(--text-h)' }}>
+                        v{version.version}
+                    </span>
+                ) : (
+                    <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                        Sin receta
+                    </span>
+                )
+            ),
         },
         {
             key: 'rendimiento',
@@ -138,11 +168,21 @@ export default function RecetaList() {
             key: 'acciones',
             encabezado: 'Acciones',
             variant: 'acciones',
-            render: ({ receta }) => (
+            render: ({ producto, receta }) => (
                 <div className={styles.grupoBotonesTabla}>
-                    <Link to={`/recetas/${receta.id}`} title="Ver detalle">
-                        <Boton variant="ver" style={{ padding: '8px 12px' }} />
-                    </Link>
+                    {receta ? (
+                        <Link to={`/recetas/${receta.id}`} title="Ver detalle de la receta">
+                            <Boton variant="ver" style={{ padding: '8px 12px' }} />
+                        </Link>
+                    ) : (
+                        usuario?.rol === 'admin' && (
+                            <Link to={`/recetas/nueva?producto_id=${producto.id}`} title="Crear receta">
+                                <Boton variant="crear" style={{ padding: '6px 12px', fontSize: '0.82rem' }}>
+                                    Crear receta
+                                </Boton>
+                            </Link>
+                        )
+                    )}
                 </div>
             ),
         },
@@ -152,7 +192,7 @@ export default function RecetaList() {
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
                 titulo="Recetas"
-                descripcion="Listado de recetas y su versión vigente."
+                descripcion="Listado de productos y la versión vigente de su receta."
                 acciones={usuario?.rol === 'admin' && (
                     <Link to="/recetas/nueva">
                         <Boton variant="crear">Nueva receta</Boton>
@@ -164,7 +204,7 @@ export default function RecetaList() {
                 <BuscadorTexto
                     valor={busqueda}
                     onCambio={setBusqueda}
-                    placeholder="Buscar receta..."
+                    placeholder="Buscar producto o receta..."
                 />
             </div>
 
@@ -177,14 +217,14 @@ export default function RecetaList() {
             <TablaPaginada
                 datos={filtradas}
                 columnas={columnas}
-                gridTemplateColumns="2fr 1fr 1.2fr 1.4fr 1.2fr 1fr"
+                gridTemplateColumns="2fr 1fr 1.2fr 1.4fr 1.2fr 1.2fr"
                 itemsPorPagina={10}
                 mensajeVacio={
                     respuesta.cargando
                         ? 'Cargando recetas…'
                         : busqueda
-                          ? 'No hay recetas que coincidan con la búsqueda.'
-                          : 'Todavía no hay recetas registradas.'
+                          ? 'No hay productos o recetas que coincidan con la búsqueda.'
+                          : 'Todavía no hay productos ni recetas registradas.'
                 }
                 columnaOrdenInicial="producto"
             />

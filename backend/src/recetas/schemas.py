@@ -104,6 +104,7 @@ class RecetaEscalada(BaseModel):
     unidad_producto_nombre: str
     factor_aplicado: float
     renglones: List[RenglonEscalado]
+
 class ItemInformacionNutricionalResponse(BaseModel):
     nutriente: str
     unidad: str
@@ -121,3 +122,21 @@ class TablaNutricionalRecetaResponse(BaseModel):
     unidad_venta_gramos: float
     medida_casera: Optional[str] = None
     items: List[ItemInformacionNutricionalResponse] = []
+
+class ItemComposicionResponse(BaseModel):
+    renglon: int
+    insumo_id: int
+    nombre_insumo: str
+    cantidad_gramos: float
+    porcentaje: float
+    tipo_uso: TipoUsoInsumo
+    aditivo_id: Optional[int] = None
+
+class ComposicionRecetaResponse(BaseModel):
+    receta_id: int
+    version: int
+    total_gramos: float
+    ingredientes: List[ItemComposicionResponse]
+    aditivos: List[ItemComposicionResponse]
+    suma_porcentajes: float
+    suma_correcta: bool

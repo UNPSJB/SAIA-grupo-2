@@ -9,6 +9,7 @@ from src.recetas import schemas, exceptions
 from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo, DECIMALES_ESCALADO, DECIMALES_FACTOR
 from src.productos.models import Producto
 from src.insumos.models import Insumo
+from src.aditivos.models import Aditivo
 from src.unidades_medida import services as unidades_services
 from src.unidades_medida.constants import MagnitudUnidad
 from src.datos_nutricionales.models import DatoNutricionalInsumo, ValorDiarioReferencia
@@ -18,10 +19,18 @@ from src.datos_nutricionales import services as datos_nutricionales_services
 logger = logging.getLogger(__name__)
 
 def _validar_detalles_y_rendimientos(
+    db: Session,
+    producto_id: int,
     rendimiento_final_gramos: float,
     unidad_venta_gramos: float,
     detalles: List[schemas.DetalleRecetaCreate]
 ):
+    producto = db.scalar(select(Producto).where(Producto.id == producto_id))
+    if not producto:
+        raise exceptions.RecetaNoEncontrada()
+    if getattr(producto, "activo", True) is False:
+        raise exceptions.ProductoInactivo()
+
     if rendimiento_final_gramos <= 0:
         raise exceptions.RendimientoFinalInvalido()
     if unidad_venta_gramos <= 0:
@@ -33,9 +42,27 @@ def _validar_detalles_y_rendimientos(
     if not tiene_ingrediente:
         raise exceptions.TipoUsoInvalido()
 
+    insumo_ids = [d.insumo_id for d in detalles]
+    if len(insumo_ids) != len(set(insumo_ids)):
+        raise exceptions.InsumoDuplicado()
+
+    insumos_db = db.scalars(select(Insumo).where(Insumo.id.in_(insumo_ids))).all()
+    insumos_dict = {ins.id: ins for ins in insumos_db}
+
     for d in detalles:
         if d.cantidad_gramos <= 0:
             raise exceptions.RendimientoFinalInvalido()
+
+        insumo = insumos_dict.get(d.insumo_id)
+        if not insumo or not insumo.activo:
+            raise exceptions.InsumoInactivo()
+
+        if d.tipo_uso == TipoUsoInsumo.ADITIVO:
+            if not d.aditivo_id:
+                raise exceptions.AditivoRequerido()
+            aditivo_db = db.scalar(select(Aditivo).where(Aditivo.id == d.aditivo_id))
+            if not aditivo_db:
+                raise exceptions.AditivoRequerido()
 
 def listar_Recetas(db: Session) -> List[Receta]:
     return db.scalars(select(Receta)).all()
@@ -57,6 +84,8 @@ def crear_receta(db: Session, datos: schemas.RecetaCreate) -> Receta:
 
     v_inicial = datos.version_inicial
     _validar_detalles_y_rendimientos(
+        db,
+        datos.producto_id,
         v_inicial.rendimiento_final_gramos,
         v_inicial.unidad_venta_gramos,
         v_inicial.detalles
@@ -137,6 +166,8 @@ def crear_version_receta(
     receta = leer_receta(db, receta_id)
 
     _validar_detalles_y_rendimientos(
+        db,
+        receta.producto_id,
         version_receta.rendimiento_final_gramos,
         version_receta.unidad_venta_gramos,
         version_receta.detalles
@@ -224,7 +255,6 @@ def marcar_version_receta_vigente(db: Session, receta_id: int, nro_version: int)
     db.commit()
     db.refresh(version)
     return version
-
 def _obtener_receta_vigente(db: Session, producto_id: int) -> VersionReceta:
     consulta= (
         select(VersionReceta)
@@ -386,4 +416,76 @@ def calcular_informacion_nutricional_receta(
         unidad_venta_gramos=porcion,
         medida_casera=version_obj.medida_casera,
         items=items_res
+    )
+def calcular_composicion_receta(
+    db: Session, receta_id: int, nro_version: Optional[int] = None
+) -> schemas.ComposicionRecetaResponse:
+    if nro_version is not None:
+        version_obj = leer_version_receta(db, receta_id, nro_version)
+    else:
+        version_obj = obtener_version_vigente(db, receta_id)
+
+    stmt = (
+        select(
+            detalle_receta.c.renglon,
+            detalle_receta.c.insumo_id,
+            detalle_receta.c.cantidad_gramos,
+            detalle_receta.c.tipo_uso,
+            detalle_receta.c.aditivo_id,
+            Insumo.nombre.label("nombre_insumo"),
+        )
+        .join(Insumo, detalle_receta.c.insumo_id == Insumo.id)
+        .where(
+            detalle_receta.c.receta_id == receta_id,
+            detalle_receta.c.nro_version == version_obj.version,
+        )
+        .order_by(detalle_receta.c.renglon)
+    )
+
+    renglones = db.execute(stmt).fetchall()
+
+    total_gramos = sum(r.cantidad_gramos for r in renglones)
+
+    ingredientes = []
+    aditivos = []
+
+    for r in renglones:
+        porcentaje = (
+            (r.cantidad_gramos / total_gramos) * 100
+            if total_gramos > 0
+            else 0.0
+        )
+
+        item = schemas.ItemComposicionResponse(
+            renglon=r.renglon,
+            insumo_id=r.insumo_id,
+            nombre_insumo=r.nombre_insumo,
+            cantidad_gramos=r.cantidad_gramos,
+            porcentaje=round(porcentaje, 4),
+            tipo_uso=r.tipo_uso,
+            aditivo_id=r.aditivo_id,
+        )
+
+        if r.tipo_uso == TipoUsoInsumo.INGREDIENTE:
+            ingredientes.append(item)
+        elif r.tipo_uso == TipoUsoInsumo.ADITIVO:
+            aditivos.append(item)
+
+    suma_porcentajes = sum(
+        item.porcentaje for item in ingredientes + aditivos
+    )
+
+    suma_correcta = (
+        total_gramos > 0
+        and abs(suma_porcentajes - 100.0) <= 0.01
+    )
+
+    return schemas.ComposicionRecetaResponse(
+        receta_id=receta_id,
+        version=version_obj.version,
+        total_gramos=round(total_gramos, 4),
+        ingredientes=ingredientes,
+        aditivos=aditivos,
+        suma_porcentajes=round(suma_porcentajes, 4),
+        suma_correcta=suma_correcta,
     )

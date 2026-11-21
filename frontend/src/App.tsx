@@ -257,6 +257,7 @@ function RutasProtegidas() {
             <Route path="/documentos/vigentes" element={<DocumentosVigentesList />} />
             <Route path="/recetas" element={<RecetaList />} />
             <Route path="/recetas/nueva" element={<RutaAdmin><RecetaForm /></RutaAdmin>} />
+            <Route path="/recetas/:id/nueva-version" element={<RutaAdmin><RecetaForm /></RutaAdmin>} />
             <Route path="/recetas/:id" element={<RecetaDetail />} />
 
             <Route path="/configuracion/empresa" element={<RutaAdmin><ConfiguracionEmpresa /></RutaAdmin>} />

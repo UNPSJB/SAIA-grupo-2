@@ -14,6 +14,7 @@ export interface Aditivo {
     nombre_completo: string;
     clase_funcional_id: number;
     numero_ins: string | null;
+  clase_funcional?: ClaseFuncionalAditivo;
 }
 
 export interface AditivoPayload {
