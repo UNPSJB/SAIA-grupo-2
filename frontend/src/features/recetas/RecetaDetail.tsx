@@ -55,11 +55,6 @@ export default function RecetaDetail() {
     const esAdmin = usuario?.rol === 'admin';
     const { id = '' } = useParams();
 
-    const [respuesta, setRespuesta] = useState<RespuestaDetalle | null>(null);
-    const [nroVersionSeleccionada, setNroVersionSeleccionada] = useState<number | null>(null);
-    const [composicion, setComposicion] = useState<ComposicionReceta | null>(null);
-    const [cargandoComposicion, setCargandoComposicion] = useState(false);
-    const [errorComposicion, setErrorComposicion] = useState<string | null>(null);
 
     const [respuesta, setRespuesta] = useState<RespuestaDetalle | null>(null);
     const [nroVersionSeleccionada, setNroVersionSeleccionada] = useState<number | null>(null);
@@ -376,15 +371,6 @@ export default function RecetaDetail() {
                                     Composición porcentual
                                 </h3>
 
-                        {esAdmin && (
-                            <section
-                                className={styles.bloqueDetalle}
-                                aria-labelledby="receta-composicion"
-                            >
-                                <h3 id="receta-composicion">
-                                    Composición porcentual
-                                </h3>
-
                                 {cargandoComposicion && (
                                     <p className={styles.textMuted}>
                                         Calculando composición...
@@ -498,6 +484,11 @@ export default function RecetaDetail() {
                                 </ol>
                             )}
                         </section>
+                        {version.estado === 'activo' && (
+                            <section className={styles.bloqueDetalle} aria-labelledby="titulo-escalar-receta">
+                                <EscalarReceta productoId={receta.producto_id} />
+                            </section>
+                        )}
                     </>
                 )}
 
