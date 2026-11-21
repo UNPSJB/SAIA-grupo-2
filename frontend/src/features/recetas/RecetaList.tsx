@@ -174,6 +174,17 @@ export default function RecetaList() {
                 <div className={styles.grupoBotonesTabla}>
                     {receta ? (
                         <>
+                            {usuario?.rol === 'admin' && (
+                                <Link
+                                    to={`/recetas/${receta.id}/nueva-version`}
+                                    title="Crear nueva versión de receta"
+                                >
+                                    <Boton
+                                        variant="guardar"
+                                        title="Crear nueva versión de receta"
+                                    />
+                                </Link>
+                            )}
                             <Link to={`/recetas/${receta.id}`} title="Ver detalle de la receta">
                                 <Boton variant="ver" style={{ padding: '8px 12px' }} />
                             </Link>
