@@ -81,3 +81,23 @@ export interface Receta {
     producto_id: number;
     producto: Producto;
 }
+
+export interface ItemComposicionReceta {
+    renglon: number;
+    insumo_id: number;
+    nombre_insumo: string;
+    cantidad_gramos: number;
+    porcentaje: number;
+    tipo_uso: TipoUsoInsumo;
+    aditivo_id: number | null;
+}
+
+export interface ComposicionReceta {
+    receta_id: number;
+    version: number;
+    total_gramos: number;
+    ingredientes: ItemComposicionReceta[];
+    aditivos: ItemComposicionReceta[];
+    suma_porcentajes: number;
+    suma_correcta: boolean;
+}

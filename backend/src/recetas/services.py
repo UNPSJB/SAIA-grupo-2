@@ -337,3 +337,77 @@ def calcular_informacion_nutricional_receta(
         medida_casera=version_obj.medida_casera,
         items=items_res
     )
+
+
+def calcular_composicion_receta(
+    db: Session, receta_id: int, nro_version: Optional[int] = None
+) -> schemas.ComposicionRecetaResponse:
+    if nro_version is not None:
+        version_obj = leer_version_receta(db, receta_id, nro_version)
+    else:
+        version_obj = obtener_version_vigente(db, receta_id)
+
+    stmt = (
+        select(
+            detalle_receta.c.renglon,
+            detalle_receta.c.insumo_id,
+            detalle_receta.c.cantidad_gramos,
+            detalle_receta.c.tipo_uso,
+            detalle_receta.c.aditivo_id,
+            Insumo.nombre.label("nombre_insumo"),
+        )
+        .join(Insumo, detalle_receta.c.insumo_id == Insumo.id)
+        .where(
+            detalle_receta.c.receta_id == receta_id,
+            detalle_receta.c.nro_version == version_obj.version,
+        )
+        .order_by(detalle_receta.c.renglon)
+    )
+
+    renglones = db.execute(stmt).fetchall()
+
+    total_gramos = sum(r.cantidad_gramos for r in renglones)
+
+    ingredientes = []
+    aditivos = []
+
+    for r in renglones:
+        porcentaje = (
+            (r.cantidad_gramos / total_gramos) * 100
+            if total_gramos > 0
+            else 0.0
+        )
+
+        item = schemas.ItemComposicionResponse(
+            renglon=r.renglon,
+            insumo_id=r.insumo_id,
+            nombre_insumo=r.nombre_insumo,
+            cantidad_gramos=r.cantidad_gramos,
+            porcentaje=round(porcentaje, 4),
+            tipo_uso=r.tipo_uso,
+            aditivo_id=r.aditivo_id,
+        )
+
+        if r.tipo_uso == TipoUsoInsumo.INGREDIENTE:
+            ingredientes.append(item)
+        elif r.tipo_uso == TipoUsoInsumo.ADITIVO:
+            aditivos.append(item)
+
+    suma_porcentajes = sum(
+        item.porcentaje for item in ingredientes + aditivos
+    )
+
+    suma_correcta = (
+        total_gramos > 0
+        and abs(suma_porcentajes - 100.0) <= 0.01
+    )
+
+    return schemas.ComposicionRecetaResponse(
+        receta_id=receta_id,
+        version=version_obj.version,
+        total_gramos=round(total_gramos, 4),
+        ingredientes=ingredientes,
+        aditivos=aditivos,
+        suma_porcentajes=round(suma_porcentajes, 4),
+        suma_correcta=suma_correcta,
+    )

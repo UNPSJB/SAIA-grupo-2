@@ -1,5 +1,6 @@
 import { API_URL } from '../constants/config';
 import type {
+    ComposicionReceta,
     Receta,
     RecetaPayload,
     VersionReceta,
@@ -94,5 +95,19 @@ export const marcarVersionRecetaVigente = async (
         {
             method: 'PUT',
             headers: headersEscritura(rol),
+        },
+    );
+
+export const getComposicionReceta = async (
+    recetaId: number | string,
+    numeroVersion: number | string,
+): Promise<ComposicionReceta> =>
+    solicitar(
+        `/${recetaId}/versiones/${numeroVersion}/composicion`,
+        'No se pudo calcular la composición porcentual.',
+        {
+            headers: {
+                'X-User-Role': 'admin',
+            },
         },
     );

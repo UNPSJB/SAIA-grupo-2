@@ -8,16 +8,17 @@ import { getAditivos } from '../../services/aditivosServices';
 import { getInsumos } from '../../services/insumosServices';
 import { getEquipos } from '../../services/equiposServices';
 import {
+    getComposicionReceta,
     getRecetaById,
     getVersionesReceta,
-    getVersionVigenteReceta,
+    //getVersionVigenteReceta,
     RecetasApiError,
 } from '../../services/recetasServices';
 import { exportarRecetaPDF } from '../../utils/exportarRecetaPdf';
 import type { Aditivo } from '../../types/aditivos';
 import type { Insumo } from '../../types/insumos';
 import type { Equipo } from '../../types/equipos';
-import type { Receta, VersionReceta } from '../../types/receta';
+import type {ComposicionReceta, Receta, VersionReceta,} from '../../types/receta';
 import styles from '../../styles/shared.module.css';
 
 interface RespuestaDetalle {
@@ -36,6 +37,13 @@ function formatearGramos(valor: number): string {
     }).format(valor)} g`;
 }
 
+function formatearPorcentaje(valor: number): string {
+    return `${new Intl.NumberFormat('es-AR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(valor)} %`;
+}
+
 function formatearFecha(fecha: string | null): string {
     if (!fecha) return 'Sin especificar';
     const partes = fecha.slice(0, 10).split('-');
@@ -49,7 +57,10 @@ export default function RecetaDetail() {
 
     const [respuesta, setRespuesta] = useState<RespuestaDetalle | null>(null);
     const [nroVersionSeleccionada, setNroVersionSeleccionada] = useState<number | null>(null);
-
+    const [composicion, setComposicion] = useState<ComposicionReceta | null>(null);
+    const [cargandoComposicion, setCargandoComposicion] = useState(false);
+    const [errorComposicion, setErrorComposicion] = useState<string | null>(null);
+    
     useEffect(() => {
         let cancelado = false;
 
@@ -122,7 +133,49 @@ export default function RecetaDetail() {
         if (!versiones || versiones.length === 0) return null;
         return versiones.find((v) => v.version === nroVersionSeleccionada) || versiones[0];
     }, [versiones, nroVersionSeleccionada]);
+    useEffect(() => {
+        if (!esAdmin || !version) {
+            setComposicion(null);
+            return;
+        }
 
+        let cancelado = false;
+
+        const cargarComposicion = async () => {
+            try {
+                setCargandoComposicion(true);
+                setErrorComposicion(null);
+                setComposicion(null);
+
+                const resultado = await getComposicionReceta(
+                    id,
+                    version.version,
+                );
+
+                if (!cancelado) {
+                    setComposicion(resultado);
+                }
+            } catch (error) {
+                if (!cancelado) {
+                    setErrorComposicion(
+                        error instanceof Error
+                            ? error.message
+                            : 'No se pudo obtener la composición porcentual.',
+                    );
+                }
+            } finally {
+                if (!cancelado) {
+                    setCargandoComposicion(false);
+                }
+            }
+        };
+
+        void cargarComposicion();
+
+        return () => {
+            cancelado = true;
+        };
+    }, [id, esAdmin, version?.version]);
     const handleDescargarPDF = async () => {
         if (!receta || !version) return;
         await exportarRecetaPDF({
@@ -308,7 +361,93 @@ export default function RecetaDetail() {
                                 </ul>
                             )}
                         </section>
+                        {esAdmin && (
+                            <section
+                                className={styles.bloqueDetalle}
+                                aria-labelledby="receta-composicion"
+                            >
+                                <h3 id="receta-composicion">
+                                    Composición porcentual
+                                </h3>
 
+                                {cargandoComposicion && (
+                                    <p className={styles.textMuted}>
+                                        Calculando composición...
+                                    </p>
+                                )}
+
+                                {errorComposicion && (
+                                    <p className={styles.textDanger} role="alert">
+                                        {errorComposicion}
+                                    </p>
+                                )}
+
+                                {composicion && (
+                                    <>
+                                        <p>
+                                            <strong>Peso total:</strong>{' '}
+                                            {formatearGramos(composicion.total_gramos)}
+                                        </p>
+
+                                        <h4>Ingredientes</h4>
+
+                                        {composicion.ingredientes.length === 0 ? (
+                                            <p className={styles.textMuted}>
+                                                No hay ingredientes registrados.
+                                            </p>
+                                        ) : (
+                                            <ul>
+                                                {composicion.ingredientes.map((item) => (
+                                                    <li key={item.renglon}>
+                                                        <strong>{item.nombre_insumo}</strong>
+                                                        {' — '}
+                                                        {formatearGramos(item.cantidad_gramos)}
+                                                        {' — '}
+                                                        {formatearPorcentaje(item.porcentaje)}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+
+                                        <h4>Aditivos</h4>
+
+                                        {composicion.aditivos.length === 0 ? (
+                                            <p className={styles.textMuted}>
+                                                No hay aditivos registrados.
+                                            </p>
+                                        ) : (
+                                            <ul>
+                                                {composicion.aditivos.map((item) => (
+                                                    <li key={item.renglon}>
+                                                        <strong>{item.nombre_insumo}</strong>
+                                                        {' — '}
+                                                        {formatearGramos(item.cantidad_gramos)}
+                                                        {' — '}
+                                                        {formatearPorcentaje(item.porcentaje)}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+
+                                        <p>
+                                            <strong>Suma de porcentajes:</strong>{' '}
+                                            {formatearPorcentaje(composicion.suma_porcentajes)}
+                                        </p>
+
+                                        <p
+                                            style={{
+                                                color: composicion.suma_correcta ? '#22c55e' : '#ef4444',
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            {composicion.suma_correcta
+                                                ? '✓ La composición suma 100 %.'
+                                                : '⚠ La composición no suma 100 %.'}
+                                        </p>
+                                    </>
+                                )}
+                            </section>
+                        )}
                         <section className={styles.bloqueDetalle} aria-labelledby="receta-pasos">
                             <h3 id="receta-pasos">Pasos de elaboración</h3>
                             {version.pasos.length === 0 ? (

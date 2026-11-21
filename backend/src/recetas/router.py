@@ -120,3 +120,32 @@ def crear_receta(
     db: Annotated[Session, Depends(get_db)]
 ):
     return services.crear_receta(db, receta)
+
+@router.get(
+    "/{receta_id}/versiones/vigente/composicion",
+    response_model=schemas.ComposicionRecetaResponse,
+    dependencies=[Depends(verificar_rol_admin)],
+    summary="Obtener composición porcentual de la versión vigente"
+)
+def obtener_composicion_version_vigente(
+    receta_id: int,
+    db: Annotated[Session, Depends(get_db)]
+):
+    return services.calcular_composicion_receta(db, receta_id=receta_id)
+
+@router.get(
+    "/{receta_id}/versiones/{nro_version}/composicion",
+    response_model=schemas.ComposicionRecetaResponse,
+    dependencies=[Depends(verificar_rol_admin)],
+    summary="Obtener composición porcentual de una versión específica"
+)
+def obtener_composicion_version_especifica(
+    receta_id: int,
+    nro_version: int,
+    db: Annotated[Session, Depends(get_db)]
+):
+    return services.calcular_composicion_receta(
+        db,
+        receta_id=receta_id,
+        nro_version=nro_version
+    )
