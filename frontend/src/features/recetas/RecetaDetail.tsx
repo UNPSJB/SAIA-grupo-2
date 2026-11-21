@@ -1,27 +1,34 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
+import { useAuth } from '../../context/AuthContext';
 import Boton from '../../components/Boton';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
 import { getAditivos } from '../../services/aditivosServices';
 import { getInsumos } from '../../services/insumosServices';
+import { getEquipos } from '../../services/equiposServices';
 import {
+    getComposicionReceta,
     getRecetaById,
-    getVersionVigenteReceta,
+    getVersionesReceta,
+    //getVersionVigenteReceta,
     RecetasApiError,
 } from '../../services/recetasServices';
+import { exportarRecetaPDF } from '../../utils/exportarRecetaPdf';
 import type { Aditivo } from '../../types/aditivos';
 import type { Insumo } from '../../types/insumos';
-import type { Receta, VersionReceta } from '../../types/receta';
+import type { Equipo } from '../../types/equipos';
+import type {ComposicionReceta, Receta, VersionReceta,} from '../../types/receta';
 import EscalarReceta from './EscalarReceta';
 import styles from '../../styles/shared.module.css';
 
 interface RespuestaDetalle {
     clave: string;
     receta: Receta | null;
-    version: VersionReceta | null;
+    versiones: VersionReceta[];
     insumos: Insumo[];
     aditivos: Aditivo[];
+    equipos: Equipo[];
     error: string | null;
 }
 
@@ -31,6 +38,13 @@ function formatearGramos(valor: number): string {
     }).format(valor)} g`;
 }
 
+function formatearPorcentaje(valor: number): string {
+    return `${new Intl.NumberFormat('es-AR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(valor)} %`;
+}
+
 function formatearFecha(fecha: string | null): string {
     if (!fecha) return 'Sin especificar';
     const partes = fecha.slice(0, 10).split('-');
@@ -38,23 +52,31 @@ function formatearFecha(fecha: string | null): string {
 }
 
 export default function RecetaDetail() {
+    const { usuario } = useAuth();
+    const esAdmin = usuario?.rol === 'admin';
     const { id = '' } = useParams();
-    const [respuesta, setRespuesta] = useState<RespuestaDetalle | null>(null);
 
+    const [respuesta, setRespuesta] = useState<RespuestaDetalle | null>(null);
+    const [nroVersionSeleccionada, setNroVersionSeleccionada] = useState<number | null>(null);
+    const [composicion, setComposicion] = useState<ComposicionReceta | null>(null);
+    const [cargandoComposicion, setCargandoComposicion] = useState(false);
+    const [errorComposicion, setErrorComposicion] = useState<string | null>(null);
+    
     useEffect(() => {
         let cancelado = false;
 
         const cargarDetalle = async () => {
             try {
-                const [receta, insumos, aditivos] = await Promise.all([
+                const [receta, insumos, aditivos, equipos] = await Promise.all([
                     getRecetaById(id),
                     getInsumos(),
                     getAditivos(),
+                    getEquipos(),
                 ]);
 
-                let version: VersionReceta | null = null;
+                let versionesData: VersionReceta[] = [];
                 try {
-                    version = await getVersionVigenteReceta(id);
+                    versionesData = await getVersionesReceta(id);
                 } catch (problema) {
                     if (
                         problema instanceof RecetasApiError
@@ -68,11 +90,17 @@ export default function RecetaDetail() {
                     setRespuesta({
                         clave: id,
                         receta,
-                        version,
+                        versiones: versionesData,
                         insumos,
                         aditivos,
+                        equipos,
                         error: null,
                     });
+
+                    const vigente = versionesData.find((v) => v.estado === 'activo') || versionesData[0];
+                    if (vigente) {
+                        setNroVersionSeleccionada(vigente.version);
+                    }
                 }
             } catch (problema) {
                 console.error('Error al cargar el detalle de la receta:', problema);
@@ -80,9 +108,10 @@ export default function RecetaDetail() {
                     setRespuesta({
                         clave: id,
                         receta: null,
-                        version: null,
+                        versiones: [],
                         insumos: [],
                         aditivos: [],
+                        equipos: [],
                         error: problema instanceof Error
                             ? problema.message
                             : 'No se pudo cargar el detalle de la receta.',
@@ -99,7 +128,72 @@ export default function RecetaDetail() {
 
     const actual = respuesta?.clave === id ? respuesta : null;
     const receta = actual?.receta ?? null;
-    const version = actual?.version ?? null;
+    const versiones = actual?.versiones ?? [];
+
+    const version = useMemo(() => {
+        if (!versiones || versiones.length === 0) return null;
+        return versiones.find((v) => v.version === nroVersionSeleccionada) || versiones[0];
+    }, [versiones, nroVersionSeleccionada]);
+    useEffect(() => {
+        if (!esAdmin || !version) {
+            setComposicion(null);
+            return;
+        }
+
+        let cancelado = false;
+
+        const cargarComposicion = async () => {
+            try {
+                setCargandoComposicion(true);
+                setErrorComposicion(null);
+                setComposicion(null);
+
+                const resultado = await getComposicionReceta(
+                    id,
+                    version.version,
+                );
+
+                if (!cancelado) {
+                    setComposicion(resultado);
+                }
+            } catch (error) {
+                if (!cancelado) {
+                    setErrorComposicion(
+                        error instanceof Error
+                            ? error.message
+                            : 'No se pudo obtener la composición porcentual.',
+                    );
+                }
+            } finally {
+                if (!cancelado) {
+                    setCargandoComposicion(false);
+                }
+            }
+        };
+
+        void cargarComposicion();
+
+        return () => {
+            cancelado = true;
+        };
+    }, [id, esAdmin, version?.version]);
+    const handleDescargarPDF = async () => {
+        if (!receta || !version) return;
+        await exportarRecetaPDF({
+            nombreProducto: receta.producto.nombre,
+            version: version.version,
+            rendimientoFinalGramos: version.rendimiento_final_gramos,
+            unidadVentaGramos: version.unidad_venta_gramos,
+            medidaCasera: version.medida_casera,
+            motivoCambio: version.motivo_cambio,
+            fechaVigencia: version.fecha_vigencia,
+            detalles: version.detalles,
+            pasos: version.pasos,
+            insumos: actual?.insumos,
+            aditivos: actual?.aditivos,
+            equipos: actual?.equipos,
+        });
+    };
 
     const insumosPorId = useMemo(
         () => new Map((actual?.insumos ?? []).map((insumo) => [insumo.id, insumo])),
@@ -137,8 +231,22 @@ export default function RecetaDetail() {
         <div className={styles.contenedorPrincipal}>
             <EncabezadoPagina
                 titulo={receta.producto.nombre}
-                descripcion="Contenido de la versión vigente de la receta."
+                descripcion="Ficha técnica de receta e historial de versiones."
                 ancho="900px"
+                acciones={
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        {version && (
+                            <Boton type="button" variant="descargar" onClick={handleDescargarPDF}>
+                                Descargar PDF
+                            </Boton>
+                        )}
+                        {esAdmin && (
+                            <Link to={`/recetas/${receta.id}/nueva-version`}>
+                                <Boton variant="crear">Nueva versión</Boton>
+                            </Link>
+                        )}
+                    </div>
+                }
             />
 
             <div
@@ -147,13 +255,51 @@ export default function RecetaDetail() {
             >
                 {!version ? (
                     <p className={styles.textMuted}>
-                        Esta receta todavía no tiene una versión vigente activa.
+                        Esta receta todavía no tiene versiones registradas.
                     </p>
                 ) : (
                     <>
-                        <h2 style={{ marginTop: 0 }}>
-                            Versión vigente: v{version.version}
-                        </h2>
+                        {/* Selector de Versión e Insignia */}
+                        <div
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                marginBottom: '20px',
+                                paddingBottom: '14px',
+                                borderBottom: '1px solid var(--border-color, #334155)',
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <label style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-h)' }}>
+                                    Historial de Versión:
+                                </label>
+                                <select
+                                    value={nroVersionSeleccionada ?? version.version}
+                                    onChange={(e) => setNroVersionSeleccionada(Number(e.target.value))}
+                                    className={styles.input}
+                                    style={{ width: 'auto', padding: '6px 12px', fontWeight: 600 }}
+                                >
+                                    {versiones.map((v) => (
+                                        <option key={v.version} value={v.version}>
+                                            v{v.version} {v.estado === 'activo' ? '(Vigente)' : '(Archivada)'}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                {version.estado === 'activo' ? (
+                                    <span style={{ fontSize: '0.88rem', color: '#22c55e', fontWeight: 600 }}>
+                                        ● Versión Vigente (Activa)
+                                    </span>
+                                ) : (
+                                    <span style={{ fontSize: '0.88rem', color: '#eab308', fontWeight: 600 }}>
+                                        ● Archivada (Solo lectura)
+                                    </span>
+                                )}
+                            </div>
+                        </div>
 
                         <div className={styles.formGrid}>
                             <p>
@@ -182,7 +328,7 @@ export default function RecetaDetail() {
                             <h3 id="receta-detalles">Ingredientes y aditivos</h3>
                             {version.detalles.length === 0 ? (
                                 <p className={styles.textMuted}>
-                                    La versión vigente no tiene ingredientes ni aditivos cargados.
+                                    Esta versión no tiene ingredientes ni aditivos cargados.
                                 </p>
                             ) : (
                                 <ul>
@@ -216,12 +362,98 @@ export default function RecetaDetail() {
                                 </ul>
                             )}
                         </section>
+                        {esAdmin && (
+                            <section
+                                className={styles.bloqueDetalle}
+                                aria-labelledby="receta-composicion"
+                            >
+                                <h3 id="receta-composicion">
+                                    Composición porcentual
+                                </h3>
 
+                                {cargandoComposicion && (
+                                    <p className={styles.textMuted}>
+                                        Calculando composición...
+                                    </p>
+                                )}
+
+                                {errorComposicion && (
+                                    <p className={styles.textDanger} role="alert">
+                                        {errorComposicion}
+                                    </p>
+                                )}
+
+                                {composicion && (
+                                    <>
+                                        <p>
+                                            <strong>Peso total:</strong>{' '}
+                                            {formatearGramos(composicion.total_gramos)}
+                                        </p>
+
+                                        <h4>Ingredientes</h4>
+
+                                        {composicion.ingredientes.length === 0 ? (
+                                            <p className={styles.textMuted}>
+                                                No hay ingredientes registrados.
+                                            </p>
+                                        ) : (
+                                            <ul>
+                                                {composicion.ingredientes.map((item) => (
+                                                    <li key={item.renglon}>
+                                                        <strong>{item.nombre_insumo}</strong>
+                                                        {' — '}
+                                                        {formatearGramos(item.cantidad_gramos)}
+                                                        {' — '}
+                                                        {formatearPorcentaje(item.porcentaje)}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+
+                                        <h4>Aditivos</h4>
+
+                                        {composicion.aditivos.length === 0 ? (
+                                            <p className={styles.textMuted}>
+                                                No hay aditivos registrados.
+                                            </p>
+                                        ) : (
+                                            <ul>
+                                                {composicion.aditivos.map((item) => (
+                                                    <li key={item.renglon}>
+                                                        <strong>{item.nombre_insumo}</strong>
+                                                        {' — '}
+                                                        {formatearGramos(item.cantidad_gramos)}
+                                                        {' — '}
+                                                        {formatearPorcentaje(item.porcentaje)}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+
+                                        <p>
+                                            <strong>Suma de porcentajes:</strong>{' '}
+                                            {formatearPorcentaje(composicion.suma_porcentajes)}
+                                        </p>
+
+                                        <p
+                                            style={{
+                                                color: composicion.suma_correcta ? '#22c55e' : '#ef4444',
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            {composicion.suma_correcta
+                                                ? '✓ La composición suma 100 %.'
+                                                : '⚠ La composición no suma 100 %.'}
+                                        </p>
+                                    </>
+                                )}
+                            </section>
+                        )}
                         <section className={styles.bloqueDetalle} aria-labelledby="receta-pasos">
                             <h3 id="receta-pasos">Pasos de elaboración</h3>
                             {version.pasos.length === 0 ? (
                                 <p className={styles.textMuted}>
-                                    La versión vigente no tiene pasos de elaboración cargados.
+                                    Esta versión no tiene pasos de elaboración cargados.
                                 </p>
                             ) : (
                                 <ol>
@@ -231,7 +463,7 @@ export default function RecetaDetail() {
                                             <li key={paso.id} style={{ marginBottom: '16px' }}>
                                                 <strong>{paso.nombre_paso}</strong>
                                                 {paso.es_punto_control && (
-                                                    <span> · Punto de control</span>
+                                                    <span style={{ color: '#ef4444', fontWeight: 'bold' }}> · Punto Crítico de Control (PCC)</span>
                                                 )}
                                                 <p style={{ whiteSpace: 'pre-wrap', marginBottom: '6px' }}>
                                                     {paso.procedimiento}
@@ -251,10 +483,6 @@ export default function RecetaDetail() {
                                         ))}
                                 </ol>
                             )}
-                        </section>
-
-                        <section className={styles.bloqueDetalle} aria-labelledby="titulo-escalar-receta">
-                            <EscalarReceta productoId={receta.producto_id} />
                         </section>
                     </>
                 )}
