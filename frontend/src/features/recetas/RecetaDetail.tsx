@@ -55,7 +55,6 @@ export default function RecetaDetail() {
     const esAdmin = usuario?.rol === 'admin';
     const { id = '' } = useParams();
 
-
     const [respuesta, setRespuesta] = useState<RespuestaDetalle | null>(null);
     const [nroVersionSeleccionada, setNroVersionSeleccionada] = useState<number | null>(null);
     const [composicion, setComposicion] = useState<ComposicionReceta | null>(null);
@@ -134,6 +133,7 @@ export default function RecetaDetail() {
         if (!versiones || versiones.length === 0) return null;
         return versiones.find((v) => v.version === nroVersionSeleccionada) || versiones[0];
     }, [versiones, nroVersionSeleccionada]);
+
     useEffect(() => {
         if (!esAdmin || !version) {
             setComposicion(null);
@@ -177,6 +177,7 @@ export default function RecetaDetail() {
             cancelado = true;
         };
     }, [id, esAdmin, version?.version]);
+
     const handleDescargarPDF = async () => {
         if (!receta || !version) return;
         await exportarRecetaPDF({
@@ -362,6 +363,7 @@ export default function RecetaDetail() {
                                 </ul>
                             )}
                         </section>
+
                         {esAdmin && (
                             <section
                                 className={styles.bloqueDetalle}
@@ -449,6 +451,7 @@ export default function RecetaDetail() {
                                 )}
                             </section>
                         )}
+                        
                         <section className={styles.bloqueDetalle} aria-labelledby="receta-pasos">
                             <h3 id="receta-pasos">Pasos de elaboración</h3>
                             {version.pasos.length === 0 ? (
