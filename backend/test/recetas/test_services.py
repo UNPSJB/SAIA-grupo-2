@@ -133,3 +133,95 @@ def test_validaciones_receta_invalida(db_session: Session, producto_test: Produc
                 )
             )
         )
+
+def test_validar_insumos_duplicados_lanza_excepcion(db_session: Session, producto_test: Producto, insumo_test: Insumo):
+    with pytest.raises(exceptions.InsumoDuplicado):
+        services.crear_receta(
+            db_session,
+            schemas.RecetaCreate(
+                producto_id=producto_test.id,
+                version_inicial=schemas.VersionRecetaInicialCreate(
+                    rendimiento_final_gramos=1000.0,
+                    unidad_venta_gramos=250.0,
+                    detalles=[
+                        schemas.DetalleRecetaCreate(
+                            insumo_id=insumo_test.id,
+                            cantidad_gramos=500.0,
+                            tipo_uso=TipoUsoInsumo.INGREDIENTE
+                        ),
+                        schemas.DetalleRecetaCreate(
+                            insumo_id=insumo_test.id,
+                            cantidad_gramos=500.0,
+                            tipo_uso=TipoUsoInsumo.INGREDIENTE
+                        ),
+                    ]
+                )
+            )
+        )
+
+def test_validar_insumo_inactivo_lanza_excepcion(db_session: Session, producto_test: Producto, unidad_medida_test: UnidadMedida):
+    insumo_inactivo = Insumo(
+        nombre="Insumo Desactivado",
+        activo=False,
+        unidad_medida_id=unidad_medida_test.id,
+        cantidad=100.0
+    )
+    db_session.add(insumo_inactivo)
+    db_session.commit()
+    db_session.refresh(insumo_inactivo)
+
+    with pytest.raises(exceptions.InsumoInactivo):
+        services.crear_receta(
+            db_session,
+            schemas.RecetaCreate(
+                producto_id=producto_test.id,
+                version_inicial=schemas.VersionRecetaInicialCreate(
+                    rendimiento_final_gramos=1000.0,
+                    unidad_venta_gramos=250.0,
+                    detalles=[
+                        schemas.DetalleRecetaCreate(
+                            insumo_id=insumo_inactivo.id,
+                            cantidad_gramos=500.0,
+                            tipo_uso=TipoUsoInsumo.INGREDIENTE
+                        )
+                    ]
+                )
+            )
+        )
+
+def test_validar_aditivo_sin_referencia_lanza_excepcion(db_session: Session, producto_test: Producto, insumo_test: Insumo, unidad_medida_test: UnidadMedida):
+    insumo2 = Insumo(
+        nombre="Aditivo Prueba",
+        activo=True,
+        unidad_medida_id=unidad_medida_test.id,
+        cantidad=100.0,
+        es_aditivo=True
+    )
+    db_session.add(insumo2)
+    db_session.commit()
+    db_session.refresh(insumo2)
+
+    with pytest.raises(exceptions.AditivoRequerido):
+        services.crear_receta(
+            db_session,
+            schemas.RecetaCreate(
+                producto_id=producto_test.id,
+                version_inicial=schemas.VersionRecetaInicialCreate(
+                    rendimiento_final_gramos=1000.0,
+                    unidad_venta_gramos=250.0,
+                    detalles=[
+                        schemas.DetalleRecetaCreate(
+                            insumo_id=insumo_test.id,
+                            cantidad_gramos=500.0,
+                            tipo_uso=TipoUsoInsumo.INGREDIENTE
+                        ),
+                        schemas.DetalleRecetaCreate(
+                            insumo_id=insumo2.id,
+                            cantidad_gramos=10.0,
+                            tipo_uso=TipoUsoInsumo.ADITIVO,
+                            aditivo_id=None
+                        ),
+                    ]
+                )
+            )
+        )

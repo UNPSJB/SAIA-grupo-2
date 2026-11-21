@@ -1,4 +1,5 @@
 import type { UnidadMedida } from './unidadesMedida';
+import type { Aditivo } from './aditivos';
 
 export interface Insumo {
     id: number;
@@ -9,6 +10,7 @@ export interface Insumo {
     cantidad: number;
     es_aditivo?: boolean;
     aditivo_referencia_id?: number | null;
+    aditivo_referencia?: Aditivo | null;
 }
 
 export interface InsumoPayload {

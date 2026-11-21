@@ -49,7 +49,14 @@ export default function InsumosList() {
             key:'nombre',
             encabezado: 'Nombre del Insumo',
             ordenable: true,
-            render: (ins) => ins.nombre
+            render: (ins) => <span style={{ fontWeight: 600 }}>{ins.nombre}</span>
+        },
+        {
+            key: 'tipo',
+            encabezado: 'Tipo',
+            ordenable: true,
+            valorOrdenamiento: (ins) => ins.es_aditivo ? 'Aditivo' : 'Ingrediente',
+            render: (ins) => ins.es_aditivo ? 'Aditivo' : 'Ingrediente'
         },
         {
             key: 'cantidad',
@@ -118,8 +125,8 @@ export default function InsumosList() {
                             <TablaPaginada
                                 datos={insumosFiltrados}
                                 columnas={misColumnas}
-                                gridTemplateColumns="1.5fr 1fr 1fr 2fr"
-                                itemsPorPagina={5}
+                                gridTemplateColumns="1.5fr 1fr 1fr 1fr 2fr"
+                                itemsPorPagina={10}
                                 mensajeVacio="No se encontraron Insumos con los filtros actuales."
                                 columnaOrdenInicial="nombre"
                                 ordenAscInicial={true}

@@ -18,3 +18,15 @@ class UnidadVentaInvalida(BadRequest):
 
 class TipoUsoInvalido(BadRequest):
     DETAIL = ErrorCode.TIPO_USO_INVALIDO
+
+class InsumoDuplicado(BadRequest):
+    DETAIL = ErrorCode.INSUMO_DUPLICADO
+
+class InsumoInactivo(BadRequest):
+    DETAIL = ErrorCode.INSUMO_INACTIVO
+
+class ProductoInactivo(BadRequest):
+    DETAIL = ErrorCode.PRODUCTO_INACTIVO
+
+class AditivoRequerido(BadRequest):
+    DETAIL = ErrorCode.ADITIVO_REQUERIDO

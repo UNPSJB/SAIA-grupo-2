@@ -9,6 +9,7 @@ from src.recetas import schemas, exceptions
 from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo
 from src.productos.models import Producto
 from src.insumos.models import Insumo
+from src.aditivos.models import Aditivo
 from src.datos_nutricionales.models import DatoNutricionalInsumo, ValorDiarioReferencia
 from src.datos_nutricionales.constants import Nutriente
 from src.datos_nutricionales import services as datos_nutricionales_services
@@ -16,10 +17,18 @@ from src.datos_nutricionales import services as datos_nutricionales_services
 logger = logging.getLogger(__name__)
 
 def _validar_detalles_y_rendimientos(
+    db: Session,
+    producto_id: int,
     rendimiento_final_gramos: float,
     unidad_venta_gramos: float,
     detalles: List[schemas.DetalleRecetaCreate]
 ):
+    producto = db.scalar(select(Producto).where(Producto.id == producto_id))
+    if not producto:
+        raise exceptions.RecetaNoEncontrada()
+    if getattr(producto, "activo", True) is False:
+        raise exceptions.ProductoInactivo()
+
     if rendimiento_final_gramos <= 0:
         raise exceptions.RendimientoFinalInvalido()
     if unidad_venta_gramos <= 0:
@@ -31,9 +40,27 @@ def _validar_detalles_y_rendimientos(
     if not tiene_ingrediente:
         raise exceptions.TipoUsoInvalido()
 
+    insumo_ids = [d.insumo_id for d in detalles]
+    if len(insumo_ids) != len(set(insumo_ids)):
+        raise exceptions.InsumoDuplicado()
+
+    insumos_db = db.scalars(select(Insumo).where(Insumo.id.in_(insumo_ids))).all()
+    insumos_dict = {ins.id: ins for ins in insumos_db}
+
     for d in detalles:
         if d.cantidad_gramos <= 0:
             raise exceptions.RendimientoFinalInvalido()
+
+        insumo = insumos_dict.get(d.insumo_id)
+        if not insumo or not insumo.activo:
+            raise exceptions.InsumoInactivo()
+
+        if d.tipo_uso == TipoUsoInsumo.ADITIVO:
+            if not d.aditivo_id:
+                raise exceptions.AditivoRequerido()
+            aditivo_db = db.scalar(select(Aditivo).where(Aditivo.id == d.aditivo_id))
+            if not aditivo_db:
+                raise exceptions.AditivoRequerido()
 
 def listar_Recetas(db: Session) -> List[Receta]:
     return db.scalars(select(Receta)).all()
@@ -55,6 +82,8 @@ def crear_receta(db: Session, datos: schemas.RecetaCreate) -> Receta:
 
     v_inicial = datos.version_inicial
     _validar_detalles_y_rendimientos(
+        db,
+        datos.producto_id,
         v_inicial.rendimiento_final_gramos,
         v_inicial.unidad_venta_gramos,
         v_inicial.detalles
@@ -135,6 +164,8 @@ def crear_version_receta(
     receta = leer_receta(db, receta_id)
 
     _validar_detalles_y_rendimientos(
+        db,
+        receta.producto_id,
         version_receta.rendimiento_final_gramos,
         version_receta.unidad_venta_gramos,
         version_receta.detalles

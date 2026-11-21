@@ -33,6 +33,13 @@ export default function InsumoDetail() {
             {insumo ? (
                 <div className={styles.tarjetaEstatica} style={{ maxWidth: '600px', width: '100%' }}>
                     <p><strong>Nombre:</strong> {insumo.nombre}</p>
+                    <p><strong>Clasificación:</strong> {insumo.es_aditivo ? 'Aditivo de Referencia' : 'Ingrediente'}</p>
+                    {insumo.es_aditivo && insumo.aditivo_referencia && (
+                        <>
+                            <p><strong>Aditivo INS Referencia:</strong> {insumo.aditivo_referencia.nombre_completo}</p>
+                            <p><strong>Número INS:</strong> {insumo.aditivo_referencia.numero_ins ? `INS ${insumo.aditivo_referencia.numero_ins}` : 'Opcional / Sin INS'}</p>
+                        </>
+                    )}
                     <p><strong>Unidad de Medida:</strong> {insumo.unidad_medida.nombre}</p>
                     <p><strong>Stock disponible:</strong> {formatearStock(insumo.cantidad, insumo.unidad_medida.magnitud)}</p>
 
