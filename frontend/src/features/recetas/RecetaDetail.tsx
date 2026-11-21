@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '../../context/AuthContext';
 import Boton from '../../components/Boton';
@@ -53,7 +53,16 @@ function formatearFecha(fecha: string | null): string {
 export default function RecetaDetail() {
     const { usuario } = useAuth();
     const esAdmin = usuario?.rol === 'admin';
+    const esOperario = usuario?.rol === 'operario';
     const { id = '' } = useParams();
+    const [searchParams] = useSearchParams();
+    const versionParam = searchParams.get('version');
+    const nroVersionSolicitada = versionParam === null ? null : Number(versionParam);
+    const versionSolicitada = nroVersionSolicitada !== null
+        && Number.isInteger(nroVersionSolicitada)
+        && nroVersionSolicitada > 0
+        ? nroVersionSolicitada
+        : null;
 
     const [respuesta, setRespuesta] = useState<RespuestaDetalle | null>(null);
     const [nroVersionSeleccionada, setNroVersionSeleccionada] = useState<number | null>(null);
@@ -96,9 +105,13 @@ export default function RecetaDetail() {
                         error: null,
                     });
 
+                    const versionSolicitadaData = versionSolicitada === null
+                        ? null
+                        : versionesData.find((v) => v.version === versionSolicitada);
                     const vigente = versionesData.find((v) => v.estado === 'activo') || versionesData[0];
-                    if (vigente) {
-                        setNroVersionSeleccionada(vigente.version);
+                    const versionInicial = versionSolicitadaData || vigente;
+                    if (versionInicial) {
+                        setNroVersionSeleccionada(versionInicial.version);
                     }
                 }
             } catch (problema) {
@@ -123,7 +136,7 @@ export default function RecetaDetail() {
         return () => {
             cancelado = true;
         };
-    }, [id]);
+    }, [id, versionSolicitada]);
 
     const actual = respuesta?.clave === id ? respuesta : null;
     const receta = actual?.receta ?? null;
@@ -278,6 +291,7 @@ export default function RecetaDetail() {
                                 <select
                                     value={nroVersionSeleccionada ?? version.version}
                                     onChange={(e) => setNroVersionSeleccionada(Number(e.target.value))}
+                                    disabled={esOperario}
                                     className={styles.input}
                                     style={{ width: 'auto', padding: '6px 12px', fontWeight: 600 }}
                                 >

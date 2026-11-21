@@ -16,6 +16,7 @@ import type { Producto } from '../../types/productos';
 import type { Receta, VersionReceta } from '../../types/receta';
 import { filtrarPorTexto } from '../../utils/texto';
 import styles from '../../styles/shared.module.css';
+import HistorialVersionesRecetaModal from './HistorialVersionesRecetaModal';
 
 interface ProductoConEstadoReceta {
     producto: Producto;
@@ -43,6 +44,7 @@ export default function RecetaList() {
         error: null,
     });
     const [busqueda, setBusqueda] = useState('');
+    const [recetaHistorial, setRecetaHistorial] = useState<{ id: number; nombre: string } | null>(null);
 
     useEffect(() => {
         let cancelado = false;
@@ -171,9 +173,16 @@ export default function RecetaList() {
             render: ({ producto, receta }) => (
                 <div className={styles.grupoBotonesTabla}>
                     {receta ? (
-                        <Link to={`/recetas/${receta.id}`} title="Ver detalle de la receta">
-                            <Boton variant="ver" style={{ padding: '8px 12px' }} />
-                        </Link>
+                        <>
+                            <Link to={`/recetas/${receta.id}`} title="Ver detalle de la receta">
+                                <Boton variant="ver" style={{ padding: '8px 12px' }} />
+                            </Link>
+                            <Boton
+                                variant="documentos"
+                                onClick={() => setRecetaHistorial({ id: receta.id, nombre: producto.nombre })}
+                                title="Ver historial de versiones"
+                            />
+                        </>
                     ) : (
                         usuario?.rol === 'admin' && (
                             <Link to={`/recetas/nueva?producto_id=${producto.id}`} title="Crear receta">
@@ -228,6 +237,14 @@ export default function RecetaList() {
                 }
                 columnaOrdenInicial="producto"
             />
+
+            {recetaHistorial && (
+                <HistorialVersionesRecetaModal
+                    recetaId={recetaHistorial.id}
+                    recetaNombre={recetaHistorial.nombre}
+                    onClose={() => setRecetaHistorial(null)}
+                />
+            )}
         </div>
     );
 }
