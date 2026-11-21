@@ -293,16 +293,16 @@ def calcular_receta_escalada(
             )
         )
 
-        return schemas.RecetaEscalada(
-            receta_id=version_receta.receta_id,
-            receta_version_id=version_receta.version,
-            producto_id=producto_id,
-            rendimiento_original=round(rendimiento_base, DECIMALES_ESCALADO),
-            rendimiento_esperado=rendimiento_esperado,
-            unidad_producto_nombre=unidad_gramos.nombre,
-            factor_aplicado=round(factor, DECIMALES_FACTOR),
-            renglones=renglones_escalados
-        )
+    return schemas.RecetaEscalada(
+        receta_id=version_receta.receta_id,
+        receta_version_id=version_receta.version,
+        producto_id=producto_id,
+        rendimiento_original=round(rendimiento_base, DECIMALES_ESCALADO),
+        rendimiento_esperado=rendimiento_esperado,
+        unidad_producto_nombre=unidad_gramos.nombre,
+        factor_aplicado=round(factor, DECIMALES_FACTOR),
+        renglones=renglones_escalados
+    )
 def _expresar_valor(valor: float, umbral: float, decimales: int, unidad: str) -> str:
     if valor < umbral:
         return "0 " + unidad if unidad else "0"

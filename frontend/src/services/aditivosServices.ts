@@ -94,3 +94,17 @@ export const actualizarClaseFuncionalAditivo = async (
     if (!res.ok) throw new Error(await mensajeDeError(res, 'No se pudo actualizar la clase funcional.'));
     return res.json();
 };
+
+//agrego alias de compatibilidad
+export const getClasesFuncionales = getClasesFuncionalesAditivos;
+
+export const createAditivo = (
+    payload: AditivoPayload,
+    rol: RolUsuario = 'admin',
+) => crearAditivo(payload, rol);
+
+export const createClaseFuncional = (
+    nombre: string,
+    necesita_ins: boolean,
+    rol: RolUsuario = 'admin',
+) => crearClaseFuncionalAditivo({ nombre, necesita_ins }, rol);

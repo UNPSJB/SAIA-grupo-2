@@ -137,7 +137,6 @@ export default function EscalarReceta({
                             flexWrap: 'wrap',
                             gap: '10px',
                             padding: '10px 14px',
-                            backgroundColor: '#f8fafc',
                             borderRadius: '6px',
                             marginBottom: '14px',
                             fontSize: '0.9rem',
@@ -180,9 +179,7 @@ export default function EscalarReceta({
                                         key={renglon.insumo_id}
                                         style={{
                                             borderBottom: '1px solid #e2e8f0',
-                                            backgroundColor: renglon.stock_suficiente
-                                                ? 'transparent'
-                                                : '#fef2f2',
+                                            
                                         }}
                                     >
                                         <td style={{ padding: '8px', fontWeight: 500 }}>

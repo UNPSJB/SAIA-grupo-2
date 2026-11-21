@@ -275,7 +275,8 @@ export default function LoteForm() {
 
                 {factorEscalado != null && (
                     <div className={estilosInsumos.bannerReceta} role="status">
-                        Precargado desde receta escalada (<strong>factor x{factorEscalado}</strong>).
+                        Precargado desde receta escalada (<strong>factor x{factorEscalado}</strong> · rendimiento esperado:{' '}
+                        <strong>{precargaReceta?.cantidad} g</strong>).
                         Podés ajustar las cantidades antes de registrar el lote.
                     </div>
                 )}

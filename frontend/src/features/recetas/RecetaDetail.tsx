@@ -13,6 +13,7 @@ import {
 import type { Aditivo } from '../../types/aditivos';
 import type { Insumo } from '../../types/insumos';
 import type { Receta, VersionReceta } from '../../types/receta';
+import EscalarReceta from './EscalarReceta';
 import styles from '../../styles/shared.module.css';
 
 interface RespuestaDetalle {
@@ -250,6 +251,10 @@ export default function RecetaDetail() {
                                         ))}
                                 </ol>
                             )}
+                        </section>
+
+                        <section className={styles.bloqueDetalle} aria-labelledby="titulo-escalar-receta">
+                            <EscalarReceta productoId={receta.producto_id} />
                         </section>
                     </>
                 )}

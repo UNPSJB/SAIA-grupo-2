@@ -11,6 +11,7 @@ from src.insumos.models import Insumo
 from src.lotes_produccion import exceptions, schemas
 from src.lotes_produccion.models import LoteProduccion
 from src.productos import services as productos_services
+from src.recetas import services as recetas_services
 from src.unidades_medida import services as unidades_services
 from src.unidades_medida.models import UnidadMedida
 
@@ -54,6 +55,9 @@ def crear_lote(db: Session, lote: schemas.LoteProduccionCreate) -> LoteProduccio
     declarado no se modifica: el stock solo vuelve a subir desde la carga de stock del insumo.
     """
     productos_services.leer_producto(db, lote.producto_id)
+
+    if lote.receta_id is not None and lote.receta_version_id is not None:
+        recetas_services.leer_version_receta(db, lote.receta_id, lote.receta_version_id)
 
     if lote.fecha > date.today():
         raise exceptions.FechaFutura()
