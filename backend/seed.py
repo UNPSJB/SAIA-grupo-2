@@ -55,7 +55,7 @@ from src.rotulado_frontal import services as rotulado_frontal_services
 from src.rotulado_frontal.schemas import ActualizacionMarcasInsumos, CambioMarcaInsumo, NuevaEvaluacion
 
 from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
-from src.recetas.models import Receta, VersionReceta
+from src.recetas.models import Receta, VersionReceta, PasoReceta, DetalleReceta
 
 DIAS_DE_HISTORIAL = 90
 ZONA_PLANTA = timezone(timedelta(hours=-3))

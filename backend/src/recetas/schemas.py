@@ -1,6 +1,6 @@
 from typing import Optional, List
 from datetime import date
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from src.productos.schemas import Producto
 from src.equipos.schemas import Equipo
 from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo

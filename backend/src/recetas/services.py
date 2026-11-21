@@ -4,11 +4,13 @@ from typing import List, Optional
 from sqlalchemy import select, func, update, insert
 from sqlalchemy.orm import Session
 
-from src.recetas.models import Receta, VersionReceta, PasoReceta, detalle_receta
+from src.recetas.models import Receta, VersionReceta, PasoReceta, DetalleReceta, detalle_receta
 from src.recetas import schemas, exceptions
-from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo
+from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo, DECIMALES_ESCALADO, DECIMALES_FACTOR
 from src.productos.models import Producto
 from src.insumos.models import Insumo
+from src.unidades_medida import services as unidades_services
+from src.unidades_medida.constants import MagnitudUnidad
 from src.datos_nutricionales.models import DatoNutricionalInsumo, ValorDiarioReferencia
 from src.datos_nutricionales.constants import Nutriente
 from src.datos_nutricionales import services as datos_nutricionales_services
