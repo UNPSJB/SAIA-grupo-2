@@ -1,6 +1,6 @@
 from typing import Optional, List
 from datetime import date
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from src.productos.schemas import Producto
 from src.equipos.schemas import Equipo
 from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo
@@ -80,6 +80,31 @@ class Receta(RecetaBase):
     producto: Producto
     model_config = ConfigDict(from_attributes=True)
 
+class RecetaEscaladaBase(BaseModel):
+    factor: Optional[float] = Field(None, gt=0)
+    cantidad_objetivo: Optional[float] = Field(None, gt=0)
+
+class RenglonEscalado(BaseModel):
+    insumo_id: int
+    insumo_nombre: str
+    unidad_medida_id: int
+    unidad_medida_nombre: str
+    magnitud: str
+    cantidad_original: float
+    cantidad_escalada: float
+    stock_disponible: float
+    stock_suficiente: bool
+
+class RecetaEscalada(BaseModel):
+    receta_id: int
+    receta_version_id: int
+    producto_id: int
+    rendimiento_original: float
+    rendimiento_esperado: float
+    unidad_producto_nombre: str
+    factor_aplicado: float
+    renglones: List[RenglonEscalado]
+
 class ItemInformacionNutricionalResponse(BaseModel):
     nutriente: str
     unidad: str
@@ -106,7 +131,6 @@ class ItemComposicionResponse(BaseModel):
     porcentaje: float
     tipo_uso: TipoUsoInsumo
     aditivo_id: Optional[int] = None
-
 
 class ComposicionRecetaResponse(BaseModel):
     receta_id: int

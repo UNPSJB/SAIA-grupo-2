@@ -11,6 +11,8 @@ import EmpleadoDetail from './features/empleados/EmpleadoDetail';
 import EmpleadoDelete from './features/empleados/EmpleadoDelete';
 import DocumentacionEmpleado from './features/documentacion/DocumentacionEmpleado';
 import DocumentacionForm from './features/documentacion/DocumentacionForm';
+import AlertasDocumentacion from './features/documentacion/AlertaVencimiento';
+
 
 import CapacidadesList from './features/capacidades/CapacidadesList';
 import CapacidadForm from './features/capacidades/CapacidadForm';
@@ -55,7 +57,7 @@ import ElementoLimpiezaDelete from './features/elementosLimpieza/ElementoLimpiez
 import AlertasRecambio from './features/elementosLimpieza/AlertasRecambio';
 import VencimientosList from './features/vencimientos/VencimientosList'; 
 import VencimientosDocumentacionList from './features/vencimientosDocumentacion/VencimientosDocumentacionList';
-import AlertasDocumentacion from './features/documentacion/AlertaVencimiento';
+//import AlertasDocumentacion from './features/documentacion/AlertaVencimiento';
 import ProductosElaboradosList from './features/productos/ProductosList';
 import ProductoElaboradoForm from './features/productos/ProductoForm';
 import ProductoElaboradoDetail from './features/productos/ProductoDetail';
@@ -167,6 +169,7 @@ function RutasProtegidas() {
             <Route path="/" element={<Inicio />} />
             
             <Route path="/empleados" element={<RutaAdmin><EmpleadosList /></RutaAdmin>} />
+            <Route path="/empleados/alertas" element={<RutaAdmin><AlertasDocumentacion /></RutaAdmin>} />
             <Route path="/empleados/nuevo" element={<RutaAdmin><EmpleadoForm /></RutaAdmin>} />
             <Route path="/empleados/editar/:id" element={<RutaAdmin><EmpleadoForm /></RutaAdmin>} />
             <Route path="/empleados/eliminar/:id" element={<RutaAdmin><EmpleadoDelete /></RutaAdmin>} />

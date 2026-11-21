@@ -11,14 +11,14 @@ import {
     getComposicionReceta,
     getRecetaById,
     getVersionesReceta,
-    //getVersionVigenteReceta,
     RecetasApiError,
 } from '../../services/recetasServices';
 import { exportarRecetaPDF } from '../../utils/exportarRecetaPdf';
 import type { Aditivo } from '../../types/aditivos';
 import type { Insumo } from '../../types/insumos';
 import type { Equipo } from '../../types/equipos';
-import type {ComposicionReceta, Receta, VersionReceta,} from '../../types/receta';
+import type { ComposicionReceta, Receta, VersionReceta } from '../../types/receta';
+import EscalarReceta from './EscalarReceta';
 import styles from '../../styles/shared.module.css';
 
 interface RespuestaDetalle {
@@ -60,7 +60,7 @@ export default function RecetaDetail() {
     const [composicion, setComposicion] = useState<ComposicionReceta | null>(null);
     const [cargandoComposicion, setCargandoComposicion] = useState(false);
     const [errorComposicion, setErrorComposicion] = useState<string | null>(null);
-    
+
     useEffect(() => {
         let cancelado = false;
 
@@ -133,6 +133,7 @@ export default function RecetaDetail() {
         if (!versiones || versiones.length === 0) return null;
         return versiones.find((v) => v.version === nroVersionSeleccionada) || versiones[0];
     }, [versiones, nroVersionSeleccionada]);
+
     useEffect(() => {
         if (!esAdmin || !version) {
             setComposicion(null);
@@ -176,6 +177,7 @@ export default function RecetaDetail() {
             cancelado = true;
         };
     }, [id, esAdmin, version?.version]);
+
     const handleDescargarPDF = async () => {
         if (!receta || !version) return;
         await exportarRecetaPDF({
@@ -361,6 +363,7 @@ export default function RecetaDetail() {
                                 </ul>
                             )}
                         </section>
+
                         {esAdmin && (
                             <section
                                 className={styles.bloqueDetalle}
@@ -448,6 +451,7 @@ export default function RecetaDetail() {
                                 )}
                             </section>
                         )}
+
                         <section className={styles.bloqueDetalle} aria-labelledby="receta-pasos">
                             <h3 id="receta-pasos">Pasos de elaboración</h3>
                             {version.pasos.length === 0 ? (
@@ -482,6 +486,10 @@ export default function RecetaDetail() {
                                         ))}
                                 </ol>
                             )}
+                        </section>
+
+                        <section className={styles.bloqueDetalle} aria-labelledby="titulo-escalar-receta">
+                            <EscalarReceta productoId={receta.producto_id} />
                         </section>
                     </>
                 )}

@@ -2,6 +2,7 @@ from enum import Enum
 
 class ErrorCode:
     RECETA_NO_ENCONTRADA = "La receta ingresada no fue encontrada"
+    RECETA_VIGENTE_NO_ENCONTRADA = "El producto no tiene una receta vigente definida"
     VERSION_INICIAL_REQUERIDA = "La receta necesita una version inicial para crearse"
 
     VERSION_NO_ENCONTRADA = "La version de receta ingresada no fue encontrada"
@@ -13,6 +14,7 @@ class ErrorCode:
     INSUMO_INACTIVO = "No se puede utilizar un insumo dado de baja o inactivo"
     PRODUCTO_INACTIVO = "No se puede crear o modificar la receta de un producto dado de baja"
     ADITIVO_REQUERIDO = "Los renglones clasificados como aditivo deben especificar un aditivo de referencia válido"
+    PARAMETROS_ESCALADO_INVALIDOS = "Debe indicar un factor multiplicador o una cantidad objetivo, pero no ambos"
 
 class EstadoVersionReceta(str, Enum):
     ACTIVO = "activo"
@@ -21,3 +23,7 @@ class EstadoVersionReceta(str, Enum):
 class TipoUsoInsumo(str, Enum):
     INGREDIENTE = "ingrediente"
     ADITIVO = "aditivo"
+
+
+DECIMALES_ESCALADO = 2
+DECIMALES_FACTOR = 4

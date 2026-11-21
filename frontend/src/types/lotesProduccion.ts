@@ -7,6 +7,9 @@ export interface LoteProduccion {
     producto_id: number;
     fecha: string;
     cantidad: number;
+    receta_id?: number | null;
+    receta_version_id?: number | null;
+    factor_escalado?: number | null;
     producto: ProductoResumen;
     fecha_registro: string;
     cerrado: boolean;
@@ -24,6 +27,9 @@ export interface LoteProduccionPayload {
     producto_id: number;
     fecha: string;
     cantidad: number;
+    receta_id: number | null;
+    receta_version_id?: number | null;
+    factor_escalado?: number | null;
     insumos: InsumoUtilizadoPayload[];
 }
 
@@ -39,4 +45,13 @@ export interface InsumoAsociado {
     cantidad_utilizada: number;
     unidad_medida: string;
     magnitud: MagnitudUnidad;
+}
+
+export interface EstadoLoteDesdeReceta {
+    producto_id: number;
+    cantidad: number;
+    receta_id: number;
+    receta_version_id: number;
+    factor_escalado: number;
+    insumos: InsumoUtilizadoPayload[]
 }

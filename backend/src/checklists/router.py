@@ -1,7 +1,7 @@
 import logging
 from datetime import date
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Query, Header
+from fastapi import APIRouter, Depends, Query, Header, HTTPException
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select
 

@@ -1,7 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import type { LoteProduccion } from '../../types/lotesProduccion';
+import type { EstadoLoteDesdeReceta, LoteProduccion } from '../../types/lotesProduccion';
 import type { Producto } from '../../types/productos';
 import type { Insumo } from '../../types/insumos';
 import type { UnidadMedida } from '../../types/unidadesMedida';
@@ -15,16 +15,23 @@ import Boton from '../../components/Boton';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
 import NuevoProductoModal from '../productos/NuevoProductoModal';
 import { ETIQUETA_TIPO_PRODUCTO, hoyLocal } from '../productos/formatoProducto';
+import { convertirABase, formatearStock } from '../insumos/cantidades';
 import LoteDetalleModal from './LoteDetalleModal';
 import AgregarInsumoLote, { type InsumoElegido } from './AgregarInsumoLote';
 import ListaInsumosLote from './ListaInsumosLote';
 import estilosInsumos from './InsumosLote.module.css';
 import styles from '../../styles/shared.module.css';
 
+interface InsumoLoteFormulario extends InsumoElegido{
+    unidadNombre: string;
+    cantidadReceta?: number;
+}
+
 interface Errores {
     productoId?: string;
     fecha?: string;
     cantidad?: string;
+    insumos?: string;
 }
 
 const estiloError = { borderColor: '#ef4444', outline: 'none' };
@@ -34,13 +41,24 @@ export default function LoteForm() {
     const { usuario } = useAuth();
     const esAdmin = usuario?.rol === 'admin';
     const navigate = useNavigate();
+    const location = useLocation();
     const [parametros] = useSearchParams();
+    const precargaReceta = (location.state as EstadoLoteDesdeReceta | null) ?? null;
+    const precargaAplicadaRef = useRef(false);
 
     const [productos, setProductos] = useState<Producto[] | null>(null);
     const [errorCarga, setErrorCarga] = useState(false);
-    const [productoId, setProductoId] = useState(parametros.get('producto') ?? '');
+    const [productoId, setProductoId] = useState(
+        precargaReceta ? String(precargaReceta.producto_id) : parametros.get('producto') ?? ''
+    );
     const [fecha, setFecha] = useState(hoyLocal);
-    const [cantidad, setCantidad] = useState('');
+    const [cantidad, setCantidad] = useState(
+        precargaReceta ? String(precargaReceta.cantidad) : ''
+    );
+
+    const [recetaId, setRecetaId] = useState<number | null>(precargaReceta?.receta_id ?? null);
+    const [recetaVersionId, SetRecetaVesionId] = useState<number | null>(precargaReceta?.receta_version_id ?? null);
+    const [factorEscalado, setFactorEscalado] = useState<number | null>(precargaReceta?.factor_escalado ?? null);
 
     const [errores, setErrores] = useState<Errores>({});
     const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
@@ -50,7 +68,7 @@ export default function LoteForm() {
 
     const [catalogoInsumos, setCatalogoInsumos] = useState<Insumo[]>([]);
     const [unidades, setUnidades] = useState<UnidadMedida[]>([]);
-    const [insumosAgregados, setInsumosAgregados] = useState<InsumoElegido[]>([]);
+    const [insumosAgregados, setInsumosAgregados] = useState<InsumoLoteFormulario[]>([]);
     const [versionInsumos, setVersionInsumos] = useState(0);
 
 
@@ -79,18 +97,63 @@ export default function LoteForm() {
         Promise.all([getInsumos(), getUnidadesMedida()])
             .then(([datosInsumos, datosUnidades]) => {
                 if (cancelado) return;
-                setCatalogoInsumos(datosInsumos.filter((insumo) => insumo.activo));
+                const activos = datosInsumos.filter((insumo) => insumo.activo);
+                setCatalogoInsumos(activos);
                 setUnidades(datosUnidades);
+
+                if (precargaReceta && !precargaAplicadaRef.current) {
+                    precargaAplicadaRef.current = true;
+                    const itemsPrecargados: InsumoLoteFormulario[] = [];
+
+                    for (const item of precargaReceta.insumos){
+                        const insumo = activos.find((i) => i.id === item.insumo_id);
+                        const unidad = datosUnidades.find((u) => u.id === item.unidad_medida_id);
+                        if (!insumo || !unidad) continue;
+
+                        itemsPrecargados.push({
+                            insumo,
+                            cantidad: item.cantidad_utilizada,
+                            unidadMedidaId: unidad.id,
+                            unidadNombre: unidad.nombre,
+                            cantidadBase: convertirABase(item.cantidad_utilizada, unidad),
+                            cantidadReceta: item.cantidad_utilizada
+                        });
+                    }
+                    setInsumosAgregados(itemsPrecargados);
+                }
             })
             .catch((problema) => console.error('Error al cargar insumos:', problema));
         return () => {
             cancelado = true;
         };
-    }, [versionInsumos]);
+    }, [versionInsumos, precargaReceta]);
 
     const hoy = hoyLocal();
     const productoElegido = productos?.find((producto) => String(producto.id) === productoId) ?? null;
     const unidad = productoElegido?.unidad_medida.nombre.toLowerCase();
+
+    const cantidadProductoDifiere = 
+        precargaReceta != null &&
+        recetaVersionId !== null &&
+        cantidad.trim() !== '' &&
+        !Number.isNaN(Number(cantidad)) &&
+        Math.abs(Number(cantidad) - precargaReceta.cantidad) > 0.0001;
+
+    const cambiarCantidadInsumo = (insumoId: number, nuevaCantidad: number) => {
+        setInsumosAgregados((actuales) =>
+            actuales.map((item) => {
+                if (item.insumo.id !== insumoId) return item;
+                const unidadItem = unidades.find((u) => u.id === item.unidadMedidaId);
+                const cantidadValida = Number.isFinite(nuevaCantidad) && nuevaCantidad >= 0 ? nuevaCantidad : 0;
+                return {
+                    ...item,
+                    cantidad: cantidadValida,
+                    cantidadBase: unidadItem ? convertirABase(cantidadValida, unidadItem) : cantidadValida
+                };
+            }),    
+        );
+        setErrores((prev) => ({ ...prev, insumos: undefined}));
+    };
 
 
     const quitarInsumo = (insumoId: number) => {
@@ -117,6 +180,20 @@ export default function LoteForm() {
             nuevos.cantidad = 'La cantidad debe ser mayor a 0';
         }
 
+        const insumoInvalido = insumosAgregados.find(
+            (item) => !(item.cantidad > 0) || item.cantidadBase > item.insumo.cantidad
+        );
+        if (insumoInvalido){
+            if(!(insumoInvalido.cantidad > 0)){
+                nuevos.insumos= `La cantidad de ${insumoInvalido.insumo.nombre} debe ser mayor a 0`;
+            } else {
+                nuevos.insumos = `No hay stock suficiente de ${insumoInvalido.insumo.nombre}. Disponible: ${formatearStock(
+                    insumoInvalido.insumo.cantidad,
+                    insumoInvalido.insumo.unidad_medida.magnitud
+                )}`;
+            }
+        }
+
         return nuevos;
     };
 
@@ -134,14 +211,21 @@ export default function LoteForm() {
                 producto_id: productoElegido.id,
                 fecha,
                 cantidad: Number(cantidad),
+                receta_id: recetaId,
+                receta_version_id: recetaVersionId,
+                factor_escalado: recetaVersionId != null ? factorEscalado : null,
                 insumos: insumosAgregados.map((item) => ({
                     insumo_id: item.insumo.id,
                     cantidad_utilizada: item.cantidad,
                     unidad_medida_id: item.unidadMedidaId,
+            
                 })),
             });
             setLoteRegistrado(lote);
             setCantidad('');
+            setRecetaId(null);
+            SetRecetaVesionId(null);
+            setFactorEscalado(null);
             setInsumosAgregados([]);
             setVersionInsumos((v) => v + 1);
         } catch (error) {
@@ -157,6 +241,9 @@ export default function LoteForm() {
             [...(actuales ?? []), producto].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')),
         );
         setProductoId(String(producto.id));
+        setRecetaId(null);
+        SetRecetaVesionId(null);
+        setFactorEscalado(null);
         setErrores((actuales) => ({ ...actuales, productoId: undefined }));
         setCreandoProducto(false);
     };
@@ -186,13 +273,26 @@ export default function LoteForm() {
                     <p style={{ color: '#ef4444', marginTop: 0 }}>No se pudieron cargar los productos.</p>
                 )}
 
+                {factorEscalado != null && (
+                    <div className={estilosInsumos.bannerReceta} role="status">
+                        Precargado desde receta escalada (<strong>factor x{factorEscalado}</strong> · rendimiento esperado:{' '}
+                        <strong>{precargaReceta?.cantidad} g</strong>).
+                        Podés ajustar las cantidades antes de registrar el lote.
+                    </div>
+                )}
+
                 <div className={styles.formGroup}>
                     <label htmlFor="lote-producto">Producto:</label>
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', width: '100%' }}>
                         <select
                             id="lote-producto"
                             value={productoId}
-                            onChange={(evento) => setProductoId(evento.target.value)}
+                            onChange={(evento) => {
+                                setProductoId(evento.target.value);
+                                setRecetaId(null);
+                                SetRecetaVesionId(null);
+                                setFactorEscalado(null);
+                            }}
                             style={{ flex: '1 1 260px', width: 'auto', ...(errores.productoId ? estiloError : {}) }}
                             disabled={productos === null}
                         >
@@ -251,6 +351,12 @@ export default function LoteForm() {
                             style={errores.cantidad ? estiloError : {}}
                         />
                         {errores.cantidad && <span style={estiloMensaje}>{errores.cantidad}</span>}
+
+                        {cantidadProductoDifiere && (
+                            <span className={estilosInsumos.avisoDiferencia} style={{ marginTop: '4px' }} role="status">
+                                Difiere de la receta. Escalado: {precargaReceta?.cantidad}
+                            </span>
+                        )}
                     </div>
                 </div>
 
@@ -263,7 +369,16 @@ export default function LoteForm() {
                         insumos={catalogoInsumos}
                         unidades={unidades}
                         yaAgregados={insumosAgregados.map((item) => item.insumo.id)}
-                        onAgregar={(elegido) => setInsumosAgregados((actuales) => [...actuales, elegido])}
+                        onAgregar={(elegido) => {
+                            const unidadElegida = unidades.find((u) => u.id === elegido.unidadMedidaId);
+                            setInsumosAgregados((actuales) => [
+                                ...actuales,
+                                {
+                                    ...elegido,
+                                    unidadNombre: unidadElegida?.nombre ?? ''
+                                },
+                            ]);
+                        }}
                     />
                     <ListaInsumosLote
                         items={insumosAgregados.map((item) => ({
@@ -271,10 +386,21 @@ export default function LoteForm() {
                             nombre: item.insumo.nombre,
                             cantidadBase: item.cantidadBase,
                             magnitud: item.insumo.unidad_medida.magnitud,
+                            editable: item.cantidadReceta !== undefined,
+                            cantidad: item.cantidad,
+                            cantidadReceta: item.cantidadReceta,
+                            unidadNombre: item.unidadNombre,
+                            stockDisponibleBase: item.insumo.cantidad,
                         }))}
                         mensajeVacio="Opcional: agregá los insumos que se usaron. Se descuentan del stock al registrar el lote."
+                        onCambiarCantidad={cambiarCantidadInsumo}
                         onQuitar={quitarInsumo}
                     />
+                    {errores.insumos && (
+                        <p className={estilosInsumos.errorRenglon} style={{ marginTop: '8px' }} role="alert">
+                            {errores.insumos}
+                        </p>
+                    )}
                     {insumosAgregados.length > 0 && (
                         <p className={estilosInsumos.nota}>
                             Al registrar el lote se descuentan del stock. El consumo se puede corregir hasta cerrar el lote
