@@ -19,7 +19,7 @@ class ErrorCode:
     DENSIDAD_REQUERIDA = "El insumo de volumen debe tener una densidad en gramos por mililitro configurada"
     PESO_POR_UNIDAD_REQUERIDO = "El insumo por unidad debe tener configurado su peso en gramos por unidad"
     EQUIVALENCIA_INVALIDA = "No se pudo convertir la cantidad del insumo a gramos"
-    PARAMETROS_ESCALADO_INVALIDOS = "Debe indicar un factor multiplicador o una cantidad objetivo, pero no ambos"
+    PARAMETROS_ESCALADO_INVALIDOS = "Indicá uno solo: factor multiplicador, cantidad objetivo en gramos o cantidad de unidades"
 
 class EstadoVersionReceta(str, Enum):
     ACTIVO = "activo"

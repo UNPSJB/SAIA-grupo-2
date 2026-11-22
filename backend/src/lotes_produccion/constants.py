@@ -8,3 +8,5 @@ class ErrorCode:
     INSUMO_REPETIDO = "Cada insumo puede declararse una sola vez por lote."
     LOTE_CERRADO = "El lote está cerrado: su consumo ya no se puede modificar."
     STOCK_INSUFICIENTE = "No hay suficiente stock disponible de este insumo."
+    RECETA_INCOMPLETA = "La receta y su versión se indican juntas."
+    RECETA_DE_OTRO_PRODUCTO = "La receta indicada no corresponde al producto del lote."

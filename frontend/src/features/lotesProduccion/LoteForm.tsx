@@ -53,11 +53,11 @@ export default function LoteForm() {
     );
     const [fecha, setFecha] = useState(hoyLocal);
     const [cantidad, setCantidad] = useState(
-        precargaReceta ? String(precargaReceta.cantidad) : ''
+        precargaReceta?.cantidad != null ? String(precargaReceta.cantidad) : ''
     );
 
     const [recetaId, setRecetaId] = useState<number | null>(precargaReceta?.receta_id ?? null);
-    const [recetaVersionId, SetRecetaVesionId] = useState<number | null>(precargaReceta?.receta_version_id ?? null);
+    const [recetaVersionId, setRecetaVersionId] = useState<number | null>(precargaReceta?.receta_version_id ?? null);
     const [factorEscalado, setFactorEscalado] = useState<number | null>(precargaReceta?.factor_escalado ?? null);
 
     const [errores, setErrores] = useState<Errores>({});
@@ -133,7 +133,7 @@ export default function LoteForm() {
     const unidad = productoElegido?.unidad_medida.nombre.toLowerCase();
 
     const cantidadProductoDifiere = 
-        precargaReceta != null &&
+        precargaReceta?.cantidad != null &&
         recetaVersionId !== null &&
         cantidad.trim() !== '' &&
         !Number.isNaN(Number(cantidad)) &&
@@ -224,7 +224,7 @@ export default function LoteForm() {
             setLoteRegistrado(lote);
             setCantidad('');
             setRecetaId(null);
-            SetRecetaVesionId(null);
+            setRecetaVersionId(null);
             setFactorEscalado(null);
             setInsumosAgregados([]);
             setVersionInsumos((v) => v + 1);
@@ -242,7 +242,7 @@ export default function LoteForm() {
         );
         setProductoId(String(producto.id));
         setRecetaId(null);
-        SetRecetaVesionId(null);
+        setRecetaVersionId(null);
         setFactorEscalado(null);
         setErrores((actuales) => ({ ...actuales, productoId: undefined }));
         setCreandoProducto(false);
@@ -276,7 +276,7 @@ export default function LoteForm() {
                 {factorEscalado != null && (
                     <div className={estilosInsumos.bannerReceta} role="status">
                         Precargado desde receta escalada (<strong>factor x{factorEscalado}</strong> · rendimiento esperado:{' '}
-                        <strong>{precargaReceta?.cantidad} g</strong>).
+                        <strong>{precargaReceta?.rendimiento_gramos} g</strong>).
                         Podés ajustar las cantidades antes de registrar el lote.
                     </div>
                 )}
@@ -290,7 +290,7 @@ export default function LoteForm() {
                             onChange={(evento) => {
                                 setProductoId(evento.target.value);
                                 setRecetaId(null);
-                                SetRecetaVesionId(null);
+                                setRecetaVersionId(null);
                                 setFactorEscalado(null);
                             }}
                             style={{ flex: '1 1 260px', width: 'auto', ...(errores.productoId ? estiloError : {}) }}
@@ -354,7 +354,7 @@ export default function LoteForm() {
 
                         {cantidadProductoDifiere && (
                             <span className={estilosInsumos.avisoDiferencia} style={{ marginTop: '4px' }} role="status">
-                                Difiere de la receta. Escalado: {precargaReceta?.cantidad}
+                                Difiere de la receta. Escalado: {precargaReceta?.cantidad}{unidad ? ` ${unidad}` : ''}
                             </span>
                         )}
                     </div>

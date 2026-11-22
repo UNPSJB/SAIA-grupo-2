@@ -42,8 +42,6 @@ class DetalleRecetaBase(BaseModel):
 
         valores = valores.copy()
 
-        # Compatibilidad temporal con los tests y clientes anteriores:
-        # si solo llega cantidad_gramos, se interpreta como gramos.
         if "cantidad_original" not in valores and valores.get("cantidad_gramos") is not None:
             valores["cantidad_original"] = valores["cantidad_gramos"]
             valores.setdefault("unidad_medida_id", 1)
@@ -102,8 +100,11 @@ class Receta(RecetaBase):
     model_config = ConfigDict(from_attributes=True)
 
 class RecetaEscaladaBase(BaseModel):
+    """Se indica uno solo: factor, gramos de producto terminado o unidades de venta a producir."""
+
     factor: Optional[float] = Field(None, gt=0)
     cantidad_objetivo: Optional[float] = Field(None, gt=0)
+    unidades_objetivo: Optional[float] = Field(None, gt=0)
 
 class RenglonEscalado(BaseModel):
     insumo_id: int
@@ -122,6 +123,8 @@ class RecetaEscalada(BaseModel):
     producto_id: int
     rendimiento_original: float
     rendimiento_esperado: float
+    cantidad_producto: Optional[float] = None
+    unidad_producto_id: int
     unidad_producto_nombre: str
     factor_aplicado: float
     renglones: List[RenglonEscalado]
@@ -135,24 +138,6 @@ class ItemInformacionNutricionalResponse(BaseModel):
     valor_porcion_expresado: str
     porcentaje_vd: Optional[float] = None
     porcentaje_vd_expresado: str = "-"
-
-#  nuevo para mostrar a que insumos le faltan datos
-# class FaltanteNutricionalInsumo(BaseModel):
-#     insumo_id: int
-#     insumo_nombre: str
-#     tipo_uso: str = "ingrediente"
-#     datos_faltantes: List[str] = []
-#     sin_fuente: List[str] = []
-
-# class TablaNutricionalRecetaResponse(BaseModel):
-#     receta_id: int
-#     version: int
-#     rendimiento_final_gramos: float
-#     unidad_venta_gramos: float
-#     medida_casera: Optional[str] = None
-#     estado: str = "completa"                              #nuevo. estado de la receta
-#     faltantes: List[FaltanteNutricionalInsumo] = []       # nuevo. lista de lo que falta
-#     items: List[ItemInformacionNutricionalResponse] = []
 
 
 class TablaNutricionalRecetaResponse(BaseModel):

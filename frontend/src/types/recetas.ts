@@ -1,8 +1,9 @@
 import type { MagnitudUnidad } from "./unidadesMedida";
 
-export interface EscaladoRecetaPayload{
+export interface EscaladoRecetaPayload {
     factor?: number;
     cantidad_objetivo?: number;
+    unidades_objetivo?: number;
 }
 
 export interface RenglonEscalado {
@@ -23,6 +24,8 @@ export interface RecetaEscalada {
     producto_id: number;
     rendimiento_original: number;
     rendimiento_esperado: number;
+    cantidad_producto: number | null;
+    unidad_producto_id: number;
     unidad_producto_nombre: string;
     factor_aplicado: number;
     renglones: RenglonEscalado[];

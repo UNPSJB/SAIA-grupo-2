@@ -49,7 +49,8 @@ export interface InsumoAsociado {
 
 export interface EstadoLoteDesdeReceta {
     producto_id: number;
-    cantidad: number;
+    cantidad: number | null;
+    rendimiento_gramos: number;
     receta_id: number;
     receta_version_id: number;
     factor_escalado: number;
