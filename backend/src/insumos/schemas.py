@@ -6,6 +6,7 @@ from src.aditivos.schemas import Aditivo as AditivoSchema
 
 class InsumoBase(BaseModel):
     nombre: str
+    denominacion_rotulo: Optional[str] = None
     unidad_medida_id: int
     activo: bool = True
     es_aditivo: bool = False

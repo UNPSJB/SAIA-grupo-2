@@ -1,9 +1,10 @@
 from typing import Optional, List
-from datetime import date
+from datetime import date, datetime
 from pydantic import BaseModel, ConfigDict, Field
 from src.productos.schemas import Producto
 from src.equipos.schemas import Equipo
-from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo
+from src.documentacion.schemas import EmpleadoResumen
+from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo, FormatoDeclaracionAditivos
 
 class PasoRecetaBase(BaseModel):
     orden: int = 1
@@ -140,3 +141,49 @@ class ComposicionRecetaResponse(BaseModel):
     aditivos: List[ItemComposicionResponse]
     suma_porcentajes: float
     suma_correcta: bool
+
+class ConfiguracionProduccionResponse(BaseModel):
+    id: int
+    formato_declaracion_aditivos: FormatoDeclaracionAditivos
+    model_config = ConfigDict(from_attributes=True)
+
+class ConfiguracionProduccionUpdate(BaseModel):
+    formato_declaracion_aditivos: FormatoDeclaracionAditivos
+
+class IngredienteRotuloItem(BaseModel):
+    insumo_id: int
+    nombre_insumo: str
+    denominacion_rotulo: str
+    cantidad_gramos: float
+    porcentaje: float
+    renglon_original: int
+
+class AditivoRotuloItem(BaseModel):
+    aditivo_id: int
+    insumo_id: int
+    nombre_completo: str
+    numero_ins: Optional[str] = None
+    texto_formateado: str
+
+class GrupoAditivosRotulo(BaseModel):
+    clase_funcional_id: int
+    clase_funcional: str
+    es_aromatizante: bool
+    texto_grupo: str
+    aditivos: List[AditivoRotuloItem]
+
+class ListaIngredientesRotuloResponse(BaseModel):
+    receta_id: int
+    version: int
+    es_orden_manual: bool
+    orden_manual_por: Optional[EmpleadoResumen] = None
+    orden_manual_fecha: Optional[datetime] = None
+    aviso_orden_anterior: Optional[str] = None
+    formato_aditivos: FormatoDeclaracionAditivos
+    ingredientes: List[IngredienteRotuloItem]
+    grupos_aditivos: List[GrupoAditivosRotulo]
+    texto_rotulo: str
+
+class AjusteOrdenIngredientesPayload(BaseModel):
+    orden_insumo_ids: List[int]
+    empleado_id: Optional[int] = None

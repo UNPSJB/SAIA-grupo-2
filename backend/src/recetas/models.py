@@ -1,11 +1,26 @@
 from typing import Optional, List
-from datetime import date
-from sqlalchemy import Date, Enum as SQLEnum, ForeignKey, String, Text, Boolean, Float, Integer
+from datetime import date, datetime
+from sqlalchemy import Date, Enum as SQLEnum, ForeignKey, JSON, String, Text, Boolean, Float, Integer, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship, foreign
 
 from src.models import ModeloBase
 from src.asociaciones.detalle_receta import detalle_receta
-from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo
+from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo, FormatoDeclaracionAditivos
+
+#Agregado para hu ordenar ingredientes
+class ConfiguracionProduccion(ModeloBase):
+    __tablename__ = "configuracion_produccion"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    formato_declaracion_aditivos: Mapped[FormatoDeclaracionAditivos] = mapped_column(
+        SQLEnum(
+            FormatoDeclaracionAditivos,
+            values_callable=lambda enum_values: [value.value for value in enum_values],
+            create_constraint=True,
+        ),
+        nullable=False,
+        default=FormatoDeclaracionAditivos.FUNCION_AMBOS,
+    )
 
 class DetalleReceta(ModeloBase):
     __table__ = detalle_receta
@@ -41,6 +56,18 @@ class VersionReceta(ModeloBase):
         Date,
         nullable=True,
         default=date.today,
+    )
+
+    #Agregado: para persistir el ajuste manueal de orden de ingredientes por version
+    orden_ingredientes_manual: Mapped[Optional[List[int]]] = mapped_column(JSON, nullable=True)
+    orden_manual_por_id: Mapped[Optional[int]] = mapped_column(ForeignKey("empleados.id"), nullable=True)
+    orden_manual_fecha: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    aviso_orden_anterior: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+
+    orden_manual_por: Mapped[Optional["src.empleados.models.Empleado"]] = relationship(
+        "src.empleados.models.Empleado",
+        foreign_keys=[orden_manual_por_id],
+        lazy="selectin",
     )
 
     detalles: Mapped[List["DetalleReceta"]] = relationship(

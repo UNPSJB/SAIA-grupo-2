@@ -27,3 +27,8 @@ class TipoUsoInsumo(str, Enum):
 
 DECIMALES_ESCALADO = 2
 DECIMALES_FACTOR = 4
+
+class FormatoDeclaracionAditivos(str, Enum):
+    FUNCION_NOMBRE = "funcion_nombre"
+    FUNCION_INS = "funcion_ins"
+    FUNCION_AMBOS = "funcion_ambos"

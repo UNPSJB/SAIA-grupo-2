@@ -1,15 +1,16 @@
 import logging
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional
 from sqlalchemy import select, func, update, insert
 from sqlalchemy.orm import Session
 
-from src.recetas.models import Receta, VersionReceta, PasoReceta, DetalleReceta, detalle_receta
+from src.recetas.models import Receta, VersionReceta, PasoReceta, DetalleReceta, ConfiguracionProduccion, detalle_receta
 from src.recetas import schemas, exceptions
-from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo, DECIMALES_ESCALADO, DECIMALES_FACTOR
+from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo, FormatoDeclaracionAditivos, DECIMALES_ESCALADO, DECIMALES_FACTOR
 from src.productos.models import Producto
 from src.insumos.models import Insumo
-from src.aditivos.models import Aditivo
+from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
+from src.empleados import services as empleados_services
 from src.unidades_medida import services as unidades_services
 from src.unidades_medida.constants import MagnitudUnidad
 from src.datos_nutricionales.models import DatoNutricionalInsumo, ValorDiarioReferencia
@@ -178,6 +179,40 @@ def crear_version_receta(
     ) or 0
     nueva_nro_version = max_v + 1
 
+    version_anterior = db.scalar(
+        select(VersionReceta).where(
+            VersionReceta.receta_id == receta_id,
+            VersionReceta.estado == EstadoVersionReceta.ACTIVO,
+        )
+    )
+    orden_heredado = None
+    orden_por_heredado = None
+    orden_fecha_heredada = None
+    aviso_orden = None
+
+    if version_anterior and version_anterior.orden_ingredientes_manual:
+        total_ant = sum(d.cantidad_gramos for d in version_anterior.detalles)
+        pct_ant = {
+            d.insumo_id: round((d.cantidad_gramos / total_ant) * 100, 4) if total_ant > 0 else 0.0
+            for d in version_anterior.detalles
+            if d.tipo_uso == TipoUsoInsumo.INGREDIENTE
+        }
+        total_nuevo = sum(d.cantidad_gramos for d in version_receta.detalles)
+        pct_nuevo = {
+            d.insumo_id: round((d.cantidad_gramos / total_nuevo) * 100, 4) if total_nuevo > 0 else 0.0
+            for d in version_receta.detalles
+            if d.tipo_uso == TipoUsoInsumo.INGREDIENTE
+        }
+        if pct_ant == pct_nuevo:
+            orden_heredado = version_anterior.orden_ingredientes_manual
+            orden_por_heredado = version_anterior.orden_manual_por_id
+            orden_fecha_heredada = version_anterior.orden_manual_fecha
+        else:
+            aviso_orden = (
+                "La versión anterior tenía un ajuste manual de orden. "
+                "Se volvió al orden automático porque cambiaron los porcentajes."
+            )
+
     db.execute(
         update(VersionReceta)
         .where(VersionReceta.receta_id == receta_id)
@@ -193,7 +228,11 @@ def crear_version_receta(
         motivo_cambio=version_receta.motivo_cambio or f"Actualización a versión {nueva_nro_version}",
         creado_por_id=version_receta.creado_por_id,
         estado=EstadoVersionReceta.ACTIVO,
-        fecha_vigencia=version_receta.fecha_vigencia or date.today()
+        fecha_vigencia=version_receta.fecha_vigencia or date.today(),
+        orden_ingredientes_manual=orden_heredado,
+        orden_manual_por_id=orden_por_heredado,
+        orden_manual_fecha=orden_fecha_heredada,
+        aviso_orden_anterior=aviso_orden,
     )
     db.add(nueva_version)
     db.flush()
@@ -489,3 +528,219 @@ def calcular_composicion_receta(
         suma_porcentajes=round(suma_porcentajes, 4),
         suma_correcta=suma_correcta,
     )
+
+def obtener_configuracion_produccion(db: Session) -> ConfiguracionProduccion:
+    config = db.scalar(select(ConfiguracionProduccion))
+    if not config:
+        config = ConfiguracionProduccion(
+            formato_declaracion_aditivos=FormatoDeclaracionAditivos.FUNCION_AMBOS
+        )
+        db.add(config)
+        db.commit()
+        db.refresh(config)
+    return config
+
+def actualizar_configuracion_produccion(
+        db: Session,
+        datos: schemas.ConfiguracionProduccionUpdate,
+) -> ConfiguracionProduccion:
+    config = obtener_configuracion_produccion(db)
+    config.formato_declaracion_aditivos = datos.formato_declaracion_aditivos
+    db.commit()
+    db.refresh(config)
+    return config
+
+def _formatear_aditivo_individual(aditivo: Aditivo, formato: FormatoDeclaracionAditivos) -> str:
+    nombre = aditivo.nombre_completo.strip()
+    ins = f"INS {aditivo.numero_ins.strip()}" if aditivo.numero_ins else None
+    if formato == FormatoDeclaracionAditivos.FUNCION_NOMBRE or not ins:
+        return nombre
+    if formato == FormatoDeclaracionAditivos.FUNCION_INS:
+        return ins
+    return f"{nombre} ({ins})"
+
+def obtener_lista_ingredientes_rotulo(
+        db: Session,
+        receta_id: int,
+        nro_version: Optional[int] = None,
+) -> schemas.ListaIngredientesRotuloResponse:
+    version_obj = (
+        leer_version_receta(db, receta_id, nro_version)
+        if nro_version is not None
+        else obtener_version_vigente(db, receta_id)
+    )
+    config = obtener_configuracion_produccion(db)
+    formato = config.formato_declaracion_aditivos
+
+    stmt = (
+        select(
+            detalle_receta.c.renglon,
+            detalle_receta.c.insumo_id,
+            detalle_receta.c.cantidad_gramos,
+            detalle_receta.c.tipo_uso,
+            detalle_receta.c.aditivo_id,
+            Insumo.nombre.label("insumo_nombre"),
+            Insumo.denominacion_rotulo.label("denominacion_rotulo"),
+        )
+        .join(Insumo, detalle_receta.c.insumo_id == Insumo.id)
+        .where(
+            detalle_receta.c.receta_id == receta_id,
+            detalle_receta.c.nro_version == version_obj.version,
+        )
+        .order_by(detalle_receta.c.renglon)    
+    )
+    renglones = db.execute(stmt).fetchall()
+    total_gramos = sum(r.cantidad_gramos for r in renglones)
+
+    ingredientes_raw: List[schemas.IngredienteRotuloItem] = []
+    aditivos_rows = []
+
+    for r in renglones:
+        porcentaje = round((r.cantidad_gramos / total_gramos) * 100, 4) if total_gramos > 0 else 0.0
+        if r.tipo_uso == TipoUsoInsumo.INGREDIENTE:
+            denom = (r.denominacion_rotulo or "").strip() or r.insumo_nombre
+            ingredientes_raw.append(
+                schemas.IngredienteRotuloItem(
+                    insumo_id=r.insumo_id,
+                    nombre_insumo=r.insumo_nombre,
+                    denominacion_rotulo=denom,
+                    cantidad_gramos=r.cantidad_gramos,
+                    porcentaje=porcentaje,
+                    renglon_original=r.renglon,
+                )
+            )
+        elif r.tipo_uso == TipoUsoInsumo.ADITIVO and r.aditivo_id is not None:
+            aditivos_rows.append(r)
+
+    ingredientes_auto = sorted(
+        ingredientes_raw,
+        key=lambda item: (-item.porcentaje, item.renglon_original),
+    )
+
+    es_manual = False
+    if version_obj.orden_ingredientes_manual:
+        ids_actuales = {item.insumo_id for item in ingredientes_auto}
+        orden_guardado = [iid for iid in version_obj.orden_ingredientes_manual if iid in ids_actuales]
+        if len(orden_guardado) == len(ingredientes_auto):
+            pos = {iid: idx for idx, iid in enumerate(orden_guardado)}
+            ingredientes_ordenados = sorted(ingredientes_auto, key=lambda item: pos[item.insumo_id])
+            es_manual = True
+        else:
+            ingredientes_ordenados = ingredientes_auto
+    else:
+        ingredientes_ordenados = ingredientes_auto
+
+    grupos_map: dict[int, schemas.GrupoAditivosRotulo] = {}
+    orden_grupos: List[int] = []
+
+    if aditivos_rows:
+        ids_aditivos = [r.aditivo_id for r in aditivos_rows]
+        filas_aditivos = db.execute(
+            select(Aditivo, ClaseFuncionalAditivo)
+            .join(ClaseFuncionalAditivo, ClaseFuncionalAditivo.id == Aditivo.clase_funcional_id)
+            .where(Aditivo.id.in_(ids_aditivos))
+        ).all()
+        aditivos_dict = {ad.id: (ad,cf) for ad, cf in filas_aditivos}
+
+        for r in aditivos_rows:
+            par = aditivos_dict.get(r.aditivo_id)
+            if not par:
+                continue
+            aditivo_obj, clase_obj = par
+            es_aromatizante = (not clase_obj.necesita_ins) or ("aromatizante" in clase_obj.nombre.lower())
+
+            if clase_obj.id not in grupos_map:
+                orden_grupos.append(clase_obj.id)
+                grupos_map[clase_obj.id] = schemas.GrupoAditivosRotulo(
+                    clase_funcional_id=clase_obj.id,
+                    clase_funcional=clase_obj.nombre,
+                    es_aromatizante=es_aromatizante,
+                    texto_grupo=clase_obj.nombre,
+                    aditivos=[],
+                )
+
+            texto_indiv = (
+                clase_obj.nombre
+                if es_aromatizante
+                else _formatear_aditivo_individual(aditivo_obj, formato)
+            )
+            grupos_map[clase_obj.id].aditivos.append(
+                schemas.AditivoRotuloItem(
+                    aditivo_id=aditivo_obj.id,
+                    insumo_id=r.insumo_id,
+                    nombre_completo=aditivo_obj.nombre_completo,
+                    numero_ins=aditivo_obj.numero_ins,
+                    texto_formateado=texto_indiv,
+                )
+            )
+
+    grupos_aditivos: List[schemas.GrupoAditivosRotulo] = []
+    for cid in orden_grupos:
+        grupo = grupos_map[cid]
+        if grupo.es_aromatizante:
+            grupo.texto_grupo = grupo.clase_funcional
+        else:
+            detalles_str = ", ".join(a.texto_formateado for a in grupo.aditivos)
+            grupo.texto_grupo = f"{grupo.clase_funcional}: {detalles_str}"
+        grupos_aditivos.append(grupo)
+
+    partes_rotulo = [ing.denominacion_rotulo for ing in ingredientes_ordenados]
+    partes_rotulo.extend(grp.texto_grupo for grp in grupos_aditivos)
+    texto_rotulo = f"Ingredientes: {', '.join(partes_rotulo)}." if partes_rotulo else ""
+
+    return schemas.ListaIngredientesRotuloResponse(
+        receta_id=receta_id,
+        version=version_obj.version,
+        es_orden_manual= es_manual,
+        orden_manual_por=version_obj.orden_manual_por,
+        orden_manual_fecha=version_obj.orden_manual_fecha,
+        aviso_orden_anterior=version_obj.aviso_orden_anterior,
+        formato_aditivos=formato,
+        ingredientes=ingredientes_ordenados,
+        grupos_aditivos=grupos_aditivos,
+        texto_rotulo=texto_rotulo,
+    )
+
+def guardar_orden_manual_ingredientes(
+    db: Session,
+    receta_id: int,
+    nro_version: int,
+    payload: schemas.AjusteOrdenIngredientesPayload,
+) -> schemas.ListaIngredientesRotuloResponse:
+    version_obj = leer_version_receta(db, receta_id, nro_version)
+    if version_obj.estado != EstadoVersionReceta.ACTIVO:
+        raise exceptions.VersionNoEncontrada()
+    
+    actual = obtener_lista_ingredientes_rotulo(db, receta_id, nro_version)
+
+    ids_esperados = {item.insumo_id for item in actual.ingredientes}
+    if len(payload.orden_insumo_ids) != len(ids_esperados) or set(payload.orden_insumo_ids) != ids_esperados:
+        raise exceptions.InsumoDuplicado()
+
+    if payload.empleado_id is not None:
+        empleados_services.leer_empleado(db, payload.empleado_id)
+
+    version_obj.orden_ingredientes_manual = payload.orden_insumo_ids
+    version_obj.orden_manual_por_id = payload.empleado_id
+    version_obj.orden_manual_fecha = datetime.now()
+    version_obj.aviso_orden_anterior = None
+
+    db.commit()
+    return obtener_lista_ingredientes_rotulo(db, receta_id, nro_version)
+
+def restablecer_orden_automatico_ingredientes(
+    db: Session,
+    receta_id: int,
+    nro_version: int,    
+) -> schemas.ListaIngredientesRotuloResponse:
+    version_obj = leer_version_receta(db, receta_id, nro_version)
+    if version_obj.estado != EstadoVersionReceta.ACTIVO:
+        raise exceptions.VersionNoEncontrada()
+    
+    version_obj.orden_ingredientes_manual = None
+    version_obj.orden_manual_por_id = None
+    version_obj.orden_manual_fecha = None
+    version_obj.aviso_orden_anterior = None
+
+    db.commit()
+    return obtener_lista_ingredientes_rotulo(db, receta_id, nro_version)
