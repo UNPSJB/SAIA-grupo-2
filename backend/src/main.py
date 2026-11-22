@@ -26,6 +26,7 @@ from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
 from src.recetas.models import Receta, VersionReceta, PasoReceta
 from src.parametros_normativos.models import ConjuntoParametros, ModuloRotuladoFrontal
 from src.rotulado_frontal.models import EvaluacionAplicabilidad
+from src.rotulados.models import Rotulo, RotuloLote, HistorialCambioRotulo
 from src.alergenos.models import CondicionesConservacion, DeclaracionAlergenos, MarcaAlergenosInsumo
 
 from src.config import settings
@@ -54,6 +55,7 @@ from src.datos_nutricionales.router import router as datos_nutricionales_router
 from src.configuracion_empresa.router import router as configuracion_empresa_router
 from src.parametros_normativos.router import router as parametros_normativos_router
 from src.rotulado_frontal.router import router as rotulado_frontal_router
+from src.rotulados.router import router as rotulados_router
 from src.alergenos.router import router as alergenos_router
 from src.documentos_versionados.router import (
     router as documentos_versionados_router,
@@ -118,6 +120,7 @@ app.include_router(datos_nutricionales_router)
 app.include_router(configuracion_empresa_router)
 app.include_router(parametros_normativos_router)
 app.include_router(rotulado_frontal_router)
+app.include_router(rotulados_router)
 app.include_router(alergenos_router)
 app.include_router(documentos_versionados_router)
 app.include_router(router_documentos)
