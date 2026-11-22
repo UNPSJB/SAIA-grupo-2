@@ -14,7 +14,7 @@ class Insumo(ModeloBase):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     nombre: Mapped[str] = mapped_column(index=True)
-    denominacion_rotulo: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    denominacion_rotulo: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     unidad_medida_id: Mapped[int] = mapped_column(ForeignKey("unidades_medida.id"))
     cantidad: Mapped[float] = mapped_column(Float, default=0.0)

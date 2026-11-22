@@ -4,6 +4,7 @@ import type { Aditivo } from './aditivos';
 export interface Insumo {
     id: number;
     nombre: string;
+    denominacion_rotulo?: string | null;
     unidad_medida_id: number;
     unidad_medida: UnidadMedida;
     activo: boolean;
@@ -15,6 +16,7 @@ export interface Insumo {
 
 export interface InsumoPayload {
     nombre: string;
+    denominacion_rotulo?: string | null;
     unidad_medida_id: number;
     activo?: boolean;
     es_aditivo?: boolean;
