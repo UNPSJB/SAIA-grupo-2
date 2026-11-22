@@ -1,7 +1,7 @@
 from typing import Optional, List
 from datetime import date
 from src.datos_nutricionales.constants import EstadoTablaNutricional
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from src.productos.schemas import Producto
 from src.equipos.schemas import Equipo
 from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo
@@ -28,9 +28,28 @@ class PasoReceta(PasoRecetaBase):
 
 class DetalleRecetaBase(BaseModel):
     insumo_id: int
-    cantidad_gramos: float
+    cantidad_original: float = Field(..., gt=0)
+    unidad_medida_id: int = Field(default=1, gt=0)
     tipo_uso: TipoUsoInsumo
     aditivo_id: Optional[int] = None
+    cantidad_gramos: Optional[float] = Field(default=None, gt=0)
+
+    @model_validator(mode="before")
+    @classmethod
+    def compatibilidad_cantidad_gramos(cls, valores):
+        if not isinstance(valores, dict):
+            return valores
+
+        valores = valores.copy()
+
+        # Compatibilidad temporal con los tests y clientes anteriores:
+        # si solo llega cantidad_gramos, se interpreta como gramos.
+        if "cantidad_original" not in valores and valores.get("cantidad_gramos") is not None:
+            valores["cantidad_original"] = valores["cantidad_gramos"]
+            valores.setdefault("unidad_medida_id", 1)
+
+        return valores
+
 
 class DetalleRecetaCreate(DetalleRecetaBase):
     pass
@@ -82,6 +101,31 @@ class Receta(RecetaBase):
     producto: Producto
     model_config = ConfigDict(from_attributes=True)
 
+class RecetaEscaladaBase(BaseModel):
+    factor: Optional[float] = Field(None, gt=0)
+    cantidad_objetivo: Optional[float] = Field(None, gt=0)
+
+class RenglonEscalado(BaseModel):
+    insumo_id: int
+    insumo_nombre: str
+    unidad_medida_id: int
+    unidad_medida_nombre: str
+    magnitud: str
+    cantidad_original: float
+    cantidad_escalada: float
+    stock_disponible: float
+    stock_suficiente: bool
+
+class RecetaEscalada(BaseModel):
+    receta_id: int
+    receta_version_id: int
+    producto_id: int
+    rendimiento_original: float
+    rendimiento_esperado: float
+    unidad_producto_nombre: str
+    factor_aplicado: float
+    renglones: List[RenglonEscalado]
+
 class ItemInformacionNutricionalResponse(BaseModel):
     nutriente: str
     unidad: str
@@ -120,3 +164,21 @@ class TablaNutricionalRecetaResponse(BaseModel):
     estado: EstadoTablaNutricional = EstadoTablaNutricional.COMPLETA
     faltantes: List[FaltanteNutricionalInsumo] = Field(default_factory=list)
     items: List[ItemInformacionNutricionalResponse] = []
+
+class ItemComposicionResponse(BaseModel):
+    renglon: int
+    insumo_id: int
+    nombre_insumo: str
+    cantidad_gramos: float
+    porcentaje: float
+    tipo_uso: TipoUsoInsumo
+    aditivo_id: Optional[int] = None
+
+class ComposicionRecetaResponse(BaseModel):
+    receta_id: int
+    version: int
+    total_gramos: float
+    ingredientes: List[ItemComposicionResponse]
+    aditivos: List[ItemComposicionResponse]
+    suma_porcentajes: float
+    suma_correcta: bool

@@ -6,6 +6,8 @@ class PermisoDenegadoAdmin(PermissionDenied):
 
 class RecetaNoEncontrada(NotFound):
     DETAIL = ErrorCode.RECETA_NO_ENCONTRADA
+class RecetaVigenteNoEncontrada(NotFound):
+    DETAIL= ErrorCode.RECETA_VIGENTE_NO_ENCONTRADA
 class VersionInicialRequerida(BadRequest):
     DETAIL = ErrorCode.VERSION_INICIAL_REQUERIDA
 
@@ -18,3 +20,32 @@ class UnidadVentaInvalida(BadRequest):
 
 class TipoUsoInvalido(BadRequest):
     DETAIL = ErrorCode.TIPO_USO_INVALIDO
+class ParametrosEscaladoInvalidos(BadRequest):
+    DETAIL = ErrorCode.PARAMETROS_ESCALADO_INVALIDOS
+
+class InsumoDuplicado(BadRequest):
+    DETAIL = ErrorCode.INSUMO_DUPLICADO
+
+class InsumoInactivo(BadRequest):
+    DETAIL = ErrorCode.INSUMO_INACTIVO
+
+class ProductoInactivo(BadRequest):
+    DETAIL = ErrorCode.PRODUCTO_INACTIVO
+
+class AditivoRequerido(BadRequest):
+    DETAIL = ErrorCode.ADITIVO_REQUERIDO
+
+class CantidadOriginalInvalida(BadRequest):
+    DETAIL = ErrorCode.CANTIDAD_ORIGINAL_INVALIDA
+
+class UnidadInsumoIncompatible(BadRequest):
+    DETAIL = ErrorCode.UNIDAD_INSUMO_INCOMPATIBLE
+
+class DensidadRequerida(BadRequest):
+    DETAIL = ErrorCode.DENSIDAD_REQUERIDA
+
+class PesoPorUnidadRequerido(BadRequest):
+    DETAIL = ErrorCode.PESO_POR_UNIDAD_REQUERIDO
+
+class EquivalenciaInvalida(BadRequest):
+    DETAIL = ErrorCode.EQUIVALENCIA_INVALIDA

@@ -18,6 +18,40 @@ def verificar_acceso_operario_o_admin(x_user_role: Optional[str] = Header(None, 
     if not x_user_role or x_user_role.lower() not in ("operario", "admin"):
         raise PermisoDenegadoAdmin()
 
+@router.post(
+        "/producto/{producto_id}/escalar",
+        response_model=schemas.RecetaEscalada,
+        summary="Calcular receta vigente escalada para un lote de producción",
+)
+def escalar_receta_producto(
+    producto_id: int,
+    payload: schemas.RecetaEscaladaBase,
+    db: Annotated[Session, Depends(get_db)]
+):
+    return services.calcular_receta_escalada(db, producto_id, payload)
+@router.get(
+    "/{receta_id}/versiones/vigente/nutricion",
+    response_model=schemas.TablaNutricionalRecetaResponse,
+    summary="Obtener calculo de información nutricional de la versión vigente"
+)
+def obtener_nutricion_version_vigente(
+    receta_id: int,
+    db: Annotated[Session, Depends(get_db)]
+):
+    return services.calcular_informacion_nutricional_receta(db, receta_id=receta_id)
+
+@router.get(
+    "/{receta_id}/versiones/{nro_version}/nutricion",
+    response_model=schemas.TablaNutricionalRecetaResponse,
+    summary="Obtener calculo de información nutricional de una versión específica"
+)
+def obtener_nutricion_version_especifica(
+    receta_id: int,
+    nro_version: int,
+    db: Annotated[Session, Depends(get_db)]
+):
+    return services.calcular_informacion_nutricional_receta(db, receta_id=receta_id, nro_version=nro_version)
+
 @router.get(
     "/{receta_id}/versiones/vigente/nutricion",
     response_model=schemas.TablaNutricionalRecetaResponse,
@@ -120,3 +154,32 @@ def crear_receta(
     db: Annotated[Session, Depends(get_db)]
 ):
     return services.crear_receta(db, receta)
+
+@router.get(
+    "/{receta_id}/versiones/vigente/composicion",
+    response_model=schemas.ComposicionRecetaResponse,
+    dependencies=[Depends(verificar_rol_admin)],
+    summary="Obtener composición porcentual de la versión vigente"
+)
+def obtener_composicion_version_vigente(
+    receta_id: int,
+    db: Annotated[Session, Depends(get_db)]
+):
+    return services.calcular_composicion_receta(db, receta_id=receta_id)
+
+@router.get(
+    "/{receta_id}/versiones/{nro_version}/composicion",
+    response_model=schemas.ComposicionRecetaResponse,
+    dependencies=[Depends(verificar_rol_admin)],
+    summary="Obtener composición porcentual de una versión específica"
+)
+def obtener_composicion_version_especifica(
+    receta_id: int,
+    nro_version: int,
+    db: Annotated[Session, Depends(get_db)]
+):
+    return services.calcular_composicion_receta(
+        db,
+        receta_id=receta_id,
+        nro_version=nro_version
+    )

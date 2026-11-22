@@ -11,6 +11,8 @@ import EmpleadoDetail from './features/empleados/EmpleadoDetail';
 import EmpleadoDelete from './features/empleados/EmpleadoDelete';
 import DocumentacionEmpleado from './features/documentacion/DocumentacionEmpleado';
 import DocumentacionForm from './features/documentacion/DocumentacionForm';
+import AlertasDocumentacion from './features/documentacion/AlertaVencimiento';
+
 
 import CapacidadesList from './features/capacidades/CapacidadesList';
 import CapacidadForm from './features/capacidades/CapacidadForm';
@@ -55,7 +57,7 @@ import ElementoLimpiezaDelete from './features/elementosLimpieza/ElementoLimpiez
 import AlertasRecambio from './features/elementosLimpieza/AlertasRecambio';
 import VencimientosList from './features/vencimientos/VencimientosList'; 
 import VencimientosDocumentacionList from './features/vencimientosDocumentacion/VencimientosDocumentacionList';
-import AlertasDocumentacion from './features/documentacion/AlertaVencimiento';
+//import AlertasDocumentacion from './features/documentacion/AlertaVencimiento';
 import ProductosElaboradosList from './features/productos/ProductosList';
 import ProductoElaboradoForm from './features/productos/ProductoForm';
 import ProductoElaboradoDetail from './features/productos/ProductoDetail';
@@ -75,6 +77,9 @@ import EstadisticaIncidentes from './features/incidentes/EstadisticaIncidentes';
 import DocumentosVersionadosList from './features/documentosVersionados/DocumentosVersionadosList';
 import DocumentoVersionadoForm from './features/documentosVersionados/DocumentoVersionadoForm';
 import DocumentosVigentesList from './features/documentosVersionados/DocumentosVigentesList';
+import RecetaList from './features/recetas/RecetaList';
+import RecetaForm from './features/recetas/RecetaForm';
+import RecetaDetail from './features/recetas/RecetaDetail';
 
 import ConfiguracionVistaPublica from './features/vistaPublica/ConfiguracionVistaPublica';
 import ConfiguracionEmpresa from './features/configuracionEmpresa/ConfiguracionEmpresa';
@@ -83,6 +88,9 @@ import ParametrosNormativosDetalle from './features/parametrosNormativos/Paramet
 import RotuladoFrontalList from './features/rotuladoFrontal/RotuladoFrontalList';
 import EvaluacionRotuladoFrontal from './features/rotuladoFrontal/EvaluacionRotuladoFrontal';
 import MarcasInsumos from './features/rotuladoFrontal/MarcasInsumos';
+import AlergenosList from './features/alergenos/AlergenosList';
+import AlergenosProducto from './features/alergenos/AlergenosProducto';
+import MarcasAlergenosInsumos from './features/alergenos/MarcasAlergenosInsumos';
 import VistaPublica from './features/vistaPublica/VistaPublica';
 
 import './App.css';
@@ -164,6 +172,7 @@ function RutasProtegidas() {
             <Route path="/" element={<Inicio />} />
             
             <Route path="/empleados" element={<RutaAdmin><EmpleadosList /></RutaAdmin>} />
+            <Route path="/empleados/alertas" element={<RutaAdmin><AlertasDocumentacion /></RutaAdmin>} />
             <Route path="/empleados/nuevo" element={<RutaAdmin><EmpleadoForm /></RutaAdmin>} />
             <Route path="/empleados/editar/:id" element={<RutaAdmin><EmpleadoForm /></RutaAdmin>} />
             <Route path="/empleados/eliminar/:id" element={<RutaAdmin><EmpleadoDelete /></RutaAdmin>} />
@@ -238,6 +247,9 @@ function RutasProtegidas() {
             <Route path="/datos-nutricionales/valores-diarios" element={<RutaAdmin><ValoresDiariosList /></RutaAdmin>} />
             <Route path="/datos-nutricionales/:id" element={<RutaAdmin><DatosNutricionalesInsumo /></RutaAdmin>} />
             <Route path="/rotulado-frontal" element={<RutaAdmin><RotuladoFrontalList /></RutaAdmin>} />
+            <Route path="/alergenos" element={<RutaAdmin><AlergenosList /></RutaAdmin>} />
+            <Route path="/alergenos/insumos" element={<RutaAdmin><MarcasAlergenosInsumos /></RutaAdmin>} />
+            <Route path="/alergenos/:id" element={<RutaAdmin><AlergenosProducto /></RutaAdmin>} />
             <Route path="/rotulado-frontal/insumos" element={<RutaAdmin><MarcasInsumos /></RutaAdmin>} />
             <Route path="/rotulado-frontal/:id" element={<RutaAdmin><EvaluacionRotuladoFrontal /></RutaAdmin>} />
 
@@ -249,6 +261,10 @@ function RutasProtegidas() {
             <Route path="/documentos" element={<RutaAdmin><DocumentosVersionadosList /></RutaAdmin>} />
             <Route path="/documentos/nuevo" element={<RutaAdmin><DocumentoVersionadoForm /></RutaAdmin>} />
             <Route path="/documentos/vigentes" element={<DocumentosVigentesList />} />
+            <Route path="/recetas" element={<RecetaList />} />
+            <Route path="/recetas/nueva" element={<RutaAdmin><RecetaForm /></RutaAdmin>} />
+            <Route path="/recetas/:id/nueva-version" element={<RutaAdmin><RecetaForm /></RutaAdmin>} />
+            <Route path="/recetas/:id" element={<RecetaDetail />} />
 
             <Route path="/configuracion/empresa" element={<RutaAdmin><ConfiguracionEmpresa /></RutaAdmin>} />
             <Route path="/configuracion/vista-publica" element={<RutaAdmin><ConfiguracionVistaPublica /></RutaAdmin>} />

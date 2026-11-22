@@ -45,11 +45,18 @@ def test_sumar_stock_unidad_inexistente(db_session: Session, harina: Insumo):
         services.sumar_stock(db_session, harina.id, schemas.InsumoAgregarStock(cantidad=1, unidad_medida_id=999))
 
 
-def test_crear_insumo_en_unidades_no_esta_permitido(db_session: Session, unidades: dict):
-    with pytest.raises(exceptions.UnidadNoPermitida):
-        services.crear_insumo(
-            db_session, schemas.InsumoCreate(nombre="Huevos", unidad_medida_id=unidades["Unidades"].id)
-        )
+def test_crear_insumo_en_unidades(db_session: Session, unidades: dict):
+    insumo = services.crear_insumo(
+        db_session,
+        schemas.InsumoCreate(
+            nombre="Huevos",
+            unidad_medida_id=unidades["Unidades"].id,
+        ),
+    )
+
+    assert insumo.nombre == "Huevos"
+    assert insumo.unidad_medida.magnitud == "cantidad"
+    assert insumo.peso_por_unidad_gramos is None
 
 
 def test_crear_insumo_con_unidad_inexistente(db_session: Session, unidades: dict):
@@ -93,11 +100,17 @@ def test_modificar_insumo_a_otra_magnitud_sin_stock(db_session: Session, harina:
     assert modificado.unidad_medida.nombre == "Litros"
 
 
-def test_modificar_insumo_a_unidades_no_esta_permitido(db_session: Session, harina: Insumo, unidades: dict):
-    with pytest.raises(exceptions.UnidadNoPermitida):
-        services.modificar_insumo(
-            db_session, harina.id, schemas.InsumoUpdate(nombre="Harina 000", unidad_medida_id=unidades["Unidades"].id)
-        )
+def test_modificar_insumo_a_unidades(db_session: Session, harina: Insumo, unidades: dict):
+    modificado = services.modificar_insumo(
+        db_session,
+        harina.id,
+        schemas.InsumoUpdate(
+            nombre="Harina por unidad",
+            unidad_medida_id=unidades["Unidades"].id,
+        ),
+    )
+
+    assert modificado.unidad_medida.magnitud == "cantidad"
 
 
 def test_router_agregar_stock(client: TestClient, harina: Insumo, unidades: dict):
@@ -127,7 +140,90 @@ def test_router_agregar_stock_sin_unidad(client: TestClient, harina: Insumo):
 
 
 def test_router_crear_insumo_en_unidades(client: TestClient, unidades: dict):
-    respuesta = client.post("/insumos/", json={"nombre": "Huevos", "unidad_medida_id": unidades["Unidades"].id})
+    respuesta = client.post(
+        "/insumos/",
+        json={
+            "nombre": "Huevos",
+            "unidad_medida_id": unidades["Unidades"].id,
+        },
+    )
 
-    assert respuesta.status_code == status.HTTP_400_BAD_REQUEST
-    assert respuesta.json()["detail"] == ErrorCode.UNIDAD_NO_PERMITIDA
+    assert respuesta.status_code == status.HTTP_200_OK
+    assert respuesta.json()["unidad_medida"]["magnitud"] == "cantidad"
+
+
+def test_crear_insumo_masa_no_acepta_equivalencias(db_session: Session, unidades: dict):
+    with pytest.raises(exceptions.EquivalenciaInvalida):
+        services.crear_insumo(
+            db_session,
+            schemas.InsumoCreate(
+                nombre="Harina",
+                unidad_medida_id=unidades["Gramos"].id,
+                densidad_g_ml=1.2,
+            ),
+        )
+
+
+def test_crear_insumo_volumen_no_acepta_peso_por_unidad(db_session: Session, unidades: dict):
+    with pytest.raises(exceptions.EquivalenciaInvalida):
+        services.crear_insumo(
+            db_session,
+            schemas.InsumoCreate(
+                nombre="Leche",
+                unidad_medida_id=unidades["Litros"].id,
+                peso_por_unidad_gramos=100,
+            ),
+        )
+
+
+def test_crear_insumo_cantidad_no_acepta_densidad(db_session: Session, unidades: dict):
+    with pytest.raises(exceptions.EquivalenciaInvalida):
+        services.crear_insumo(
+            db_session,
+            schemas.InsumoCreate(
+                nombre="Huevos",
+                unidad_medida_id=unidades["Unidades"].id,
+                densidad_g_ml=1.2,
+            ),
+        )
+
+def test_crear_insumo_volumen_con_densidad(db_session: Session, unidades: dict):
+    insumo = services.crear_insumo(
+        db_session,
+        schemas.InsumoCreate(
+            nombre="Aceite",
+            unidad_medida_id=unidades["Litros"].id,
+            densidad_g_ml=0.92,
+        ),
+    )
+
+    assert insumo.densidad_g_ml == 0.92
+    assert insumo.peso_por_unidad_gramos is None
+
+
+def test_crear_insumo_cantidad_con_peso_por_unidad(db_session: Session, unidades: dict):
+    insumo = services.crear_insumo(
+        db_session,
+        schemas.InsumoCreate(
+            nombre="Huevos",
+            unidad_medida_id=unidades["Unidades"].id,
+            peso_por_unidad_gramos=60,
+        ),
+    )
+
+    assert insumo.peso_por_unidad_gramos == 60
+    assert insumo.densidad_g_ml is None
+
+
+def test_modificar_insumo_agrega_densidad(db_session: Session, leche: Insumo, unidades: dict):
+    modificado = services.modificar_insumo(
+        db_session,
+        leche.id,
+        schemas.InsumoUpdate(
+            nombre="Leche entera",
+            unidad_medida_id=unidades["Litros"].id,
+            densidad_g_ml=1.03,
+        ),
+    )
+
+    assert modificado.densidad_g_ml == 1.03

@@ -43,6 +43,14 @@ class VersionReceta(ModeloBase):
         default=date.today,
     )
 
+    detalles: Mapped[List["DetalleReceta"]] = relationship(
+        "DetalleReceta",
+        primaryjoin="and_(foreign(DetalleReceta.receta_id)==VersionReceta.receta_id, foreign(DetalleReceta.nro_version)==VersionReceta.version)",
+        order_by="DetalleReceta.renglon",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
     pasos: Mapped[List["PasoReceta"]] = relationship(
         "PasoReceta",
         primaryjoin="and_(foreign(PasoReceta.receta_id)==VersionReceta.receta_id, foreign(PasoReceta.version)==VersionReceta.version)",

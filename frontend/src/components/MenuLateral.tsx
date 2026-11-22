@@ -68,6 +68,7 @@ const SECCIONES: Seccion[] = [
                 soloAdmin: true,
                 enlaces: [
                     { etiqueta: 'Insumos', ruta: '/insumos' },
+                    { etiqueta: 'Aditivos de referencia', ruta: '/aditivos', exacta: true },
                     { etiqueta: 'Unidades de medida', ruta: '/unidadesMedida' },
                 ],
             },
@@ -89,13 +90,14 @@ const SECCIONES: Seccion[] = [
                 clave: 'produccion',
                 etiqueta: 'Producción',
                 icono: 'basket',
-                soloAdmin: true,
                 enlaces: [
-                    { etiqueta: 'Productos', ruta: '/productos' },
-                    { etiqueta: 'Historial de lotes', ruta: '/lotes-produccion', exacta: true },
-                    { etiqueta: 'Datos nutricionales', ruta: '/datos-nutricionales' },
-                    { etiqueta: 'Valores diarios (VD)', ruta: '/datos-nutricionales/valores-diarios', exacta: true },
-                    { etiqueta: 'Rotulado frontal', ruta: '/rotulado-frontal' },
+                    { etiqueta: 'Recetas', ruta: '/recetas', exacta: true },
+                    { etiqueta: 'Productos', ruta: '/productos', soloAdmin: true },
+                    { etiqueta: 'Historial de lotes', ruta: '/lotes-produccion', exacta: true, soloAdmin: true },
+                    { etiqueta: 'Datos nutricionales', ruta: '/datos-nutricionales', soloAdmin: true },
+                    { etiqueta: 'Valores diarios (VD)', ruta: '/datos-nutricionales/valores-diarios', exacta: true, soloAdmin: true },
+                    { etiqueta: 'Rotulado frontal', ruta: '/rotulado-frontal', soloAdmin: true },
+                    { etiqueta: 'Alérgenos y conservación', ruta: '/alergenos', soloAdmin: true },
                 ],
             },
             {

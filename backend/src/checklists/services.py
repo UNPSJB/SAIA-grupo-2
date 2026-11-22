@@ -1,7 +1,7 @@
 import logging
 from datetime import date, datetime, timedelta
 from typing import List, Optional
-from sqlalchemy import select
+from sqlalchemy import select, case, func
 from sqlalchemy.orm import Session, selectinload
 
 from src.checklists.models import Checklist, ConsumoReal

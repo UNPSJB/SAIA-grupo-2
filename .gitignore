@@ -326,6 +326,7 @@ sketch
 
 Arrancar Backend.bat
 Arrancar Frontend.bat
+Arrancar Frontend sin instalar.bat
 
 *.sqlite
 *.db
