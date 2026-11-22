@@ -7,7 +7,7 @@ from src.models import ModeloBase
 from src.asociaciones.detalle_receta import detalle_receta
 from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo, FormatoDeclaracionAditivos
 
-#Agregado para hu ordenar ingredientes
+
 class ConfiguracionProduccion(ModeloBase):
     __tablename__ = "configuracion_produccion"
 
@@ -58,7 +58,7 @@ class VersionReceta(ModeloBase):
         default=date.today,
     )
 
-    #Agregado: para persistir el ajuste manueal de orden de ingredientes por version
+    
     orden_ingredientes_manual: Mapped[Optional[List[int]]] = mapped_column(JSON, nullable=True)
     orden_manual_por_id: Mapped[Optional[int]] = mapped_column(ForeignKey("empleados.id"), nullable=True)
     orden_manual_fecha: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
