@@ -18,51 +18,118 @@ from src.datos_nutricionales import services as datos_nutricionales_services
 
 logger = logging.getLogger(__name__)
 
+def _convertir_a_gramos(
+    insumo: Insumo,
+    cantidad_original: float,
+    unidad_medida_id: int,
+    db: Session
+) -> float:
+    if cantidad_original <= 0:
+        raise exceptions.CantidadOriginalInvalida()
+
+    unidad = unidades_services.leer_unidad_medida(db, unidad_medida_id)
+    unidad_insumo = insumo.unidad_medida
+
+    if unidad.magnitud != unidad_insumo.magnitud:
+        raise exceptions.UnidadInsumoIncompatible()
+
+    cantidad_base = cantidad_original * unidad.factor_base
+
+    if unidad.magnitud == MagnitudUnidad.MASA:
+        gramos = cantidad_base
+
+    elif unidad.magnitud == MagnitudUnidad.VOLUMEN:
+        if insumo.densidad_g_ml is None or insumo.densidad_g_ml <= 0:
+            raise exceptions.DensidadRequerida()
+
+        gramos = cantidad_base * insumo.densidad_g_ml
+
+    elif unidad.magnitud == MagnitudUnidad.CANTIDAD:
+        if (
+            insumo.peso_por_unidad_gramos is None
+            or insumo.peso_por_unidad_gramos <= 0
+        ):
+            raise exceptions.PesoPorUnidadRequerido()
+
+        gramos = cantidad_base * insumo.peso_por_unidad_gramos
+
+    else:
+        raise exceptions.EquivalenciaInvalida()
+
+    if gramos <= 0:
+        raise exceptions.EquivalenciaInvalida()
+
+    return gramos
+
+
 def _validar_detalles_y_rendimientos(
     db: Session,
     producto_id: int,
     rendimiento_final_gramos: float,
     unidad_venta_gramos: float,
     detalles: List[schemas.DetalleRecetaCreate]
-):
+) -> dict[int, float]:
     producto = db.scalar(select(Producto).where(Producto.id == producto_id))
+
     if not producto:
         raise exceptions.RecetaNoEncontrada()
+
     if getattr(producto, "activo", True) is False:
         raise exceptions.ProductoInactivo()
 
     if rendimiento_final_gramos <= 0:
         raise exceptions.RendimientoFinalInvalido()
+
     if unidad_venta_gramos <= 0:
         raise exceptions.UnidadVentaInvalida()
+
     if not detalles:
         raise exceptions.VersionInicialRequerida()
 
-    tiene_ingrediente = any(d.tipo_uso == TipoUsoInsumo.INGREDIENTE for d in detalles)
+    tiene_ingrediente = any(
+        d.tipo_uso == TipoUsoInsumo.INGREDIENTE for d in detalles
+    )
+
     if not tiene_ingrediente:
         raise exceptions.TipoUsoInvalido()
 
     insumo_ids = [d.insumo_id for d in detalles]
+
     if len(insumo_ids) != len(set(insumo_ids)):
         raise exceptions.InsumoDuplicado()
 
-    insumos_db = db.scalars(select(Insumo).where(Insumo.id.in_(insumo_ids))).all()
+    insumos_db = db.scalars(
+        select(Insumo).where(Insumo.id.in_(insumo_ids))
+    ).all()
+
     insumos_dict = {ins.id: ins for ins in insumos_db}
+    cantidades_gramos = {}
 
     for d in detalles:
-        if d.cantidad_gramos <= 0:
-            raise exceptions.RendimientoFinalInvalido()
-
         insumo = insumos_dict.get(d.insumo_id)
+
         if not insumo or not insumo.activo:
             raise exceptions.InsumoInactivo()
+
+        cantidades_gramos[d.insumo_id] = _convertir_a_gramos(
+            insumo=insumo,
+            cantidad_original=d.cantidad_original,
+            unidad_medida_id=d.unidad_medida_id,
+            db=db
+        )
 
         if d.tipo_uso == TipoUsoInsumo.ADITIVO:
             if not d.aditivo_id:
                 raise exceptions.AditivoRequerido()
-            aditivo_db = db.scalar(select(Aditivo).where(Aditivo.id == d.aditivo_id))
+
+            aditivo_db = db.scalar(
+                select(Aditivo).where(Aditivo.id == d.aditivo_id)
+            )
+
             if not aditivo_db:
                 raise exceptions.AditivoRequerido()
+
+    return cantidades_gramos
 
 def listar_Recetas(db: Session) -> List[Receta]:
     return db.scalars(select(Receta)).all()
@@ -83,7 +150,7 @@ def crear_receta(db: Session, datos: schemas.RecetaCreate) -> Receta:
         raise exceptions.VersionInicialRequerida()
 
     v_inicial = datos.version_inicial
-    _validar_detalles_y_rendimientos(
+    cantidades_gramos = _validar_detalles_y_rendimientos(
         db,
         datos.producto_id,
         v_inicial.rendimiento_final_gramos,
@@ -116,7 +183,9 @@ def crear_receta(db: Session, datos: schemas.RecetaCreate) -> Receta:
                 nro_version=1,
                 renglon=idx,
                 insumo_id=d.insumo_id,
-                cantidad_gramos=d.cantidad_gramos,
+                cantidad_original=d.cantidad_original,
+                unidad_medida_id=d.unidad_medida_id,
+                cantidad_gramos=cantidades_gramos[d.insumo_id],
                 tipo_uso=d.tipo_uso.value,
                 aditivo_id=d.aditivo_id
             )
@@ -165,7 +234,7 @@ def crear_version_receta(
 ) -> VersionReceta:
     receta = leer_receta(db, receta_id)
 
-    _validar_detalles_y_rendimientos(
+    cantidades_gramos = _validar_detalles_y_rendimientos(
         db,
         receta.producto_id,
         version_receta.rendimiento_final_gramos,
@@ -205,7 +274,9 @@ def crear_version_receta(
                 nro_version=nueva_nro_version,
                 renglon=idx,
                 insumo_id=d.insumo_id,
-                cantidad_gramos=d.cantidad_gramos,
+                cantidad_original=d.cantidad_original,
+                unidad_medida_id=d.unidad_medida_id,
+                cantidad_gramos=cantidades_gramos[d.insumo_id],
                 tipo_uso=d.tipo_uso.value,
                 aditivo_id=d.aditivo_id
             )

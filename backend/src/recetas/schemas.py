@@ -1,6 +1,6 @@
 from typing import Optional, List
 from datetime import date
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from src.productos.schemas import Producto
 from src.equipos.schemas import Equipo
 from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo
@@ -26,9 +26,28 @@ class PasoReceta(PasoRecetaBase):
 
 class DetalleRecetaBase(BaseModel):
     insumo_id: int
-    cantidad_gramos: float
+    cantidad_original: float = Field(..., gt=0)
+    unidad_medida_id: int = Field(default=1, gt=0)
     tipo_uso: TipoUsoInsumo
     aditivo_id: Optional[int] = None
+    cantidad_gramos: Optional[float] = Field(default=None, gt=0)
+
+    @model_validator(mode="before")
+    @classmethod
+    def compatibilidad_cantidad_gramos(cls, valores):
+        if not isinstance(valores, dict):
+            return valores
+
+        valores = valores.copy()
+
+        # Compatibilidad temporal con los tests y clientes anteriores:
+        # si solo llega cantidad_gramos, se interpreta como gramos.
+        if "cantidad_original" not in valores and valores.get("cantidad_gramos") is not None:
+            valores["cantidad_original"] = valores["cantidad_gramos"]
+            valores.setdefault("unidad_medida_id", 1)
+
+        return valores
+
 
 class DetalleRecetaCreate(DetalleRecetaBase):
     pass

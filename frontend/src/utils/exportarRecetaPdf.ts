@@ -16,7 +16,8 @@ export interface DatosExportarRecetaPDF {
     fechaVigencia?: string | null;
     detalles: Array<{
         insumo_id: number;
-        cantidad_gramos: number;
+        cantidad_original: number;
+        unidad_medida_nombre: string;
         tipo_uso: string;
         aditivo_id?: number | null;
     }>;
@@ -175,13 +176,13 @@ export async function exportarRecetaPDF(datos: DatosExportarRecetaPDF): Promise<
             nombreInsumo,
             tipoText,
             detalleAditivo,
-            `${d.cantidad_gramos.toLocaleString('es-AR')} g`,
+            `${d.cantidad_original.toLocaleString('es-AR')} ${d.unidad_medida_nombre}`,
         ];
     });
 
     autoTable(doc, {
         startY: startIngredientesY + 8,
-        head: [['#', 'Insumo', 'Tipo de Uso', 'Aditivo INS Referencia', 'Cantidad (g)']],
+        head: [['#', 'Insumo', 'Tipo de Uso', 'Aditivo INS Referencia', 'Cantidad']],
         body: filasIngredientes,
         margin: { left: margin, right: margin, bottom: 40 },
         styles: {

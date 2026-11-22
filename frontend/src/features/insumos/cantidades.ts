@@ -1,6 +1,6 @@
 import type { MagnitudUnidad, UnidadMedida } from '../../types/unidadesMedida';
 
-export const MAGNITUDES_INSUMO: MagnitudUnidad[] = ['masa', 'volumen'];
+export const MAGNITUDES_INSUMO: MagnitudUnidad[] = ['masa', 'volumen', 'cantidad'];
 
 const ML_POR_LITRO = 1000;
 

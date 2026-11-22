@@ -14,6 +14,11 @@ class ErrorCode:
     INSUMO_INACTIVO = "No se puede utilizar un insumo dado de baja o inactivo"
     PRODUCTO_INACTIVO = "No se puede crear o modificar la receta de un producto dado de baja"
     ADITIVO_REQUERIDO = "Los renglones clasificados como aditivo deben especificar un aditivo de referencia válido"
+    CANTIDAD_ORIGINAL_INVALIDA = "La cantidad original de cada insumo debe ser mayor que cero"
+    UNIDAD_INSUMO_INCOMPATIBLE = "La unidad seleccionada no corresponde a la magnitud del insumo"
+    DENSIDAD_REQUERIDA = "El insumo de volumen debe tener una densidad en gramos por mililitro configurada"
+    PESO_POR_UNIDAD_REQUERIDO = "El insumo por unidad debe tener configurado su peso en gramos por unidad"
+    EQUIVALENCIA_INVALIDA = "No se pudo convertir la cantidad del insumo a gramos"
     PARAMETROS_ESCALADO_INVALIDOS = "Debe indicar un factor multiplicador o una cantidad objetivo, pero no ambos"
 
 class EstadoVersionReceta(str, Enum):
