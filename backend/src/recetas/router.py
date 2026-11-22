@@ -218,7 +218,8 @@ def obtener_lista_ingredientes(
 
 @router.put(
     "/{receta_id}/versiones/{nro_version}/lista-ingredientes/orden-manual",
-    response_model=[Depends(verificar_rol_admin)],
+    response_model=schemas.ListaIngredientesRotuloResponse,
+    dependencies=[Depends(verificar_rol_admin)],
     summary="Guardar ajuste manual de orden de ingredientes",
 )
 def actualiza_orden_manual_ingredientes(
