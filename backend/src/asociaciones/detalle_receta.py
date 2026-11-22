@@ -27,6 +27,18 @@ detalle_receta = Table(
         nullable=False
     ),
     Column(
+        "cantidad_original",
+        Float,
+        nullable=False,
+        default=0.0
+    ),
+    Column(
+        "unidad_medida_id",
+        ForeignKey("unidades_medida.id"),
+        nullable=False,
+        default=1
+    ),
+    Column(
         "cantidad_gramos",
         Float,
         nullable=False

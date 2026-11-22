@@ -28,3 +28,7 @@ class CantidadInvalida(BadRequest):
 
 class UnidadIncompatible(BadRequest):
     DETAIL = ErrorCode.UNIDAD_INCOMPATIBLE
+
+
+class EquivalenciaInvalida(BadRequest):
+    DETAIL = ErrorCode.EQUIVALENCIA_INVALIDA

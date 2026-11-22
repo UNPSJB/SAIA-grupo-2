@@ -88,6 +88,9 @@ import ParametrosNormativosDetalle from './features/parametrosNormativos/Paramet
 import RotuladoFrontalList from './features/rotuladoFrontal/RotuladoFrontalList';
 import EvaluacionRotuladoFrontal from './features/rotuladoFrontal/EvaluacionRotuladoFrontal';
 import MarcasInsumos from './features/rotuladoFrontal/MarcasInsumos';
+import AlergenosList from './features/alergenos/AlergenosList';
+import AlergenosProducto from './features/alergenos/AlergenosProducto';
+import MarcasAlergenosInsumos from './features/alergenos/MarcasAlergenosInsumos';
 import VistaPublica from './features/vistaPublica/VistaPublica';
 
 import './App.css';
@@ -244,6 +247,9 @@ function RutasProtegidas() {
             <Route path="/datos-nutricionales/valores-diarios" element={<RutaAdmin><ValoresDiariosList /></RutaAdmin>} />
             <Route path="/datos-nutricionales/:id" element={<RutaAdmin><DatosNutricionalesInsumo /></RutaAdmin>} />
             <Route path="/rotulado-frontal" element={<RutaAdmin><RotuladoFrontalList /></RutaAdmin>} />
+            <Route path="/alergenos" element={<RutaAdmin><AlergenosList /></RutaAdmin>} />
+            <Route path="/alergenos/insumos" element={<RutaAdmin><MarcasAlergenosInsumos /></RutaAdmin>} />
+            <Route path="/alergenos/:id" element={<RutaAdmin><AlergenosProducto /></RutaAdmin>} />
             <Route path="/rotulado-frontal/insumos" element={<RutaAdmin><MarcasInsumos /></RutaAdmin>} />
             <Route path="/rotulado-frontal/:id" element={<RutaAdmin><EvaluacionRotuladoFrontal /></RutaAdmin>} />
 

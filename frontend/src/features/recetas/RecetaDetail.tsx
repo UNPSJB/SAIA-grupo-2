@@ -9,6 +9,7 @@ import EncabezadoPagina from '../../components/EncabezadoPagina';
 import { getAditivos } from '../../services/aditivosServices';
 import { getInsumos } from '../../services/insumosServices';
 import { getEquipos } from '../../services/equiposServices';
+import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
 import {
     getComposicionReceta,
     getRecetaById,
@@ -19,6 +20,7 @@ import { exportarRecetaPDF } from '../../utils/exportarRecetaPdf';
 import type { Aditivo } from '../../types/aditivos';
 import type { Insumo } from '../../types/insumos';
 import type { Equipo } from '../../types/equipos';
+import type { UnidadMedida } from '../../types/unidadesMedida';
 import type { ComposicionReceta, Receta, VersionReceta } from '../../types/receta';
 import EscalarReceta from './EscalarReceta';
 import ListaIngredientesRotuloTab from './ListaIngredientesRotuloTab';
@@ -38,6 +40,7 @@ interface RespuestaDetalle {
     insumos: Insumo[];
     aditivos: Aditivo[];
     equipos: Equipo[];
+    unidades: UnidadMedida[];
     error: string | null;
 }
 
@@ -86,11 +89,12 @@ export default function RecetaDetail() {
 
         const cargarDetalle = async () => {
             try {
-                const [receta, insumos, aditivos, equipos] = await Promise.all([
+                const [receta, insumos, aditivos, equipos, unidades] = await Promise.all([
                     getRecetaById(id),
                     getInsumos(),
                     getAditivos(),
                     getEquipos(),
+                    getUnidadesMedida(),
                 ]);
 
                 let versionesData: VersionReceta[] = [];
@@ -113,6 +117,7 @@ export default function RecetaDetail() {
                         insumos,
                         aditivos,
                         equipos,
+                        unidades,
                         error: null,
                     });
 
@@ -135,6 +140,7 @@ export default function RecetaDetail() {
                         insumos: [],
                         aditivos: [],
                         equipos: [],
+                        unidades: [],
                         error: problema instanceof Error
                             ? problema.message
                             : 'No se pudo cargar el detalle de la receta.',
@@ -158,6 +164,24 @@ export default function RecetaDetail() {
         return versiones.find((v) => v.version === nroVersionSeleccionada) || versiones[0];
     }, [versiones, nroVersionSeleccionada]);
 
+    function obtenerCantidadOriginal(renglon: number) {
+        const detalle = version?.detalles.find(
+            (d) => d.renglon === renglon,
+        );
+
+        if (!detalle) return '—';
+
+        const unidad = actual?.unidades.find(
+            (u) => u.id === detalle.unidad_medida_id,
+        );
+
+        const cantidad = new Intl.NumberFormat('es-AR', {
+            maximumFractionDigits: 2,
+        }).format(detalle.cantidad_original);
+
+        return `${cantidad} ${unidad?.nombre ?? ''}`.trim();
+    }
+    
     const componentesComposicion = composicion
         ? [...composicion.ingredientes, ...composicion.aditivos]
         : [];
@@ -216,7 +240,14 @@ export default function RecetaDetail() {
             medidaCasera: version.medida_casera,
             motivoCambio: version.motivo_cambio,
             fechaVigencia: version.fecha_vigencia,
-            detalles: version.detalles,
+            detalles: version.detalles.map((d) => ({
+                insumo_id: d.insumo_id,
+                cantidad_original: d.cantidad_original,
+                unidad_medida_nombre:
+                    actual?.unidades.find((u) => u.id === d.unidad_medida_id)?.nombre || '',
+                tipo_uso: d.tipo_uso,
+                aditivo_id: d.aditivo_id,
+            })),
             pasos: version.pasos,
             insumos: actual?.insumos,
             aditivos: actual?.aditivos,
@@ -626,7 +657,81 @@ export default function RecetaDetail() {
                                                 </p>
                                             </>
                                         )}
-                                    </section>
+
+                                        <div className={estilos.datosTabla}>
+                                            <h4>Ingredientes</h4>
+
+                                            {composicion.ingredientes.length === 0 ? (
+                                                <p>No hay ingredientes registrados.</p>
+                                            ) : (
+                                                <table>
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col">Ingrediente</th>
+                                                            <th scope="col">Cantidad original</th>
+                                                            <th scope="col">Cantidad (g)</th>
+                                                            <th scope="col">Porcentaje</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {composicion.ingredientes.map((item) => (
+                                                            <tr key={item.renglon}>
+                                                                <th scope="row">{item.nombre_insumo}</th>
+                                                                <td>{obtenerCantidadOriginal(item.renglon)}</td>
+                                                                <td>{formatearGramos(item.cantidad_gramos)}</td>
+                                                                <td>{formatearPorcentaje(item.porcentaje)}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            )}
+                                        </div>
+
+                                        <div className={estilos.datosTabla}>
+                                            <h4>Aditivos</h4>
+
+                                            {composicion.aditivos.length === 0 ? (
+                                                <p>No hay aditivos registrados.</p>
+                                            ) : (
+                                                <table>
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col">Aditivo</th>
+                                                            <th scope="col">Cantidad original</th>
+                                                            <th scope="col">Cantidad (g)</th>
+                                                            <th scope="col">Porcentaje</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {composicion.aditivos.map((item) => (
+                                                            <tr key={item.renglon}>
+                                                                <th scope="row">{item.nombre_insumo}</th>
+                                                                <td>{obtenerCantidadOriginal(item.renglon)}</td>
+                                                                <td>{formatearGramos(item.cantidad_gramos)}</td>
+                                                                <td>{formatearPorcentaje(item.porcentaje)}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            )}
+                                        </div>
+
+                                        <p>
+                                            <strong>Suma de porcentajes:</strong>{' '}
+                                            {formatearPorcentaje(composicion.suma_porcentajes)}
+                                        </p>
+
+                                        <p
+                                            style={{
+                                                color: composicion.suma_correcta ? '#22c55e' : '#ef4444',
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            {composicion.suma_correcta
+                                                ? '✓ La composición suma 100 %.'
+                                                : '⚠ La composición no suma 100 %.'}
+                                        </p>
+                                    </>
                                 )}
 
                                 <section className={styles.bloqueDetalle} aria-labelledby="receta-pasos">

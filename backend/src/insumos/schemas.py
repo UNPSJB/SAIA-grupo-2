@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from src.unidades_medida.schemas import UnidadMedida
 from src.aditivos.schemas import Aditivo as AditivoSchema
@@ -11,7 +11,9 @@ class InsumoBase(BaseModel):
     activo: bool = True
     es_aditivo: bool = False
     aditivo_referencia_id: Optional[int] = None
-
+    densidad_g_ml: Optional[float] = Field(default=None, gt=0)
+    peso_por_unidad_gramos: Optional[float] = Field(default=None, gt=0)
+    
 class InsumoCreate(InsumoBase):
     pass
 

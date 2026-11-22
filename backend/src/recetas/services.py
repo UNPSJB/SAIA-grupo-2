@@ -1,6 +1,6 @@
 import logging
 from datetime import date, datetime
-from typing import List, Optional
+from typing import List, Optional, Any
 from sqlalchemy import select, func, update, insert
 from sqlalchemy.orm import Session
 
@@ -14,10 +14,54 @@ from src.empleados import services as empleados_services
 from src.unidades_medida import services as unidades_services
 from src.unidades_medida.constants import MagnitudUnidad
 from src.datos_nutricionales.models import DatoNutricionalInsumo, ValorDiarioReferencia
-from src.datos_nutricionales.constants import Nutriente
+from src.datos_nutricionales.constants import EstadoTablaNutricional, Nutriente
 from src.datos_nutricionales import services as datos_nutricionales_services
 
 logger = logging.getLogger(__name__)
+
+def _convertir_a_gramos(
+    insumo: Insumo,
+    cantidad_original: float,
+    unidad_medida_id: int,
+    db: Session
+) -> float:
+    if cantidad_original <= 0:
+        raise exceptions.CantidadOriginalInvalida()
+
+    unidad = unidades_services.leer_unidad_medida(db, unidad_medida_id)
+    unidad_insumo = insumo.unidad_medida
+
+    if unidad.magnitud != unidad_insumo.magnitud:
+        raise exceptions.UnidadInsumoIncompatible()
+
+    cantidad_base = cantidad_original * unidad.factor_base
+
+    if unidad.magnitud == MagnitudUnidad.MASA:
+        gramos = cantidad_base
+
+    elif unidad.magnitud == MagnitudUnidad.VOLUMEN:
+        if insumo.densidad_g_ml is None or insumo.densidad_g_ml <= 0:
+            raise exceptions.DensidadRequerida()
+
+        gramos = cantidad_base * insumo.densidad_g_ml
+
+    elif unidad.magnitud == MagnitudUnidad.CANTIDAD:
+        if (
+            insumo.peso_por_unidad_gramos is None
+            or insumo.peso_por_unidad_gramos <= 0
+        ):
+            raise exceptions.PesoPorUnidadRequerido()
+
+        gramos = cantidad_base * insumo.peso_por_unidad_gramos
+
+    else:
+        raise exceptions.EquivalenciaInvalida()
+
+    if gramos <= 0:
+        raise exceptions.EquivalenciaInvalida()
+
+    return gramos
+
 
 def _validar_detalles_y_rendimientos(
     db: Session,
@@ -25,45 +69,68 @@ def _validar_detalles_y_rendimientos(
     rendimiento_final_gramos: float,
     unidad_venta_gramos: float,
     detalles: List[schemas.DetalleRecetaCreate]
-):
+) -> dict[int, float]:
     producto = db.scalar(select(Producto).where(Producto.id == producto_id))
+
     if not producto:
         raise exceptions.RecetaNoEncontrada()
+
     if getattr(producto, "activo", True) is False:
         raise exceptions.ProductoInactivo()
 
     if rendimiento_final_gramos <= 0:
         raise exceptions.RendimientoFinalInvalido()
+
     if unidad_venta_gramos <= 0:
         raise exceptions.UnidadVentaInvalida()
+
     if not detalles:
         raise exceptions.VersionInicialRequerida()
 
-    tiene_ingrediente = any(d.tipo_uso == TipoUsoInsumo.INGREDIENTE for d in detalles)
+    tiene_ingrediente = any(
+        d.tipo_uso == TipoUsoInsumo.INGREDIENTE for d in detalles
+    )
+
     if not tiene_ingrediente:
         raise exceptions.TipoUsoInvalido()
 
     insumo_ids = [d.insumo_id for d in detalles]
+
     if len(insumo_ids) != len(set(insumo_ids)):
         raise exceptions.InsumoDuplicado()
 
-    insumos_db = db.scalars(select(Insumo).where(Insumo.id.in_(insumo_ids))).all()
+    insumos_db = db.scalars(
+        select(Insumo).where(Insumo.id.in_(insumo_ids))
+    ).all()
+
     insumos_dict = {ins.id: ins for ins in insumos_db}
+    cantidades_gramos = {}
 
     for d in detalles:
-        if d.cantidad_gramos <= 0:
-            raise exceptions.RendimientoFinalInvalido()
-
         insumo = insumos_dict.get(d.insumo_id)
+
         if not insumo or not insumo.activo:
             raise exceptions.InsumoInactivo()
+
+        cantidades_gramos[d.insumo_id] = _convertir_a_gramos(
+            insumo=insumo,
+            cantidad_original=d.cantidad_original,
+            unidad_medida_id=d.unidad_medida_id,
+            db=db
+        )
 
         if d.tipo_uso == TipoUsoInsumo.ADITIVO:
             if not d.aditivo_id:
                 raise exceptions.AditivoRequerido()
-            aditivo_db = db.scalar(select(Aditivo).where(Aditivo.id == d.aditivo_id))
+
+            aditivo_db = db.scalar(
+                select(Aditivo).where(Aditivo.id == d.aditivo_id)
+            )
+
             if not aditivo_db:
                 raise exceptions.AditivoRequerido()
+
+    return cantidades_gramos
 
 def listar_Recetas(db: Session) -> List[Receta]:
     return db.scalars(select(Receta)).all()
@@ -84,7 +151,7 @@ def crear_receta(db: Session, datos: schemas.RecetaCreate) -> Receta:
         raise exceptions.VersionInicialRequerida()
 
     v_inicial = datos.version_inicial
-    _validar_detalles_y_rendimientos(
+    cantidades_gramos = _validar_detalles_y_rendimientos(
         db,
         datos.producto_id,
         v_inicial.rendimiento_final_gramos,
@@ -117,7 +184,9 @@ def crear_receta(db: Session, datos: schemas.RecetaCreate) -> Receta:
                 nro_version=1,
                 renglon=idx,
                 insumo_id=d.insumo_id,
-                cantidad_gramos=d.cantidad_gramos,
+                cantidad_original=d.cantidad_original,
+                unidad_medida_id=d.unidad_medida_id,
+                cantidad_gramos=cantidades_gramos[d.insumo_id],
                 tipo_uso=d.tipo_uso.value,
                 aditivo_id=d.aditivo_id
             )
@@ -166,7 +235,7 @@ def crear_version_receta(
 ) -> VersionReceta:
     receta = leer_receta(db, receta_id)
 
-    _validar_detalles_y_rendimientos(
+    cantidades_gramos = _validar_detalles_y_rendimientos(
         db,
         receta.producto_id,
         version_receta.rendimiento_final_gramos,
@@ -244,7 +313,9 @@ def crear_version_receta(
                 nro_version=nueva_nro_version,
                 renglon=idx,
                 insumo_id=d.insumo_id,
-                cantidad_gramos=d.cantidad_gramos,
+                cantidad_original=d.cantidad_original,
+                unidad_medida_id=d.unidad_medida_id,
+                cantidad_gramos=cantidades_gramos[d.insumo_id],
                 tipo_uso=d.tipo_uso.value,
                 aditivo_id=d.aditivo_id
             )
@@ -295,41 +366,59 @@ def marcar_version_receta_vigente(db: Session, receta_id: int, nro_version: int)
     db.refresh(version)
     return version
 def _obtener_receta_vigente(db: Session, producto_id: int) -> VersionReceta:
-    consulta= (
-        select(VersionReceta)
-        .join(Receta, VersionReceta.receta_id == Receta.id)
-        .where(
-            Receta.producto_id == producto_id,
-            VersionReceta.estado == EstadoVersionReceta.ACTIVO
-        )
-    )
-    version_vigente = db.scalars(consulta).first()
-
-    if not version_vigente:
+    receta = db.scalar(select(Receta).where(Receta.producto_id == producto_id))
+    if receta is None:
         raise exceptions.RecetaVigenteNoEncontrada()
-    
-    return version_vigente
+    try:
+        return obtener_version_vigente(db, receta.id)
+    except exceptions.VersionNoEncontrada:
+        raise exceptions.RecetaVigenteNoEncontrada()
+
+
+def _gramos_objetivo(payload: schemas.RecetaEscaladaBase, version: VersionReceta) -> float:
+    """Gramos de producto terminado a obtener segun el unico parametro indicado."""
+    indicados = [
+        valor for valor in (payload.factor, payload.cantidad_objetivo, payload.unidades_objetivo) if valor is not None
+    ]
+    if len(indicados) != 1:
+        raise exceptions.ParametrosEscaladoInvalidos()
+    if payload.unidades_objetivo is not None:
+        return payload.unidades_objetivo * version.unidad_venta_gramos
+    if payload.cantidad_objetivo is not None:
+        return payload.cantidad_objetivo
+    return version.rendimiento_final_gramos * payload.factor
+
+
+def _cantidad_en_unidad_del_producto(producto: Producto, version: VersionReceta, gramos: float) -> Optional[float]:
+    """Pasa los gramos de producto terminado a la unidad en que se registran sus lotes.
+
+    Por unidades usa el peso de la unidad de venta de la receta; por masa, el factor de la unidad.
+    Para un producto medido en volumen no hay densidad del producto, asi que no se calcula.
+    """
+    unidad = producto.unidad_medida
+    if unidad.magnitud == MagnitudUnidad.CANTIDAD:
+        return round(gramos / version.unidad_venta_gramos, DECIMALES_ESCALADO)
+    if unidad.magnitud == MagnitudUnidad.MASA:
+        return round(gramos / unidad.factor_base, DECIMALES_ESCALADO)
+    return None
+
 
 def calcular_receta_escalada(
         db: Session, producto_id: int, payload: schemas.RecetaEscaladaBase
 ) -> schemas.RecetaEscalada:
+    """Escala la version vigente de la receta sin modificarla.
+
+    Cada renglon se escala en la unidad en que esta cargado en la receta, que es de la misma magnitud
+    que la del insumo, y el stock se compara en la unidad base de esa magnitud.
+    """
     version_receta = _obtener_receta_vigente(db, producto_id)
-    unidad_gramos = unidades_services.unidad_base(db, MagnitudUnidad.MASA)
-
     rendimiento_base = version_receta.rendimiento_final_gramos
-    if(payload.factor is None) == (payload.cantidad_objetivo is None):
-        raise exceptions.ParametrosEscaladoInvalidos()
-
     if rendimiento_base <= 0:
         raise exceptions.RendimientoFinalInvalido()
 
-    if payload.cantidad_objetivo is not None:
-        factor = payload.cantidad_objetivo / rendimiento_base
-        rendimiento_esperado = round(payload.cantidad_objetivo, DECIMALES_ESCALADO)
-    elif payload.factor is not None:
-        factor = payload.factor
-        rendimiento_esperado = round(rendimiento_base * factor, DECIMALES_ESCALADO)
-    else: raise exceptions.ParametrosEscaladoInvalidos()
+    gramos_objetivo = _gramos_objetivo(payload, version_receta)
+    factor = gramos_objetivo / rendimiento_base
+    rendimiento_esperado = round(gramos_objetivo, DECIMALES_ESCALADO)
 
     consulta_detalles = (
         select(DetalleReceta, Insumo)
@@ -344,40 +433,131 @@ def calcular_receta_escalada(
 
     renglones_escalados = []
     for detalle, insumo in filas_detalle:
-        cantidad_orig= detalle.cantidad_gramos
-        cantidad_escalada = round(cantidad_orig * factor, DECIMALES_ESCALADO)
-        stock_disponible = round(insumo.cantidad or 0.0, DECIMALES_ESCALADO)
+        unidad = unidades_services.leer_unidad_medida(db, detalle.unidad_medida_id)
+        if unidad.magnitud != insumo.unidad_medida.magnitud:
+            raise exceptions.UnidadInsumoIncompatible()
+        cantidad_escalada = detalle.cantidad_original * factor
+        stock_disponible = insumo.cantidad or 0.0
 
         renglones_escalados.append(
             schemas.RenglonEscalado(
                 insumo_id=insumo.id,
                 insumo_nombre=insumo.nombre,
-                unidad_medida_id=unidad_gramos.id,
-                unidad_medida_nombre=unidad_gramos.nombre,
-                magnitud=unidad_gramos.magnitud,
-                cantidad_original=round(cantidad_orig, DECIMALES_ESCALADO),
-                cantidad_escalada=cantidad_escalada,
-                stock_disponible=stock_disponible,
-                stock_suficiente=stock_disponible >= cantidad_escalada
+                unidad_medida_id=unidad.id,
+                unidad_medida_nombre=unidad.nombre,
+                magnitud=unidad.magnitud,
+                cantidad_original=round(detalle.cantidad_original, DECIMALES_ESCALADO),
+                cantidad_escalada=round(cantidad_escalada, DECIMALES_ESCALADO),
+                stock_disponible=round(stock_disponible, DECIMALES_ESCALADO),
+                stock_suficiente=stock_disponible >= cantidad_escalada * unidad.factor_base,
             )
         )
 
+    producto = db.get(Producto, producto_id)
     return schemas.RecetaEscalada(
         receta_id=version_receta.receta_id,
         receta_version_id=version_receta.version,
         producto_id=producto_id,
         rendimiento_original=round(rendimiento_base, DECIMALES_ESCALADO),
         rendimiento_esperado=rendimiento_esperado,
-        unidad_producto_nombre=unidad_gramos.nombre,
+        cantidad_producto=_cantidad_en_unidad_del_producto(producto, version_receta, gramos_objetivo),
+        unidad_producto_id=producto.unidad_medida.id,
+        unidad_producto_nombre=producto.unidad_medida.nombre,
         factor_aplicado=round(factor, DECIMALES_FACTOR),
         renglones=renglones_escalados
     )
+
+
 def _expresar_valor(valor: float, umbral: float, decimales: int, unidad: str) -> str:
     if valor < umbral:
         return "0 " + unidad if unidad else "0"
     if decimales == 0:
         return f"{int(round(valor))} {unidad}".strip()
     return f"{round(valor, decimales)} {unidad}".strip()
+
+
+def revisar_faltantes_receta(
+    db: Session, renglones: List[Any]
+) -> List[schemas.FaltanteNutricionalInsumo]:
+    """Revisa cada renglón de la receta y arma la lista de faltantes:
+    insumo, qué dato falta y si no tiene fuente registrada.
+    Aplica la regla de aditivos: solo cuentan como incompletos si tienen
+    marca de aporte y les falta energía o sodio.
+    """
+    from src.rotulado_frontal.models import MarcaInsumo
+
+    faltantes: List[schemas.FaltanteNutricionalInsumo] = []
+    insumo_ids = list({r.insumo_id for r in renglones})
+    if not insumo_ids:
+        return faltantes
+
+    insumos = {i.id: i for i in db.scalars(select(Insumo).where(Insumo.id.in_(insumo_ids))).all()}
+    marcas = {m.insumo_id: m for m in db.scalars(select(MarcaInsumo).where(MarcaInsumo.insumo_id.in_(insumo_ids))).all()}
+
+    todos_datos = db.scalars(
+        select(DatoNutricionalInsumo).where(DatoNutricionalInsumo.insumo_id.in_(insumo_ids))
+    ).all()
+    datos_por_insumo: dict[int, dict[Nutriente, DatoNutricionalInsumo]] = {}
+    for d in todos_datos:
+        datos_por_insumo.setdefault(d.insumo_id, {})[d.nutriente] = d
+
+    vistos = set()
+    for r in renglones:
+        insumo_id = r.insumo_id
+        tipo_uso = r.tipo_uso
+        tipo_uso_val = tipo_uso.value if hasattr(tipo_uso, "value") else str(tipo_uso)
+
+        clave = (insumo_id, tipo_uso_val)
+        if clave in vistos:
+            continue
+        vistos.add(clave)
+
+        insumo = insumos.get(insumo_id)
+        insumo_nombre = insumo.nombre if insumo else f"Insumo #{insumo_id}"
+        datos_insumo = datos_por_insumo.get(insumo_id, {})
+        marca = marcas.get(insumo_id)
+
+        datos_faltantes: List[str] = []
+        sin_fuente: List[str] = []
+
+        if tipo_uso_val == TipoUsoInsumo.ADITIVO.value:
+            aporta_sodio = bool(marca and marca.agrega_sodio)
+            aporta_energia = bool(marca and (marca.agrega_azucares or marca.agrega_grasas))
+
+            if aporta_energia:
+                dato_e = datos_insumo.get(Nutriente.ENERGIA)
+                if not dato_e or dato_e.valor is None:
+                    datos_faltantes.append(Nutriente.ENERGIA.value)
+                elif not dato_e.fuente:
+                    sin_fuente.append(Nutriente.ENERGIA.value)
+
+            if aporta_sodio:
+                dato_s = datos_insumo.get(Nutriente.SODIO)
+                if not dato_s or dato_s.valor is None:
+                    datos_faltantes.append(Nutriente.SODIO.value)
+                elif not dato_s.fuente:
+                    sin_fuente.append(Nutriente.SODIO.value)
+        else:
+            for nut in Nutriente:
+                dato = datos_insumo.get(nut)
+                if not dato or dato.valor is None:
+                    datos_faltantes.append(nut.value)
+                elif not dato.fuente:
+                    sin_fuente.append(nut.value)
+
+        if datos_faltantes or sin_fuente:
+            faltantes.append(
+                schemas.FaltanteNutricionalInsumo(
+                    insumo_id=insumo_id,
+                    insumo_nombre=insumo_nombre,
+                    tipo_uso=tipo_uso_val,
+                    datos_faltantes=datos_faltantes,
+                    sin_fuente=sin_fuente,
+                )
+            )
+
+    return faltantes
+
 
 def calcular_informacion_nutricional_receta(
     db: Session, receta_id: int, nro_version: Optional[int] = None
@@ -393,6 +573,9 @@ def calcular_informacion_nutricional_receta(
     )
     renglones = db.execute(stmt_detalles).fetchall()
 
+
+    faltantes = revisar_faltantes_receta(db, renglones)
+    estado = EstadoTablaNutricional.INCOMPLETA if faltantes else EstadoTablaNutricional.COMPLETA
     vds = {v.nutriente: v for v in datos_nutricionales_services.obtener_valores_diarios_referencia(db)}
     aportes_totales = {nut: 0.0 for nut in Nutriente}
 
@@ -454,6 +637,8 @@ def calcular_informacion_nutricional_receta(
         rendimiento_final_gramos=rendimiento,
         unidad_venta_gramos=porcion,
         medida_casera=version_obj.medida_casera,
+        estado=estado,        ## nuevo
+        faltantes=faltantes,  ##nuevo
         items=items_res
     )
 def calcular_composicion_receta(

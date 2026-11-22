@@ -12,6 +12,8 @@ export interface Insumo {
     es_aditivo?: boolean;
     aditivo_referencia_id?: number | null;
     aditivo_referencia?: Aditivo | null;
+    densidad_g_ml?: number | null;
+    peso_por_unidad_gramos?: number | null;
 }
 
 export interface InsumoPayload {
@@ -21,4 +23,6 @@ export interface InsumoPayload {
     activo?: boolean;
     es_aditivo?: boolean;
     aditivo_referencia_id?: number | null;
+    densidad_g_ml?: number | null;
+    peso_por_unidad_gramos?: number | null;
 }

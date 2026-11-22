@@ -56,7 +56,11 @@ def crear_lote(db: Session, lote: schemas.LoteProduccionCreate) -> LoteProduccio
     """
     productos_services.leer_producto(db, lote.producto_id)
 
-    if lote.receta_id is not None and lote.receta_version_id is not None:
+    if (lote.receta_id is None) != (lote.receta_version_id is None):
+        raise exceptions.RecetaIncompleta()
+    if lote.receta_id is not None:
+        if recetas_services.leer_receta(db, lote.receta_id).producto_id != lote.producto_id:
+            raise exceptions.RecetaDeOtroProducto()
         recetas_services.leer_version_receta(db, lote.receta_id, lote.receta_version_id)
 
     if lote.fecha > date.today():

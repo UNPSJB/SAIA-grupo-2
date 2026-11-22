@@ -19,6 +19,8 @@ interface FormValues {
     unidad_medida_id: number;
     es_aditivo: boolean;
     aditivo_referencia_id: number | '';
+    densidad_g_ml: number | '';
+    peso_por_unidad_gramos: number | '';
 }
 
 export default function InsumoForm() {
@@ -37,10 +39,17 @@ export default function InsumoForm() {
             denominacion_rotulo: '',
             es_aditivo: false,
             aditivo_referencia_id: '',
+            densidad_g_ml: '',
+            peso_por_unidad_gramos: '',
         }
     });
 
     const esAditivoMarcado = watch('es_aditivo');
+    const unidadSeleccionadaId = watch('unidad_medida_id');
+
+    const magnitudSeleccionada = unidadesDisponibles.find(
+        (unidad) => unidad.id === Number(unidadSeleccionadaId)
+    )?.magnitud;
 
     useEffect(() => {
         const cargarCatalogos = async () => {
@@ -69,6 +78,8 @@ export default function InsumoForm() {
                         unidad_medida_id: data.unidad_medida_id,
                         es_aditivo: Boolean(data.es_aditivo),
                         aditivo_referencia_id: data.aditivo_referencia_id ?? '',
+                        densidad_g_ml: data.densidad_g_ml ?? '',
+                        peso_por_unidad_gramos: data.peso_por_unidad_gramos ?? '',
                     });
                     setMagnitudFija(data.cantidad > 0 ? data.unidad_medida.magnitud : null);
                 } catch (err) {
@@ -89,6 +100,8 @@ export default function InsumoForm() {
             unidad_medida_id: Number(data.unidad_medida_id),
             es_aditivo: Boolean(data.es_aditivo),
             aditivo_referencia_id: data.es_aditivo && data.aditivo_referencia_id ? Number(data.aditivo_referencia_id) : null,
+            densidad_g_ml: magnitudSeleccionada === 'volumen' && data.densidad_g_ml !== '' ? Number(data.densidad_g_ml) : null,
+            peso_por_unidad_gramos: magnitudSeleccionada === 'cantidad' && data.peso_por_unidad_gramos !== '' ? Number(data.peso_por_unidad_gramos) : null,
         };
 
         try {
@@ -178,6 +191,54 @@ export default function InsumoForm() {
                                 : 'Es la unidad en la que se compra. El stock se registra en gramos, o en litros si es líquido.'}
                         </span>
                     </div>
+
+                    {magnitudSeleccionada === 'volumen' && (
+                    <div className={styles.formGroup}>
+                        <label>Densidad (g/ml):</label>
+                        <input
+                            type="number"
+                            step="any"
+                            min="0.0001"
+                            {...register('densidad_g_ml', {
+                                validate: (value) =>
+                                    value === '' || Number(value) > 0 ||
+                                    'La densidad debe ser mayor a cero',
+                            })}
+                        />
+                        <span className={styles.textMuted} style={{ fontSize: '0.8rem' }}>
+                            Equivalencia necesaria para convertir este insumo a gramos en las recetas.
+                        </span>
+                        {errors.densidad_g_ml && (
+                            <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>
+                                {errors.densidad_g_ml.message}
+                            </span>
+                        )}
+                    </div>
+                )}
+
+                {magnitudSeleccionada === 'cantidad' && (
+                    <div className={styles.formGroup}>
+                        <label>Peso por unidad (g):</label>
+                        <input
+                            type="number"
+                            step="any"
+                            min="0.0001"
+                            {...register('peso_por_unidad_gramos', {
+                                validate: (value) =>
+                                    value === '' || Number(value) > 0 ||
+                                    'El peso por unidad debe ser mayor a cero',
+                            })}
+                        />
+                        <span className={styles.textMuted} style={{ fontSize: '0.8rem' }}>
+                            Peso promedio de una unidad, necesario para convertirla a gramos en las recetas.
+                        </span>
+                        {errors.peso_por_unidad_gramos && (
+                            <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>
+                                {errors.peso_por_unidad_gramos.message}
+                            </span>
+                        )}
+                    </div>
+                )}
 
                     <div className={styles.formGroup} style={{ marginTop: '10px' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>

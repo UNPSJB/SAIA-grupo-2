@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Optional
 
 from fastapi import HTTPException
 from sqlalchemy import delete, select, update
@@ -11,6 +11,7 @@ from src.insumos.constants import MAGNITUDES_INSUMO
 from src.insumos.models import Insumo
 from src.unidades_medida import services as unidades_services
 from src.unidades_medida.models import UnidadMedida
+from src.unidades_medida.constants import MagnitudUnidad
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,20 @@ def _validar_unidad(db: Session, unidad_medida_id: int) -> UnidadMedida:
     return unidad
 
 
+def _validar_equivalencias(unidad: UnidadMedida, densidad_g_ml: Optional[float], peso_por_unidad_gramos: Optional[float],):
+    if unidad.magnitud == MagnitudUnidad.MASA:
+        if densidad_g_ml is not None or peso_por_unidad_gramos is not None:
+            raise exceptions.EquivalenciaInvalida()
+
+    elif unidad.magnitud == MagnitudUnidad.VOLUMEN:
+        if peso_por_unidad_gramos is not None:
+            raise exceptions.EquivalenciaInvalida()
+
+    elif unidad.magnitud == MagnitudUnidad.CANTIDAD:
+        if densidad_g_ml is not None:
+            raise exceptions.EquivalenciaInvalida()
+
+
 def crear_insumo(db: Session, insumo: schemas.InsumoCreate) -> Insumo:
     if insumo.nombre == "":
         raise exceptions.NombreVacio()
@@ -30,7 +45,12 @@ def crear_insumo(db: Session, insumo: schemas.InsumoCreate) -> Insumo:
     if db_insumos is not None:
         raise exceptions.NombreDuplicado()
 
-    _validar_unidad(db, insumo.unidad_medida_id)
+    unidad = _validar_unidad(db, insumo.unidad_medida_id)
+    _validar_equivalencias(
+        unidad,
+        insumo.densidad_g_ml,
+        insumo.peso_por_unidad_gramos,
+    )
 
     _insumo = Insumo(**insumo.model_dump())
     db.add(_insumo)
@@ -63,6 +83,11 @@ def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) 
             raise exceptions.NombreDuplicado()
 
     nueva_unidad = _validar_unidad(db, insumo.unidad_medida_id)
+    _validar_equivalencias(
+        nueva_unidad,
+        insumo.densidad_g_ml,
+        insumo.peso_por_unidad_gramos,
+    )
     if nueva_unidad.magnitud != db_insumo.unidad_medida.magnitud and db_insumo.cantidad:
         raise exceptions.CambioDeMagnitudConStock()
 

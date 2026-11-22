@@ -15,6 +15,7 @@ export type Nutriente =
 
 export type FuenteDatoNutricional = 'sara' | 'rotulo_proveedor' | 'bibliografia' | 'valor_propio';
 
+
 export type ValoresNutricionales = Record<Nutriente, number | null>;
 
 export interface AlimentoReferencia extends ValoresNutricionales {
@@ -89,6 +90,28 @@ export interface FilaNutricionalNormativa {
     completo: boolean;
 }
 
+//nuevo 
+export interface FaltanteNutricional {
+    insumo_id: number;
+    insumo_nombre: string;
+    tipo_uso: string;
+    datos_faltantes: string[];
+    sin_fuente: string[];
+}
+// nuevo
+export interface FilaNutricionalNormativa {
+    nutriente: Nutriente;
+    nombre: string;
+    unidad: string;
+    subnivel: boolean;
+    obligatorio: boolean;
+    valor_100g: number | null;
+    valor_porcion: number | null;
+    porcentaje_vd: number | null;
+    completo: boolean;
+}
+
+
 export interface InformacionNutricionalProducto {
     producto_id: number;
     producto_nombre: string;
@@ -100,6 +123,7 @@ export interface InformacionNutricionalProducto {
     nota_pie: string;
     insumos_sin_datos: string[];
     filas: FilaNutricionalNormativa[];
+    faltantes?: FaltanteNutricional[];  //nuevo
 }
 
 export interface ValorDiarioReferencia {
@@ -127,5 +151,7 @@ export interface TablaNutricionalReceta {
     rendimiento_final_gramos: number;
     unidad_venta_gramos: number;
     medida_casera: string | null;
+    estado?: EstadoTablaNutricional;        // nuevo
+    faltantes?: FaltanteNutricional[];   //nuevo
     items: ItemInformacionNutricional[];
 }

@@ -10,6 +10,7 @@ import { getProductos } from '../../services/productosServices';
 import { getInsumos } from '../../services/insumosServices';
 import { getAditivos } from '../../services/aditivosServices';
 import { getEquipos } from '../../services/equiposServices';
+import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
 import {
     crearReceta,
     crearVersionReceta,
@@ -24,6 +25,7 @@ import type { Producto } from '../../types/productos';
 import type { Insumo } from '../../types/insumos';
 import type { Aditivo } from '../../types/aditivos';
 import type { Equipo } from '../../types/equipos';
+import type { UnidadMedida } from '../../types/unidadesMedida';
 import type {
     DetalleRecetaPayload,
     PasoRecetaPayload,
@@ -38,7 +40,8 @@ import styles from '../../styles/shared.module.css';
 interface RenglonForm {
     idTemp: string;
     insumo_id: number | '';
-    cantidad_gramos: number | '';
+    cantidad_original: number | '';
+    unidad_medida_id: number | '';
     tipo_uso: TipoUsoInsumo;
     aditivo_id: number | '';
 }
@@ -67,6 +70,7 @@ export default function RecetaForm() {
     const [insumos, setInsumos] = useState<Insumo[]>([]);
     const [aditivos, setAditivos] = useState<Aditivo[]>([]);
     const [equipos, setEquipos] = useState<Equipo[]>([]);
+    const [unidades, setUnidades] = useState<UnidadMedida[]>([]);
 
     const [recetaExistente, setRecetaExistente] = useState<Receta | null>(null);
     const [versionVigente, setVersionVigente] = useState<VersionReceta | null>(null);
@@ -92,12 +96,13 @@ export default function RecetaForm() {
         const cargarTodo = async () => {
             try {
                 setCargando(true);
-                const [prodsData, insData, aditsData, eqData, recetasData] = await Promise.all([
+                const [prodsData, insData, aditsData, eqData, recetasData, unidadesData] = await Promise.all([
                     getProductos(),
                     getInsumos(),
                     getAditivos(),
                     getEquipos(),
                     getRecetas(),
+                    getUnidadesMedida(),
                 ]);
 
                 if (cancelado) return;
@@ -106,6 +111,7 @@ export default function RecetaForm() {
                 setInsumos(insumosActivos);
                 setAditivos(aditsData);
                 setEquipos(eqData);
+                setUnidades(unidadesData);
 
                 if (esNuevaVersion && recetaIdParam) {
                     const rec = await getRecetaById(recetaIdParam);
@@ -125,7 +131,8 @@ export default function RecetaForm() {
                                 ver.detalles.map((d) => ({
                                     idTemp: String(Math.random()),
                                     insumo_id: d.insumo_id,
-                                    cantidad_gramos: d.cantidad_gramos,
+                                    cantidad_original: d.cantidad_original,
+                                    unidad_medida_id: d.unidad_medida_id,
                                     tipo_uso: d.tipo_uso,
                                     aditivo_id: d.aditivo_id ?? '',
                                 })),
@@ -164,7 +171,8 @@ export default function RecetaForm() {
                         {
                             idTemp: String(Math.random()),
                             insumo_id: '',
-                            cantidad_gramos: '',
+                            cantidad_original: '',
+                            unidad_medida_id: '',
                             tipo_uso: 'ingrediente',
                             aditivo_id: '',
                         },
@@ -209,7 +217,8 @@ export default function RecetaForm() {
             {
                 idTemp: String(Math.random()),
                 insumo_id: '',
-                cantidad_gramos: '',
+                cantidad_original: '',
+                unidad_medida_id: '',
                 tipo_uso: 'ingrediente',
                 aditivo_id: '',
             },
@@ -231,6 +240,7 @@ export default function RecetaForm() {
                     insumo_id: newInsumoId,
                     tipo_uso: esAd ? 'aditivo' : 'ingrediente',
                     aditivo_id: esAd && insumoObj?.aditivo_referencia_id ? insumoObj.aditivo_referencia_id : d.aditivo_id,
+                    unidad_medida_id: insumoObj?.unidad_medida_id ?? '',
                 };
             }),
         );
@@ -287,7 +297,9 @@ export default function RecetaForm() {
             motivoCambio: motivoCambio || (esNuevaVersion ? 'Nueva versión' : 'Creación inicial'),
             detalles: detalles.map((d) => ({
                 insumo_id: Number(d.insumo_id),
-                cantidad_gramos: Number(d.cantidad_gramos) || 0,
+                cantidad_original: Number(d.cantidad_original) || 0,
+                unidad_medida_nombre:
+                    unidades.find((u) => u.id === Number(d.unidad_medida_id))?.nombre || '',
                 tipo_uso: d.tipo_uso,
                 aditivo_id: d.aditivo_id ? Number(d.aditivo_id) : null,
             })),
@@ -346,8 +358,13 @@ export default function RecetaForm() {
                 setModalAlerta({ isOpen: true, titulo: 'Renglón Incompleto', mensaje: 'Todos los renglones deben tener un insumo seleccionado.', exitoRedireccion: false, idRecetaRedireccion: '' });
                 return;
             }
-            if (!d.cantidad_gramos || Number(d.cantidad_gramos) <= 0) {
-                setModalAlerta({ isOpen: true, titulo: 'Cantidad Inválida', mensaje: 'La cantidad en gramos de cada insumo debe ser mayor a 0.', exitoRedireccion: false, idRecetaRedireccion: '' });
+            if (!d.cantidad_original || Number(d.cantidad_original) <= 0) {
+                setModalAlerta({ isOpen: true, titulo: 'Cantidad Inválida', mensaje: 'La cantidad de cada insumo debe ser mayor a 0.', exitoRedireccion: false, idRecetaRedireccion: '' });
+                return;
+            }
+
+            if (!d.unidad_medida_id) {
+                setModalAlerta({ isOpen: true, titulo: 'Unidad Inválida', mensaje: 'Debés seleccionar una unidad de medida para cada insumo.', exitoRedireccion: false, idRecetaRedireccion: '' });
                 return;
             }
             if (d.tipo_uso === 'aditivo' && !d.aditivo_id) {
@@ -380,7 +397,8 @@ export default function RecetaForm() {
 
             const payloadDetalles: DetalleRecetaPayload[] = detalles.map((d) => ({
                 insumo_id: Number(d.insumo_id),
-                cantidad_gramos: Number(d.cantidad_gramos),
+                cantidad_original: Number(d.cantidad_original),
+                unidad_medida_id: Number(d.unidad_medida_id),
                 tipo_uso: d.tipo_uso,
                 aditivo_id: d.tipo_uso === 'aditivo' && d.aditivo_id ? Number(d.aditivo_id) : null,
             }));
@@ -571,13 +589,17 @@ export default function RecetaForm() {
                         {detalles.map((d, index) => {
                             const insumoSeleccionado = insumos.find((i) => i.id === Number(d.insumo_id));
                             const esAditivoRenglon = d.tipo_uso === 'aditivo';
-
+                            const unidadesCompatibles = unidades.filter(
+                                (u) => u.magnitud === insumoSeleccionado?.unidad_medida.magnitud,
+                            );
                             return (
                                 <div
                                     key={d.idTemp}
                                     style={{
                                         display: 'grid',
-                                        gridTemplateColumns: esAditivoRenglon ? '2fr 1fr 2fr 1fr auto' : '2.5fr 1fr 1.5fr auto',
+                                        gridTemplateColumns: esAditivoRenglon
+                                            ? '2fr 1fr 2fr 1fr 1fr auto'
+                                            : '2.5fr 1fr 1.5fr 1fr auto',
                                         gap: '12px',
                                         alignItems: 'center',
                                         padding: '12px',
@@ -651,18 +673,23 @@ export default function RecetaForm() {
                                     )}
 
                                     <div>
-                                        <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Cantidad (g):</label>
+                                        <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                            Cantidad:
+                                        </label>
                                         <input
                                             type="number"
-                                            min="0.1"
+                                            min="0.001"
                                             step="any"
-                                            placeholder="g"
-                                            value={d.cantidad_gramos}
+                                            placeholder="Cantidad"
+                                            value={d.cantidad_original}
                                             onChange={(e) =>
                                                 setDetalles((prev) =>
                                                     prev.map((item) =>
                                                         item.idTemp === d.idTemp
-                                                            ? { ...item, cantidad_gramos: e.target.value ? Number(e.target.value) : '' }
+                                                            ? {
+                                                                ...item,
+                                                                cantidad_original: e.target.value ? Number(e.target.value) : '',
+                                                            }
                                                             : item,
                                                     ),
                                                 )
@@ -670,6 +697,37 @@ export default function RecetaForm() {
                                             className={styles.input}
                                             style={{ marginTop: '2px' }}
                                         />
+                                    </div>
+
+                                    <div>
+                                        <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                            Unidad:
+                                        </label>
+                                        <select
+                                            value={d.unidad_medida_id}
+                                            onChange={(e) =>
+                                                setDetalles((prev) =>
+                                                    prev.map((item) =>
+                                                        item.idTemp === d.idTemp
+                                                            ? {
+                                                                ...item,
+                                                                unidad_medida_id: e.target.value ? Number(e.target.value) : '',
+                                                            }
+                                                            : item,
+                                                    )
+                                                )
+                                            }
+                                            className={styles.input}
+                                            style={{ marginTop: '2px' }}
+                                            disabled={!insumoSeleccionado}
+                                        >
+                                            <option value="">-- Unidad --</option>
+                                            {unidadesCompatibles.map((u) => (
+                                                <option key={u.id} value={u.id}>
+                                                    {u.nombre}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
 
                                     <div style={{ marginTop: '16px' }}>
@@ -951,7 +1009,7 @@ export default function RecetaForm() {
                                 const aditObj = d.aditivo_id ? aditivos.find((a) => a.id === Number(d.aditivo_id)) : null;
                                 return (
                                     <li key={d.idTemp} style={{ marginBottom: '6px' }}>
-                                        <strong>{insObj?.nombre || `Insumo #${d.insumo_id || (i + 1)}`}</strong> — {d.cantidad_gramos || 0} g · {d.tipo_uso === 'aditivo' ? 'Aditivo' : 'Ingrediente'}
+                                        <strong>{insObj?.nombre || `Insumo #${d.insumo_id || (i + 1)}`}</strong> — {d.cantidad_original || 0} {unidades.find((u) => u.id === Number(d.unidad_medida_id))?.nombre || ''} · {d.tipo_uso === 'aditivo' ? 'Aditivo' : 'Ingrediente'}
                                         {aditObj ? ` · INS: ${aditObj.nombre_completo}${aditObj.numero_ins ? ` (INS ${aditObj.numero_ins})` : ''}` : ''}
                                     </li>
                                 );

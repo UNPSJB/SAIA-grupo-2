@@ -34,3 +34,18 @@ class ProductoInactivo(BadRequest):
 
 class AditivoRequerido(BadRequest):
     DETAIL = ErrorCode.ADITIVO_REQUERIDO
+
+class CantidadOriginalInvalida(BadRequest):
+    DETAIL = ErrorCode.CANTIDAD_ORIGINAL_INVALIDA
+
+class UnidadInsumoIncompatible(BadRequest):
+    DETAIL = ErrorCode.UNIDAD_INSUMO_INCOMPATIBLE
+
+class DensidadRequerida(BadRequest):
+    DETAIL = ErrorCode.DENSIDAD_REQUERIDA
+
+class PesoPorUnidadRequerido(BadRequest):
+    DETAIL = ErrorCode.PESO_POR_UNIDAD_REQUERIDO
+
+class EquivalenciaInvalida(BadRequest):
+    DETAIL = ErrorCode.EQUIVALENCIA_INVALIDA

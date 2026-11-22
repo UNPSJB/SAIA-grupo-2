@@ -18,6 +18,8 @@ import { getInformacionNutricionalProducto } from '../../services/datosNutricion
 import TablaNutricional from '../datosNutricionales/TablaNutricional';
 import estilosNutricionales from '../datosNutricionales/DatosNutricionales.module.css';
 
+// import InsigniaEstadoNutricional from '../datosNutricionales/InsigniaEstadoNutricional';
+
 interface Respuesta {
     clave: string;
     producto: Producto | null;
@@ -55,6 +57,15 @@ export default function ProductoDetail() {
     const unidad = producto?.unidad_medida.nombre;
     const totalProducido = lotes.reduce((suma, lote) => suma + lote.cantidad, 0);
     const infoNutricional = actual?.infoNutricional ?? null;
+
+    //nuevo
+    const recargarNutricion = () => {
+        getInformacionNutricionalProducto(id)
+            .then((nuevaInfo) => {
+                setRespuesta((prev) => (prev ? { ...prev, infoNutricional: nuevaInfo } : prev));
+            })
+            .catch((err) => console.error('Error al recargar información nutricional:', err));
+    };
 
     const columnas: Columna<LoteProduccion>[] = [
         {
@@ -171,10 +182,13 @@ export default function ProductoDetail() {
                         </div>
                     </details>
 
-                        {infoNutricional && (
+                    {infoNutricional && (
                             <details className={styles.accordionItem} open>
                                 <summary className={`${styles.accordionHeader} ${estilosNutricionales.ocultarEnImpresion}`}>
-                                    <strong>Tabla nutricional (formato normativo)</strong>{' '}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <strong>Tabla nutricional (formato normativo)</strong>
+                                        {/* <InsigniaEstadoNutricional estado={infoNutricional.estado} /> */}
+                                    </div>
                                     <svg
                                         className={styles.accordionIcon}
                                         xmlns="http://www.w3.org/2000/svg"
@@ -191,11 +205,10 @@ export default function ProductoDetail() {
                                     </svg>
                                 </summary>
                                 <div className={styles.accordionBody}>
-                                    <TablaNutricional datos={infoNutricional} />
+                                    <TablaNutricional datos={infoNutricional} onRecalcular={recargarNutricion} />
                                 </div>
                             </details>
-        
-    )}
+                        )}
 </div>
 
 

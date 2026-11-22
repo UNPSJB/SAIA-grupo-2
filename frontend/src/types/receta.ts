@@ -9,7 +9,8 @@ export type TipoUsoInsumo = (typeof TIPOS_USO_INSUMO)[number];
 
 export interface DetalleRecetaPayload {
     insumo_id: number;
-    cantidad_gramos: number;
+    cantidad_original: number;
+    unidad_medida_id: number;
     tipo_uso: TipoUsoInsumo;
     aditivo_id?: number | null;
 }
@@ -18,6 +19,7 @@ export interface DetalleReceta extends DetalleRecetaPayload {
     receta_id: number;
     nro_version: number;
     renglon: number;
+    cantidad_gramos: number;
 }
 
 export interface PasoRecetaPayload {

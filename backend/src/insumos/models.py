@@ -18,7 +18,8 @@ class Insumo(ModeloBase):
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     unidad_medida_id: Mapped[int] = mapped_column(ForeignKey("unidades_medida.id"))
     cantidad: Mapped[float] = mapped_column(Float, default=0.0)
-
+    densidad_g_ml: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    peso_por_unidad_gramos: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     es_aditivo: Mapped[bool] = mapped_column(Boolean, default=False)
     aditivo_referencia_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("aditivos.id"), nullable=True

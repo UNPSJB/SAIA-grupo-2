@@ -1,0 +1,99 @@
+.titulo {
+    margin-top: 0;
+}
+
+.descripcion {
+    font-size: 0.9rem;
+}
+
+.formulario {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.campo {
+    min-width: 180px;
+}
+
+.error {
+    color: var(--rojo-texto);
+    margin-top: 12px;
+}
+
+.resultado {
+    margin-top: 20px;
+}
+
+.resumen {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 14px;
+    font-size: 0.9rem;
+}
+
+.resumen strong {
+    color: var(--text-h);
+}
+
+.desplazable {
+    overflow-x: auto;
+}
+
+.tabla {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.tabla th {
+    padding: 8px;
+    border-bottom: 2px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.tabla td {
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.nombreInsumo {
+    font-weight: 500;
+    color: var(--text-h);
+}
+
+.cantidadEscalada {
+    font-weight: 600;
+    color: var(--text-h);
+}
+
+.disponible {
+    color: var(--verde-texto);
+    font-weight: 500;
+}
+
+.insuficiente {
+    color: var(--rojo-texto);
+    font-weight: 600;
+}
+
+.aviso {
+    color: #f59e0b;
+    font-size: 0.85rem;
+    margin-top: 10px;
+}
+
+.acciones {
+    margin-top: 16px;
+}

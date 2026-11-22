@@ -53,6 +53,9 @@ from src.parametros_normativos import services as parametros_normativos_services
 from src.rotulado_frontal.models import EvaluacionAplicabilidad
 from src.rotulado_frontal import services as rotulado_frontal_services
 from src.rotulado_frontal.schemas import ActualizacionMarcasInsumos, CambioMarcaInsumo, NuevaEvaluacion
+from src.alergenos.models import DeclaracionAlergenos
+from src.alergenos import schemas as alergenos_schemas
+from src.alergenos import services as alergenos_services
 
 from src.configuracion_empresa.models import ConfiguracionEmpresa
 from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
@@ -553,14 +556,24 @@ INSUMOS_ALIMENTARIOS = [
 ]
 
 
+DENSIDADES_INSUMOS = {
+    "Leche Entera": 1.03,
+    "Aceite de Girasol": 0.92,
+}
+
+
 def crear_insumos(db: Session) -> int:
-    """Crea los insumos alimentarios con su stock, que se guarda en gramos o mililitros."""
+    """Crea los insumos alimentarios con su stock, que se guarda en gramos o mililitros.
+
+    Los liquidos que se usan en las recetas de ejemplo llevan su densidad, para pasar mililitros a gramos.
+    """
     for nombre, nombre_unidad, stock in INSUMOS_ALIMENTARIOS:
         unidad = db.query(UnidadMedida).filter_by(nombre=nombre_unidad).first()
         db.add(Insumo(
             nombre=nombre,
             unidad_medida_id=unidad.id,
             cantidad=unidades_medida_services.convertir_a_base(stock, unidad),
+            densidad_g_ml=DENSIDADES_INSUMOS.get(nombre),
         ))
     db.commit()
     return len(INSUMOS_ALIMENTARIOS)
@@ -771,8 +784,9 @@ def cargar_rotulado_frontal_de_ejemplo(db: Session) -> int:
     return len(EVALUACIONES_ROTULADO_FRONTAL)
 
 
-def cargar_aditivos_y_recetas_de_ejemplo(db: Session) -> tuple[int, int]:
+def cargar_aditivos_y_recetas_de_ejemplo(db: Session, unidad_gramos: UnidadMedida) -> tuple[int, int]:
     """Pobla el maestro de aditivos INS, vincula insumos aditivos y crea recetas completas para los productos."""
+    unidad_ml = db.query(UnidadMedida).filter(UnidadMedida.nombre == "Mililitros").one()
     cf_map = {}
     clases_datos = [
         ("Conservante", True),
@@ -858,9 +872,9 @@ def cargar_aditivos_y_recetas_de_ejemplo(db: Session) -> tuple[int, int]:
             db.flush()
 
             db.execute(insert(detalle_receta).values([
-                {"receta_id": rec_pan.id, "nro_version": 1, "renglon": 1, "insumo_id": insumos["Harina 000"].id, "cantidad_gramos": 650.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
-                {"receta_id": rec_pan.id, "nro_version": 1, "renglon": 2, "insumo_id": insumos["Levadura Fresca"].id, "cantidad_gramos": 20.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
-                {"receta_id": rec_pan.id, "nro_version": 1, "renglon": 3, "insumo_id": insumos["Sal Fina"].id, "cantidad_gramos": 12.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_pan.id, "nro_version": 1, "renglon": 1, "insumo_id": insumos["Harina 000"].id, "cantidad_original": 650.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 650.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_pan.id, "nro_version": 1, "renglon": 2, "insumo_id": insumos["Levadura Fresca"].id, "cantidad_original": 20.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 20.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_pan.id, "nro_version": 1, "renglon": 3, "insumo_id": insumos["Sal Fina"].id, "cantidad_original": 12.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 12.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
             ]))
 
             v2 = VersionReceta(
@@ -877,9 +891,9 @@ def cargar_aditivos_y_recetas_de_ejemplo(db: Session) -> tuple[int, int]:
             db.flush()
 
             db.execute(insert(detalle_receta).values([
-                {"receta_id": rec_pan.id, "nro_version": 2, "renglon": 1, "insumo_id": insumos["Harina 000"].id, "cantidad_gramos": 650.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
-                {"receta_id": rec_pan.id, "nro_version": 2, "renglon": 2, "insumo_id": insumos["Levadura Fresca"].id, "cantidad_gramos": 15.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
-                {"receta_id": rec_pan.id, "nro_version": 2, "renglon": 3, "insumo_id": insumos["Sal Fina"].id, "cantidad_gramos": 12.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_pan.id, "nro_version": 2, "renglon": 1, "insumo_id": insumos["Harina 000"].id, "cantidad_original": 650.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 650.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_pan.id, "nro_version": 2, "renglon": 2, "insumo_id": insumos["Levadura Fresca"].id, "cantidad_original": 15.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 15.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_pan.id, "nro_version": 2, "renglon": 3, "insumo_id": insumos["Sal Fina"].id, "cantidad_original": 12.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 12.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
             ]))
 
             horno = equipos.get("Horno Rotativo")
@@ -924,10 +938,10 @@ def cargar_aditivos_y_recetas_de_ejemplo(db: Session) -> tuple[int, int]:
             db.flush()
 
             db.execute(insert(detalle_receta).values([
-                {"receta_id": rec_m.id, "nro_version": 1, "renglon": 1, "insumo_id": insumos["Harina 000"].id, "cantidad_gramos": 300.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
-                {"receta_id": rec_m.id, "nro_version": 1, "renglon": 2, "insumo_id": insumos["Manteca"].id, "cantidad_gramos": 100.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
-                {"receta_id": rec_m.id, "nro_version": 1, "renglon": 3, "insumo_id": insumos["Azúcar Blanca"].id, "cantidad_gramos": 60.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
-                {"receta_id": rec_m.id, "nro_version": 1, "renglon": 4, "insumo_id": insumos["Leche Entera"].id, "cantidad_gramos": 80.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_m.id, "nro_version": 1, "renglon": 1, "insumo_id": insumos["Harina 000"].id, "cantidad_original": 300.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 300.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_m.id, "nro_version": 1, "renglon": 2, "insumo_id": insumos["Manteca"].id, "cantidad_original": 100.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 100.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_m.id, "nro_version": 1, "renglon": 3, "insumo_id": insumos["Azúcar Blanca"].id, "cantidad_original": 60.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 60.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_m.id, "nro_version": 1, "renglon": 4, "insumo_id": insumos["Leche Entera"].id, "cantidad_original": 80.0, "unidad_medida_id": unidad_ml.id, "cantidad_gramos": round(80.0 * DENSIDADES_INSUMOS["Leche Entera"], 2), "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
             ]))
 
             p_m1 = PasoReceta(
@@ -963,9 +977,9 @@ def cargar_aditivos_y_recetas_de_ejemplo(db: Session) -> tuple[int, int]:
             db.flush()
 
             db.execute(insert(detalle_receta).values([
-                {"receta_id": rec_p.id, "nro_version": 1, "renglon": 1, "insumo_id": insumos["Harina 000"].id, "cantidad_gramos": 160.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
-                {"receta_id": rec_p.id, "nro_version": 1, "renglon": 2, "insumo_id": insumos["Puré de Tomate"].id, "cantidad_gramos": 50.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
-                {"receta_id": rec_p.id, "nro_version": 1, "renglon": 3, "insumo_id": insumos["Aceite de Girasol"].id, "cantidad_gramos": 10.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_p.id, "nro_version": 1, "renglon": 1, "insumo_id": insumos["Harina 000"].id, "cantidad_original": 160.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 160.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_p.id, "nro_version": 1, "renglon": 2, "insumo_id": insumos["Puré de Tomate"].id, "cantidad_original": 50.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 50.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_p.id, "nro_version": 1, "renglon": 3, "insumo_id": insumos["Aceite de Girasol"].id, "cantidad_original": 10.0, "unidad_medida_id": unidad_ml.id, "cantidad_gramos": round(10.0 * DENSIDADES_INSUMOS["Aceite de Girasol"], 2), "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
             ]))
 
             p_p1 = PasoReceta(
@@ -979,6 +993,79 @@ def cargar_aditivos_y_recetas_de_ejemplo(db: Session) -> tuple[int, int]:
 
     db.commit()
     return len(ad_map), recetas_creadas
+
+
+MARCAS_ALERGENOS_INSUMOS = {
+    "Harina 000": (["trigo"], True),
+    "Harina Integral": (["trigo"], True),
+    "Avena Arrollada": (["avena"], True),
+    "Leche Entera": (["leche"], False),
+    "Manteca": (["leche"], False),
+    "Dulce de Leche": (["leche"], False),
+    "Crema de Leche": (["leche"], False),
+    "Queso Crema": (["leche"], False),
+    "Ricota": (["leche"], False),
+    "Queso Muzzarella": (["leche"], False),
+    "Huevo Entero": (["huevo"], False),
+    "Yema de Huevo": (["huevo"], False),
+    "Clara de Huevo": (["huevo"], False),
+    "Nueces": (["frutas_secas"], False),
+    "Almendras": (["frutas_secas"], False),
+    "Azúcar Blanca": ([], False),
+    "Sal Fina": ([], False),
+    "Levadura Fresca": ([], False),
+    "Aceite de Girasol": ([], False),
+    "Naranjas": ([], False),
+    "Harina de Arroz": ([], False),
+    "Almidón de Maíz": ([], False),
+    "Miel": ([], False),
+    "Tomate Fresco": ([], False),
+}
+
+CONSERVACION_PRODUCTOS = {
+    "Pan francés": {"duracion": 2, "instrucciones": "Conservar en lugar fresco y seco"},
+    "Medialunas de manteca": {"duracion": 3, "instrucciones": "Conservar en lugar fresco y seco"},
+    "Prepizza": {"temperatura_minima": 0, "temperatura_maxima": 4, "duracion": 10},
+}
+
+
+def cargar_alergenos_de_ejemplo(db: Session) -> int:
+    """Marca alergenos y gluten de los insumos basicos y deja datos de conservacion de los productos con receta.
+
+    El pan frances queda con la declaracion confirmada; el resto muestra lo que sugiere el sistema.
+    """
+    admin = db.query(Empleado).filter_by(legajo="EMP-1000").first()
+    insumos = {insumo.nombre: insumo.id for insumo in db.query(Insumo).all()}
+    alergenos_services.actualizar_marcas(
+        db,
+        alergenos_schemas.ActualizacionMarcas(
+            empleado_id=admin.id,
+            marcas=[
+                alergenos_schemas.CambioMarcaInsumo(insumo_id=insumos[nombre], alergenos=alergenos, contiene_gluten=gluten)
+                for nombre, (alergenos, gluten) in MARCAS_ALERGENOS_INSUMOS.items()
+                if nombre in insumos
+            ],
+        ),
+    )
+    productos = {producto.nombre: producto.id for producto in db.query(Producto).all()}
+    for nombre, datos in CONSERVACION_PRODUCTOS.items():
+        if nombre in productos:
+            alergenos_services.guardar_conservacion(
+                db, productos[nombre], alergenos_schemas.ConservacionUpdate(empleado_id=admin.id, **datos)
+            )
+    if "Pan francés" in productos:
+        propuesta = alergenos_services.proponer(db, productos["Pan francés"])
+        alergenos_services.guardar_declaracion(
+            db,
+            productos["Pan francés"],
+            alergenos_schemas.DeclaracionUpdate(
+                empleado_id=admin.id,
+                contiene=[item.alergeno for item in propuesta.contiene],
+                contiene_gluten=propuesta.contiene_gluten,
+                confirmar=True,
+            ),
+        )
+    return len(MARCAS_ALERGENOS_INSUMOS)
 
 
 def seed_database(reset: bool = True):
@@ -996,6 +1083,7 @@ def seed_database(reset: bool = True):
 
         # --- UNIDADES DE MEDIDA ---
         unidades_creadas = unidades_medida_services.crear_catalogo(db)
+        unidad_gramos = db.query(UnidadMedida).filter(UnidadMedida.nombre == "Gramos").one()
         if unidades_creadas:
             print(f"Unidades de medida creadas ({unidades_creadas}).")
 
@@ -1479,8 +1567,12 @@ def seed_database(reset: bool = True):
             print(f"Parametros normativos v1 publicados y {evaluaciones} evaluaciones de rotulado frontal cargadas.")
 
         if db.query(Receta).count() == 0:
-            num_aditivos, num_recetas = cargar_aditivos_y_recetas_de_ejemplo(db)
+            num_aditivos, num_recetas = cargar_aditivos_y_recetas_de_ejemplo(db, unidad_gramos)
             print(f"Catálogo de Aditivos de Referencia INS ({num_aditivos}) y Recetas enriquecidas ({num_recetas}) procesadas correctamente.")
+
+        if db.query(DeclaracionAlergenos).count() == 0:
+            marcas = cargar_alergenos_de_ejemplo(db)
+            print(f"Marcas de alérgenos de {marcas} insumos y datos de conservación cargados.")
 
         print("Base de datos poblada exitosamente con datos de prueba enriquecidos para SAIA!")
 

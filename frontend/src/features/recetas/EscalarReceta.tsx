@@ -1,15 +1,37 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
-import type { EscalarRecetaProps, RecetaEscalada } from "../../types/recetas";
+import type { EscaladoRecetaPayload, EscalarRecetaProps, RecetaEscalada } from "../../types/recetas";
 import type { EstadoLoteDesdeReceta } from "../../types/lotesProduccion";
 import { escalarRecetaProducto } from "../../services/recetasServices";
 import { formatearStock } from "../insumos/cantidades";
 import Boton from "../../components/Boton";
+import estilos from './EscalarReceta.module.css';
 import styles from '../../styles/shared.module.css';
 
+type ModoEscalado = 'factor' | 'cantidad' | 'unidades';
 
-type ModoEscalado = 'cantidad' | 'factor';
+const ETIQUETA_VALOR: Record<ModoEscalado, string> = {
+    factor: 'Factor (ej: 1.5, 2):',
+    cantidad: 'Cantidad objetivo (g):',
+    unidades: 'Unidades a producir:',
+};
+
+const EJEMPLO_VALOR: Record<ModoEscalado, string> = {
+    factor: 'Ej: 2',
+    cantidad: 'Ej: 2500',
+    unidades: 'Ej: 40',
+};
+
+function payloadDe(modo: ModoEscalado, numero: number): EscaladoRecetaPayload {
+    if (modo === 'cantidad') return { cantidad_objetivo: numero };
+    if (modo === 'unidades') return { unidades_objetivo: numero };
+    return { factor: numero };
+}
+
+function formatear(valor: number): string {
+    return valor.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+}
 
 export default function EscalarReceta({
     productoId,
@@ -30,14 +52,12 @@ export default function EscalarReceta({
         const numero = Number(valor);
         if (valor.trim() === '' || Number.isNaN(numero) || numero <= 0) {
             setError('Ingresá un valor mayor a 0.');
-            return
+            return;
         }
 
         try {
             setCargando(true);
-            const payload =
-                modo === 'cantidad' ? { cantidad_objetivo: numero } : { factor: numero };
-            const datos = await escalarRecetaProducto(productoId, payload);
+            const datos = await escalarRecetaProducto(productoId, payloadDe(modo, numero));
             setResultado(datos);
         } catch (err) {
             console.error('Error al escalar receta:', err);
@@ -53,7 +73,8 @@ export default function EscalarReceta({
 
         const estadoLote: EstadoLoteDesdeReceta = {
             producto_id: resultado.producto_id,
-            cantidad: resultado.rendimiento_esperado,
+            cantidad: resultado.cantidad_producto,
+            rendimiento_gramos: resultado.rendimiento_esperado,
             receta_id: resultado.receta_id,
             receta_version_id: resultado.receta_version_id,
             factor_escalado: resultado.factor_aplicado,
@@ -68,21 +89,19 @@ export default function EscalarReceta({
     };
 
     const hayFaltanteStock = resultado?.renglones.some((r) => !r.stock_suficiente) ?? false;
+    const unidadProducto = resultado?.unidad_producto_nombre.toLowerCase();
 
     return (
         <section className={styles.formularioTarjeta} aria-labelledby="titulo-escalar-receta">
-            <h3 id="titulo-escalar-receta" style={{ marginTop: 0 }}>
+            <h3 id="titulo-escalar-receta" className={estilos.titulo}>
                 Escalar receta
             </h3>
-            <p className={styles.textMuted} style={{ fontSize: '0.9rem'}}>
+            <p className={`${styles.textMuted} ${estilos.descripcion}`}>
                 Calculá las cantidades exactas de ingredientes según la producción de hoy. No modifica la receta original.
             </p>
 
-            <form
-                onSubmit={handleCalcular}
-                style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end'}}
-            >
-                <div className={styles.formGroup} style={{ minWidth: '180px' }}>
+            <form onSubmit={handleCalcular} className={estilos.formulario}>
+                <div className={`${styles.formGroup} ${estilos.campo}`}>
                     <label htmlFor="modo-escalado">Escalar por:</label>
                     <select
                         id="modo-escalado"
@@ -96,19 +115,18 @@ export default function EscalarReceta({
                     >
                         <option value="factor">Factor multiplicador (ej: x2)</option>
                         <option value="cantidad">Cantidad objetivo (gramos)</option>
+                        <option value="unidades">Cantidad de unidades</option>
                     </select>
                 </div>
 
-                <div className={styles.formGroup} style={{ minWidth: '180px '}}>
-                    <label htmlFor="valor-escalado">
-                        {modo === 'factor' ? 'Factor (ej: 1.5, 2):' : 'Cantidad objetivo (g)'}
-                    </label>
+                <div className={`${styles.formGroup} ${estilos.campo}`}>
+                    <label htmlFor="valor-escalado">{ETIQUETA_VALOR[modo]}</label>
                     <input
                         id="valor-escalado"
                         type="number"
                         min="0"
-                        step="any"
-                        placeholder={modo === 'factor' ? 'Ej: 2' : 'Ej: 2500'}
+                        step={modo === 'unidades' ? '1' : 'any'}
+                        placeholder={EJEMPLO_VALOR[modo]}
                         value={valor}
                         onChange={(e) => {
                             setValor(e.target.value);
@@ -123,86 +141,54 @@ export default function EscalarReceta({
             </form>
 
             {error && (
-                <p role="alert" style={{ color: '#ef4444', marginTop: '12px' }}>
+                <p role="alert" className={estilos.error}>
                     {error}
                 </p>
             )}
 
             {resultado && (
-                <div style={{ marginTop: '20px' }}>
-                    <div
-                        style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            flexWrap: 'wrap',
-                            gap: '10px',
-                            padding: '10px 14px',
-                            borderRadius: '6px',
-                            marginBottom: '14px',
-                            fontSize: '0.9rem',
-                        }}
-                    >
+                <div className={estilos.resultado}>
+                    <div className={estilos.resumen}>
                         <span>
-                            <strong>Rendimiento base:</strong> {resultado.rendimiento_original}{' '}
-                            {resultado.unidad_producto_nombre}
+                            <strong>Rendimiento base:</strong> {formatear(resultado.rendimiento_original)} g
                         </span>
                         <span>
-                            <strong>Rendimiento esperado:</strong> {resultado.rendimiento_esperado}{' '}
-                            {resultado.unidad_producto_nombre}
+                            <strong>Rendimiento esperado:</strong> {formatear(resultado.rendimiento_esperado)} g
+                            {resultado.cantidad_producto !== null &&
+                                ` (${formatear(resultado.cantidad_producto)} ${unidadProducto})`}
                         </span>
                         <span>
-                            <strong>Factor aplicado:</strong> x{resultado.factor_aplicado}
+                            <strong>Factor aplicado:</strong> x{formatear(resultado.factor_aplicado)}
                         </span>
                     </div>
 
-                    <div style={{ overflowX: 'auto' }}>
-                        <table
-                            style={{
-                                width: '100%',
-                                borderCollapse: 'collapse',
-                                textAlign: 'left',
-                                fontSize: '0.9rem'
-                            }}
-                        >
+                    <div className={estilos.desplazable}>
+                        <table className={estilos.tabla}>
                             <thead>
-                                <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                                    <th style={{ padding: '8px' }}>Insumo</th>
-                                    <th style={{ padding: '8px' }}>Original</th>
-                                    <th style={{ padding: '8px' }}>Escalado</th>
-                                    <th style={{ padding: '8px' }}>Stock disponible</th>
-                                    <th style={{ padding: '8px' }}>Estado</th>
+                                <tr>
+                                    <th>Insumo</th>
+                                    <th>Original</th>
+                                    <th>Escalado</th>
+                                    <th>Stock disponible</th>
+                                    <th>Estado</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {resultado.renglones.map((renglon) => (
-                                    <tr
-                                        key={renglon.insumo_id}
-                                        style={{
-                                            borderBottom: '1px solid #e2e8f0',
-                                            
-                                        }}
-                                    >
-                                        <td style={{ padding: '8px', fontWeight: 500 }}>
-                                            {renglon.insumo_nombre}
+                                    <tr key={renglon.insumo_id}>
+                                        <td className={estilos.nombreInsumo}>{renglon.insumo_nombre}</td>
+                                        <td>
+                                            {formatear(renglon.cantidad_original)} {renglon.unidad_medida_nombre}
                                         </td>
-                                        <td style={{ padding: '8px' }}>
-                                            {renglon.cantidad_original} {renglon.unidad_medida_nombre}
+                                        <td className={estilos.cantidadEscalada}>
+                                            {formatear(renglon.cantidad_escalada)} {renglon.unidad_medida_nombre}
                                         </td>
-                                        <td style={{ padding: '8px', fontWeight: 600 }}>
-                                            {renglon.cantidad_escalada} {renglon.unidad_medida_nombre}
-                                        </td>
-                                        <td style={{ padding: '8px' }}>
-                                            {formatearStock(renglon.stock_disponible, renglon.magnitud)}
-                                        </td>
-                                        <td style={{ padding: '8px' }}>
+                                        <td>{formatearStock(renglon.stock_disponible, renglon.magnitud)}</td>
+                                        <td>
                                             {renglon.stock_suficiente ? (
-                                                <span style={{ color: '#16a34a', fontWeight: 500 }}>
-                                                    Disponible
-                                                </span>
+                                                <span className={estilos.disponible}>Disponible</span>
                                             ) : (
-                                                <span style={{ color: '#dc2626', fontWeight: 600 }}>
-                                                    Stock insuficiente
-                                                </span>
+                                                <span className={estilos.insuficiente}>Stock insuficiente</span>
                                             )}
                                         </td>
                                     </tr>
@@ -212,12 +198,20 @@ export default function EscalarReceta({
                     </div>
 
                     {hayFaltanteStock && (
-                        <p style={{ color: '#b45309', fontSize: '0.85rem', marginTop: '10px' }}>
-                            Algunos insumos no tienen stock suficiente. Podés iniciar el lote igualmente y ajustar las cantidades en el formulario.
+                        <p className={estilos.aviso}>
+                            Algunos insumos no tienen stock suficiente. Podés iniciar el lote igualmente y ajustar las
+                            cantidades en el formulario.
                         </p>
                     )}
 
-                    <div className={styles.filaBotones} style={{ marginTop: '16px' }}>
+                    {resultado.cantidad_producto === null && (
+                        <p className={estilos.aviso}>
+                            El producto se mide en {unidadProducto} y no hay equivalencia con los gramos de la receta:
+                            completá a mano la cantidad producida del lote.
+                        </p>
+                    )}
+
+                    <div className={`${styles.filaBotones} ${estilos.acciones}`}>
                         <Boton variant="crear" onClick={handleIniciarLote}>
                             Iniciar lote con estas cantidades
                         </Boton>
