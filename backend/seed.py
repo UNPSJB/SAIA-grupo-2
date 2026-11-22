@@ -53,6 +53,9 @@ from src.parametros_normativos import services as parametros_normativos_services
 from src.rotulado_frontal.models import EvaluacionAplicabilidad
 from src.rotulado_frontal import services as rotulado_frontal_services
 from src.rotulado_frontal.schemas import ActualizacionMarcasInsumos, CambioMarcaInsumo, NuevaEvaluacion
+from src.alergenos.models import DeclaracionAlergenos
+from src.alergenos import schemas as alergenos_schemas
+from src.alergenos import services as alergenos_services
 
 from src.configuracion_empresa.models import ConfiguracionEmpresa
 from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
@@ -981,6 +984,79 @@ def cargar_aditivos_y_recetas_de_ejemplo(db: Session, unidad_gramos: UnidadMedid
     return len(ad_map), recetas_creadas
 
 
+MARCAS_ALERGENOS_INSUMOS = {
+    "Harina 000": (["trigo"], True),
+    "Harina Integral": (["trigo"], True),
+    "Avena Arrollada": (["avena"], True),
+    "Leche Entera": (["leche"], False),
+    "Manteca": (["leche"], False),
+    "Dulce de Leche": (["leche"], False),
+    "Crema de Leche": (["leche"], False),
+    "Queso Crema": (["leche"], False),
+    "Ricota": (["leche"], False),
+    "Queso Muzzarella": (["leche"], False),
+    "Huevo Entero": (["huevo"], False),
+    "Yema de Huevo": (["huevo"], False),
+    "Clara de Huevo": (["huevo"], False),
+    "Nueces": (["frutas_secas"], False),
+    "Almendras": (["frutas_secas"], False),
+    "Azúcar Blanca": ([], False),
+    "Sal Fina": ([], False),
+    "Levadura Fresca": ([], False),
+    "Aceite de Girasol": ([], False),
+    "Naranjas": ([], False),
+    "Harina de Arroz": ([], False),
+    "Almidón de Maíz": ([], False),
+    "Miel": ([], False),
+    "Tomate Fresco": ([], False),
+}
+
+CONSERVACION_PRODUCTOS = {
+    "Pan francés": {"duracion": 2, "instrucciones": "Conservar en lugar fresco y seco"},
+    "Medialunas de manteca": {"duracion": 3, "instrucciones": "Conservar en lugar fresco y seco"},
+    "Prepizza": {"temperatura_minima": 0, "temperatura_maxima": 4, "duracion": 10},
+}
+
+
+def cargar_alergenos_de_ejemplo(db: Session) -> int:
+    """Marca alergenos y gluten de los insumos basicos y deja datos de conservacion de los productos con receta.
+
+    El pan frances queda con la declaracion confirmada; el resto muestra lo que sugiere el sistema.
+    """
+    admin = db.query(Empleado).filter_by(legajo="EMP-1000").first()
+    insumos = {insumo.nombre: insumo.id for insumo in db.query(Insumo).all()}
+    alergenos_services.actualizar_marcas(
+        db,
+        alergenos_schemas.ActualizacionMarcas(
+            empleado_id=admin.id,
+            marcas=[
+                alergenos_schemas.CambioMarcaInsumo(insumo_id=insumos[nombre], alergenos=alergenos, contiene_gluten=gluten)
+                for nombre, (alergenos, gluten) in MARCAS_ALERGENOS_INSUMOS.items()
+                if nombre in insumos
+            ],
+        ),
+    )
+    productos = {producto.nombre: producto.id for producto in db.query(Producto).all()}
+    for nombre, datos in CONSERVACION_PRODUCTOS.items():
+        if nombre in productos:
+            alergenos_services.guardar_conservacion(
+                db, productos[nombre], alergenos_schemas.ConservacionUpdate(empleado_id=admin.id, **datos)
+            )
+    if "Pan francés" in productos:
+        propuesta = alergenos_services.proponer(db, productos["Pan francés"])
+        alergenos_services.guardar_declaracion(
+            db,
+            productos["Pan francés"],
+            alergenos_schemas.DeclaracionUpdate(
+                empleado_id=admin.id,
+                contiene=[item.alergeno for item in propuesta.contiene],
+                contiene_gluten=propuesta.contiene_gluten,
+                confirmar=True,
+            ),
+        )
+    return len(MARCAS_ALERGENOS_INSUMOS)
+
+
 def seed_database(reset: bool = True):
     if reset:
         print("Recreando las tablas de la base de datos...")
@@ -1482,6 +1558,10 @@ def seed_database(reset: bool = True):
         if db.query(Receta).count() == 0:
             num_aditivos, num_recetas = cargar_aditivos_y_recetas_de_ejemplo(db, unidad_gramos)
             print(f"Catálogo de Aditivos de Referencia INS ({num_aditivos}) y Recetas enriquecidas ({num_recetas}) procesadas correctamente.")
+
+        if db.query(DeclaracionAlergenos).count() == 0:
+            marcas = cargar_alergenos_de_ejemplo(db)
+            print(f"Marcas de alérgenos de {marcas} insumos y datos de conservación cargados.")
 
         print("Base de datos poblada exitosamente con datos de prueba enriquecidos para SAIA!")
 
