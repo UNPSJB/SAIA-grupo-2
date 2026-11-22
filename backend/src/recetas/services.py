@@ -1,6 +1,6 @@
 import logging
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, Any
 from sqlalchemy import select, func, update, insert
 from sqlalchemy.orm import Session
 
@@ -230,6 +230,96 @@ def _expresar_valor(valor: float, umbral: float, decimales: int, unidad: str) ->
         return f"{int(round(valor))} {unidad}".strip()
     return f"{round(valor, decimales)} {unidad}".strip()
 
+
+# nuevo ######################################
+
+def revisar_faltantes_receta(
+    db: Session, renglones: List[Any]
+) -> List[schemas.FaltanteNutricionalInsumo]:
+    """Revisa cada renglón de la receta y arma la lista de faltantes:
+    insumo, qué dato falta y si no tiene fuente registrada.
+    Aplica la regla de aditivos: solo cuentan como incompletos si tienen
+    marca de aporte y les falta energía o sodio.
+    """
+    from src.rotulado_frontal.models import MarcaInsumo
+
+    faltantes: List[schemas.FaltanteNutricionalInsumo] = []
+    insumo_ids = list({r.insumo_id for r in renglones})
+    if not insumo_ids:
+        return faltantes
+
+    insumos = {i.id: i for i in db.scalars(select(Insumo).where(Insumo.id.in_(insumo_ids))).all()}
+    marcas = {m.insumo_id: m for m in db.scalars(select(MarcaInsumo).where(MarcaInsumo.insumo_id.in_(insumo_ids))).all()}
+
+    todos_datos = db.scalars(
+        select(DatoNutricionalInsumo).where(DatoNutricionalInsumo.insumo_id.in_(insumo_ids))
+    ).all()
+    datos_por_insumo: dict[int, dict[Nutriente, DatoNutricionalInsumo]] = {}
+    for d in todos_datos:
+        datos_por_insumo.setdefault(d.insumo_id, {})[d.nutriente] = d
+
+    vistos = set()
+    for r in renglones:
+        insumo_id = r.insumo_id
+        tipo_uso = r.tipo_uso
+        tipo_uso_val = tipo_uso.value if hasattr(tipo_uso, "value") else str(tipo_uso)
+
+        clave = (insumo_id, tipo_uso_val)
+        if clave in vistos:
+            continue
+        vistos.add(clave)
+
+        insumo = insumos.get(insumo_id)
+        insumo_nombre = insumo.nombre if insumo else f"Insumo #{insumo_id}"
+        datos_insumo = datos_por_insumo.get(insumo_id, {})
+        marca = marcas.get(insumo_id)
+
+        datos_faltantes: List[str] = []
+        sin_fuente: List[str] = []
+
+        if tipo_uso_val == TipoUsoInsumo.ADITIVO.value:
+            # REGLA DE ADITIVOS: solo cuentan como incompletos si tienen marca de
+            # aporte y les falta energía o sodio.
+            aporta_sodio = bool(marca and marca.agrega_sodio)
+            aporta_energia = bool(marca and (marca.agrega_azucares or marca.agrega_grasas))
+
+            if aporta_energia:
+                dato_e = datos_insumo.get(Nutriente.ENERGIA)
+                if not dato_e or dato_e.valor is None:
+                    datos_faltantes.append(Nutriente.ENERGIA.value)
+                elif not dato_e.fuente:
+                    sin_fuente.append(Nutriente.ENERGIA.value)
+
+            if aporta_sodio:
+                dato_s = datos_insumo.get(Nutriente.SODIO)
+                if not dato_s or dato_s.valor is None:
+                    datos_faltantes.append(Nutriente.SODIO.value)
+                elif not dato_s.fuente:
+                    sin_fuente.append(Nutriente.SODIO.value)
+        else:
+            # INGREDIENTE: los 10 nutrientes obligatorios deben estar presentes con valor y fuente
+            for nut in Nutriente:
+                dato = datos_insumo.get(nut)
+                if not dato or dato.valor is None:
+                    datos_faltantes.append(nut.value)
+                elif not dato.fuente:
+                    sin_fuente.append(nut.value)
+
+        if datos_faltantes or sin_fuente:
+            faltantes.append(
+                schemas.FaltanteNutricionalInsumo(
+                    insumo_id=insumo_id,
+                    insumo_nombre=insumo_nombre,
+                    tipo_uso=tipo_uso_val,
+                    datos_faltantes=datos_faltantes,
+                    sin_fuente=sin_fuente,
+                )
+            )
+
+    return faltantes
+
+###############################################3
+
 def calcular_informacion_nutricional_receta(
     db: Session, receta_id: int, nro_version: Optional[int] = None
 ) -> schemas.TablaNutricionalRecetaResponse:
@@ -244,6 +334,10 @@ def calcular_informacion_nutricional_receta(
     )
     renglones = db.execute(stmt_detalles).fetchall()
 
+
+    # nuevo, revisar si falta algo y ponerle el estado que corresponda
+    faltantes = revisar_faltantes_receta(db, renglones)
+    estado = EstadoTablaNutricional.INCOMPLETA if faltantes else EstadoTablaNutricional.COMPLETA
     vds = {v.nutriente: v for v in datos_nutricionales_services.obtener_valores_diarios_referencia(db)}
     aportes_totales = {nut: 0.0 for nut in Nutriente}
 
@@ -305,5 +399,7 @@ def calcular_informacion_nutricional_receta(
         rendimiento_final_gramos=rendimiento,
         unidad_venta_gramos=porcion,
         medida_casera=version_obj.medida_casera,
+        estado=estado,        ## nuevo
+        faltantes=faltantes,  ##nuevo
         items=items_res
     )

@@ -1,9 +1,11 @@
 from typing import Optional, List
 from datetime import date
-from pydantic import BaseModel, ConfigDict
+from src.datos_nutricionales.constants import EstadoTablaNutricional
+from pydantic import BaseModel, ConfigDict, Field
 from src.productos.schemas import Producto
 from src.equipos.schemas import Equipo
 from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo
+from src.datos_nutricionales.schemas import FaltanteNutricionalInsumo 
 
 class PasoRecetaBase(BaseModel):
     orden: int = 1
@@ -90,10 +92,31 @@ class ItemInformacionNutricionalResponse(BaseModel):
     porcentaje_vd: Optional[float] = None
     porcentaje_vd_expresado: str = "-"
 
+#  nuevo para mostrar a que insumos le faltan datos
+# class FaltanteNutricionalInsumo(BaseModel):
+#     insumo_id: int
+#     insumo_nombre: str
+#     tipo_uso: str = "ingrediente"
+#     datos_faltantes: List[str] = []
+#     sin_fuente: List[str] = []
+
+# class TablaNutricionalRecetaResponse(BaseModel):
+#     receta_id: int
+#     version: int
+#     rendimiento_final_gramos: float
+#     unidad_venta_gramos: float
+#     medida_casera: Optional[str] = None
+#     estado: str = "completa"                              #nuevo. estado de la receta
+#     faltantes: List[FaltanteNutricionalInsumo] = []       # nuevo. lista de lo que falta
+#     items: List[ItemInformacionNutricionalResponse] = []
+
+
 class TablaNutricionalRecetaResponse(BaseModel):
     receta_id: int
     version: int
     rendimiento_final_gramos: float
     unidad_venta_gramos: float
     medida_casera: Optional[str] = None
+    estado: EstadoTablaNutricional = EstadoTablaNutricional.COMPLETA
+    faltantes: List[FaltanteNutricionalInsumo] = Field(default_factory=list)
     items: List[ItemInformacionNutricionalResponse] = []

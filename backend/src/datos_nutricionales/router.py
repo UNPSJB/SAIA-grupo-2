@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -35,3 +35,15 @@ def update_valor_diario_referencia(
     nutriente: Nutriente, datos: schemas.ValorDiarioReferenciaUpdate, db: Session = Depends(get_db)
 ):
     return services.actualizar_valor_diario_referencia(db, nutriente, datos)
+
+
+@router.get("/productos/{producto_id}/informacion-nutricional", response_model=schemas.InformacionNutricionalProducto)
+def read_informacion_nutricional_producto(
+    producto_id: int,
+    porcion: Optional[float] = None,
+    medida_casera: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    return services.obtener_informacion_nutricional_producto(
+        db, producto_id, porcion=porcion, medida_casera=medida_casera
+    )
