@@ -19,6 +19,13 @@ def _codigo(error: pytest.ExceptionInfo) -> int:
     return error.value.status_code
 
 
+def _historial(db: Session, rotulo_id: int) -> list:
+    return [
+        schemas.HistorialCambioRotuloRespuesta.model_validate(cambio)
+        for cambio in services.listar_historial(db, rotulo_id)
+    ]
+
+
 def test_crear_completa_los_datos_que_el_sistema_ya_tiene(db_session: Session, producto, receta, admin):
     rotulo = crear_rotulo(db_session, producto, admin, denominacion_venta="Galletitas")
 
@@ -72,14 +79,12 @@ def test_editar_deja_constancia_con_quien_y_valor_anterior(db_session: Session, 
         admin.id,
     )
 
-    historial = services.listar_historial(db_session, rotulo.id)
-    cambios = {c.campo: c for c in historial}
+    cambios = {c.campo: c for c in _historial(db_session, rotulo.id)}
     assert set(cambios) == {"denominacion_venta", "lista_ingredientes"}
     assert cambios["lista_ingredientes"].valor_original == TEXTO_LISTA
     assert cambios["denominacion_venta"].valor_nuevo == "Galletitas dulces"
     assert cambios["denominacion_venta"].empleado_nombre == "Ana"
-    respuesta = schemas.HistorialCambioRotuloRespuesta.model_validate(cambios["denominacion_venta"])
-    assert respuesta.empleado_apellido == "Rotulo"
+    assert cambios["denominacion_venta"].empleado_apellido == "Rotulo"
 
 
 def test_actualizar_datos_automaticos_toma_la_receta_vigente(db_session: Session, producto, receta, insumos, gramos, admin):
@@ -94,7 +99,7 @@ def test_actualizar_datos_automaticos_toma_la_receta_vigente(db_session: Session
 
     assert actualizado.receta_version == 2
     assert actualizado.lista_ingredientes == "Ingredientes: azúcar, harina de trigo 000."
-    campos = {c.campo for c in services.listar_historial(db_session, rotulo.id)}
+    campos = {c.campo for c in _historial(db_session, rotulo.id)}
     assert {"receta_version", "lista_ingredientes", "ingredientes_snapshot", "nutricion_snapshot"} <= campos
 
 
@@ -141,7 +146,7 @@ def test_cambiar_la_fecha_de_duracion_deja_constancia(db_session: Session, produ
         db_session, asociado.id, schemas.RotuloLoteActualizar(fecha_duracion=date(2027, 1, 20)), admin.id
     )
 
-    cambio = services.listar_historial(db_session, rotulo.id)[0]
+    cambio = _historial(db_session, rotulo.id)[0]
     assert cambio.campo == f"lote:{lote.nro_lote}.fecha_duracion"
     assert cambio.valor_nuevo == "2027-01-20"
 
