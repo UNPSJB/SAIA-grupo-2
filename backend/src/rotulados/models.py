@@ -129,3 +129,44 @@ class HistorialCambioRotulo(ModeloBase):
     empleado: Mapped[Optional["src.empleados.models.Empleado"]] = relationship(
         "src.empleados.models.Empleado", lazy="selectin"
     )
+
+
+
+class ExportacionRotulo(ModeloBase):
+    __tablename__ = "exportaciones_rotulo"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    rotulo_id: Mapped[int] = mapped_column(
+        ForeignKey("rotulos.id"), nullable=False, index=True
+    )
+    empleado_id: Mapped[int] = mapped_column(
+        ForeignKey("empleados.id"), nullable=False
+    )
+    fecha_exportacion: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=datetime.now
+    )
+
+    receta_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("recetas.id"), nullable=True
+    )
+    version_receta: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )
+    calculo_sellos_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("calculos_sellos_rotulado.id"), nullable=True
+    )
+    parametros_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("parametros_normativos.id"), nullable=True
+    )
+    version_parametros: Mapped[Optional[str]] = mapped_column(
+        String(50), nullable=True
+    )
+
+    # Copia inmutable de los datos utilizados en esta exportación.
+    respaldo_snapshot: Mapped[dict] = mapped_column(
+        JSON, nullable=False
+    )
+
+    empleado: Mapped["src.empleados.models.Empleado"] = relationship(
+        "src.empleados.models.Empleado", lazy="selectin"
+    )

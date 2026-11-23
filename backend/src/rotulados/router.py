@@ -129,3 +129,48 @@ def listar_historial(
     db: Session = Depends(get_db),
 ):
     return services.listar_historial(db, rotulo_id)
+
+
+
+# ---------------------------------------------------------------------
+# Exportaciones de borradores PDF
+# ---------------------------------------------------------------------
+
+@router.post(
+    "/{rotulo_id}/exportaciones",
+    response_model=schemas.ExportacionRotuloDetalle,
+    status_code=201,
+)
+def crear_exportacion(
+    rotulo_id: int,
+    db: Session = Depends(get_db),
+    empleado_id: int = Depends(obtener_empleado_id),
+):
+    return services.crear_exportacion(
+        db, rotulo_id, empleado_id
+    )
+
+
+@router.get(
+    "/{rotulo_id}/exportaciones",
+    response_model=list[schemas.ExportacionRotuloRespuesta],
+)
+def listar_exportaciones(
+    rotulo_id: int,
+    db: Session = Depends(get_db),
+):
+    return services.listar_exportaciones(db, rotulo_id)
+
+
+@router.get(
+    "/{rotulo_id}/exportaciones/{exportacion_id}",
+    response_model=schemas.ExportacionRotuloDetalle,
+)
+def obtener_exportacion(
+    rotulo_id: int,
+    exportacion_id: int,
+    db: Session = Depends(get_db),
+):
+    return services.obtener_exportacion(
+        db, rotulo_id, exportacion_id
+    )

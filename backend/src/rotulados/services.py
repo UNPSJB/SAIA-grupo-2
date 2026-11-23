@@ -12,10 +12,11 @@ from src.lotes_produccion.models import LoteProduccion
 from src.productos.models import Producto
 from src.recetas.models import Receta, VersionReceta, EstadoVersionReceta
 from src.recetas import services as recetas_services
-from src.rotulado_frontal.models import EvaluacionAplicabilidad
-
+from src.rotulado_frontal.models import EvaluacionAplicabilidad, CalculoSellosRotulado
 from src.rotulados import schemas
-from src.rotulados.models import Rotulo, RotuloLote, HistorialCambioRotulo
+from src.rotulados.models import Rotulo, RotuloLote, HistorialCambioRotulo, ExportacionRotulo
+from src.parametros_normativos.models import ConjuntoParametros 
+
 
 
 # ---------------------------------------------------------------------
@@ -534,4 +535,208 @@ def calcular_completitud(
         "porcentaje_completitud": porcentaje,
         "completo": len(faltantes) == 0,
         "faltantes": faltantes,
+    }
+
+
+# ---------------------------------------------------------------------
+# Exportaciones PDF: registro y respaldo histórico
+# ---------------------------------------------------------------------
+
+def crear_exportacion(
+    db: Session,
+    rotulo_id: int,
+    empleado_id: int,
+) -> ExportacionRotulo:
+    _verificar_admin(db, empleado_id)
+    rotulo = _leer_rotulo(db, rotulo_id)
+
+    # Se copian los snapshots existentes. No se recalculan.
+    respaldo = {
+        "tipo": "BORRADOR",
+        "fecha_exportacion": datetime.now().isoformat(),
+        "rotulo": {
+            "id": rotulo.id,
+            "producto_id": rotulo.producto_id,
+            "denominacion_venta": rotulo.denominacion_venta,
+            "contenido_neto": rotulo.contenido_neto,
+            "unidad_contenido_neto": rotulo.unidad_contenido_neto,
+            "rnpa_rppa": rotulo.rnpa_rppa,
+            "razon_social": rotulo.razon_social,
+            "domicilio": rotulo.domicilio,
+            "es_importado": rotulo.es_importado,
+            "razon_social_importador": rotulo.razon_social_importador,
+            "domicilio_importador": rotulo.domicilio_importador,
+            "pais_origen": rotulo.pais_origen,
+            "instrucciones_uso": rotulo.instrucciones_uso,
+            "instrucciones_conservacion": rotulo.instrucciones_conservacion,
+            "ingredientes_snapshot": rotulo.ingredientes_snapshot,
+            "nutricion_snapshot": rotulo.nutricion_snapshot,
+            "sellos_snapshot": rotulo.sellos_snapshot,
+            "receta_id": rotulo.receta_id,
+            "receta_version": rotulo.receta_version,
+        },
+        "lotes": [
+            {
+                "nro_lote": lote.nro_lote,
+                "fecha_duracion": (
+                    lote.fecha_duracion.isoformat()
+                    if lote.fecha_duracion else None
+                ),
+            }
+            for lote in rotulo.lotes
+        ],
+        "completitud": calcular_completitud(db, rotulo_id),
+        "calculo_sellos": None,
+    }
+
+    calculo = None
+
+    # Solo se toma un cálculo correspondiente a la versión
+    # de receta guardada en el borrador.
+    if rotulo.receta_version is not None:
+        calculo = db.scalar(
+            select(CalculoSellosRotulado)
+            .where(
+                CalculoSellosRotulado.producto_id == rotulo.producto_id,
+                CalculoSellosRotulado.version_receta == rotulo.receta_version,
+            )
+            .order_by(
+                CalculoSellosRotulado.fecha_calculo.desc(),
+                CalculoSellosRotulado.id.desc(),
+            )
+        )
+
+    parametros_id = None
+    version_parametros = None
+    calculo_id = None
+
+    if calculo is not None:
+        parametros = calculo.parametros
+
+        parametros_id = calculo.parametros_id
+        version_parametros = str(parametros.version)
+        calculo_id = calculo.id
+
+        respaldo["calculo_sellos"] = {
+            "id": calculo.id,
+            "version_receta": calculo.version_receta,
+            "provisorio": calculo.provisorio,
+            "sellos_obtenidos": calculo.sellos_obtenidos,
+            "detalle_calculo": calculo.detalle_calculo,
+            "fecha_calculo": (
+                calculo.fecha_calculo.isoformat()
+                if calculo.fecha_calculo else None
+            ),
+            "calculado_por_id": calculo.calculado_por_id,
+            "evaluacion_aplicabilidad_id": (
+                calculo.evaluacion_aplicabilidad_id
+            ),
+            "parametros": {
+                "id": parametros.id,
+                "version": str(parametros.version),
+                "estado": str(parametros.estado),
+                "norma_origen": parametros.norma_origen,
+                "fecha_vigencia": (
+                    parametros.fecha_vigencia.isoformat()
+                    if parametros.fecha_vigencia else None
+                ),
+            },
+        }
+
+    # Garantiza que el respaldo sea serializable como JSON.
+    respaldo = json.loads(
+        json.dumps(respaldo, ensure_ascii=False, default=str)
+    )
+
+    exportacion = ExportacionRotulo(
+        rotulo_id=rotulo_id,
+        empleado_id=empleado_id,
+        fecha_exportacion=datetime.now(),
+        receta_id=rotulo.receta_id,
+        version_receta=rotulo.receta_version,
+        calculo_sellos_id=calculo_id,
+        parametros_id=parametros_id,
+        version_parametros=version_parametros,
+        respaldo_snapshot=respaldo,
+    )
+
+    db.add(exportacion)
+    db.commit()
+    db.refresh(exportacion)
+
+    return exportacion
+
+
+def listar_exportaciones(
+    db: Session,
+    rotulo_id: int,
+) -> list[dict]:
+    _leer_rotulo(db, rotulo_id)
+
+    filas = db.execute(
+        select(
+            ExportacionRotulo,
+            Empleado.nombre,
+            Empleado.apellido,
+        )
+        .outerjoin(
+            Empleado,
+            ExportacionRotulo.empleado_id == Empleado.id,
+        )
+        .where(ExportacionRotulo.rotulo_id == rotulo_id)
+        .order_by(
+            ExportacionRotulo.fecha_exportacion.desc(),
+            ExportacionRotulo.id.desc(),
+        )
+    ).all()
+
+    return [
+        {
+            "id": exportacion.id,
+            "rotulo_id": exportacion.rotulo_id,
+            "empleado_id": exportacion.empleado_id,
+            "fecha_exportacion": exportacion.fecha_exportacion,
+            "receta_id": exportacion.receta_id,
+            "version_receta": exportacion.version_receta,
+            "calculo_sellos_id": exportacion.calculo_sellos_id,
+            "parametros_id": exportacion.parametros_id,
+            "version_parametros": exportacion.version_parametros,
+            "empleado_nombre": nombre,
+            "empleado_apellido": apellido,
+        }
+        for exportacion, nombre, apellido in filas
+    ]
+
+
+def obtener_exportacion(
+    db: Session,
+    rotulo_id: int,
+    exportacion_id: int,
+) -> dict:
+    exportacion = db.scalar(
+        select(ExportacionRotulo).where(
+            ExportacionRotulo.id == exportacion_id,
+            ExportacionRotulo.rotulo_id == rotulo_id,
+        )
+    )
+
+    if exportacion is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Exportación no encontrada.",
+        )
+
+    return {
+        "id": exportacion.id,
+        "rotulo_id": exportacion.rotulo_id,
+        "empleado_id": exportacion.empleado_id,
+        "fecha_exportacion": exportacion.fecha_exportacion,
+        "receta_id": exportacion.receta_id,
+        "version_receta": exportacion.version_receta,
+        "calculo_sellos_id": exportacion.calculo_sellos_id,
+        "parametros_id": exportacion.parametros_id,
+        "version_parametros": exportacion.version_parametros,
+        "respaldo_snapshot": exportacion.respaldo_snapshot,
+        "empleado_nombre": exportacion.empleado.nombre if exportacion.empleado else None,
+        "empleado_apellido": exportacion.empleado.apellido if exportacion.empleado else None,
     }

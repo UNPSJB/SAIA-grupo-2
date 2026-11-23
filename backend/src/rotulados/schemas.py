@@ -99,3 +99,24 @@ class HistorialCambioRotuloRespuesta(BaseModel):
     empleado_nombre: Optional[str] = None
     empleado_apellido: Optional[str] = None
     fecha_cambio: datetime
+
+
+# Historial de exportaciones de borradores PDF
+class ExportacionRotuloRespuesta(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    rotulo_id: int
+    empleado_id: int
+    fecha_exportacion: datetime
+    receta_id: Optional[int] = None
+    version_receta: Optional[int] = None
+    calculo_sellos_id: Optional[int] = None
+    parametros_id: Optional[int] = None
+    version_parametros: Optional[str] = None
+
+
+class ExportacionRotuloDetalle(ExportacionRotuloRespuesta):
+    respaldo_snapshot: dict[str, Any]
+    empleado_nombre: Optional[str] = None
+    empleado_apellido: Optional[str] = None

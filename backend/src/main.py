@@ -26,7 +26,7 @@ from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
 from src.recetas.models import Receta, VersionReceta, PasoReceta
 from src.parametros_normativos.models import ConjuntoParametros, ModuloRotuladoFrontal
 from src.rotulado_frontal.models import EvaluacionAplicabilidad, CalculoSellosRotulado
-from src.rotulados.models import Rotulo, RotuloLote, HistorialCambioRotulo
+from src.rotulados.models import Rotulo, RotuloLote, HistorialCambioRotulo, ExportacionRotulo
 from src.alergenos.models import CondicionesConservacion, DeclaracionAlergenos, MarcaAlergenosInsumo
 
 from src.config import settings
