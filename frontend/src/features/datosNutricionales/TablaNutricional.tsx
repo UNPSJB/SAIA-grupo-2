@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import type { FilaNutricionalNormativa, InformacionNutricionalProducto } from '../../types/datosNutricionales';
 import Boton from '../../components/Boton';
-//import { descargarImagenCanvas } from '../../utils/archivos';
+import InsigniaEstadoNutricional from './InsigniaEstadoNutricional';
+import CompletarNutrientesModal from './CompletarNutrientesModal';
 import { formatearValor } from './nutrientes';
 import estilos from './DatosNutricionales.module.css';
 import styles from '../../styles/shared.module.css';
@@ -10,6 +12,7 @@ import { exportarTablaNutricionalImagen, exportarTablaNutricionalPDF } from '../
 interface TablaNutricionalProps {
     datos: InformacionNutricionalProducto;
     mostrarAcciones?: boolean;
+    onRecalcular?: () => void;
 }
 
 function textoPorcion(datos: InformacionNutricionalProducto): string {
@@ -29,7 +32,8 @@ function formatearCeldaVd(fila: FilaNutricionalNormativa): string {
     return `${fila.porcentaje_vd}%`;
 }
 
-export default function TablaNutricional({ datos, mostrarAcciones = true }: TablaNutricionalProps) {
+export default function TablaNutricional({ datos, mostrarAcciones = true, onRecalcular }: TablaNutricionalProps) {
+    const [insumoACompletar, setInsumoACompletar] = useState<{ id: number; nombre: string } | null>(null);
     const esCompleta = datos.estado === 'completa';
     const encabezadoCien = `Por 100 ${datos.unidad_base}`;
 
@@ -40,13 +44,13 @@ export default function TablaNutricional({ datos, mostrarAcciones = true }: Tabl
         exportarTablaNutricionalImagen(datos);
     };
 
+    const tieneFaltantes = Boolean(datos.faltantes && datos.faltantes.length > 0);
+
     return (
         <div className={estilos.contenedorRotulo}>
             {mostrarAcciones && (
                 <div className={`${estilos.encabezadoAccionesRotulo} ${estilos.ocultarEnImpresion}`}>
-                    <span className={`${estilos.estadoRotulo} ${esCompleta ? estilos.estadoCompleta : estilos.estadoIncompleta}`}>
-                        {esCompleta ? 'Tabla completa' : 'Tabla incompleta'}
-                    </span>
+                    <InsigniaEstadoNutricional estado={datos.estado} />
 
                     <div className={styles.grupoBotonesTabla}>
                         <Boton variant="documentos" onClick={handleDescargarPDF}>
@@ -56,6 +60,48 @@ export default function TablaNutricional({ datos, mostrarAcciones = true }: Tabl
                             Descargar imagen
                         </Boton>
                     </div>
+                </div>
+            )}
+
+            {mostrarAcciones && !esCompleta && tieneFaltantes && (
+                <div className={`${estilos.avisoFaltantes} ${estilos.ocultarEnImpresion}`} role="alert">
+                    <div className={estilos.tituloAvisoFaltantes}>
+                        Advertencia: Ingredientes con datos incompletos
+                    </div>
+                    <p style={{ margin: 0 }}>
+                        La receta contiene ingredientes sin datos nutricionales completos o sin fuente registrada:
+                    </p>
+                    <ul className={estilos.listaFaltantes}>
+                        {datos.faltantes!.map((f) => (
+                            <li key={f.insumo_id} className={estilos.itemFaltante}>
+                                <strong>{f.insumo_nombre}</strong>
+                                {f.tipo_uso === 'aditivo' && ' (Aditivo con marca de aporte)'}
+                                {f.datos_faltantes.length > 0 && (
+                                    <span className={estilos.detalleFaltante}>
+                                        Nutrientes faltantes: {f.datos_faltantes.join(', ')}
+                                    </span>
+                                )}
+                                {f.sin_fuente.length > 0 && (
+                                    <span className={estilos.detalleFaltante}>
+                                        Sin fuente registrada: {f.sin_fuente.join(', ')}
+                                    </span>
+                                )}
+                                <div className={estilos.botonCompletarFaltante}>
+                                    <Boton
+                                        variant="editar"
+                                        onClick={() =>
+                                            setInsumoACompletar({
+                                                id: f.insumo_id,
+                                                nombre: f.insumo_nombre,
+                                            })
+                                        }
+                                    >
+                                        Completar
+                                    </Boton>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             )}
 
@@ -120,6 +166,20 @@ export default function TablaNutricional({ datos, mostrarAcciones = true }: Tabl
                 <p className={estilos.notaPieNormativa}>{datos.nota_pie}</p>
                 <p className={estilos.leyendaNormativa}>{datos.leyenda}</p>
             </section>
+
+            {insumoACompletar && (
+                <CompletarNutrientesModal
+                    insumoId={insumoACompletar.id}
+                    insumoNombre={insumoACompletar.nombre}
+                    onClose={() => setInsumoACompletar(null)}
+                    onGuardadoExitoso={() => {
+                        setInsumoACompletar(null);
+                        if (onRecalcular) {
+                            onRecalcular();
+                        }
+                    }}
+                />
+            )}
         </div>
     );
 }

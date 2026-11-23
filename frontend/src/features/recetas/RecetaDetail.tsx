@@ -23,6 +23,7 @@ import type { Equipo } from '../../types/equipos';
 import type { UnidadMedida } from '../../types/unidadesMedida';
 import type { ComposicionReceta, Receta, VersionReceta } from '../../types/receta';
 import EscalarReceta from './EscalarReceta';
+import ListaIngredientesRotuloTab from './ListaIngredientesRotuloTab';
 import styles from '../../styles/shared.module.css';
 import estilos from '../../components/Estadisticas.module.css';
 
@@ -81,7 +82,8 @@ export default function RecetaDetail() {
     const [composicion, setComposicion] = useState<ComposicionReceta | null>(null);
     const [cargandoComposicion, setCargandoComposicion] = useState(false);
     const [errorComposicion, setErrorComposicion] = useState<string | null>(null);
-    
+    const [pestanaActiva, setPestanaActiva] = useState<'ficha' | 'lista_ingredientes'>('ficha');
+
     useEffect(() => {
         let cancelado = false;
 
@@ -181,9 +183,9 @@ export default function RecetaDetail() {
     }
     
     const componentesComposicion = composicion
-            ? [...composicion.ingredientes, ...composicion.aditivos]
-            : [];
-    
+        ? [...composicion.ingredientes, ...composicion.aditivos]
+        : [];
+
     useEffect(() => {
         if (!esAdmin || !version) {
             setComposicion(null);
@@ -360,299 +362,348 @@ export default function RecetaDetail() {
                             </div>
                         </div>
 
-                        <div className={styles.formGrid}>
-                            <p>
-                                <strong>Rendimiento final:</strong>{' '}
-                                {formatearGramos(version.rendimiento_final_gramos)}
-                            </p>
-                            <p>
-                                <strong>Unidad de venta:</strong>{' '}
-                                {formatearGramos(version.unidad_venta_gramos)}
-                            </p>
-                            <p>
-                                <strong>Medida casera:</strong>{' '}
-                                {version.medida_casera || '—'}
-                            </p>
-                            <p>
-                                <strong>Fecha de vigencia:</strong>{' '}
-                                {formatearFecha(version.fecha_vigencia)}
-                            </p>
-                            <p style={{ gridColumn: '1 / -1', marginBottom: 0 }}>
-                                <strong>Motivo del cambio:</strong>{' '}
-                                {version.motivo_cambio || '—'}
-                            </p>
+                        {/* Barra de pestañas */}
+                        <div
+                            role="tablist"
+                            aria-label="Secciones de la receta"
+                            style={{
+                                display: 'flex',
+                                gap: '8px',
+                                marginBottom: '20px',
+                                borderBottom: '1px solid var(--border-color, #334155)',
+                                paddingBottom: '10px',
+                            }}
+                        >
+                            <button
+                                type="button"
+                                role="tab"
+                                aria-selected={pestanaActiva === 'ficha'}
+                                onClick={() => setPestanaActiva('ficha')}
+                                className={styles.botonFiltro}
+                                style={{
+                                    fontWeight: pestanaActiva === 'ficha' ? 700 : 500,
+                                    borderColor: pestanaActiva === 'ficha' ? '#4e96e2' : undefined,
+                                }}
+                            >
+                                Ficha técnica
+                            </button>
+                            <button
+                                type="button"
+                                role="tab"
+                                aria-selected={pestanaActiva === 'lista_ingredientes'}
+                                onClick={() => setPestanaActiva('lista_ingredientes')}
+                                className={styles.botonFiltro}
+                                style={{
+                                    fontWeight: pestanaActiva === 'lista_ingredientes' ? 700 : 500,
+                                    borderColor: pestanaActiva === 'lista_ingredientes' ? '#4e96e2' : undefined,
+                                }}
+                            >
+                                Lista de ingredientes
+                            </button>
                         </div>
 
-                        <section className={styles.bloqueDetalle} aria-labelledby="receta-detalles">
-                            <h3 id="receta-detalles">Ingredientes y aditivos</h3>
-                            {version.detalles.length === 0 ? (
-                                <p className={styles.textMuted}>
-                                    Esta versión no tiene ingredientes ni aditivos cargados.
-                                </p>
-                            ) : (
-                                <ul>
-                                    {version.detalles
-                                        .toSorted((a, b) => a.renglon - b.renglon)
-                                        .map((detalle) => {
-                                            const insumo = insumosPorId.get(detalle.insumo_id);
-                                            const aditivo = detalle.aditivo_id
-                                                ? aditivosPorId.get(detalle.aditivo_id)
-                                                : null;
+                        {pestanaActiva === 'lista_ingredientes' ? (
+                            <ListaIngredientesRotuloTab
+                                recetaId={receta.id}
+                                version={version.version}
+                                esVigente={version.estado === 'activo'}
+                            />
+                        ) : (
+                            <>
+                                <div className={styles.formGrid}>
+                                    <p>
+                                        <strong>Rendimiento final:</strong>{' '}
+                                        {formatearGramos(version.rendimiento_final_gramos)}
+                                    </p>
+                                    <p>
+                                        <strong>Unidad de venta:</strong>{' '}
+                                        {formatearGramos(version.unidad_venta_gramos)}
+                                    </p>
+                                    <p>
+                                        <strong>Medida casera:</strong>{' '}
+                                        {version.medida_casera || '—'}
+                                    </p>
+                                    <p>
+                                        <strong>Fecha de vigencia:</strong>{' '}
+                                        {formatearFecha(version.fecha_vigencia)}
+                                    </p>
+                                    <p style={{ gridColumn: '1 / -1', marginBottom: 0 }}>
+                                        <strong>Motivo del cambio:</strong>{' '}
+                                        {version.motivo_cambio || '—'}
+                                    </p>
+                                </div>
 
-                                            return (
-                                                <li
-                                                    key={`${detalle.receta_id}-${detalle.nro_version}-${detalle.renglon}`}
-                                                >
-                                                    <strong>
-                                                        {insumo?.nombre ?? `Insumo #${detalle.insumo_id}`}
-                                                    </strong>
-                                                    {' — '}
-                                                    {formatearGramos(detalle.cantidad_gramos)}
-                                                    {' · '}
-                                                    {detalle.tipo_uso === 'ingrediente'
-                                                        ? 'Ingrediente'
-                                                        : 'Aditivo'}
-                                                    {aditivo
-                                                        ? ` · ${aditivo.nombre_completo}${aditivo.numero_ins ? ` (INS ${aditivo.numero_ins})` : ''}`
-                                                        : ''}
-                                                </li>
-                                            );
-                                        })}
-                                </ul>
-                            )}
-                        </section>
-
-                        {esAdmin && (
-                            <section className={styles.bloqueDetalle} aria-labelledby="receta-composicion">
-                                <h3 id="receta-composicion">Composición porcentual</h3>
-
-                                {cargandoComposicion && (
-                                    <p>Calculando composición...</p>
-                                )}
-
-                                {errorComposicion && (
-                                    <p role="alert">{errorComposicion}</p>
-                                )}
-
-                                {composicion && (
-                                    <>
-                                        <p>
-                                            <strong>Peso total:</strong>{' '}
-                                            {formatearGramos(composicion.total_gramos)}
+                                <section className={styles.bloqueDetalle} aria-labelledby="receta-detalles">
+                                    <h3 id="receta-detalles">Ingredientes y aditivos</h3>
+                                    {version.detalles.length === 0 ? (
+                                        <p className={styles.textMuted}>
+                                            Esta versión no tiene ingredientes ni aditivos cargados.
                                         </p>
+                                    ) : (
+                                        <ul>
+                                            {version.detalles
+                                                .toSorted((a, b) => a.renglon - b.renglon)
+                                                .map((detalle) => {
+                                                    const insumo = insumosPorId.get(detalle.insumo_id);
+                                                    const aditivo = detalle.aditivo_id
+                                                        ? aditivosPorId.get(detalle.aditivo_id)
+                                                        : null;
 
-                                        {componentesComposicion.length > 0 && (
+                                                    return (
+                                                        <li
+                                                            key={`${detalle.receta_id}-${detalle.nro_version}-${detalle.renglon}`}
+                                                        >
+                                                            <strong>
+                                                                {insumo?.nombre ?? `Insumo #${detalle.insumo_id}`}
+                                                            </strong>
+                                                            {' — '}
+                                                            {formatearGramos(detalle.cantidad_gramos)}
+                                                            {' · '}
+                                                            {detalle.tipo_uso === 'ingrediente'
+                                                                ? 'Ingrediente'
+                                                                : 'Aditivo'}
+                                                            {aditivo
+                                                                ? ` · ${aditivo.nombre_completo}${aditivo.numero_ins ? ` (INS ${aditivo.numero_ins})` : ''}`
+                                                                : ''}
+                                                        </li>
+                                                    );
+                                                })}
+                                        </ul>
+                                    )}
+                                </section>
+
+                                {esAdmin && (
+                                    <section className={styles.bloqueDetalle} aria-labelledby="receta-composicion">
+                                        <h3 id="receta-composicion">Composición porcentual</h3>
+
+                                        {cargandoComposicion && (
+                                            <p>Calculando composición...</p>
+                                        )}
+
+                                        {errorComposicion && (
+                                            <p role="alert">{errorComposicion}</p>
+                                        )}
+
+                                        {composicion && (
                                             <>
-                                                <h4>Distribución porcentual</h4>
+                                                <p>
+                                                    <strong>Peso total:</strong>{' '}
+                                                    {formatearGramos(composicion.total_gramos)}
+                                                </p>
 
-                                                <div className={estilos.lienzoGrafico}>
-                                                    <Bar
-                                                        role="img"
-                                                        aria-label={`Composición de la receta: ${componentesComposicion
-                                                            .map(
-                                                                (item) =>
-                                                                    `${item.nombre_insumo}: ${formatearPorcentaje(item.porcentaje)}`,
-                                                            )
-                                                            .join('; ')}`}
-                                                        data={{
-                                                            labels: componentesComposicion.map(
-                                                                (item) => item.nombre_insumo,
-                                                            ),
-                                                            datasets: [
-                                                                {
-                                                                    label: 'Porcentaje',
-                                                                    data: componentesComposicion.map(
-                                                                        (item) => item.porcentaje,
+                                                {componentesComposicion.length > 0 && (
+                                                    <>
+                                                        <h4>Distribución porcentual</h4>
+
+                                                        <div className={estilos.lienzoGrafico}>
+                                                            <Bar
+                                                                role="img"
+                                                                aria-label={`Composición de la receta: ${componentesComposicion
+                                                                    .map(
+                                                                        (item) =>
+                                                                            `${item.nombre_insumo}: ${formatearPorcentaje(item.porcentaje)}`,
+                                                                    )
+                                                                    .join('; ')}`}
+                                                                data={{
+                                                                    labels: componentesComposicion.map(
+                                                                        (item) => item.nombre_insumo,
                                                                     ),
-                                                                    backgroundColor: COLOR_BARRA,
-                                                                    hoverBackgroundColor: COLOR_BARRA,
-                                                                    borderRadius: {
-                                                                        topLeft: 4,
-                                                                        topRight: 4,
-                                                                        bottomLeft: 0,
-                                                                        bottomRight: 0,
-                                                                    },
-                                                                    borderSkipped: 'bottom',
-                                                                    maxBarThickness: 32,
-                                                                },
-                                                            ],
-                                                        }}
-                                                        options={{
-                                                            responsive: true,
-                                                            maintainAspectRatio: false,
-                                                            animation: { duration: 250 },
-                                                            interaction: { mode: 'index', intersect: false },
-                                                            plugins: {
-                                                                legend: { display: false },
-                                                                tooltip: {
-                                                                    displayColors: false,
-                                                                    callbacks: {
-                                                                        title: (elementos) =>
-                                                                            componentesComposicion[
-                                                                                elementos[0].dataIndex
-                                                                            ]?.nombre_insumo ?? '',
-                                                                        label: (contexto) => {
-                                                                            const item =
-                                                                                componentesComposicion[
-                                                                                    contexto.dataIndex
-                                                                                ];
+                                                                    datasets: [
+                                                                        {
+                                                                            label: 'Porcentaje',
+                                                                            data: componentesComposicion.map(
+                                                                                (item) => item.porcentaje,
+                                                                            ),
+                                                                            backgroundColor: COLOR_BARRA,
+                                                                            hoverBackgroundColor: COLOR_BARRA,
+                                                                            borderRadius: {
+                                                                                topLeft: 4,
+                                                                                topRight: 4,
+                                                                                bottomLeft: 0,
+                                                                                bottomRight: 0,
+                                                                            },
+                                                                            borderSkipped: 'bottom',
+                                                                            maxBarThickness: 32,
+                                                                        },
+                                                                    ],
+                                                                }}
+                                                                options={{
+                                                                    responsive: true,
+                                                                    maintainAspectRatio: false,
+                                                                    animation: { duration: 250 },
+                                                                    interaction: { mode: 'index', intersect: false },
+                                                                    plugins: {
+                                                                        legend: { display: false },
+                                                                        tooltip: {
+                                                                            displayColors: false,
+                                                                            callbacks: {
+                                                                                title: (elementos) =>
+                                                                                    componentesComposicion[
+                                                                                        elementos[0].dataIndex
+                                                                                    ]?.nombre_insumo ?? '',
+                                                                                label: (contexto) => {
+                                                                                    const item =
+                                                                                        componentesComposicion[
+                                                                                            contexto.dataIndex
+                                                                                        ];
 
-                                                                            if (!item) return '';
+                                                                                    if (!item) return '';
 
-                                                                            return `${formatearPorcentaje(item.porcentaje)} · ${formatearGramos(item.cantidad_gramos)}`;
+                                                                                    return `${formatearPorcentaje(item.porcentaje)} · ${formatearGramos(item.cantidad_gramos)}`;
+                                                                                },
+                                                                            },
                                                                         },
                                                                     },
-                                                                },
-                                                            },
-                                                            scales: {
-                                                                y: {
-                                                                    beginAtZero: true,
-                                                                    border: { display: false },
-                                                                    grid: { color: COLOR_GRILLA },
-                                                                    ticks: {
-                                                                        color: COLOR_TEXTO_EJE,
-                                                                        callback: (valor) => `${valor}%`,
+                                                                    scales: {
+                                                                        y: {
+                                                                            beginAtZero: true,
+                                                                            border: { display: false },
+                                                                            grid: { color: COLOR_GRILLA },
+                                                                            ticks: {
+                                                                                color: COLOR_TEXTO_EJE,
+                                                                                callback: (valor) => `${valor}%`,
+                                                                            },
+                                                                        },
+                                                                        x: {
+                                                                            grid: { display: false },
+                                                                            border: { color: COLOR_GRILLA },
+                                                                            ticks: {
+                                                                                color: COLOR_TEXTO_EJE,
+                                                                                autoSkip: false,
+                                                                                maxRotation: 45,
+                                                                                minRotation: 0,
+                                                                            },
+                                                                        },
                                                                     },
-                                                                },
-                                                                x: {
-                                                                    grid: { display: false },
-                                                                    border: { color: COLOR_GRILLA },
-                                                                    ticks: {
-                                                                        color: COLOR_TEXTO_EJE,
-                                                                        autoSkip: false,
-                                                                        maxRotation: 45,
-                                                                        minRotation: 0,
-                                                                    },
-                                                                },
-                                                            },
-                                                        }}
-                                                    />
+                                                                }}
+                                                            />
+                                                        </div>
+
+                                                        <p className={estilos.notaGrafico}>
+                                                            Pasá el cursor por cada barra para consultar el porcentaje y la
+                                                            cantidad en gramos del componente.
+                                                        </p>
+                                                    </>
+                                                )}
+
+                                                <div className={estilos.datosTabla}>
+                                                    <h4>Ingredientes</h4>
+
+                                                    {composicion.ingredientes.length === 0 ? (
+                                                        <p>No hay ingredientes registrados.</p>
+                                                    ) : (
+                                                        <table>
+                                                            <thead>
+                                                                <tr>
+                                                                    <th scope="col">Ingrediente</th>
+                                                                    <th scope="col">Cantidad (g)</th>
+                                                                    <th scope="col">Porcentaje</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {composicion.ingredientes.map((item) => (
+                                                                    <tr key={item.renglon}>
+                                                                        <th scope="row">{item.nombre_insumo}</th>
+                                                                        <td>{formatearGramos(item.cantidad_gramos)}</td>
+                                                                        <td>{formatearPorcentaje(item.porcentaje)}</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    )}
                                                 </div>
 
-                                                <p className={estilos.notaGrafico}>
-                                                    Pasá el cursor por cada barra para consultar el porcentaje y la
-                                                    cantidad en gramos del componente.
+                                                <div className={estilos.datosTabla}>
+                                                    <h4>Aditivos</h4>
+
+                                                    {composicion.aditivos.length === 0 ? (
+                                                        <p>No hay aditivos registrados.</p>
+                                                    ) : (
+                                                        <table>
+                                                            <thead>
+                                                                <tr>
+                                                                    <th scope="col">Aditivo</th>
+                                                                    <th scope="col">Cantidad (g)</th>
+                                                                    <th scope="col">Porcentaje</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {composicion.aditivos.map((item) => (
+                                                                    <tr key={item.renglon}>
+                                                                        <th scope="row">{item.nombre_insumo}</th>
+                                                                        <td>{formatearGramos(item.cantidad_gramos)}</td>
+                                                                        <td>{formatearPorcentaje(item.porcentaje)}</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    )}
+                                                </div>
+
+                                                <p>
+                                                    <strong>Suma de porcentajes:</strong>{' '}
+                                                    {formatearPorcentaje(composicion.suma_porcentajes)}
+                                                </p>
+
+                                                <p
+                                                    style={{
+                                                        color: composicion.suma_correcta ? '#22c55e' : '#ef4444',
+                                                        fontWeight: 600,
+                                                    }}
+                                                >
+                                                    {composicion.suma_correcta
+                                                        ? '✓ La composición suma 100 %.'
+                                                        : '⚠ La composición no suma 100 %.'}
                                                 </p>
                                             </>
                                         )}
-
-                                        <div className={estilos.datosTabla}>
-                                            <h4>Ingredientes</h4>
-
-                                            {composicion.ingredientes.length === 0 ? (
-                                                <p>No hay ingredientes registrados.</p>
-                                            ) : (
-                                                <table>
-                                                    <thead>
-                                                        <tr>
-                                                            <th scope="col">Ingrediente</th>
-                                                            <th scope="col">Cantidad original</th>
-                                                            <th scope="col">Cantidad (g)</th>
-                                                            <th scope="col">Porcentaje</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {composicion.ingredientes.map((item) => (
-                                                            <tr key={item.renglon}>
-                                                                <th scope="row">{item.nombre_insumo}</th>
-                                                                <td>{obtenerCantidadOriginal(item.renglon)}</td>
-                                                                <td>{formatearGramos(item.cantidad_gramos)}</td>
-                                                                <td>{formatearPorcentaje(item.porcentaje)}</td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            )}
-                                        </div>
-
-                                        <div className={estilos.datosTabla}>
-                                            <h4>Aditivos</h4>
-
-                                            {composicion.aditivos.length === 0 ? (
-                                                <p>No hay aditivos registrados.</p>
-                                            ) : (
-                                                <table>
-                                                    <thead>
-                                                        <tr>
-                                                            <th scope="col">Aditivo</th>
-                                                            <th scope="col">Cantidad original</th>
-                                                            <th scope="col">Cantidad (g)</th>
-                                                            <th scope="col">Porcentaje</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {composicion.aditivos.map((item) => (
-                                                            <tr key={item.renglon}>
-                                                                <th scope="row">{item.nombre_insumo}</th>
-                                                                <td>{obtenerCantidadOriginal(item.renglon)}</td>
-                                                                <td>{formatearGramos(item.cantidad_gramos)}</td>
-                                                                <td>{formatearPorcentaje(item.porcentaje)}</td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            )}
-                                        </div>
-
-                                        <p>
-                                            <strong>Suma de porcentajes:</strong>{' '}
-                                            {formatearPorcentaje(composicion.suma_porcentajes)}
-                                        </p>
-
-                                        <p
-                                            style={{
-                                                color: composicion.suma_correcta ? '#22c55e' : '#ef4444',
-                                                fontWeight: 600,
-                                            }}
-                                        >
-                                            {composicion.suma_correcta
-                                                ? '✓ La composición suma 100 %.'
-                                                : '⚠ La composición no suma 100 %.'}
-                                        </p>
-                                    </>
+                                    </section>
                                 )}
-                            </section>
-                        )}
-                        
-                        <section className={styles.bloqueDetalle} aria-labelledby="receta-pasos">
-                            <h3 id="receta-pasos">Pasos de elaboración</h3>
-                            {version.pasos.length === 0 ? (
-                                <p className={styles.textMuted}>
-                                    Esta versión no tiene pasos de elaboración cargados.
-                                </p>
-                            ) : (
-                                <ol>
-                                    {version.pasos
-                                        .toSorted((a, b) => a.orden - b.orden)
-                                        .map((paso) => (
-                                            <li key={paso.id} style={{ marginBottom: '16px' }}>
-                                                <strong>{paso.nombre_paso}</strong>
-                                                {paso.es_punto_control && (
-                                                    <span style={{ color: '#ef4444', fontWeight: 'bold' }}> · Punto Crítico de Control (PCC)</span>
-                                                )}
-                                                <p style={{ whiteSpace: 'pre-wrap', marginBottom: '6px' }}>
-                                                    {paso.procedimiento}
-                                                </p>
-                                                <p className={styles.textMuted} style={{ marginTop: 0 }}>
-                                                    {paso.equipo
-                                                        ? `Equipo: ${paso.equipo.nombre}`
-                                                        : 'Sin equipo asociado'}
-                                                    {paso.tiempo_minutos !== null
-                                                        ? ` · ${paso.tiempo_minutos} min`
-                                                        : ''}
-                                                    {paso.temperatura_celsius !== null
-                                                        ? ` · ${paso.temperatura_celsius} °C`
-                                                        : ''}
-                                                </p>
-                                            </li>
-                                        ))}
-                                </ol>
-                            )}
-                        </section>
-                        {version.estado === 'activo' && (
-                            <section className={styles.bloqueDetalle} aria-labelledby="titulo-escalar-receta">
-                                <EscalarReceta productoId={receta.producto_id} />
-                            </section>
+
+                                <section className={styles.bloqueDetalle} aria-labelledby="receta-pasos">
+                                    <h3 id="receta-pasos">Pasos de elaboración</h3>
+                                    {version.pasos.length === 0 ? (
+                                        <p className={styles.textMuted}>
+                                            Esta versión no tiene pasos de elaboración cargados.
+                                        </p>
+                                    ) : (
+                                        <ol>
+                                            {version.pasos
+                                                .toSorted((a, b) => a.orden - b.orden)
+                                                .map((paso) => (
+                                                    <li key={paso.id} style={{ marginBottom: '16px' }}>
+                                                        <strong>{paso.nombre_paso}</strong>
+                                                        {paso.es_punto_control && (
+                                                            <span style={{ color: '#ef4444', fontWeight: 'bold' }}>
+                                                                {' '}· Punto Crítico de Control (PCC)
+                                                            </span>
+                                                        )}
+                                                        <p style={{ whiteSpace: 'pre-wrap', marginBottom: '6px' }}>
+                                                            {paso.procedimiento}
+                                                        </p>
+                                                        <p className={styles.textMuted} style={{ marginTop: 0 }}>
+                                                            {paso.equipo
+                                                                ? `Equipo: ${paso.equipo.nombre}`
+                                                                : 'Sin equipo asociado'}
+                                                            {paso.tiempo_minutos !== null
+                                                                ? ` · ${paso.tiempo_minutos} min`
+                                                                : ''}
+                                                            {paso.temperatura_celsius !== null
+                                                                ? ` · ${paso.temperatura_celsius} °C`
+                                                                : ''}
+                                                        </p>
+                                                    </li>
+                                                ))}
+                                        </ol>
+                                    )}
+                                </section>
+
+                                {version.estado === 'activo' && (
+                                    <section className={styles.bloqueDetalle} aria-labelledby="titulo-escalar-receta">
+                                        <EscalarReceta productoId={receta.producto_id} />
+                                    </section>
+                                )}
+                            </>
                         )}
                     </>
                 )}
@@ -666,3 +717,4 @@ export default function RecetaDetail() {
         </div>
     );
 }
+

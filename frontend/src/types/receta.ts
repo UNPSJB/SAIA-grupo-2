@@ -103,3 +103,48 @@ export interface ComposicionReceta {
     suma_porcentajes: number;
     suma_correcta: boolean;
 }
+
+export type FormatoDeclaracionAditivos = 'funcion_nombre' | 'funcion_ins' | 'funcion_ambos';
+
+export interface ConfiguracionProduccion {
+    id: number;
+    formato_declaracion_aditivos: FormatoDeclaracionAditivos;
+}
+
+export interface IngredienteRotuloItem {
+    insumo_id: number;
+    nombre_insumo: string;
+    denominacion_rotulo: string;
+    cantidad_gramos: number;
+    porcentaje: number;
+    renglon_original: number;
+}
+
+export interface AditivoRotuloItem {
+    aditivo_id: number;
+    insumo_id: number;
+    nombre_completo: string;
+    numero_ins: string | null;
+    texto_formateado: string;
+}
+
+export interface GrupoAditivosRotulo {
+    clase_funcional_id: number;
+    clase_funcional: string;
+    es_aromatizante: boolean;
+    texto_grupo: string;
+    aditivos: AditivoRotuloItem[];
+}
+
+export interface ListaIngredientesRotulo {
+    receta_id: number;
+    version: number;
+    es_orden_manual: boolean;
+    orden_manual_por: { id: number; nombre: string; apellido: string} | null;
+    orden_manual_fecha: string | null;
+    aviso_orden_anterior: string | null;
+    formato_aditivos: FormatoDeclaracionAditivos;
+    ingredientes: IngredienteRotuloItem[];
+    grupos_aditivos: GrupoAditivosRotulo[];
+    texto_rotulo: string;
+}

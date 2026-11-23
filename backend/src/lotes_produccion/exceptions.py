@@ -36,3 +36,11 @@ class StockInsuficiente(BadRequest):
 
 class LoteCerrado(BadRequest):
     DETAIL = ErrorCode.LOTE_CERRADO
+
+
+class RecetaIncompleta(BadRequest):
+    DETAIL = ErrorCode.RECETA_INCOMPLETA
+
+
+class RecetaDeOtroProducto(BadRequest):
+    DETAIL = ErrorCode.RECETA_DE_OTRO_PRODUCTO

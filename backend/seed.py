@@ -556,14 +556,24 @@ INSUMOS_ALIMENTARIOS = [
 ]
 
 
+DENSIDADES_INSUMOS = {
+    "Leche Entera": 1.03,
+    "Aceite de Girasol": 0.92,
+}
+
+
 def crear_insumos(db: Session) -> int:
-    """Crea los insumos alimentarios con su stock, que se guarda en gramos o mililitros."""
+    """Crea los insumos alimentarios con su stock, que se guarda en gramos o mililitros.
+
+    Los liquidos que se usan en las recetas de ejemplo llevan su densidad, para pasar mililitros a gramos.
+    """
     for nombre, nombre_unidad, stock in INSUMOS_ALIMENTARIOS:
         unidad = db.query(UnidadMedida).filter_by(nombre=nombre_unidad).first()
         db.add(Insumo(
             nombre=nombre,
             unidad_medida_id=unidad.id,
             cantidad=unidades_medida_services.convertir_a_base(stock, unidad),
+            densidad_g_ml=DENSIDADES_INSUMOS.get(nombre),
         ))
     db.commit()
     return len(INSUMOS_ALIMENTARIOS)
@@ -776,6 +786,7 @@ def cargar_rotulado_frontal_de_ejemplo(db: Session) -> int:
 
 def cargar_aditivos_y_recetas_de_ejemplo(db: Session, unidad_gramos: UnidadMedida) -> tuple[int, int]:
     """Pobla el maestro de aditivos INS, vincula insumos aditivos y crea recetas completas para los productos."""
+    unidad_ml = db.query(UnidadMedida).filter(UnidadMedida.nombre == "Mililitros").one()
     cf_map = {}
     clases_datos = [
         ("Conservante", True),
@@ -930,7 +941,7 @@ def cargar_aditivos_y_recetas_de_ejemplo(db: Session, unidad_gramos: UnidadMedid
                 {"receta_id": rec_m.id, "nro_version": 1, "renglon": 1, "insumo_id": insumos["Harina 000"].id, "cantidad_original": 300.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 300.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
                 {"receta_id": rec_m.id, "nro_version": 1, "renglon": 2, "insumo_id": insumos["Manteca"].id, "cantidad_original": 100.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 100.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
                 {"receta_id": rec_m.id, "nro_version": 1, "renglon": 3, "insumo_id": insumos["Azúcar Blanca"].id, "cantidad_original": 60.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 60.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
-                {"receta_id": rec_m.id, "nro_version": 1, "renglon": 4, "insumo_id": insumos["Leche Entera"].id, "cantidad_original": 80.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 80.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_m.id, "nro_version": 1, "renglon": 4, "insumo_id": insumos["Leche Entera"].id, "cantidad_original": 80.0, "unidad_medida_id": unidad_ml.id, "cantidad_gramos": round(80.0 * DENSIDADES_INSUMOS["Leche Entera"], 2), "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
             ]))
 
             p_m1 = PasoReceta(
@@ -968,7 +979,7 @@ def cargar_aditivos_y_recetas_de_ejemplo(db: Session, unidad_gramos: UnidadMedid
             db.execute(insert(detalle_receta).values([
                 {"receta_id": rec_p.id, "nro_version": 1, "renglon": 1, "insumo_id": insumos["Harina 000"].id, "cantidad_original": 160.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 160.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
                 {"receta_id": rec_p.id, "nro_version": 1, "renglon": 2, "insumo_id": insumos["Puré de Tomate"].id, "cantidad_original": 50.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 50.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
-                {"receta_id": rec_p.id, "nro_version": 1, "renglon": 3, "insumo_id": insumos["Aceite de Girasol"].id, "cantidad_original": 10.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 10.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_p.id, "nro_version": 1, "renglon": 3, "insumo_id": insumos["Aceite de Girasol"].id, "cantidad_original": 10.0, "unidad_medida_id": unidad_ml.id, "cantidad_gramos": round(10.0 * DENSIDADES_INSUMOS["Aceite de Girasol"], 2), "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
             ]))
 
             p_p1 = PasoReceta(

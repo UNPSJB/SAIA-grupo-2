@@ -1,6 +1,9 @@
 import { API_URL } from '../constants/config';
 import type {
     ComposicionReceta,
+    ConfiguracionProduccion,
+    FormatoDeclaracionAditivos,
+    ListaIngredientesRotulo,
     Receta,
     RecetaPayload,
     VersionReceta,
@@ -123,5 +126,61 @@ export const getComposicionReceta = async (
             headers: {
                 'X-User-Role': 'admin',
             },
+        },
+    );
+
+export const getConfiguracionProduccion = async (): Promise<ConfiguracionProduccion> =>
+    solicitar('/configuracion-produccion', 'No se pudo cargar la configuración de producción.');
+
+export const updateConfiguracionProduccion = async (
+    formato: FormatoDeclaracionAditivos,
+    rol: RolUsuario,
+): Promise<ConfiguracionProduccion> =>
+    solicitar('/configuracion-produccion', 'No se pudo actualizar el formato de declaración de aditivos.', {
+        method: 'PUT',
+        headers: headersEscritura(rol),
+        body: JSON.stringify({ formato_declaracion_aditivos: formato}),
+    });
+
+export const getListaIngredientesRotulo = async (
+    recetaId: number | string,
+    numeroVersion: number | string,
+): Promise<ListaIngredientesRotulo> =>
+    solicitar(
+        `/${recetaId}/versiones/${numeroVersion}/lista-ingredientes`,
+        'No se pudo obtener la lista de ingredientes para el rótulo.',
+    );
+
+export const guardarOrdenManualIngredientes = async (
+    recetaId: number | string,
+    numeroVersion: number | string,
+    ordenInsumoIds: number[],
+    empleadoId: number | null,
+    rol: RolUsuario,
+): Promise<ListaIngredientesRotulo> =>
+    solicitar(
+        `/${recetaId}/versiones/${numeroVersion}/lista-ingredientes/orden-manual`,
+        'No se pudo guardar el orden manual.',
+        {
+            method: 'PUT',
+            headers: headersEscritura(rol),
+            body: JSON.stringify({
+                orden_insumo_ids: ordenInsumoIds,
+                empleado_id: empleadoId,
+            }),
+        },
+    );
+
+export const restablecerOrdenAutomaticoIngredientes = async (
+    recetaId: number | string,
+    numeroVersion: number | string,
+    rol: RolUsuario,
+): Promise<ListaIngredientesRotulo> =>
+    solicitar(
+        `/${recetaId}/versiones/${numeroVersion}/lista-ingredientes/orden-manual`,
+        'No se pudo restablecer el orden automático.',
+        {
+            method: 'DELETE',
+            headers: headersEscritura(rol),
         },
     );

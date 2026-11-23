@@ -15,6 +15,7 @@ import { esUnidadDeInsumo } from './cantidades';
 
 interface FormValues {
     nombre: string;
+    denominacion_rotulo: string;
     unidad_medida_id: number;
     es_aditivo: boolean;
     aditivo_referencia_id: number | '';
@@ -35,6 +36,7 @@ export default function InsumoForm() {
     const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormValues>({
         defaultValues: {
             nombre: '',
+            denominacion_rotulo: '',
             es_aditivo: false,
             aditivo_referencia_id: '',
             densidad_g_ml: '',
@@ -72,6 +74,7 @@ export default function InsumoForm() {
                     const data = await getInsumoById(id);
                     reset({
                         nombre: data.nombre,
+                        denominacion_rotulo: data.denominacion_rotulo ?? '',
                         unidad_medida_id: data.unidad_medida_id,
                         es_aditivo: Boolean(data.es_aditivo),
                         aditivo_referencia_id: data.aditivo_referencia_id ?? '',
@@ -92,7 +95,8 @@ export default function InsumoForm() {
         if (!nombreLimpio) return;
 
         const datos: InsumoPayload = { 
-            nombre: nombreLimpio, 
+            nombre: nombreLimpio,
+            denominacion_rotulo: data.denominacion_rotulo.trim() || null, 
             unidad_medida_id: Number(data.unidad_medida_id),
             es_aditivo: Boolean(data.es_aditivo),
             aditivo_referencia_id: data.es_aditivo && data.aditivo_referencia_id ? Number(data.aditivo_referencia_id) : null,
@@ -139,6 +143,26 @@ export default function InsumoForm() {
                             style={errors.nombre ? { borderColor: '#ef4444', outline: 'none' } : {}}
                         />
                         {errors.nombre && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.nombre.message}</span>}
+                    </div>
+
+                    <div className={styles.formGroup}>
+                        <label>Denominación para rótulo (opcional):</label>
+                        <input
+                            type="text"
+                            placeholder="Ej. Harina de trigo enriquecida Ley 25.630"
+                            {...register('denominacion_rotulo', {
+                                maxLength: { value: 150, message: "No puede superar los 150 caracteres" }
+                            })}
+                            style={errors.denominacion_rotulo ? { borderColor: '#ef4444', outline: 'none' } : {}}
+                        />
+                        {errors.denominacion_rotulo && (
+                            <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px'}}>
+                                {errors.denominacion_rotulo.message}
+                            </span>
+                        )}
+                        <span className={styles.textMuted} style={{ fontSize: '0.8rem', marginTop: '6px', textAlign: 'left'}}>
+                            Si se deja vacío, se usará el nombre del insumo en la lista de ingredientes del rótulo.
+                        </span>
                     </div>
                     
                     <div className={styles.formGroup}>

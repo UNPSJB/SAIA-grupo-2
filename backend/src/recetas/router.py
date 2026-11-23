@@ -18,10 +18,30 @@ def verificar_acceso_operario_o_admin(x_user_role: Optional[str] = Header(None, 
     if not x_user_role or x_user_role.lower() not in ("operario", "admin"):
         raise PermisoDenegadoAdmin()
 
+@router.get(
+    "/configuracion-produccion",
+    response_model=schemas.ConfiguracionProduccionResponse,
+    summary="Obtener configuracion de producción (formato de aditivos en rótulo)",
+)
+def leer_configuracion_produccion(db: Annotated[Session, Depends(get_db)]):
+    return services.obtener_configuracion_produccion(db)
+
+@router.put(
+    "/configuracion-produccion",
+    response_model=schemas.ConfiguracionProduccionResponse,
+    dependencies=[Depends(verificar_rol_admin)],
+    summary="Actualizar formato de declaración de aditivos",
+)
+def modificar_configuracion_produccion(
+    datos: schemas.ConfiguracionProduccionUpdate,
+    db: Annotated[Session, Depends(get_db)],
+):
+    return services.actualizar_configuracion_produccion(db, datos)
+
 @router.post(
-        "/producto/{producto_id}/escalar",
-        response_model=schemas.RecetaEscalada,
-        summary="Calcular receta vigente escalada para un lote de producción",
+    "/producto/{producto_id}/escalar",
+    response_model=schemas.RecetaEscalada,
+    summary="Calcular receta vigente escalada para un lote de producción",
 )
 def escalar_receta_producto(
     producto_id: int,
@@ -183,3 +203,42 @@ def obtener_composicion_version_especifica(
         receta_id=receta_id,
         nro_version=nro_version
     )
+
+@router.get(
+    "/{receta_id}/versiones/{nro_version}/lista-ingredientes",
+    response_model=schemas.ListaIngredientesRotuloResponse,
+    summary="Obtener lista ordenada de ingredientes y aditivos para rótulo",
+)
+def obtener_lista_ingredientes(
+    receta_id: int,
+    nro_version: int,
+    db: Annotated[Session, Depends(get_db)]
+):
+    return services.obtener_lista_ingredientes_rotulo(db, receta_id, nro_version)
+
+@router.put(
+    "/{receta_id}/versiones/{nro_version}/lista-ingredientes/orden-manual",
+    response_model=schemas.ListaIngredientesRotuloResponse,
+    dependencies=[Depends(verificar_rol_admin)],
+    summary="Guardar ajuste manual de orden de ingredientes",
+)
+def actualiza_orden_manual_ingredientes(
+    receta_id: int,
+    nro_version: int,
+    payload: schemas.AjusteOrdenIngredientesPayload,
+    db: Annotated[Session, Depends(get_db)],
+):
+    return services.guardar_orden_manual_ingredientes(db, receta_id, nro_version, payload)
+
+@router.delete(
+    "/{receta_id}/versiones/{nro_version}/lista-ingredientes/orden-manual",
+    response_model=schemas.ListaIngredientesRotuloResponse,
+    dependencies=[Depends(verificar_rol_admin)],
+    summary="Volver al orden automático de ingredientes",
+)
+def eliminar_orden_manual_ingredientes(
+    receta_id: int,
+    nro_version: int,
+    db: Annotated[Session, Depends(get_db)],
+):
+    return services.restablecer_orden_automatico_ingredientes(db, receta_id, nro_version)
