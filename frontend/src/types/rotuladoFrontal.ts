@@ -1,5 +1,6 @@
+import type { Nutriente } from './datosNutricionales';
 import type { EmpleadoResumen } from './documentacion';
-import type { Agregado, EstadoConjunto, SelloAdvertencia } from './parametrosNormativos';
+import type { Agregado, EstadoConjunto, FormaCriterio, SelloAdvertencia } from './parametrosNormativos';
 import type { TipoProducto } from './productos';
 
 export type ResultadoAplicabilidad = 'no_envasado' | 'exceptuado' | 'sin_agregados' | 'corresponde';
@@ -83,4 +84,36 @@ export interface PropuestaMarcas extends MarcasAgregados {
     version_receta: number | null;
     origenes: OrigenMarca[];
     insumos_sin_revisar: InsumoResumen[];
+}
+
+export interface PasoCalculoNutriente {
+    sello: SelloAdvertencia;
+    nutriente: Nutriente;
+    evaluado: boolean;
+    motivo_no_evaluado?: string | null;
+    forma_evaluacion?: FormaCriterio | null;
+    valor_gramos_100g?: number | null;
+    factor_energetico_utilizado?: number | null;
+    aporte_kcal_nutriente?: number | null;
+    energia_total_kcal_100g?: number | null;
+    valor_calculado?: number | null;
+    limite_umbral?: number | null;
+    unidad_umbral?: string | null;
+    supera_umbral: boolean;
+    formula_desplegada: string;
+}
+
+export interface ResultadoCalculoSellos {
+    id?: number | null;
+    producto: ProductoRotulado;
+    version_receta?: number | null;
+    provisorio: boolean;
+    resultado_aplicabilidad: ResultadoAplicabilidad;
+    motivo_aplicabilidad?: string | null;
+    sellos_obtenidos: SelloAplicable[];
+    leyendas_obtenidas: SelloAplicable[];
+    pasos_calculo: PasoCalculoNutriente[];
+    parametros: ParametrosUsados;
+    fecha_calculo?: string | null;
+    calculado_por?: EmpleadoResumen | null;
 }

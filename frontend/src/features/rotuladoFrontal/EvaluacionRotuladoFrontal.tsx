@@ -8,10 +8,13 @@ import type {
     MarcasAgregados,
     PropuestaMarcas,
     RespuestasAplicabilidad,
+    ResultadoCalculoSellos,
 } from '../../types/rotuladoFrontal';
 import { getModuloRotuladoFrontal, getParametrosVigentes } from '../../services/parametrosNormativosServices';
 import {
+    calcularSellos,
     evaluarRotulado,
+    getCalculoSellos,
     getHistorialRotulado,
     getPropuestaMarcas,
     getRotuladoProducto,
@@ -33,6 +36,9 @@ import {
 } from '../parametrosNormativos/etiquetas';
 import ModuloDesactivado from './ModuloDesactivado';
 import ResultadoRotulado from './ResultadoRotulado';
+import OctogonoAdvertencia from './OctogonoAdvertencia';
+import LeyendaPrecaucion from './LeyendaPrecaucion';
+import TablaCalculoPasoAPaso from './TablaCalculoPasoAPaso';
 import estilos from './RotuladoFrontal.module.css';
 import styles from '../../styles/shared.module.css';
 
@@ -41,6 +47,7 @@ interface Datos {
     historial: EvaluacionRotulado[];
     parametros: ConjuntoDetalle | null;
     propuesta: PropuestaMarcas | null;
+    calculoSellos: ResultadoCalculoSellos | null;
 }
 
 interface Respuesta {
@@ -83,11 +90,12 @@ async function cargar(productoId: string): Promise<Omit<Respuesta, 'clave'>> {
     const modulo = await getModuloRotuladoFrontal();
     if (!modulo.activo) return { activo: false, datos: null, error: '' };
     const [estado, historial] = await Promise.all([getRotuladoProducto(productoId), getHistorialRotulado(productoId)]);
-    const [parametros, propuesta] = await Promise.all([
+    const [parametros, propuesta, calculoSellos] = await Promise.all([
         getParametrosVigentes().catch(() => null),
         getPropuestaMarcas(productoId).catch(() => null),
+        getCalculoSellos(productoId).catch(() => null),
     ]);
-    return { activo: true, datos: { estado, historial, parametros, propuesta }, error: '' };
+    return { activo: true, datos: { estado, historial, parametros, propuesta, calculoSellos }, error: '' };
 }
 
 export default function EvaluacionRotuladoFrontal() {
@@ -97,6 +105,9 @@ export default function EvaluacionRotuladoFrontal() {
     const [formulario, setFormulario] = useState<Formulario>(formularioDesde(null, null));
     const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
     const [guardando, setGuardando] = useState(false);
+    const [calculoSellos, setCalculoSellos] = useState<ResultadoCalculoSellos | null>(null);
+    const [calculandoSellos, setCalculandoSellos] = useState(false);
+    const [mostrarDesglose, setMostrarDesglose] = useState(false);
 
     useEffect(() => {
         let cancelado = false;
@@ -105,6 +116,7 @@ export default function EvaluacionRotuladoFrontal() {
             .then((resultado) => {
                 if (cancelado) return;
                 setRespuesta({ clave: id, ...resultado });
+                setCalculoSellos(resultado.datos?.calculoSellos ?? null);
                 setFormulario(
                     formularioDesde(resultado.datos?.estado.evaluacion ?? null, resultado.datos?.propuesta ?? null),
                 );
@@ -168,6 +180,24 @@ export default function EvaluacionRotuladoFrontal() {
             setMensaje({ tipo: 'error', texto: problema instanceof Error ? problema.message : 'No se pudo guardar la evaluación.' });
         } finally {
             setGuardando(false);
+        }
+    };
+
+    const ejecutarCalculoSellos = async () => {
+        if (!usuario) return;
+        try {
+            setCalculandoSellos(true);
+            const resultado = await calcularSellos(id, usuario.id);
+            setCalculoSellos(resultado);
+            setMostrarDesglose(true);
+        } catch (problema) {
+            console.error('Error al calcular sellos:', problema);
+            setMensaje({
+                tipo: 'error',
+                texto: problema instanceof Error ? problema.message : 'No se pudo calcular los sellos de advertencia.',
+            });
+        } finally {
+            setCalculandoSellos(false);
         }
     };
 
@@ -264,6 +294,101 @@ export default function EvaluacionRotuladoFrontal() {
                     <h3>Resultado actual</h3>
                     <p className={estilos.ayuda}>Según la última evaluación guardada.</p>
                     <ResultadoRotulado evaluacion={evaluacion} />
+                </section>
+            )}
+
+            {/* SECCIÓN CÁLCULO DE SELLOS */}
+            {evaluacion && (
+                <section className={`${styles.tarjetaEstatica} ${estilos.panel}`}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                        <div>
+                            <h3 style={{ margin: 0 }}>Cálculo de Sellos de Advertencia (Ley 27.642)</h3>
+                            <p className={estilos.ayuda} style={{ marginTop: '0.25rem' }}>
+                                Evaluación matemática de nutrientes críticos sobre la versión de receta vigente.
+                            </p>
+                        </div>
+                        {usuario && (
+                            <Boton
+                                variant="crear"
+                                onClick={ejecutarCalculoSellos}
+                                disabled={calculandoSellos}
+                            >
+                                {calculandoSellos ? 'Calculando...' : 'Calcular / Recalcular sellos'}
+                            </Boton>
+                        )}
+                    </div>
+
+                    {calculoSellos?.provisorio && (
+                        <div
+                            style={{
+                                backgroundColor: 'rgba(234, 179, 8, 0.15)',
+                                border: '1px solid #eab308',
+                                color: '#facc15',
+                                borderRadius: '6px',
+                                padding: '10px 14px',
+                                margin: '1rem 0',
+                                fontSize: '0.88rem',
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                            }}
+                        >
+                            <i className="bi bi-exclamation-triangle-fill"></i>
+                            <span>CÁLCULO PROVISORIO: La receta vigente tiene insumos con datos nutricionales incompletos.</span>
+                        </div>
+                    )}
+
+                    {calculoSellos && (
+                        <div style={{ marginTop: '1rem' }}>
+                            <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                                <div>
+                                    <strong>Versión de Parámetros:</strong> v{calculoSellos.parametros.version} ({calculoSellos.parametros.norma_origen})
+                                </div>
+                                {calculoSellos.version_receta && (
+                                    <div>
+                                        <strong>Versión de Receta:</strong> v{calculoSellos.version_receta}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div style={{ marginBottom: '1rem' }}>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-h)' }}>Sellos y Advertencias Resultantes</h4>
+                                {calculoSellos.sellos_obtenidos.length === 0 && calculoSellos.leyendas_obtenidas.length === 0 ? (
+                                    <p className={styles.textMuted} style={{ fontStyle: 'italic' }}>
+                                        ✓ No le corresponden sellos de exceso ni leyendas precautorias.
+                                    </p>
+                                ) : (
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', marginTop: '0.5rem' }}>
+                                        {calculoSellos.sellos_obtenidos.map((s) => (
+                                            <OctogonoAdvertencia key={s.sello} sello={s.sello} texto={s.texto} />
+                                        ))}
+                                        {calculoSellos.leyendas_obtenidas.map((l) => (
+                                            <LeyendaPrecaucion key={l.sello} sello={l.sello} texto={l.texto} />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {calculoSellos.pasos_calculo.length > 0 && (
+                                <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+                                    <button
+                                        type="button"
+                                        className={estilos.botonTexto}
+                                        onClick={() => setMostrarDesglose(!mostrarDesglose)}
+                                        style={{ fontWeight: 600, fontSize: '0.92rem', color: 'var(--accent)' }}
+                                    >
+                                        <i className={`bi ${mostrarDesglose ? 'bi-chevron-up' : 'bi-chevron-down'}`} style={{ marginRight: '6px' }}></i>
+                                        {mostrarDesglose ? 'Ocultar desglose matemático paso a paso' : 'Ver desglose matemático paso a paso por nutriente'}
+                                    </button>
+
+                                    {mostrarDesglose && (
+                                        <TablaCalculoPasoAPaso pasos={calculoSellos.pasos_calculo} />
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </section>
             )}
 

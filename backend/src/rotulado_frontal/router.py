@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from src.database import get_db
@@ -27,6 +27,19 @@ def update_marcas_insumos(datos: schemas.ActualizacionMarcasInsumos, db: Session
 @router.get("/productos/{producto_id}/propuesta", response_model=schemas.PropuestaMarcas)
 def read_propuesta(producto_id: int, db: Session = Depends(get_db)):
     return services.proponer_marcas(db, producto_id)
+
+
+@router.get("/productos/{producto_id}/calculo-sellos", response_model=schemas.ResultadoCalculoSellos)
+def read_calculo_sellos(producto_id: int, db: Session = Depends(get_db)):
+    calculo = services.obtener_calculo_sellos_vigente(db, producto_id)
+    if calculo is None:
+        raise HTTPException(status_code=404, detail="El producto aún no cuenta con un cálculo de sellos.")
+    return calculo
+
+
+@router.post("/productos/{producto_id}/calcular-sellos", response_model=schemas.ResultadoCalculoSellos)
+def create_calculo_sellos(producto_id: int, datos: schemas.SolicitudCalculoSellos, db: Session = Depends(get_db)):
+    return services.calcular_sellos_producto(db, producto_id, datos.empleado_id)
 
 
 @router.get("/productos/{producto_id}", response_model=schemas.EstadoProducto)

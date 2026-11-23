@@ -50,7 +50,7 @@ from src.datos_nutricionales.constants import FuenteDatoNutricional, Nutriente
 from src.datos_nutricionales.schemas import CargaDatosNutricionales
 from src.parametros_normativos.models import ConjuntoParametros, ModuloRotuladoFrontal
 from src.parametros_normativos import services as parametros_normativos_services
-from src.rotulado_frontal.models import EvaluacionAplicabilidad
+from src.rotulado_frontal.models import EvaluacionAplicabilidad, CalculoSellosRotulado
 from src.rotulado_frontal import services as rotulado_frontal_services
 from src.rotulado_frontal.schemas import ActualizacionMarcasInsumos, CambioMarcaInsumo, NuevaEvaluacion
 from src.alergenos.models import DeclaracionAlergenos
@@ -650,16 +650,93 @@ DATOS_DESDE_BIBLIOGRAFIA = [
         },
     ),
     ("Sal Fina", "SARA 2 (PDF): Sal", {nutriente: 0 for nutriente in Nutriente} | {Nutriente.SODIO: 40000}),
+    (
+        "Manteca",
+        "Tabla de Composición ARGENFOODS / USDA",
+        {
+            Nutriente.ENERGIA: 717,
+            Nutriente.CARBOHIDRATOS: 0.06,
+            Nutriente.AZUCARES_TOTALES: 0.06,
+            Nutriente.AZUCARES_ANADIDOS: 0,
+            Nutriente.PROTEINAS: 0.85,
+            Nutriente.GRASAS_TOTALES: 81.1,
+            Nutriente.GRASAS_SATURADAS: 51.4,
+            Nutriente.GRASAS_TRANS: 2.5,
+            Nutriente.FIBRA_ALIMENTARIA: 0,
+            Nutriente.SODIO: 11,
+        },
+    ),
+    (
+        "Aceite de Girasol",
+        "Tabla de Composición ARGENFOODS",
+        {
+            Nutriente.ENERGIA: 884,
+            Nutriente.CARBOHIDRATOS: 0,
+            Nutriente.AZUCARES_TOTALES: 0,
+            Nutriente.AZUCARES_ANADIDOS: 0,
+            Nutriente.PROTEINAS: 0,
+            Nutriente.GRASAS_TOTALES: 100.0,
+            Nutriente.GRASAS_SATURADAS: 11.0,
+            Nutriente.GRASAS_TRANS: 0,
+            Nutriente.FIBRA_ALIMENTARIA: 0,
+            Nutriente.SODIO: 0,
+        },
+    ),
+    (
+        "Polvo de Hornear",
+        "ANMAT / Bibliografía de Referencia",
+        {
+            Nutriente.ENERGIA: 53,
+            Nutriente.CARBOHIDRATOS: 27.7,
+            Nutriente.AZUCARES_TOTALES: 0,
+            Nutriente.AZUCARES_ANADIDOS: 0,
+            Nutriente.PROTEINAS: 0,
+            Nutriente.GRASAS_TOTALES: 0,
+            Nutriente.GRASAS_SATURADAS: 0,
+            Nutriente.GRASAS_TRANS: 0,
+            Nutriente.FIBRA_ALIMENTARIA: 0,
+            Nutriente.SODIO: 10600,
+        },
+    ),
+    (
+        "Bicarbonato de Sodio",
+        "ANMAT / Bibliografía de Referencia",
+        {
+            Nutriente.ENERGIA: 0,
+            Nutriente.CARBOHIDRATOS: 0,
+            Nutriente.AZUCARES_TOTALES: 0,
+            Nutriente.AZUCARES_ANADIDOS: 0,
+            Nutriente.PROTEINAS: 0,
+            Nutriente.GRASAS_TOTALES: 0,
+            Nutriente.GRASAS_SATURADAS: 0,
+            Nutriente.GRASAS_TRANS: 0,
+            Nutriente.FIBRA_ALIMENTARIA: 0,
+            Nutriente.SODIO: 27360,
+        },
+    ),
+    (
+        "Esencia de Vainilla",
+        "Bibliografía de Referencia",
+        {
+            Nutriente.ENERGIA: 288,
+            Nutriente.CARBOHIDRATOS: 12.6,
+            Nutriente.AZUCARES_TOTALES: 12.6,
+            Nutriente.AZUCARES_ANADIDOS: 12.6,
+            Nutriente.PROTEINAS: 0,
+            Nutriente.GRASAS_TOTALES: 0,
+            Nutriente.GRASAS_SATURADAS: 0,
+            Nutriente.GRASAS_TRANS: 0,
+            Nutriente.FIBRA_ALIMENTARIA: 0,
+            Nutriente.SODIO: 9,
+        },
+    ),
 ]
 
 
 def cargar_datos_nutricionales_de_ejemplo(db: Session) -> int:
     """Importa la base SARA (CSV mas el complemento de SARA 2) y carga datos de algunos insumos.
 
-    De cada alimento se cargan los nutrientes que SARA informa: los que no tienen equivalente en el PDF
-    de SARA 2 quedan incompletos (sin azucares ni grasas trans), igual que la manteca, que se carga a
-    proposito solo con lo que trae el CSV. El aceite de girasol y los aditivos (polvo de hornear,
-    bicarbonato, esencia) quedan sin datos, y en la harina el sodio aparece modificado a mano.
+    De cada alimento se cargan los nutrientes que SARA informa.
     """
     alimentos_referencia_services.importar_desde_csv(db, CSV_ALIMENTOS_SARA)
     alimentos_referencia_services.importar_complemento_sara2(db, CSV_COMPLEMENTO_SARA2)
@@ -698,7 +775,10 @@ def cargar_datos_nutricionales_de_ejemplo(db: Session) -> int:
         cargados += cargar(nombre, administradora, datos)
 
     cargar("Harina 000", supervisor, [
-        {"nutriente": Nutriente.SODIO, "valor": 2.0, "fuente": FuenteDatoNutricional.SARA, "alimento_codigo": "A033"}
+        {"nutriente": Nutriente.SODIO, "valor": 2.0, "fuente": FuenteDatoNutricional.SARA, "alimento_codigo": "A033"},
+        {"nutriente": Nutriente.AZUCARES_TOTALES, "valor": 0.4, "fuente": FuenteDatoNutricional.BIBLIOGRAFIA, "referencia": "SARA"},
+        {"nutriente": Nutriente.AZUCARES_ANADIDOS, "valor": 0.0, "fuente": FuenteDatoNutricional.BIBLIOGRAFIA, "referencia": "SARA"},
+        {"nutriente": Nutriente.GRASAS_TRANS, "valor": 0.0, "fuente": FuenteDatoNutricional.BIBLIOGRAFIA, "referencia": "SARA"},
     ])
     return cargados
 
@@ -989,6 +1069,110 @@ def cargar_aditivos_y_recetas_de_ejemplo(db: Session, unidad_gramos: UnidadMedid
                 equipo_id=equipos.get("Horno Rotativo").id if "Horno Rotativo" in equipos else None, tiempo_minutos=8, temperatura_celsius=240.0, es_punto_control=True
             )
             db.add(p_p1)
+            recetas_creadas += 1
+
+    if "Pan lactal" in productos and "Harina 000" in insumos:
+        prod_pl = productos["Pan lactal"]
+        rec_pl = db.query(Receta).filter_by(producto_id=prod_pl.id).first()
+        if not rec_pl:
+            rec_pl = Receta(producto_id=prod_pl.id)
+            db.add(rec_pl)
+            db.flush()
+
+            v_pl = VersionReceta(
+                receta_id=rec_pl.id, version=1,
+                rendimiento_final_gramos=600.0, unidad_venta_gramos=50.0,
+                medida_casera="2 rodajas (50g)", motivo_cambio="Creación de fórmula estándar de Pan Lactal",
+                estado=EstadoVersionReceta.ACTIVO, fecha_vigencia=date.today() - timedelta(days=25)
+            )
+            db.add(v_pl)
+            db.flush()
+
+            db.execute(insert(detalle_receta).values([
+                {"receta_id": rec_pl.id, "nro_version": 1, "renglon": 1, "insumo_id": insumos["Harina 000"].id, "cantidad_original": 350.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 350.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_pl.id, "nro_version": 1, "renglon": 2, "insumo_id": insumos["Leche Entera"].id, "cantidad_original": 100.0, "unidad_medida_id": unidad_ml.id, "cantidad_gramos": round(100.0 * DENSIDADES_INSUMOS["Leche Entera"], 2), "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_pl.id, "nro_version": 1, "renglon": 3, "insumo_id": insumos["Manteca"].id, "cantidad_original": 30.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 30.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_pl.id, "nro_version": 1, "renglon": 4, "insumo_id": insumos["Azúcar Blanca"].id, "cantidad_original": 20.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 20.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_pl.id, "nro_version": 1, "renglon": 5, "insumo_id": insumos["Sal Fina"].id, "cantidad_original": 8.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 8.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_pl.id, "nro_version": 1, "renglon": 6, "insumo_id": insumos["Levadura Fresca"].id, "cantidad_original": 15.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 15.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+            ]))
+
+            p_pl1 = PasoReceta(
+                receta_id=rec_pl.id, version=1, orden=1,
+                nombre_paso="Amasado y Leudado en Molde",
+                procedimiento="Mezclar harina, leche, manteca, azúcar, sal y levadura. Amasar hasta desarrollar red de gluten, colocar en molde y leudar a 30°C.",
+                equipo_id=equipos.get("Amasadora Industrial").id if "Amasadora Industrial" in equipos else None, tiempo_minutos=30, temperatura_celsius=30.0, es_punto_control=False
+            )
+            p_pl2 = PasoReceta(
+                receta_id=rec_pl.id, version=1, orden=2,
+                nombre_paso="Horneado",
+                procedimiento="Hornear a 180°C durante 35 minutos hasta lograr corteza dorada y miga uniforme.",
+                equipo_id=equipos.get("Horno Rotativo").id if "Horno Rotativo" in equipos else None, tiempo_minutos=35, temperatura_celsius=180.0, es_punto_control=True
+            )
+            db.add_all([p_pl1, p_pl2])
+            recetas_creadas += 1
+
+    if "Galletitas marineras" in productos and "Harina 000" in insumos:
+        prod_g = productos["Galletitas marineras"]
+        rec_g = db.query(Receta).filter_by(producto_id=prod_g.id).first()
+        if not rec_g:
+            rec_g = Receta(producto_id=prod_g.id)
+            db.add(rec_g)
+            db.flush()
+
+            v_g = VersionReceta(
+                receta_id=rec_g.id, version=1,
+                rendimiento_final_gramos=500.0, unidad_venta_gramos=30.0,
+                medida_casera="6 galletitas (30g)", motivo_cambio="Fórmula tradicional de galletitas marineras",
+                estado=EstadoVersionReceta.ACTIVO, fecha_vigencia=date.today() - timedelta(days=10)
+            )
+            db.add(v_g)
+            db.flush()
+
+            db.execute(insert(detalle_receta).values([
+                {"receta_id": rec_g.id, "nro_version": 1, "renglon": 1, "insumo_id": insumos["Harina 000"].id, "cantidad_original": 400.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 400.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_g.id, "nro_version": 1, "renglon": 2, "insumo_id": insumos["Aceite de Girasol"].id, "cantidad_original": 50.0, "unidad_medida_id": unidad_ml.id, "cantidad_gramos": round(50.0 * DENSIDADES_INSUMOS["Aceite de Girasol"], 2), "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_g.id, "nro_version": 1, "renglon": 3, "insumo_id": insumos["Sal Fina"].id, "cantidad_original": 12.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 12.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+                {"receta_id": rec_g.id, "nro_version": 1, "renglon": 4, "insumo_id": insumos["Levadura Fresca"].id, "cantidad_original": 10.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 10.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+            ]))
+
+            p_g1 = PasoReceta(
+                receta_id=rec_g.id, version=1, orden=1,
+                nombre_paso="Laminado, Estampado y Horneado",
+                procedimiento="Amasar, estirar masa fina, estampar formas de galletita y hornear a 210°C hasta sequedad y textura crocante.",
+                equipo_id=equipos.get("Horno Rotativo").id if "Horno Rotativo" in equipos else None, tiempo_minutos=12, temperatura_celsius=210.0, es_punto_control=True
+            )
+            db.add(p_g1)
+            recetas_creadas += 1
+
+    if "Jugo de naranja exprimido" in productos and "Naranjas" in insumos:
+        prod_j = productos["Jugo de naranja exprimido"]
+        rec_j = db.query(Receta).filter_by(producto_id=prod_j.id).first()
+        if not rec_j:
+            rec_j = Receta(producto_id=prod_j.id)
+            db.add(rec_j)
+            db.flush()
+
+            v_j = VersionReceta(
+                receta_id=rec_j.id, version=1,
+                rendimiento_final_gramos=500.0, unidad_venta_gramos=200.0,
+                medida_casera="1 vaso (200ml)", motivo_cambio="Extracción 100% natural de naranja",
+                estado=EstadoVersionReceta.ACTIVO, fecha_vigencia=date.today() - timedelta(days=5)
+            )
+            db.add(v_j)
+            db.flush()
+
+            db.execute(insert(detalle_receta).values([
+                {"receta_id": rec_j.id, "nro_version": 1, "renglon": 1, "insumo_id": insumos["Naranjas"].id, "cantidad_original": 1000.0, "unidad_medida_id": unidad_gramos.id, "cantidad_gramos": 1000.0, "tipo_uso": TipoUsoInsumo.INGREDIENTE.value, "aditivo_id": None},
+            ]))
+
+            p_j1 = PasoReceta(
+                receta_id=rec_j.id, version=1, orden=1,
+                nombre_paso="Exprimido y Filtrado",
+                procedimiento="Lavar fruta fresca, exprimir cítricos, filtrar pulpa y envasar en frío a 4°C.",
+                equipo_id=None, tiempo_minutos=15, temperatura_celsius=4.0, es_punto_control=True
+            )
+            db.add(p_j1)
             recetas_creadas += 1
 
     db.commit()
@@ -1569,6 +1753,17 @@ def seed_database(reset: bool = True):
         if db.query(Receta).count() == 0:
             num_aditivos, num_recetas = cargar_aditivos_y_recetas_de_ejemplo(db, unidad_gramos)
             print(f"Catálogo de Aditivos de Referencia INS ({num_aditivos}) y Recetas enriquecidas ({num_recetas}) procesadas correctamente.")
+
+        if db.query(CalculoSellosRotulado).count() == 0:
+            admin = db.query(Empleado).filter_by(legajo="EMP-1000").first()
+            num_calculados = 0
+            for prod in db.query(Producto).all():
+                try:
+                    rotulado_frontal_services.calcular_sellos_producto(db, prod.id, admin.id)
+                    num_calculados += 1
+                except Exception:
+                    pass
+            print(f"Cálculos de sellos de advertencia ejecutados para {num_calculados} productos.")
 
         if db.query(DeclaracionAlergenos).count() == 0:
             marcas = cargar_alergenos_de_ejemplo(db)

@@ -6,6 +6,7 @@ import type {
     MarcaInsumo,
     PropuestaMarcas,
     RespuestasAplicabilidad,
+    ResultadoCalculoSellos,
 } from '../types/rotuladoFrontal';
 import { mensajeDeError } from '../utils/errores';
 
@@ -65,5 +66,27 @@ export const actualizarMarcasInsumos = async (
         body: JSON.stringify({ empleado_id: empleadoId, marcas }),
     });
     if (!res.ok) throw new Error(await mensajeDeError(res, 'No se pudieron guardar las marcas'));
+    return res.json();
+};
+
+export const getCalculoSellos = async (
+    productoId: number | string,
+): Promise<ResultadoCalculoSellos | null> => {
+    const res = await fetch(`${BASE_URL}/productos/${productoId}/calculo-sellos`);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(await mensajeDeError(res, 'Error al obtener el cálculo de sellos del producto'));
+    return res.json();
+};
+
+export const calcularSellos = async (
+    productoId: number | string,
+    empleadoId: number,
+): Promise<ResultadoCalculoSellos> => {
+    const res = await fetch(`${BASE_URL}/productos/${productoId}/calcular-sellos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ empleado_id: empleadoId }),
+    });
+    if (!res.ok) throw new Error(await mensajeDeError(res, 'No se pudo calcular los sellos de advertencia'));
     return res.json();
 };

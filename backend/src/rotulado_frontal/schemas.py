@@ -3,8 +3,9 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
+from src.datos_nutricionales.constants import Nutriente
 from src.documentacion.schemas import EmpleadoResumen
-from src.parametros_normativos.constants import Agregado, EstadoConjunto, SelloAdvertencia
+from src.parametros_normativos.constants import Agregado, EstadoConjunto, FormaCriterio, SelloAdvertencia
 from src.productos.constants import TipoProducto
 from src.rotulado_frontal.constants import ResultadoAplicabilidad
 
@@ -109,3 +110,41 @@ class PropuestaMarcas(MarcasAgregados):
     version_receta: Optional[int] = None
     origenes: List[OrigenMarca] = []
     insumos_sin_revisar: List[InsumoResumen] = []
+
+
+class PasoCalculoNutriente(BaseModel):
+    sello: SelloAdvertencia
+    nutriente: Nutriente
+    evaluado: bool
+    motivo_no_evaluado: Optional[str] = None
+    forma_evaluacion: Optional[FormaCriterio] = None
+    valor_gramos_100g: Optional[float] = None
+    factor_energetico_utilizado: Optional[float] = None
+    aporte_kcal_nutriente: Optional[float] = None
+    energia_total_kcal_100g: Optional[float] = None
+    valor_calculado: Optional[float] = None
+    limite_umbral: Optional[float] = None
+    unidad_umbral: Optional[str] = None
+    supera_umbral: bool = False
+    formula_desplegada: str = ""
+
+
+class SolicitudCalculoSellos(BaseModel):
+    empleado_id: int
+
+
+class ResultadoCalculoSellos(BaseModel):
+    id: Optional[int] = None
+    producto: ProductoResumen
+    version_receta: Optional[int] = None
+    provisorio: bool = False
+    resultado_aplicabilidad: ResultadoAplicabilidad
+    motivo_aplicabilidad: Optional[str] = None
+    sellos_obtenidos: List[SelloAplicable] = []
+    leyendas_obtenidas: List[SelloAplicable] = []
+    pasos_calculo: List[PasoCalculoNutriente] = []
+    parametros: ParametrosUsados
+    fecha_calculo: Optional[datetime] = None
+    calculado_por: Optional[EmpleadoResumen] = None
+
+    model_config = ConfigDict(from_attributes=True)
