@@ -164,24 +164,6 @@ export default function RecetaDetail() {
         return versiones.find((v) => v.version === nroVersionSeleccionada) || versiones[0];
     }, [versiones, nroVersionSeleccionada]);
 
-    function obtenerCantidadOriginal(renglon: number) {
-        const detalle = version?.detalles.find(
-            (d) => d.renglon === renglon,
-        );
-
-        if (!detalle) return '—';
-
-        const unidad = actual?.unidades.find(
-            (u) => u.id === detalle.unidad_medida_id,
-        );
-
-        const cantidad = new Intl.NumberFormat('es-AR', {
-            maximumFractionDigits: 2,
-        }).format(detalle.cantidad_original);
-
-        return `${cantidad} ${unidad?.nombre ?? ''}`.trim();
-    }
-    
     const componentesComposicion = composicion
         ? [...composicion.ingredientes, ...composicion.aditivos]
         : [];

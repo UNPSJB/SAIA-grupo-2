@@ -1,6 +1,8 @@
 import type { EvaluacionRotulado } from '../../types/rotuladoFrontal';
 import { formatearFechaHora, nombreCompleto } from '../datosNutricionales/nutrientes';
 import { RESULTADO, origenDeMarcas } from '../parametrosNormativos/etiquetas';
+import OctogonoAdvertencia from './OctogonoAdvertencia';
+import LeyendaPrecaucion from './LeyendaPrecaucion';
 import estilos from './RotuladoFrontal.module.css';
 
 interface ResultadoRotuladoProps {
@@ -27,11 +29,9 @@ export default function ResultadoRotulado({ evaluacion, mostrarDetalle = true }:
                 {evaluacion.sellos_a_evaluar.length > 0 && (
                     <div className={estilos.grupoSellos}>
                         <span>Sellos de exceso a evaluar</span>
-                        <div className={estilos.sellos}>
+                        <div className={estilos.sellos} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '6px' }}>
                             {evaluacion.sellos_a_evaluar.map((sello) => (
-                                <span key={sello.sello} className={estilos.sello}>
-                                    {sello.texto}
-                                </span>
+                                <OctogonoAdvertencia key={sello.sello} sello={sello.sello} texto={sello.texto} tamano="pequeno" />
                             ))}
                         </div>
                     </div>
@@ -40,11 +40,9 @@ export default function ResultadoRotulado({ evaluacion, mostrarDetalle = true }:
                 {evaluacion.leyendas.length > 0 && (
                     <div className={estilos.grupoSellos}>
                         <span>Leyendas precautorias</span>
-                        <div className={estilos.sellos}>
+                        <div className={estilos.sellos} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '6px' }}>
                             {evaluacion.leyendas.map((leyenda) => (
-                                <span key={leyenda.sello} className={estilos.leyenda}>
-                                    {leyenda.texto}
-                                </span>
+                                <LeyendaPrecaucion key={leyenda.sello} sello={leyenda.sello} texto={leyenda.texto} />
                             ))}
                         </div>
                     </div>

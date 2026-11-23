@@ -63,3 +63,34 @@ class MarcaInsumo(ModeloBase):
     cambiado_por: Mapped[Optional["src.empleados.models.Empleado"]] = relationship(
         "src.empleados.models.Empleado", lazy="selectin"
     )
+
+
+class CalculoSellosRotulado(ModeloBase):
+    """Resultado del calculo dinamico de octogonos de advertencia y leyendas precautorias de un producto.
+
+    Se almacena asociado a la version de la receta y la version de los parametros normativos con los que fue calculado.
+    """
+
+    __tablename__ = "calculos_sellos_rotulado"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    producto_id: Mapped[int] = mapped_column(ForeignKey("productos.id", ondelete="CASCADE"), index=True)
+    evaluacion_aplicabilidad_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("evaluaciones_rotulado_frontal.id", ondelete="SET NULL")
+    )
+    version_receta: Mapped[Optional[int]]
+    parametros_id: Mapped[int] = mapped_column(ForeignKey("parametros_normativos.id"))
+    fecha_calculo: Mapped[datetime]
+    calculado_por_id: Mapped[int] = mapped_column(ForeignKey("empleados.id"))
+    provisorio: Mapped[bool] = mapped_column(default=False)
+    sellos_obtenidos: Mapped[List[str]] = mapped_column(JSON, default=list)
+    detalle_calculo: Mapped[List[dict]] = mapped_column(JSON, default=list)
+
+    producto: Mapped["src.productos.models.Producto"] = relationship("src.productos.models.Producto", lazy="selectin")
+    parametros: Mapped["src.parametros_normativos.models.ConjuntoParametros"] = relationship(
+        "src.parametros_normativos.models.ConjuntoParametros", lazy="selectin"
+    )
+    evaluacion_aplicabilidad: Mapped[Optional[EvaluacionAplicabilidad]] = relationship(
+        "EvaluacionAplicabilidad", lazy="selectin"
+    )
+    calculado_por: Mapped["src.empleados.models.Empleado"] = relationship("src.empleados.models.Empleado", lazy="selectin")

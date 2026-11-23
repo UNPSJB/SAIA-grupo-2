@@ -6,19 +6,21 @@ from sqlalchemy.orm import Session
 
 from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
 from src.asociaciones.detalle_receta import detalle_receta
+from src.datos_nutricionales.constants import EstadoTablaNutricional, Nutriente
 from src.empleados import services as empleados_services
 from src.insumos import services as insumos_services
 from src.insumos.models import Insumo
 from src.parametros_normativos import services as parametros_services
-from src.parametros_normativos.constants import LEYENDAS_PRECAUTORIAS, Agregado, SelloAdvertencia
+from src.parametros_normativos.constants import LEYENDAS_PRECAUTORIAS, Agregado, CondicionCriterio, FormaCriterio, SelloAdvertencia
 from src.parametros_normativos.models import ConjuntoParametros
 from src.productos import services as productos_services
 from src.productos.models import Producto
+from src.recetas import services as recetas_services
 from src.recetas.constants import EstadoVersionReceta
 from src.recetas.models import Receta, VersionReceta
 from src.rotulado_frontal import exceptions, schemas
 from src.rotulado_frontal.constants import ResultadoAplicabilidad
-from src.rotulado_frontal.models import EvaluacionAplicabilidad, MarcaInsumo
+from src.rotulado_frontal.models import CalculoSellosRotulado, EvaluacionAplicabilidad, MarcaInsumo
 
 CAMPO_POR_AGREGADO = {
     Agregado.AZUCARES: "agrega_azucares",
@@ -269,3 +271,288 @@ def actualizar_marcas_insumos(db: Session, datos: schemas.ActualizacionMarcasIns
         db.add(marca)
     db.commit()
     return listar_marcas_insumos(db)
+
+
+def _evaluar_condicion_criterio(
+    criterio,
+    evaluacion: EvaluacionAplicabilidad,
+    sellos_en_juego: Set[SelloAdvertencia],
+    kcal_100g: float,
+) -> Tuple[bool, Optional[str]]:
+    if criterio.sello not in sellos_en_juego:
+        return False, "El producto no contiene agregados vinculados a este sello."
+
+    if criterio.condicion == CondicionCriterio.CON_SELLO_DE_ENERGIA:
+        if not (evaluacion.agrega_azucares or evaluacion.agrega_grasas):
+            return False, "El exceso en calorías solo se evalúa si el producto agrega azúcares o grasas."
+        return True, None
+
+    if criterio.condicion == CondicionCriterio.SIN_APORTE_ENERGETICO:
+        if kcal_100g > 4.0:
+            return False, "Solo aplica a bebidas sin aporte energético."
+        return True, None
+
+    return True, None
+
+
+def calcular_sellos_producto(
+    db: Session, producto_id: int, empleado_id: int
+) -> schemas.ResultadoCalculoSellos:
+    """Ejecuta el calculo dinamico de octogonos de advertencia y leyendas precautorias.
+
+    Lee dinamicamente el conjunto de parametros normativos vigente (`ConjuntoParametros.criterios`),
+    la version de receta vigente del producto, la tabla nutricional calculada y la evaluacion de aplicabilidad E12-01.
+    """
+    parametros_services.verificar_modulo_activo(db)
+    producto = productos_services.leer_producto(db, producto_id)
+    empleados_services.leer_empleado(db, empleado_id)
+
+    parametros = parametros_services.conjunto_vigente(db)
+    textos_dict = {t.sello: t.texto for t in parametros.textos}
+
+    evaluaciones = _evaluaciones(db, producto_id)
+    evaluacion = evaluaciones[0] if evaluaciones else None
+
+    if evaluacion is None or evaluacion.resultado in (ResultadoAplicabilidad.NO_ENVASADO, ResultadoAplicabilidad.EXCEPTUADO):
+        motivo = "El producto no cuenta con evaluacion de aplicabilidad." if evaluacion is None else (
+            "El producto no se envasa en ausencia del cliente." if evaluacion.resultado == ResultadoAplicabilidad.NO_ENVASADO
+            else f"Producto exceptuado de rotulado frontal ({evaluacion.excepcion or 'Categoria exceptuada'})."
+        )
+        res_aplicabilidad = evaluacion.resultado if evaluacion else ResultadoAplicabilidad.NO_ENVASADO
+        return schemas.ResultadoCalculoSellos(
+            producto=schemas.ProductoResumen.model_validate(producto),
+            provisorio=False,
+            resultado_aplicabilidad=res_aplicabilidad,
+            motivo_aplicabilidad=motivo,
+            sellos_obtenidos=[],
+            leyendas_obtenidas=[],
+            pasos_calculo=[],
+            parametros=schemas.ParametrosUsados.model_validate(parametros),
+            fecha_calculo=datetime.now(),
+            calculado_por=empleados_services.leer_empleado(db, empleado_id),
+        )
+
+    version_receta = _version_vigente_receta(db, producto_id)
+    if version_receta is None:
+        return schemas.ResultadoCalculoSellos(
+            producto=schemas.ProductoResumen.model_validate(producto),
+            provisorio=True,
+            resultado_aplicabilidad=evaluacion.resultado,
+            motivo_aplicabilidad="El producto no cuenta con una version vigente de receta.",
+            sellos_obtenidos=[],
+            leyendas_obtenidas=[],
+            pasos_calculo=[],
+            parametros=schemas.ParametrosUsados.model_validate(parametros),
+            fecha_calculo=datetime.now(),
+            calculado_por=empleados_services.leer_empleado(db, empleado_id),
+        )
+
+    tabla_nut = recetas_services.calcular_informacion_nutricional_receta(db, version_receta.receta_id, version_receta.version)
+    provisorio = getattr(tabla_nut, "estado", None) == EstadoTablaNutricional.INCOMPLETA or bool(getattr(tabla_nut, "faltantes", []))
+
+    items_dict = {item.nutriente: item for item in tabla_nut.items}
+    energia_item = items_dict.get(Nutriente.ENERGIA.value)
+    kcal_100g = energia_item.valor_100g_raw if energia_item else 0.0
+
+    resultado_ap, sellos_en_juego = determinar_aplicabilidad(evaluacion, parametros)
+    sellos_en_juego_set = set(sellos_en_juego)
+
+    criterios = [c for c in parametros.criterios if c.tipo_producto == producto.tipo]
+    pasos_calculo: List[schemas.PasoCalculoNutriente] = []
+    sellos_disparados: Set[SelloAdvertencia] = set()
+
+    for criterio in criterios:
+        evaluado, motivo_no_eval = _evaluar_condicion_criterio(criterio, evaluacion, sellos_en_juego_set, kcal_100g)
+        if not evaluado:
+            pasos_calculo.append(
+                schemas.PasoCalculoNutriente(
+                    sello=criterio.sello,
+                    nutriente=criterio.nutriente,
+                    evaluado=False,
+                    motivo_no_evaluado=motivo_no_eval,
+                    forma_evaluacion=criterio.forma,
+                    limite_umbral=criterio.limite,
+                    unidad_umbral=criterio.unidad,
+                    supera_umbral=False,
+                    formula_desplegada=f"Omitido: {motivo_no_eval}",
+                )
+            )
+            continue
+
+        nut_item = items_dict.get(criterio.nutriente.value)
+        valor_100g = nut_item.valor_100g_raw if nut_item and nut_item.valor_100g_raw is not None else 0.0
+        if criterio.nutriente == Nutriente.AZUCARES_ANADIDOS and valor_100g == 0.0:
+            tot_item = items_dict.get(Nutriente.AZUCARES_TOTALES.value)
+            if tot_item and tot_item.valor_100g_raw:
+                valor_100g = tot_item.valor_100g_raw
+
+        if criterio.forma == FormaCriterio.PORCENTAJE_ENERGIA:
+            factor = criterio.factor_energetico or (9.0 if criterio.nutriente in (Nutriente.GRASAS_TOTALES, Nutriente.GRASAS_SATURADAS) else 4.0)
+            aporte_kcal = valor_100g * factor
+            valor_calc = (aporte_kcal * 100.0 / kcal_100g) if kcal_100g > 0 else 0.0
+            supera = valor_calc >= criterio.limite
+            formula_text = (
+                f"( {valor_100g:.2f} g × {factor:.1f} kcal/g × 100 ) / {kcal_100g:.2f} kcal = {valor_calc:.2f} % "
+                f"(Umbral: ≥ {criterio.limite:.1f} %)"
+            )
+            paso = schemas.PasoCalculoNutriente(
+                sello=criterio.sello,
+                nutriente=criterio.nutriente,
+                evaluado=True,
+                forma_evaluacion=criterio.forma,
+                valor_gramos_100g=round(valor_100g, 4),
+                factor_energetico_utilizado=factor,
+                aporte_kcal_nutriente=round(aporte_kcal, 4),
+                energia_total_kcal_100g=round(kcal_100g, 4),
+                valor_calculado=round(valor_calc, 2),
+                limite_umbral=criterio.limite,
+                unidad_umbral=criterio.unidad,
+                supera_umbral=supera,
+                formula_desplegada=formula_text,
+            )
+        elif criterio.forma == FormaCriterio.MG_POR_KCAL:
+            valor_calc = (valor_100g / kcal_100g) if kcal_100g > 0 else 0.0
+            supera = valor_calc >= criterio.limite
+            formula_text = (
+                f"{valor_100g:.2f} mg / {kcal_100g:.2f} kcal = {valor_calc:.2f} mg/kcal "
+                f"(Umbral: ≥ {criterio.limite:.1f} mg/kcal)"
+            )
+            paso = schemas.PasoCalculoNutriente(
+                sello=criterio.sello,
+                nutriente=criterio.nutriente,
+                evaluado=True,
+                forma_evaluacion=criterio.forma,
+                valor_gramos_100g=round(valor_100g, 4),
+                energia_total_kcal_100g=round(kcal_100g, 4),
+                valor_calculado=round(valor_calc, 2),
+                limite_umbral=criterio.limite,
+                unidad_umbral=criterio.unidad,
+                supera_umbral=supera,
+                formula_desplegada=formula_text,
+            )
+        else:
+            valor_calc = kcal_100g if criterio.nutriente == Nutriente.ENERGIA else valor_100g
+            supera = valor_calc >= criterio.limite
+            formula_text = (
+                f"{valor_calc:.2f} {criterio.unidad} "
+                f"(Umbral: ≥ {criterio.limite:.1f} {criterio.unidad})"
+            )
+            paso = schemas.PasoCalculoNutriente(
+                sello=criterio.sello,
+                nutriente=criterio.nutriente,
+                evaluado=True,
+                forma_evaluacion=criterio.forma,
+                valor_gramos_100g=round(valor_100g, 4),
+                energia_total_kcal_100g=round(kcal_100g, 4),
+                valor_calculado=round(valor_calc, 2),
+                limite_umbral=criterio.limite,
+                unidad_umbral=criterio.unidad,
+                supera_umbral=supera,
+                formula_desplegada=formula_text,
+            )
+
+        pasos_calculo.append(paso)
+        if supera:
+            sellos_disparados.add(criterio.sello)
+
+    leyendas_disparadas: Set[SelloAdvertencia] = set()
+    if evaluacion.contiene_edulcorantes:
+        leyendas_disparadas.add(SelloAdvertencia.CONTIENE_EDULCORANTES)
+    if evaluacion.contiene_cafeina:
+        leyendas_disparadas.add(SelloAdvertencia.CONTIENE_CAFEINA)
+
+    sellos_obtenidos_dto = [
+        schemas.SelloAplicable(
+            sello=s,
+            texto=textos_dict.get(s, s.value),
+            es_leyenda=False,
+        )
+        for s in sellos_disparados if s not in LEYENDAS_PRECAUTORIAS
+    ]
+
+    leyendas_obtenidas_dto = [
+        schemas.SelloAplicable(
+            sello=l,
+            texto=textos_dict.get(l, l.value),
+            es_leyenda=True,
+        )
+        for l in leyendas_disparadas
+    ]
+
+    calculo_obj = CalculoSellosRotulado(
+        producto_id=producto_id,
+        evaluacion_aplicabilidad_id=evaluacion.id,
+        version_receta=version_receta.version,
+        parametros_id=parametros.id,
+        fecha_calculo=datetime.now(),
+        calculado_por_id=empleado_id,
+        provisorio=provisorio,
+        sellos_obtenidos=[s.sello.value for s in sellos_obtenidos_dto + leyendas_obtenidas_dto],
+        detalle_calculo=[p.model_dump(mode="json") for p in pasos_calculo],
+    )
+    db.add(calculo_obj)
+    db.commit()
+    db.refresh(calculo_obj)
+
+    return schemas.ResultadoCalculoSellos(
+        id=calculo_obj.id,
+        producto=schemas.ProductoResumen.model_validate(producto),
+        version_receta=version_receta.version,
+        provisorio=provisorio,
+        resultado_aplicabilidad=evaluacion.resultado,
+        motivo_aplicabilidad=None,
+        sellos_obtenidos=sellos_obtenidos_dto,
+        leyendas_obtenidas=leyendas_obtenidas_dto,
+        pasos_calculo=pasos_calculo,
+        parametros=schemas.ParametrosUsados.model_validate(parametros),
+        fecha_calculo=calculo_obj.fecha_calculo,
+        calculado_por=empleados_services.leer_empleado(db, empleado_id),
+    )
+
+
+def obtener_calculo_sellos_vigente(
+    db: Session, producto_id: int
+) -> Optional[schemas.ResultadoCalculoSellos]:
+    """Retorna el ultimo calculo de sellos guardado para el producto, o None si aun no fue calculado."""
+    parametros_services.verificar_modulo_activo(db)
+    productos_services.leer_producto(db, producto_id)
+    calculo = db.scalar(
+        select(CalculoSellosRotulado)
+        .where(CalculoSellosRotulado.producto_id == producto_id)
+        .order_by(CalculoSellosRotulado.fecha_calculo.desc(), CalculoSellosRotulado.id.desc())
+    )
+    if calculo is None:
+        return None
+
+    parametros = calculo.parametros
+    textos_dict = {t.sello: t.texto for t in parametros.textos}
+    sellos_objs = [SelloAdvertencia(s) for s in calculo.sellos_obtenidos]
+
+    sellos_dto = [
+        schemas.SelloAplicable(sello=s, texto=textos_dict.get(s, s.value), es_leyenda=False)
+        for s in sellos_objs if s not in LEYENDAS_PRECAUTORIAS
+    ]
+    leyendas_dto = [
+        schemas.SelloAplicable(sello=s, texto=textos_dict.get(s, s.value), es_leyenda=True)
+        for s in sellos_objs if s in LEYENDAS_PRECAUTORIAS
+    ]
+    pasos = [schemas.PasoCalculoNutriente(**p) for p in calculo.detalle_calculo]
+
+    evaluacion_id = calculo.evaluacion_aplicabilidad_id
+    evaluacion_obj = db.get(EvaluacionAplicabilidad, evaluacion_id) if evaluacion_id else None
+    resultado_ap = evaluacion_obj.resultado if evaluacion_obj else ResultadoAplicabilidad.NO_ENVASADO
+
+    return schemas.ResultadoCalculoSellos(
+        id=calculo.id,
+        producto=schemas.ProductoResumen.model_validate(calculo.producto),
+        version_receta=calculo.version_receta,
+        provisorio=calculo.provisorio,
+        resultado_aplicabilidad=resultado_ap,
+        motivo_aplicabilidad=None,
+        sellos_obtenidos=sellos_dto,
+        leyendas_obtenidas=leyendas_dto,
+        pasos_calculo=pasos,
+        parametros=schemas.ParametrosUsados.model_validate(parametros),
+        fecha_calculo=calculo.fecha_calculo,
+        calculado_por=empleados_services.leer_empleado(db, calculo.calculado_por_id),
+    )
