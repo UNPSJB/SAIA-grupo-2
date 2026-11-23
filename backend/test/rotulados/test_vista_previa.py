@@ -176,3 +176,32 @@ def test_permite_elegir_el_lote(db_session: Session, producto, receta, parametro
     with pytest.raises(HTTPException) as error:
         services.obtener_vista_previa(db_session, rotulo.id, 9999)
     assert error.value.status_code == 404
+
+
+def test_con_el_modulo_desactivado_no_muestra_advertencias(db_session: Session, producto, receta, parametros, admin):
+    from src.parametros_normativos import services as parametros_services
+    from src.parametros_normativos.schemas import CambioModulo
+
+    rotulo, _ = _rotulo_completo(db_session, producto, admin)
+    parametros_services.cambiar_modulo(db_session, CambioModulo(activo=False, empleado_id=admin.id))
+
+    cara = services.obtener_vista_previa(db_session, rotulo.id).cara_principal
+
+    assert cara.aplica_advertencias is None
+    assert cara.sellos == []
+    assert "desactivado" in cara.motivo
+
+
+def test_avisa_si_los_sellos_son_de_otra_version_de_receta(db_session: Session, producto, receta, insumos, gramos, parametros, admin):
+    rotulo, _ = _rotulo_completo(db_session, producto, admin)
+    recetas_services.crear_version_receta(
+        db_session,
+        receta.id,
+        recetas_schemas.VersionRecetaCreate(**version_receta(insumos, gramos, {"Harina 000": 600, "Azúcar": 400})),
+    )
+    services.actualizar_snapshots(db_session, rotulo.id, admin.id)
+
+    vista = services.obtener_vista_previa(db_session, rotulo.id)
+
+    assert vista.receta_version == 2
+    assert any("Los sellos se calcularon con la versión 1" in a for a in vista.advertencias)
