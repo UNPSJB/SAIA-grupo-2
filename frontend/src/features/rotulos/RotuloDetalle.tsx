@@ -14,6 +14,9 @@ import {
     getHistorialRotulo,
     getLotesRotulo,
     getRotuloProducto,
+    crearExportacionRotulo,
+    getExportacionRotulo,
+    getExportacionesRotulo,
 } from '../../services/rotulosServices';
 
 import type { Producto } from '../../types/productos';
@@ -23,11 +26,13 @@ import type {
     Rotulo,
     RotuloDatos,
     RotuloLote,
+    ExportacionRotulo,
 } from '../../types/rotulos';
 
 import Boton from '../../components/Boton';
 import shared from '../../styles/shared.module.css';
 import styles from './RotuloDetalle.module.css';
+import { exportarRotuloPdf } from '../../utils/exportarRotuloPdf';
 
 const datosIniciales: RotuloDatos = {
     denominacion_venta: '',
@@ -83,11 +88,6 @@ function mostrarValor(valor: unknown): string {
     return String(valor);
 }
 
-function mostrarSnapshot(valor: unknown): string {
-    if (valor === null || valor === undefined) return 'Sin datos disponibles';
-    return JSON.stringify(valor, null, 2);
-}
-
 function formatearValorHistorial(valor: string | null): string {
     if (valor === null || valor === '') return 'Sin valor';
 
@@ -110,13 +110,21 @@ function mostrarFecha(fecha: string): string {
     return new Date(fecha).toLocaleString('es-AR');
 }
 
+
 function TablaIngredientes({ snapshot }: { snapshot: unknown }) {
     const registro = esRegistro(snapshot) ? snapshot : null;
     const ingredientes = obtenerLista(registro, 'ingredientes');
     const aditivos = obtenerLista(registro, 'aditivos');
-    const filas = [
-        ...ingredientes.map((item) => ({ ...item, categoria: 'Ingrediente' })),
-        ...aditivos.map((item) => ({ ...item, categoria: 'Aditivo' })),
+
+    const filas: (RegistroSnapshot & { categoria: string })[] = [
+        ...ingredientes.map((item): RegistroSnapshot & { categoria: string } => ({
+            ...item,
+            categoria: 'Ingrediente',
+        })),
+        ...aditivos.map((item): RegistroSnapshot & { categoria: string } => ({
+            ...item,
+            categoria: 'Aditivo',
+        })),
     ];
 
     if (filas.length === 0) {
@@ -159,12 +167,12 @@ function TablaIngredientes({ snapshot }: { snapshot: unknown }) {
                 <div className={styles.snapshotResumen}>
                     {registro.total_gramos !== undefined && (
                         <span>
-                            Total: <strong>{mostrarValor(registro.total_gramos)} g</strong>
+                            **Total:** {mostrarValor(registro.total_gramos)} g
                         </span>
                     )}
                     {registro.suma_porcentajes !== undefined && (
                         <span>
-                            Suma: <strong>{mostrarValor(registro.suma_porcentajes)}%</strong>
+                            **Suma de porcentajes:** {mostrarValor(registro.suma_porcentajes)}%
                         </span>
                     )}
                 </div>
@@ -172,6 +180,7 @@ function TablaIngredientes({ snapshot }: { snapshot: unknown }) {
         </div>
     );
 }
+
 
 function TablaNutricional({ snapshot }: { snapshot: unknown }) {
     const registro = esRegistro(snapshot) ? snapshot : null;
@@ -275,6 +284,9 @@ export default function RotuloDetalle() {
     const [mensaje, setMensaje] = useState('');
     const [error, setError] = useState('');
 
+    const [exportaciones, setExportaciones] = useState<ExportacionRotulo[]>([]);
+    const [exportando, setExportando] = useState(false);
+
     const cargarDatos = useCallback(async () => {
         if (!productoId) return;
 
@@ -296,16 +308,18 @@ export default function RotuloDetalle() {
             );
 
             if (rotuloObtenido) {
-                const [lotesObtenidos, historialObtenido, completitudObtenida] =
+                const [lotesObtenidos, historialObtenido, completitudObtenida, exportacionesObtenidas,] =
                     await Promise.all([
                         getLotesRotulo(rotuloObtenido.id),
                         getHistorialRotulo(rotuloObtenido.id),
                         getCompletitudRotulo(rotuloObtenido.id),
+                        getExportacionesRotulo(rotuloObtenido.id),
                     ]);
 
                 setLotes(lotesObtenidos);
                 setHistorial(historialObtenido);
                 setCompletitud(completitudObtenida);
+                setExportaciones(exportacionesObtenidas);
 
                 const fechas: Record<number, string> = {};
                 lotesObtenidos.forEach((lote) => {
@@ -316,6 +330,7 @@ export default function RotuloDetalle() {
                 setLotes([]);
                 setHistorial([]);
                 setCompletitud(null);
+                setExportaciones([]);
             }
         } catch (err) {
             setError(
@@ -487,6 +502,69 @@ export default function RotuloDetalle() {
             );
         } finally {
             setProcesando(false);
+        }
+    };
+
+    const exportarBorrador = async () => {
+        if (!rotulo || !usuario?.id) {
+            setError('No se pudo identificar el rótulo o el usuario.');
+            return;
+        }
+
+        setExportando(true);
+        setError('');
+        setMensaje('');
+
+        try {
+            const exportacion = await crearExportacionRotulo(
+                rotulo.id,
+                usuario.id,
+            );
+
+            const detalle = await getExportacionRotulo(
+                rotulo.id,
+                exportacion.id,
+            );
+
+            exportarRotuloPdf(detalle);
+
+            setMensaje('El borrador PDF se generó correctamente.');
+            const historialActualizado = await getExportacionesRotulo(rotulo.id);
+            setExportaciones(historialActualizado);
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : 'No se pudo generar el borrador PDF.',
+            );
+        } finally {
+            setExportando(false);
+        }
+    };
+
+    const descargarExportacionAnterior = async (exportacionId: number) => {
+        if (!rotulo) return;
+
+        setExportando(true);
+        setError('');
+        setMensaje('');
+
+        try {
+            const detalle = await getExportacionRotulo(
+                rotulo.id,
+                exportacionId,
+            );
+
+            exportarRotuloPdf(detalle);
+            setMensaje(`Se descargó nuevamente la exportación N.º ${exportacionId}.`);
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : 'No se pudo recuperar la exportación.',
+            );
+        } finally {
+            setExportando(false);
         }
     };
 
@@ -760,6 +838,64 @@ export default function RotuloDetalle() {
 
             {rotulo && (
                 <>
+                    <section className={`${shared.tarjetaEstatica} ${styles.seccion}`}>
+                        <div className={styles.seccionEncabezado}>
+                            <div>
+                                <h2 className={styles.seccionTitulo}>Exportación del borrador</h2>
+                                <p className={styles.textoAyuda}>
+                                    Generá un PDF con el rótulo y su anexo técnico.
+                                    La exportación conserva una copia de los datos utilizados.
+                                </p>
+                            </div>
+
+                            <Boton
+                                variant="descargar"
+                                onClick={exportarBorrador}
+                                disabled={exportando || procesando}
+                            >
+                                {exportando ? 'Generando PDF...' : 'Exportar borrador PDF'}
+                            </Boton>
+                        </div>
+
+                        <h3 className={styles.subtituloSeccion}>Historial de exportaciones</h3>
+
+                        {exportaciones.length === 0 ? (
+                            <p className={shared.emptyMensaje}>
+                                Todavía no hay exportaciones registradas.
+                            </p>
+                        ) : (
+                            <div className={styles.historial}>
+                                {exportaciones.map((exportacion) => (
+                                    <article className={styles.cambio} key={exportacion.id}>
+                                        <div className={styles.cambioEncabezado}>
+                                            <strong>Exportación N.º {exportacion.id}</strong>
+                                            <span>{mostrarFecha(exportacion.fecha_exportacion)}</span>
+                                        </div>
+
+                                        <p className={styles.empleadoCambio}>
+                                            <strong>Generada por:</strong>{' '}
+                                            {exportacion.empleado_nombre || exportacion.empleado_apellido
+                                                ? `${exportacion.empleado_nombre ?? ''} ${exportacion.empleado_apellido ?? ''}`.trim()
+                                                : `Empleado ${exportacion.empleado_id}`}
+                                        </p>
+
+                                        <p className={styles.empleadoCambio}>
+                                            <strong>Versión de receta:</strong>{' '}
+                                            {exportacion.version_receta ?? 'No disponible'}
+                                        </p>
+
+                                        <Boton
+                                            variant="descargar"
+                                            onClick={() => descargarExportacionAnterior(exportacion.id)}
+                                            disabled={exportando}
+                                        >
+                                            Descargar nuevamente
+                                        </Boton>
+                                    </article>
+                                ))}
+                            </div>
+                        )}
+                    </section>
                     <section className={`${shared.tarjetaEstatica} ${styles.seccion}`}>
                         <div className={styles.seccionEncabezado}>
                             <div>

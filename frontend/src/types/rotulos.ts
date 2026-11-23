@@ -75,3 +75,21 @@ export interface CompletitudRotulo {
     completo: boolean;
     faltantes: string[];
 }
+
+export interface ExportacionRotulo {
+    id: number;
+    rotulo_id: number;
+    empleado_id: number;
+    fecha_exportacion: string;
+    receta_id: number | null;
+    version_receta: number | null;
+    calculo_sellos_id: number | null;
+    parametros_id: number | null;
+    version_parametros: number | null;
+    empleado_nombre?: string | null;
+    empleado_apellido?: string | null;
+}
+
+export interface ExportacionRotuloDetalle extends ExportacionRotulo {
+    respaldo_snapshot: Record<string, unknown>;
+}

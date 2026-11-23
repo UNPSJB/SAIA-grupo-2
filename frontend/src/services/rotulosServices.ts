@@ -9,6 +9,8 @@ import type {
     RotuloLote,
     RotuloLoteActualizar,
     RotuloLoteCrear,
+    ExportacionRotulo,
+    ExportacionRotuloDetalle,
 } from '../types/rotulos';
 
 const BASE_URL = `${API_URL}/rotulos`;
@@ -136,4 +138,35 @@ export const getHistorialRotulo = async (
 ): Promise<HistorialCambioRotulo[]> => {
     const res = await fetch(`${BASE_URL}/${id}/historial`);
     return manejarRespuesta(res, 'No se pudo cargar el historial del rótulo');
+};
+
+export const crearExportacionRotulo = async (
+    id: number | string,
+    empleadoId: number,
+): Promise<ExportacionRotulo> => {
+    const res = await fetch(`${BASE_URL}/${id}/exportaciones`, {
+        method: 'POST',
+        headers: headersAdmin(empleadoId),
+    });
+
+    return manejarRespuesta(res, 'No se pudo generar la exportación del rótulo');
+};
+
+export const getExportacionesRotulo = async (
+    id: number | string,
+): Promise<ExportacionRotulo[]> => {
+    const res = await fetch(`${BASE_URL}/${id}/exportaciones`);
+
+    return manejarRespuesta(res, 'No se pudo cargar el historial de exportaciones');
+};
+
+export const getExportacionRotulo = async (
+    id: number | string,
+    exportacionId: number | string,
+): Promise<ExportacionRotuloDetalle> => {
+    const res = await fetch(
+        `${BASE_URL}/${id}/exportaciones/${exportacionId}`,
+    );
+
+    return manejarRespuesta(res, 'No se pudo recuperar la exportación');
 };
