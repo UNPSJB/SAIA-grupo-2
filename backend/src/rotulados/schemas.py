@@ -96,4 +96,6 @@ class HistorialCambioRotuloRespuesta(BaseModel):
     valor_original: Optional[str] = None
     valor_nuevo: Optional[str] = None
     empleado_id: Optional[int] = None
+    empleado_nombre: Optional[str] = None
+    empleado_apellido: Optional[str] = None
     fecha_cambio: datetime

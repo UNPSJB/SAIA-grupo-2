@@ -55,6 +55,16 @@ def _leer_producto(db: Session, producto_id: int) -> Producto:
     return producto
 
 
+def serializar_valor(valor: Any) -> Optional[str]:
+    if valor is None:
+        return None
+
+    if isinstance(valor, (dict, list, tuple)):
+        return json.dumps(valor, ensure_ascii=False, default=str)
+
+    return str(valor)
+
+
 def _registrar_cambio(
     db: Session,
     rotulo_id: int,
@@ -69,14 +79,8 @@ def _registrar_cambio(
     cambio = HistorialCambioRotulo(
         rotulo_id=rotulo_id,
         campo=campo,
-        valor_original=(
-            json.dumps(valor_original, ensure_ascii=False, default=str)
-            if valor_original is not None else None
-        ),
-        valor_nuevo=(
-            json.dumps(valor_nuevo, ensure_ascii=False, default=str)
-            if valor_nuevo is not None else None
-        ),
+        valor_original=serializar_valor(valor_original),
+        valor_nuevo=serializar_valor(valor_nuevo),
         empleado_id=empleado_id,
         fecha_cambio=datetime.now(),
     )

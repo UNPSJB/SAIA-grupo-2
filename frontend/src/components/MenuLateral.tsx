@@ -97,6 +97,7 @@ const SECCIONES: Seccion[] = [
                     { etiqueta: 'Datos nutricionales', ruta: '/datos-nutricionales', soloAdmin: true },
                     { etiqueta: 'Valores diarios (VD)', ruta: '/datos-nutricionales/valores-diarios', exacta: true, soloAdmin: true },
                     { etiqueta: 'Rotulado frontal', ruta: '/rotulado-frontal', soloAdmin: true },
+                    { etiqueta: 'Rótulos', ruta: '/rotulos', soloAdmin: true },
                     { etiqueta: 'Alérgenos y conservación', ruta: '/alergenos', soloAdmin: true },
                 ],
             },
