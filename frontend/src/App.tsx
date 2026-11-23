@@ -93,6 +93,9 @@ import AlergenosProducto from './features/alergenos/AlergenosProducto';
 import MarcasAlergenosInsumos from './features/alergenos/MarcasAlergenosInsumos';
 import VistaPublica from './features/vistaPublica/VistaPublica';
 
+import RotulosList from './features/rotulos/RotulosList';
+import RotuloDetalle from './features/rotulos/RotuloDetalle';
+
 import './App.css';
 
 function RutaAdmin({ children }: { children: React.ReactElement }) {
@@ -252,6 +255,8 @@ function RutasProtegidas() {
             <Route path="/alergenos/:id" element={<RutaAdmin><AlergenosProducto /></RutaAdmin>} />
             <Route path="/rotulado-frontal/insumos" element={<RutaAdmin><MarcasInsumos /></RutaAdmin>} />
             <Route path="/rotulado-frontal/:id" element={<RutaAdmin><EvaluacionRotuladoFrontal /></RutaAdmin>} />
+            <Route path="/rotulos" element={<RutaAdmin><RotulosList /></RutaAdmin>}/>
+            <Route path="/rotulos/producto/:productoId" element={<RutaAdmin><RotuloDetalle /></RutaAdmin>} />
 
             <Route path="/incidentes/nuevo" element={<IncidenteForm />} />
             <Route path="/incidentes" element={<RutaAdmin><IncidentesList /></RutaAdmin>} />
