@@ -114,6 +114,7 @@ export default function CapacidadesList() {
                                 itemsPorPagina={5}
                                 mensajeVacio="No se encontraron capacidades con los filtros actuales."
                                 columnaOrdenInicial="nombre" 
+                                permitirExportar = {false}
                                 ordenAscInicial={true}
                             />
                         </div>

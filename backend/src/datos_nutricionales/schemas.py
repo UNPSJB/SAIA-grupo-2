@@ -99,7 +99,6 @@ class ValorDiarioReferencia(ValorDiarioReferenciaBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# backend/src/datos_nutricionales/schemas.py
 class FaltanteNutricionalInsumo(BaseModel):
     insumo_id: int
     insumo_nombre: str

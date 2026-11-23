@@ -352,6 +352,7 @@ export default function ConfiguracionVistaPublica() {
                     datos={configuraciones}
                     columnas={columnas}
                     gridTemplateColumns="2fr 1.2fr 2fr 1.5fr"
+                    permitirExportar={false}
                     itemsPorPagina={10}
                 />
             </div>
