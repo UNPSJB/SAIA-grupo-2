@@ -49,3 +49,23 @@ class PesoPorUnidadRequerido(BadRequest):
 
 class EquivalenciaInvalida(BadRequest):
     DETAIL = ErrorCode.EQUIVALENCIA_INVALIDA
+
+
+class RecetaExistente(BadRequest):
+    DETAIL = ErrorCode.RECETA_EXISTENTE
+
+
+class RecetaSinIngredientes(BadRequest):
+    DETAIL = ErrorCode.RECETA_SIN_INGREDIENTES
+
+
+class OrdenManualInvalido(BadRequest):
+    DETAIL = ErrorCode.ORDEN_MANUAL_INVALIDO
+
+
+class OrdenManualFueraDeEmpate(BadRequest):
+    DETAIL = ErrorCode.ORDEN_MANUAL_FUERA_DE_EMPATE
+
+
+class VersionSoloLectura(BadRequest):
+    DETAIL = ErrorCode.VERSION_SOLO_LECTURA

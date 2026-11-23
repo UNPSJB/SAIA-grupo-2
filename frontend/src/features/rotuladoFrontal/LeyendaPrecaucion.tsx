@@ -6,22 +6,19 @@ interface Props {
     tamano?: 'normal' | 'pequeno';
 }
 
-const TEXTO_LINEAS: Record<string, { linea1: string; linea2: string }> = {
-    contiene_edulcorantes: {
-        linea1: 'CONTIENE EDULCORANTES,',
-        linea2: 'NO RECOMENDABLE EN NIÑOS/AS.',
-    },
-    contiene_cafeina: {
-        linea1: 'CONTIENE CAFEÍNA.',
-        linea2: 'EVITAR EN NIÑOS/AS.',
-    },
+const TEXTOS_POR_DEFECTO: Record<string, string> = {
+    contiene_edulcorantes: 'CONTIENE EDULCORANTES, NO RECOMENDABLE EN NIÑOS/AS.',
+    contiene_cafeina: 'CONTIENE CAFEÍNA. EVITAR EN NIÑOS/AS.',
 };
 
+function partirLeyenda(texto: string): { linea1: string; linea2: string } {
+    const corte = texto.search(/[,.;]\s/);
+    if (corte === -1) return { linea1: texto, linea2: '' };
+    return { linea1: texto.slice(0, corte + 1), linea2: texto.slice(corte + 2).trim() };
+}
+
 export default function LeyendaPrecaucion({ sello, texto, tamano = 'normal' }: Props) {
-    const info = TEXTO_LINEAS[sello] || {
-        linea1: (texto || sello).toUpperCase(),
-        linea2: '',
-    };
+    const info = partirLeyenda((texto?.trim() || TEXTOS_POR_DEFECTO[sello] || sello.replace(/_/g, ' ')).toUpperCase());
 
     const esPequeno = tamano === 'pequeno';
     const ancho = esPequeno ? 220 : 310;
@@ -35,11 +32,9 @@ export default function LeyendaPrecaucion({ sello, texto, tamano = 'normal' }: P
                 viewBox="0 0 280 65"
                 style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.5))' }}
             >
-                {/* Rectángulo negro con borde doble blanco */}
                 <rect x="2" y="2" width="276" height="61" fill="#000000" stroke="#ffffff" strokeWidth="2.5" rx="1" />
                 <rect x="5" y="5" width="270" height="55" fill="none" stroke="#ffffff" strokeWidth="1.2" rx="1" />
 
-                {/* Texto Línea 1 */}
                 <text
                     x="140"
                     y="24"
@@ -53,7 +48,6 @@ export default function LeyendaPrecaucion({ sello, texto, tamano = 'normal' }: P
                     {info.linea1}
                 </text>
 
-                {/* Texto Línea 2 */}
                 {info.linea2 && (
                     <text
                         x="140"
@@ -69,7 +63,6 @@ export default function LeyendaPrecaucion({ sello, texto, tamano = 'normal' }: P
                     </text>
                 )}
 
-                {/* Ministerio de Salud (al pie dentro del rectángulo) */}
                 <text
                     x="140"
                     y="53"

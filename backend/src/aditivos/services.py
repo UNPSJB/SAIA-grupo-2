@@ -10,9 +10,6 @@ from src.aditivos import schemas, exceptions
 
 logger = logging.getLogger(__name__)
 
-# --- Funciones de apoyo ---
-# Recien noto que estuve escribiendo lineas identicas solo por amor al juego
-# (Repitiendo la linea de verificacion is not None y lanzando excepcion cada vez, fuera de la funcion de busqueda)
 def verificar_duplicado_clase_funcional( 
         db: Session, 
         clase_funcional_nombre:str
@@ -35,21 +32,23 @@ def verificar_duplicado_ins(
     if NUMERO_INS_DUPLICADO is not None:
         raise exceptions.NumeroINSDuplicado()
 
-# Verifica si lo necesita: En tal caso, que tenga, y si tiene, que no sea duplicado
 def validar_ins_aditivo(
         db:Session,
         clase_funcional_id:int,
         aditivo_numero_ins: str | None
     )-> str | None:
+    """El INS es obligatorio salvo en las clases que no lo necesitan, como los aromatizantes.
+
+    En esas clases es opcional: si se indica, se guarda y tampoco puede repetirse.
+    """
     clase_funcional = leer_clase_funcional_orm(db, clase_funcional_id)
-    if clase_funcional.necesita_ins:
-        if aditivo_numero_ins is None:
+    numero_ins = (aditivo_numero_ins or "").strip() or None
+    if numero_ins is None:
+        if clase_funcional.necesita_ins:
             raise exceptions.NumeroINSRequerido()
-        else:
-            verificar_duplicado_ins(db, aditivo_numero_ins)
-            return aditivo_numero_ins
-    else:
         return None
+    verificar_duplicado_ins(db, numero_ins)
+    return numero_ins
 
 def leer_clase_funcional_orm(
         db:Session,
@@ -84,7 +83,6 @@ def verificar_clase_sin_aditivos(
         raise exceptions.ClaseFuncionalConAditivos()
 
 
-# --- Clase funcional ---
 def listar_clases_funcionales_aditivos (
         db: Session
     ) -> List [schemas.ClaseFuncionalAditivo]:
@@ -139,7 +137,6 @@ def modificar_clase_funcional(
         
 
 
-# --- Aditivo ---
 def listar_aditivos(
         db:Session
     )-> List [schemas.Aditivo]:

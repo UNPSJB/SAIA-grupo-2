@@ -12,29 +12,29 @@ interface InfoSello {
     linea2: string[];
 }
 
-function obtenerInfoSello(sello: string, texto?: string): InfoSello {
-    if (sello === 'exceso_azucares') {
-        return { linea1: 'EXCESO EN', linea2: ['AZÚCARES'] };
-    }
-    if (sello === 'exceso_grasas_totales') {
-        return { linea1: 'EXCESO EN', linea2: ['GRASAS', 'TOTALES'] };
-    }
-    if (sello === 'exceso_grasas_saturadas') {
-        return { linea1: 'EXCESO EN', linea2: ['GRASAS', 'SATURADAS'] };
-    }
-    if (sello === 'exceso_sodio') {
-        return { linea1: 'EXCESO EN', linea2: ['SODIO'] };
-    }
-    if (sello === 'exceso_calorias') {
-        return { linea1: 'EXCESO EN', linea2: ['CALORÍAS'] };
-    }
+const TEXTOS_POR_DEFECTO: Record<string, string> = {
+    exceso_azucares: 'EXCESO EN AZÚCARES',
+    exceso_grasas_totales: 'EXCESO EN GRASAS TOTALES',
+    exceso_grasas_saturadas: 'EXCESO EN GRASAS SATURADAS',
+    exceso_sodio: 'EXCESO EN SODIO',
+    exceso_calorias: 'EXCESO EN CALORÍAS',
+};
 
-    const t = (texto || sello).toUpperCase().replace('EXCESO EN ', '').replace(/_/g, ' ');
-    const palabras = t.split(' ');
-    if (palabras.length > 1) {
-        return { linea1: 'EXCESO EN', linea2: [palabras[0], palabras.slice(1).join(' ')] };
+function partirEnDos(palabras: string[]): string[] {
+    if (palabras.length <= 1) return palabras;
+    return [palabras[0], palabras.slice(1).join(' ')];
+}
+
+function obtenerInfoSello(sello: string, texto?: string): InfoSello {
+    const completo = (texto?.trim() || TEXTOS_POR_DEFECTO[sello] || sello.replace(/_/g, ' ')).toUpperCase();
+    const palabras = completo.split(/\s+/);
+    if (palabras.length > 2 && palabras[0] === 'EXCESO' && palabras[1] === 'EN') {
+        return { linea1: 'EXCESO EN', linea2: partirEnDos(palabras.slice(2)) };
     }
-    return { linea1: 'EXCESO EN', linea2: [t] };
+    if (palabras.length > 1) {
+        return { linea1: palabras[0], linea2: partirEnDos(palabras.slice(1)) };
+    }
+    return { linea1: '', linea2: palabras };
 }
 
 export default function OctogonoAdvertencia({ sello, texto, tamano = 'normal', numeroSellos }: Props) {
@@ -85,12 +85,10 @@ export default function OctogonoAdvertencia({ sello, texto, tamano = 'normal', n
                 viewBox="0 0 100 100"
                 style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.5))' }}
             >
-                {/* Octógono fondo negro */}
                 <polygon
                     points="30,2 70,2 98,30 98,70 70,98 30,98 2,70 2,30"
                     fill="#000000"
                 />
-                {/* Marco blanco exterior e interior */}
                 <polygon
                     points="30.5,4 69.5,4 96,30.5 96,69.5 69.5,96 30.5,96 4,69.5 4,30.5"
                     fill="none"
@@ -104,7 +102,6 @@ export default function OctogonoAdvertencia({ sello, texto, tamano = 'normal', n
                     strokeWidth="1.2"
                 />
 
-                {/* Texto EXCESO EN */}
                 <text
                     x="50"
                     y="27"
@@ -118,7 +115,6 @@ export default function OctogonoAdvertencia({ sello, texto, tamano = 'normal', n
                     {info.linea1}
                 </text>
 
-                {/* Texto Nutriente Crítico */}
                 {!tieneDosLineas ? (
                     <text
                         x="50"
@@ -161,7 +157,6 @@ export default function OctogonoAdvertencia({ sello, texto, tamano = 'normal', n
                     </>
                 )}
 
-                {/* Texto Ministerio de Salud al pie DENTRO del octógono */}
                 <text
                     x="50"
                     y="80"

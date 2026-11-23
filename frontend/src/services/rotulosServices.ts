@@ -9,6 +9,7 @@ import type {
     RotuloLote,
     RotuloLoteActualizar,
     RotuloLoteCrear,
+    VistaPreviaRotulo,
 } from '../types/rotulos';
 
 const BASE_URL = `${API_URL}/rotulos`;
@@ -136,4 +137,13 @@ export const getHistorialRotulo = async (
 ): Promise<HistorialCambioRotulo[]> => {
     const res = await fetch(`${BASE_URL}/${id}/historial`);
     return manejarRespuesta(res, 'No se pudo cargar el historial del rótulo');
+};
+
+export const getVistaPreviaRotulo = async (
+    id: number | string,
+    rotuloLoteId?: number | null,
+): Promise<VistaPreviaRotulo> => {
+    const consulta = rotuloLoteId ? `?rotulo_lote_id=${rotuloLoteId}` : '';
+    const res = await fetch(`${BASE_URL}/${id}/vista-previa${consulta}`);
+    return manejarRespuesta(res, 'No se pudo armar la vista previa del rótulo');
 };

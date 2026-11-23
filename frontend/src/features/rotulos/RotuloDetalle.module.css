@@ -391,3 +391,31 @@
         grid-template-columns: 1fr;
     }
 }
+.accionesEncabezado {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.listaIngredientesBloque {
+    margin-bottom: 1.25rem;
+}
+
+.listaIngredientesBloque h3 {
+    margin: 0 0 0.25rem;
+}
+
+.listaIngredientesBloque textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.avisoIncompleto {
+    margin: 0.5rem 0;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #eab308;
+    border-radius: 6px;
+    background: rgba(234, 179, 8, 0.12);
+    color: #facc15;
+    font-size: 0.88rem;
+}

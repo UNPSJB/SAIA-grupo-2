@@ -66,7 +66,6 @@ function formatearFecha(fecha: string | null): string {
 export default function RecetaDetail() {
     const { usuario } = useAuth();
     const esAdmin = usuario?.rol === 'admin';
-    const esOperario = usuario?.rol === 'operario';
     const { id = '' } = useParams();
     const [searchParams] = useSearchParams();
     const versionParam = searchParams.get('version');
@@ -79,6 +78,7 @@ export default function RecetaDetail() {
 
     const [respuesta, setRespuesta] = useState<RespuestaDetalle | null>(null);
     const [nroVersionSeleccionada, setNroVersionSeleccionada] = useState<number | null>(null);
+    const [verHistorial, setVerHistorial] = useState(false);
     const [composicion, setComposicion] = useState<ComposicionReceta | null>(null);
     const [cargandoComposicion, setCargandoComposicion] = useState(false);
     const [errorComposicion, setErrorComposicion] = useState<string | null>(null);
@@ -161,7 +161,11 @@ export default function RecetaDetail() {
 
     const version = useMemo(() => {
         if (!versiones || versiones.length === 0) return null;
-        return versiones.find((v) => v.version === nroVersionSeleccionada) || versiones[0];
+        return (
+            versiones.find((v) => v.version === nroVersionSeleccionada) ||
+            versiones.find((v) => v.estado === 'activo') ||
+            versiones[0]
+        );
     }, [versiones, nroVersionSeleccionada]);
 
     const componentesComposicion = composicion
@@ -313,22 +317,49 @@ export default function RecetaDetail() {
                             }}
                         >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <label style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-h)' }}>
-                                    Historial de Versión:
-                                </label>
-                                <select
-                                    value={nroVersionSeleccionada ?? version.version}
-                                    onChange={(e) => setNroVersionSeleccionada(Number(e.target.value))}
-                                    disabled={esOperario}
-                                    className={styles.input}
-                                    style={{ width: 'auto', padding: '6px 12px', fontWeight: 600 }}
-                                >
-                                    {versiones.map((v) => (
-                                        <option key={v.version} value={v.version}>
-                                            v{v.version} {v.estado === 'activo' ? '(Vigente)' : '(Archivada)'}
-                                        </option>
-                                    ))}
-                                </select>
+                                {verHistorial ? (
+                                    <>
+                                        <label
+                                            htmlFor="version-receta"
+                                            style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-h)' }}
+                                        >
+                                            Historial de versiones:
+                                        </label>
+                                        <select
+                                            id="version-receta"
+                                            value={nroVersionSeleccionada ?? version.version}
+                                            onChange={(e) => setNroVersionSeleccionada(Number(e.target.value))}
+                                            className={styles.input}
+                                            style={{ width: 'auto', padding: '6px 12px', fontWeight: 600 }}
+                                        >
+                                            {versiones.map((v) => (
+                                                <option key={v.version} value={v.version}>
+                                                    v{v.version} {v.estado === 'activo' ? '(Vigente)' : '(Archivada)'}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <Boton
+                                            variant="volver"
+                                            onClick={() => {
+                                                setVerHistorial(false);
+                                                setNroVersionSeleccionada(null);
+                                            }}
+                                        >
+                                            Volver a la vigente
+                                        </Boton>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-h)' }}>
+                                            Versión v{version.version}
+                                        </span>
+                                        {versiones.length > 1 && (
+                                            <Boton variant="ver" onClick={() => setVerHistorial(true)}>
+                                                Ver historial
+                                            </Boton>
+                                        )}
+                                    </>
+                                )}
                             </div>
 
                             <div>

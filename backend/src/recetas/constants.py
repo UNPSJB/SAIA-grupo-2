@@ -19,6 +19,11 @@ class ErrorCode:
     DENSIDAD_REQUERIDA = "El insumo de volumen debe tener una densidad en gramos por mililitro configurada"
     PESO_POR_UNIDAD_REQUERIDO = "El insumo por unidad debe tener configurado su peso en gramos por unidad"
     EQUIVALENCIA_INVALIDA = "No se pudo convertir la cantidad del insumo a gramos"
+    RECETA_EXISTENTE = "El producto ya tiene una receta: los cambios se hacen creando una nueva versión"
+    RECETA_SIN_INGREDIENTES = "La receta debe tener al menos un ingrediente"
+    ORDEN_MANUAL_INVALIDO = "El orden manual debe incluir a todos los ingredientes una sola vez"
+    ORDEN_MANUAL_FUERA_DE_EMPATE = "Solo se puede cambiar el orden entre ingredientes con el mismo porcentaje"
+    VERSION_SOLO_LECTURA = "Las versiones anteriores de la receta son de solo lectura"
     PARAMETROS_ESCALADO_INVALIDOS = "Indicá uno solo: factor multiplicador, cantidad objetivo en gramos o cantidad de unidades"
 
 class EstadoVersionReceta(str, Enum):

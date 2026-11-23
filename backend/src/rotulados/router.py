@@ -71,13 +71,22 @@ def actualizar_snapshots(
     return services.actualizar_snapshots(db, rotulo_id, empleado_id)
 
 
-@router.get("/{rotulo_id}/completitud")
+@router.get("/{rotulo_id}/completitud", response_model=schemas.Completitud)
 def calcular_completitud(
     rotulo_id: int,
     rotulo_lote_id: Optional[int] = None,
     db: Session = Depends(get_db),
 ):
     return services.calcular_completitud(db, rotulo_id, rotulo_lote_id)
+
+
+@router.get("/{rotulo_id}/vista-previa", response_model=schemas.VistaPreviaRotulo)
+def obtener_vista_previa(
+    rotulo_id: int,
+    rotulo_lote_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+):
+    return services.obtener_vista_previa(db, rotulo_id, rotulo_lote_id)
 
 
 @router.post(

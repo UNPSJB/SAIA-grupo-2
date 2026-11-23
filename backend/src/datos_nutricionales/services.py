@@ -27,13 +27,13 @@ VALORES_DIARIOS_DEFAULT = [
     (Nutriente.ENERGIA, 2000.0, "kcal", 4.0, 0),
     (Nutriente.CARBOHIDRATOS, 300.0, "g", 0.5, 1),
     (Nutriente.AZUCARES_TOTALES, None, "g", 0.5, 1),
-    (Nutriente.AZUCARES_ANADIDOS, 50.0, "g", 0.5, 1),
-    (Nutriente.PROTEINAS, 50.0, "g", 0.5, 1),
+    (Nutriente.AZUCARES_ANADIDOS, None, "g", 0.5, 1),
+    (Nutriente.PROTEINAS, 75.0, "g", 0.5, 1),
     (Nutriente.GRASAS_TOTALES, 55.0, "g", 0.5, 1),
     (Nutriente.GRASAS_SATURADAS, 22.0, "g", 0.5, 1),
     (Nutriente.GRASAS_TRANS, None, "g", 0.1, 1),
     (Nutriente.FIBRA_ALIMENTARIA, 25.0, "g", 0.5, 1),
-    (Nutriente.SODIO, 2000.0, "mg", 5.0, 0),
+    (Nutriente.SODIO, 2400.0, "mg", 5.0, 0),
 ]
 
 
@@ -138,11 +138,10 @@ def cargar_datos(
         raise
 
     db.commit()
-    recalcular_versiones_afectadas(db, insumo_id)   # nuevo
+    recalcular_versiones_afectadas(db, insumo_id)
     return obtener_datos_insumo(db, insumo_id)
 
 
-##nuevo
 def obtener_versiones_afectadas(db: Session, insumo_id: int) -> List[Tuple[int, int]]:
     try:
         from src.asociaciones.detalle_receta import detalle_receta
@@ -227,6 +226,14 @@ def actualizar_valor_diario_referencia(
     db.refresh(vd)
     return vd
 
+
+def _expresar_segun_configuracion(valor: float, configuracion: Optional[ValorDiarioReferencia]) -> float:
+    """Aplica el umbral de "no significativo" y los decimales configurados para el nutriente."""
+    if configuracion is None:
+        return round(valor, 2)
+    if valor < configuracion.umbral_no_significativo:
+        return 0.0
+    return round(valor, configuracion.decimales)
 
 
 def obtener_informacion_nutricional_producto(
@@ -381,11 +388,13 @@ def obtener_informacion_nutricional_producto(
                 (cantidad / 100.0) * datos_por_insumo.get(insumo.id, {}).get(nutriente, 0.0)
                 for insumo, cantidad in composicion
             )
-            valor_100g = round((aporte_total / rendimiento_gramos) * 100.0, 2)
+            crudo_100g = (aporte_total / rendimiento_gramos) * 100.0
+            valor_100g = _expresar_segun_configuracion(crudo_100g, vd_item)
             if porcion_declarada and porcion_declarada > 0:
-                valor_porcion = round(valor_100g * (porcion_declarada / 100.0), 2)
+                crudo_porcion = crudo_100g * (porcion_declarada / 100.0)
+                valor_porcion = _expresar_segun_configuracion(crudo_porcion, vd_item)
                 if vd and vd > 0:
-                    porcentaje_vd = round((valor_porcion / vd) * 100)
+                    porcentaje_vd = 0 if valor_porcion == 0 else round((crudo_porcion / vd) * 100)
         filas.append(
             schemas.FilaNutricionalNormativa(
                 nutriente=nutriente,

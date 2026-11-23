@@ -11,7 +11,14 @@ from src.empleados import services as empleados_services
 from src.insumos import services as insumos_services
 from src.insumos.models import Insumo
 from src.parametros_normativos import services as parametros_services
-from src.parametros_normativos.constants import LEYENDAS_PRECAUTORIAS, Agregado, CondicionCriterio, FormaCriterio, SelloAdvertencia
+from src.parametros_normativos.constants import (
+    LEYENDAS_PRECAUTORIAS,
+    Agregado,
+    ClaveParametro,
+    CondicionCriterio,
+    FormaCriterio,
+    SelloAdvertencia,
+)
 from src.parametros_normativos.models import ConjuntoParametros
 from src.productos import services as productos_services
 from src.productos.models import Producto
@@ -273,26 +280,54 @@ def actualizar_marcas_insumos(db: Session, datos: schemas.ActualizacionMarcasIns
     return listar_marcas_insumos(db)
 
 
+SELLOS_QUE_HABILITAN_CALORIAS = (
+    SelloAdvertencia.EXCESO_AZUCARES,
+    SelloAdvertencia.EXCESO_GRASAS_TOTALES,
+    SelloAdvertencia.EXCESO_GRASAS_SATURADAS,
+)
+
+
+def _kcal_sin_aporte_energetico(parametros: ConjuntoParametros) -> Optional[float]:
+    return next(
+        (p.valor for p in parametros.parametros_generales if p.clave == ClaveParametro.KCAL_BEBIDA_SIN_APORTE_ENERGETICO),
+        None,
+    )
+
+
 def _evaluar_condicion_criterio(
     criterio,
-    evaluacion: EvaluacionAplicabilidad,
     sellos_en_juego: Set[SelloAdvertencia],
-    kcal_100g: float,
+    sellos_disparados: Set[SelloAdvertencia],
+    kcal_porcion: float,
+    limite_sin_aporte: Optional[float],
 ) -> Tuple[bool, Optional[str]]:
+    """Decide si el criterio se evalua segun los agregados y la condicion que fija la version de parametros.
+
+    El exceso en calorias solo se evalua si el producto ya lleva sello de azucares, grasas totales o
+    grasas saturadas; el criterio de bebidas sin aporte energetico usa el parametro general por porcion.
+    """
     if criterio.sello not in sellos_en_juego:
         return False, "El producto no contiene agregados vinculados a este sello."
 
     if criterio.condicion == CondicionCriterio.CON_SELLO_DE_ENERGIA:
-        if not (evaluacion.agrega_azucares or evaluacion.agrega_grasas):
-            return False, "El exceso en calorías solo se evalúa si el producto agrega azúcares o grasas."
+        if not sellos_disparados.intersection(SELLOS_QUE_HABILITAN_CALORIAS):
+            return False, "El exceso en calorías solo se evalúa si el producto lleva sello de azúcares, grasas totales o grasas saturadas."
         return True, None
 
     if criterio.condicion == CondicionCriterio.SIN_APORTE_ENERGETICO:
-        if kcal_100g > 4.0:
-            return False, "Solo aplica a bebidas sin aporte energético."
+        if limite_sin_aporte is None:
+            return False, "La versión de parámetros no define el límite de bebida sin aporte energético."
+        if kcal_porcion > limite_sin_aporte:
+            return False, f"Solo aplica a bebidas sin aporte energético (hasta {limite_sin_aporte:g} kcal por porción)."
         return True, None
 
     return True, None
+
+
+def _motivo_sin_agregados(resultado: ResultadoAplicabilidad) -> Optional[str]:
+    if resultado == ResultadoAplicabilidad.SIN_AGREGADOS:
+        return "El producto no agrega azúcares, grasas, sodio, edulcorantes ni cafeína: no corresponden sellos."
+    return None
 
 
 def calcular_sellos_producto(
@@ -352,17 +387,25 @@ def calcular_sellos_producto(
 
     items_dict = {item.nutriente: item for item in tabla_nut.items}
     energia_item = items_dict.get(Nutriente.ENERGIA.value)
-    kcal_100g = energia_item.valor_100g_raw if energia_item else 0.0
+    kcal_100g = energia_item.valor_100g_raw if energia_item and energia_item.valor_100g_raw is not None else 0.0
+    kcal_porcion = energia_item.valor_porcion_raw if energia_item and energia_item.valor_porcion_raw is not None else 0.0
+    limite_sin_aporte = _kcal_sin_aporte_energetico(parametros)
 
     resultado_ap, sellos_en_juego = determinar_aplicabilidad(evaluacion, parametros)
     sellos_en_juego_set = set(sellos_en_juego)
+    orden_textos = {t.sello: t.orden for t in parametros.textos}
 
-    criterios = [c for c in parametros.criterios if c.tipo_producto == producto.tipo]
+    criterios = sorted(
+        (c for c in parametros.criterios if c.tipo_producto == producto.tipo),
+        key=lambda c: (c.condicion == CondicionCriterio.CON_SELLO_DE_ENERGIA, c.orden),
+    )
     pasos_calculo: List[schemas.PasoCalculoNutriente] = []
     sellos_disparados: Set[SelloAdvertencia] = set()
 
     for criterio in criterios:
-        evaluado, motivo_no_eval = _evaluar_condicion_criterio(criterio, evaluacion, sellos_en_juego_set, kcal_100g)
+        evaluado, motivo_no_eval = _evaluar_condicion_criterio(
+            criterio, sellos_en_juego_set, sellos_disparados, kcal_porcion, limite_sin_aporte
+        )
         if not evaluado:
             pasos_calculo.append(
                 schemas.PasoCalculoNutriente(
@@ -381,10 +424,6 @@ def calcular_sellos_producto(
 
         nut_item = items_dict.get(criterio.nutriente.value)
         valor_100g = nut_item.valor_100g_raw if nut_item and nut_item.valor_100g_raw is not None else 0.0
-        if criterio.nutriente == Nutriente.AZUCARES_ANADIDOS and valor_100g == 0.0:
-            tot_item = items_dict.get(Nutriente.AZUCARES_TOTALES.value)
-            if tot_item and tot_item.valor_100g_raw:
-                valor_100g = tot_item.valor_100g_raw
 
         if criterio.forma == FormaCriterio.PORCENTAJE_ENERGIA:
             factor = criterio.factor_energetico or (9.0 if criterio.nutriente in (Nutriente.GRASAS_TOTALES, Nutriente.GRASAS_SATURADAS) else 4.0)
@@ -455,11 +494,7 @@ def calcular_sellos_producto(
         if supera:
             sellos_disparados.add(criterio.sello)
 
-    leyendas_disparadas: Set[SelloAdvertencia] = set()
-    if evaluacion.contiene_edulcorantes:
-        leyendas_disparadas.add(SelloAdvertencia.CONTIENE_EDULCORANTES)
-    if evaluacion.contiene_cafeina:
-        leyendas_disparadas.add(SelloAdvertencia.CONTIENE_CAFEINA)
+    leyendas_disparadas = [s for s in sellos_en_juego if s in LEYENDAS_PRECAUTORIAS]
 
     sellos_obtenidos_dto = [
         schemas.SelloAplicable(
@@ -467,7 +502,8 @@ def calcular_sellos_producto(
             texto=textos_dict.get(s, s.value),
             es_leyenda=False,
         )
-        for s in sellos_disparados if s not in LEYENDAS_PRECAUTORIAS
+        for s in sorted(sellos_disparados, key=lambda sello: orden_textos.get(sello, len(orden_textos)))
+        if s not in LEYENDAS_PRECAUTORIAS
     ]
 
     leyendas_obtenidas_dto = [
@@ -500,7 +536,7 @@ def calcular_sellos_producto(
         version_receta=version_receta.version,
         provisorio=provisorio,
         resultado_aplicabilidad=evaluacion.resultado,
-        motivo_aplicabilidad=None,
+        motivo_aplicabilidad=_motivo_sin_agregados(evaluacion.resultado),
         sellos_obtenidos=sellos_obtenidos_dto,
         leyendas_obtenidas=leyendas_obtenidas_dto,
         pasos_calculo=pasos_calculo,
@@ -548,7 +584,7 @@ def obtener_calculo_sellos_vigente(
         version_receta=calculo.version_receta,
         provisorio=calculo.provisorio,
         resultado_aplicabilidad=resultado_ap,
-        motivo_aplicabilidad=None,
+        motivo_aplicabilidad=_motivo_sin_agregados(resultado_ap),
         sellos_obtenidos=sellos_dto,
         leyendas_obtenidas=leyendas_dto,
         pasos_calculo=pasos,

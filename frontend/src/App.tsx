@@ -95,6 +95,7 @@ import VistaPublica from './features/vistaPublica/VistaPublica';
 
 import RotulosList from './features/rotulos/RotulosList';
 import RotuloDetalle from './features/rotulos/RotuloDetalle';
+import VistaPreviaRotulo from './features/rotulos/VistaPreviaRotulo';
 
 import './App.css';
 
@@ -257,6 +258,7 @@ function RutasProtegidas() {
             <Route path="/rotulado-frontal/:id" element={<RutaAdmin><EvaluacionRotuladoFrontal /></RutaAdmin>} />
             <Route path="/rotulos" element={<RutaAdmin><RotulosList /></RutaAdmin>}/>
             <Route path="/rotulos/producto/:productoId" element={<RutaAdmin><RotuloDetalle /></RutaAdmin>} />
+            <Route path="/rotulos/producto/:productoId/vista-previa" element={<RutaAdmin><VistaPreviaRotulo /></RutaAdmin>} />
 
             <Route path="/incidentes/nuevo" element={<IncidenteForm />} />
             <Route path="/incidentes" element={<RutaAdmin><IncidentesList /></RutaAdmin>} />

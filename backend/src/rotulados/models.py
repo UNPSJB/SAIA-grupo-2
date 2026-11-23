@@ -26,32 +26,30 @@ class Rotulo(ModeloBase):
         ForeignKey("productos.id"), nullable=False, unique=True, index=True
     )
 
-    # Datos comerciales y legales
     denominacion_venta: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     contenido_neto: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     unidad_contenido_neto: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     rnpa_rppa: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
-    # Datos del elaborador
     razon_social: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     domicilio: Mapped[Optional[str]] = mapped_column(String(250), nullable=True)
 
-    # Datos de importación
     es_importado: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     razon_social_importador: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     domicilio_importador: Mapped[Optional[str]] = mapped_column(String(250), nullable=True)
     pais_origen: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
-    # Instrucciones
     instrucciones_uso: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     instrucciones_conservacion: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    lista_ingredientes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    # Fotografías de los datos automáticos de las fuentes
     ingredientes_snapshot: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     nutricion_snapshot: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     sellos_snapshot: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)
+    calculo_sellos_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("calculos_sellos_rotulado.id"), nullable=True
+    )
 
-    # Procedencia de la información
     receta_id: Mapped[Optional[int]] = mapped_column(ForeignKey("recetas.id"), nullable=True)
     receta_version: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
@@ -129,3 +127,11 @@ class HistorialCambioRotulo(ModeloBase):
     empleado: Mapped[Optional["src.empleados.models.Empleado"]] = relationship(
         "src.empleados.models.Empleado", lazy="selectin"
     )
+
+    @property
+    def empleado_nombre(self) -> Optional[str]:
+        return self.empleado.nombre if self.empleado else None
+
+    @property
+    def empleado_apellido(self) -> Optional[str]:
+        return self.empleado.apellido if self.empleado else None

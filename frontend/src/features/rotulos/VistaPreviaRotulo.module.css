@@ -1,0 +1,279 @@
+.areaImpresion {
+    max-width: 1100px;
+    width: 100%;
+}
+
+.avisos {
+    border: 2px solid #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--text-h);
+    border-radius: 8px;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.avisos h3 {
+    margin: 0 0 0.5rem;
+    color: #fbbf24;
+    font-size: 1.05rem;
+}
+
+.avisos ul {
+    margin: 0.25rem 0 0.6rem;
+    padding-left: 1.25rem;
+}
+
+.avisoOk {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    border: 1px solid #22c55e;
+    background: rgba(34, 197, 94, 0.12);
+    color: #4ade80;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.selectorLote {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.rotulo {
+    background: #ffffff;
+    color: #111111;
+    border-radius: 6px;
+    padding: 1rem;
+    font-family: Arial, Helvetica, sans-serif;
+    text-align: left;
+}
+
+.rotulo p,
+.rotulo dd,
+.rotulo dt {
+    color: #111111;
+}
+
+.leyendaBorrador {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: #b91c1c;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 4px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.caras {
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) minmax(320px, 1.4fr);
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.cara,
+.informacion {
+    position: relative;
+    border: 2px dashed #9ca3af;
+    border-radius: 6px;
+    padding: 1.75rem 1rem 1rem;
+}
+
+.cara {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+}
+
+.etiquetaCara {
+    position: absolute;
+    top: 0.4rem;
+    left: 0.6rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+}
+
+.sellos {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.denominacion {
+    font-size: 1.6rem;
+    margin: 0.5rem 0 0;
+    color: #111111;
+}
+
+.rotulo .producto {
+    margin: 0;
+    color: #4b5563;
+}
+
+.contenidoNeto {
+    margin-top: auto;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.rotulo .sinSellos {
+    font-size: 0.85rem;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem;
+}
+
+.rotulo .provisorio {
+    color: #b45309;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.rotulo .faltante {
+    color: #b91c1c;
+    font-style: italic;
+}
+
+.rotulo .notaChica {
+    font-size: 0.72rem;
+    color: #4b5563;
+    margin: 0.25rem 0 0;
+}
+
+.informacion p {
+    margin: 0 0 0.4rem;
+    font-size: 0.9rem;
+}
+
+.alergenos {
+    font-weight: 700;
+}
+
+.datos {
+    margin: 0.6rem 0;
+    display: grid;
+    gap: 0.3rem;
+    font-size: 0.88rem;
+}
+
+.datos div {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.datos dt {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.datos dt::after {
+    content: ':';
+}
+
+.datos dd {
+    margin: 0;
+}
+
+.tablaNutricional table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    border: 2px solid #111111;
+}
+
+.tablaNutricional caption {
+    caption-side: top;
+    text-align: left;
+    font-weight: 800;
+    border: 2px solid #111111;
+    border-bottom: none;
+    padding: 0.3rem 0.5rem;
+}
+
+.tablaNutricional caption span {
+    display: block;
+    font-weight: 400;
+}
+
+.tablaNutricional th,
+.tablaNutricional td {
+    border: 1px solid #111111;
+    padding: 0.2rem 0.4rem;
+    text-align: right;
+    color: #111111;
+}
+
+.tablaNutricional th[scope='row'] {
+    text-align: left;
+}
+
+.tablaNutricional thead th {
+    text-align: center;
+    font-weight: 700;
+}
+
+.subnivel th[scope='row'] {
+    padding-left: 1.2rem;
+    font-weight: 400;
+}
+
+.pie {
+    font-size: 0.8rem;
+    color: var(--text);
+    margin-top: 0.5rem;
+}
+
+@media (max-width: 800px) {
+    .caras {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media print {
+    :global(body *) {
+        visibility: hidden;
+    }
+
+    .areaImpresion,
+    .areaImpresion * {
+        visibility: visible;
+    }
+
+    .areaImpresion {
+        position: absolute;
+        left: 0;
+        top: 0;
+        max-width: none;
+    }
+
+    .noImprimir,
+    .noImprimir * {
+        display: none !important;
+    }
+
+    .avisos {
+        background: #ffffff;
+    }
+
+    .avisos,
+    .avisos h3,
+    .pie {
+        color: #111111;
+    }
+}

@@ -297,7 +297,6 @@ export default function EvaluacionRotuladoFrontal() {
                 </section>
             )}
 
-            {/* SECCIÓN CÁLCULO DE SELLOS */}
             {evaluacion && (
                 <section className={`${styles.tarjetaEstatica} ${estilos.panel}`}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
@@ -335,15 +334,29 @@ export default function EvaluacionRotuladoFrontal() {
                             }}
                         >
                             <i className="bi bi-exclamation-triangle-fill"></i>
-                            <span>CÁLCULO PROVISORIO: La receta vigente tiene insumos con datos nutricionales incompletos.</span>
+                            <span>
+                                CÁLCULO PROVISORIO:{' '}
+                                {calculoSellos.motivo_aplicabilidad ?? 'La receta vigente tiene insumos con datos nutricionales incompletos.'}
+                            </span>
                         </div>
+                    )}
+
+                    {calculoSellos && evaluacion && evaluacion.fecha > (calculoSellos.fecha_calculo ?? '') && (
+                        <p className={estilos.mensajeError}>
+                            La evaluación cambió después del último cálculo: recalculá los sellos para actualizar el resultado.
+                        </p>
+                    )}
+
+                    {calculoSellos && !calculoSellos.provisorio && calculoSellos.motivo_aplicabilidad && (
+                        <p className={estilos.ayuda}>{calculoSellos.motivo_aplicabilidad}</p>
                     )}
 
                     {calculoSellos && (
                         <div style={{ marginTop: '1rem' }}>
                             <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
                                 <div>
-                                    <strong>Versión de Parámetros:</strong> v{calculoSellos.parametros.version} ({calculoSellos.parametros.norma_origen})
+                                    <strong>Versión de Parámetros:</strong> v{calculoSellos.parametros.version}, vigente desde el{' '}
+                                    {formatearFecha(calculoSellos.parametros.fecha_vigencia)} ({calculoSellos.parametros.norma_origen})
                                 </div>
                                 {calculoSellos.version_receta && (
                                     <div>

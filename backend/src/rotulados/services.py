@@ -1,26 +1,33 @@
 
 import json
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from src.alergenos import services as alergenos_services
+from src.alergenos.constants import EstadoDeclaracion
+from src.datos_nutricionales.constants import (
+    NOTA_PIE_VALORES_DIARIOS,
+    NUTRIENTES_TABLA_NORMATIVA,
+    EstadoTablaNutricional,
+)
 from src.empleados.models import Empleado, RolEmpleado
 from src.lotes_produccion.models import LoteProduccion
+from src.parametros_normativos import services as parametros_services
+from src.parametros_normativos.constants import LEYENDAS_PRECAUTORIAS, SelloAdvertencia
 from src.productos.models import Producto
 from src.recetas.models import Receta, VersionReceta, EstadoVersionReceta
 from src.recetas import services as recetas_services
-from src.rotulado_frontal.models import EvaluacionAplicabilidad
+from src.rotulado_frontal.constants import ResultadoAplicabilidad
+from src.rotulado_frontal.models import CalculoSellosRotulado, EvaluacionAplicabilidad
 
 from src.rotulados import schemas
 from src.rotulados.models import Rotulo, RotuloLote, HistorialCambioRotulo
 
 
-# ---------------------------------------------------------------------
-# Validaciones comunes
-# ---------------------------------------------------------------------
 
 def _verificar_admin(db: Session, empleado_id: int) -> Empleado:
     empleado = db.get(Empleado, empleado_id)
@@ -87,50 +94,40 @@ def _registrar_cambio(
     db.add(cambio)
 
 
-# ---------------------------------------------------------------------
-# Datos automáticos: receta y rotulado frontal
-# ---------------------------------------------------------------------
 
-def _obtener_snapshots(
-    db: Session,
-    producto_id: int,
-) -> dict:
-    receta = db.scalar(
-        select(Receta).where(Receta.producto_id == producto_id)
+LEYENDA_BORRADOR = (
+    "BORRADOR: debe ser revisado por un/a profesional y por la autoridad sanitaria competente antes de su uso"
+)
+
+MOTIVO_SIN_ADVERTENCIAS = {
+    ResultadoAplicabilidad.NO_ENVASADO: "No corresponden advertencias: el producto no se envasa en ausencia del cliente.",
+    ResultadoAplicabilidad.EXCEPTUADO: "No corresponden advertencias: el producto está exceptuado del rotulado frontal.",
+    ResultadoAplicabilidad.SIN_AGREGADOS: (
+        "No corresponden advertencias: el producto no agrega azúcares, grasas, sodio, edulcorantes ni cafeína."
+    ),
+}
+
+
+def _version_vigente(db: Session, producto_id: int) -> Optional[VersionReceta]:
+    receta = db.scalar(select(Receta).where(Receta.producto_id == producto_id))
+    if receta is None:
+        return None
+    return db.scalar(
+        select(VersionReceta)
+        .where(
+            VersionReceta.receta_id == receta.id,
+            VersionReceta.estado == EstadoVersionReceta.ACTIVO,
+        )
+        .order_by(VersionReceta.version.desc())
     )
 
-    ingredientes_snapshot = None
-    nutricion_snapshot = None
-    receta_id = None
-    receta_version = None
 
-    if receta is not None:
-        version = db.scalar(
-            select(VersionReceta)
-            .where(
-                VersionReceta.receta_id == receta.id,
-                VersionReceta.estado == EstadoVersionReceta.ACTIVO,
-            )
-            .order_by(VersionReceta.version.desc())
-        )
+def _modulo_frontal_activo(db: Session) -> bool:
+    return parametros_services.leer_modulo(db).activo
 
-        if version is not None:
-            composicion = recetas_services.calcular_composicion_receta(
-                db, receta.id, version.version
-            )
-            nutricion = recetas_services.calcular_informacion_nutricional_receta(
-                db, receta.id, version.version
-            )
 
-            ingredientes_snapshot = (
-                composicion.model_dump(mode="json")
-            )
-            nutricion_snapshot = nutricion.model_dump(mode="json")
-
-            receta_id = receta.id
-            receta_version = version.version
-
-    evaluacion = db.scalar(
+def _ultima_evaluacion(db: Session, producto_id: int) -> Optional[EvaluacionAplicabilidad]:
+    return db.scalar(
         select(EvaluacionAplicabilidad)
         .where(EvaluacionAplicabilidad.producto_id == producto_id)
         .order_by(
@@ -139,22 +136,64 @@ def _obtener_snapshots(
         )
     )
 
-    sellos_snapshot = (
-        list(evaluacion.sellos) if evaluacion is not None else None
+
+def _ultimo_calculo(db: Session, producto_id: int) -> Optional[CalculoSellosRotulado]:
+    return db.scalar(
+        select(CalculoSellosRotulado)
+        .where(CalculoSellosRotulado.producto_id == producto_id)
+        .order_by(CalculoSellosRotulado.fecha_calculo.desc(), CalculoSellosRotulado.id.desc())
     )
+
+
+def _sellos_actuales(db: Session, producto_id: int) -> dict:
+    """Sellos y leyendas que surgen de E12: el ultimo calculo si corresponden advertencias, ninguno si no corresponden.
+
+    Queda en None mientras falte evaluar o calcular, o si el modulo de rotulado frontal esta desactivado.
+    """
+    sin_datos = {"sellos_snapshot": None, "calculo_sellos_id": None}
+    if not _modulo_frontal_activo(db):
+        return sin_datos
+    evaluacion = _ultima_evaluacion(db, producto_id)
+    if evaluacion is None:
+        return sin_datos
+    if evaluacion.resultado != ResultadoAplicabilidad.CORRESPONDE:
+        return {"sellos_snapshot": [], "calculo_sellos_id": None}
+    calculo = _ultimo_calculo(db, producto_id)
+    if calculo is None:
+        return sin_datos
+    return {"sellos_snapshot": list(calculo.sellos_obtenidos), "calculo_sellos_id": calculo.id}
+
+
+def _obtener_snapshots(
+    db: Session,
+    producto_id: int,
+) -> dict:
+    """Datos que el sistema ya tiene: lista de ingredientes (E10), tabla nutricional (E11) y sellos (E12)."""
+    ingredientes_snapshot = None
+    lista_ingredientes = None
+    nutricion_snapshot = None
+    receta_id = None
+    receta_version = None
+
+    version = _version_vigente(db, producto_id)
+    if version is not None:
+        lista = recetas_services.obtener_lista_ingredientes_rotulo(db, version.receta_id, version.version)
+        nutricion = recetas_services.calcular_informacion_nutricional_receta(db, version.receta_id, version.version)
+        ingredientes_snapshot = lista.model_dump(mode="json")
+        lista_ingredientes = lista.texto_rotulo or None
+        nutricion_snapshot = nutricion.model_dump(mode="json")
+        receta_id = version.receta_id
+        receta_version = version.version
 
     return {
         "ingredientes_snapshot": ingredientes_snapshot,
+        "lista_ingredientes": lista_ingredientes,
         "nutricion_snapshot": nutricion_snapshot,
-        "sellos_snapshot": sellos_snapshot,
+        **_sellos_actuales(db, producto_id),
         "receta_id": receta_id,
         "receta_version": receta_version,
     }
 
-
-# ---------------------------------------------------------------------
-# Crear y consultar rótulos
-# ---------------------------------------------------------------------
 
 def crear_rotulo(
     db: Session,
@@ -207,9 +246,6 @@ def listar_rotulos(db: Session) -> list[Rotulo]:
     ).all()
 
 
-# ---------------------------------------------------------------------
-# Actualizar datos manuales y registrar historial
-# ---------------------------------------------------------------------
 
 def actualizar_rotulo(
     db: Session,
@@ -247,9 +283,6 @@ def actualizar_rotulo(
     return rotulo
 
 
-# ---------------------------------------------------------------------
-# Actualizar fotografías de datos automáticos
-# ---------------------------------------------------------------------
 
 def actualizar_snapshots(
     db: Session,
@@ -283,9 +316,6 @@ def actualizar_snapshots(
     return rotulo
 
 
-# ---------------------------------------------------------------------
-# Asociar el borrador a un lote de producción
-# ---------------------------------------------------------------------
 
 def asociar_lote(
     db: Session,
@@ -387,9 +417,6 @@ def listar_lotes_rotulo(
     ).all()
 
 
-# ---------------------------------------------------------------------
-# Historial
-# ---------------------------------------------------------------------
 
 def listar_historial(
     db: Session,
@@ -407,9 +434,46 @@ def listar_historial(
     ).all()
 
 
-# ---------------------------------------------------------------------
-# Completitud del rótulo
-# ---------------------------------------------------------------------
+
+
+CAMPOS_REQUERIDOS = {
+    "denominacion_venta": "Denominación de venta",
+    "lista_ingredientes": "Lista de ingredientes",
+    "contenido_neto": "Contenido neto",
+    "unidad_contenido_neto": "Unidad del contenido neto",
+    "rnpa_rppa": "RNPA/RPPA",
+    "razon_social": "Razón social",
+    "domicilio": "Domicilio del elaborador",
+    "nutricion_snapshot": "Información nutricional",
+}
+
+CAMPOS_IMPORTADOR = {
+    "razon_social_importador": "Razón social del importador",
+    "domicilio_importador": "Domicilio del importador",
+    "pais_origen": "País de origen",
+}
+
+
+def _vacio(valor: Any) -> bool:
+    return valor is None or (isinstance(valor, str) and not valor.strip())
+
+
+def _leer_rotulo_lote(db: Session, rotulo: Rotulo, rotulo_lote_id: int) -> RotuloLote:
+    rotulo_lote = db.get(RotuloLote, rotulo_lote_id)
+    if rotulo_lote is None or rotulo_lote.rotulo_id != rotulo.id:
+        raise HTTPException(
+            status_code=404,
+            detail="Asociación entre rótulo y lote no encontrada."
+        )
+    return rotulo_lote
+
+
+def _faltantes_sellos(db: Session, rotulo: Rotulo) -> List[str]:
+    if rotulo.sellos_snapshot is not None or not _modulo_frontal_activo(db):
+        return []
+    if _ultima_evaluacion(db, rotulo.producto_id) is None:
+        return ["Evaluación de rotulado frontal"]
+    return ["Cálculo de sellos de advertencia"]
 
 
 def calcular_completitud(
@@ -417,91 +481,34 @@ def calcular_completitud(
     rotulo_id: int,
     rotulo_lote_id: Optional[int] = None,
 ) -> dict:
+    """Campos obligatorios del Capitulo V del CAA que faltan. No impide guardar el borrador."""
     rotulo = _leer_rotulo(db, rotulo_id)
 
-    faltantes = []
-    total = 0
-    cumplidos = 0
-
-    campos_requeridos = {
-        "denominacion_venta": "Denominación de venta",
-        "contenido_neto": "Contenido neto",
-        "unidad_contenido_neto": "Unidad del contenido neto",
-        "rnpa_rppa": "RNPA/RPPA",
-        "razon_social": "Razón social",
-        "domicilio": "Domicilio del elaborador",
-        "ingredientes_snapshot": "Ingredientes",
-        "nutricion_snapshot": "Información nutricional",
-    }
-
-    # Datos generales del rótulo.
-    for campo, descripcion in campos_requeridos.items():
-        total += 1
-        valor = getattr(rotulo, campo)
-
-        if valor is None or (
-            isinstance(valor, str) and not valor.strip()
-        ):
-            faltantes.append(descripcion)
-        else:
-            cumplidos += 1
-
-    # Datos adicionales para productos importados.
+    requeridos = dict(CAMPOS_REQUERIDOS)
     if rotulo.es_importado:
-        campos_importador = {
-            "razon_social_importador": "Razón social del importador",
-            "domicilio_importador": "Domicilio del importador",
-            "pais_origen": "País de origen",
-        }
+        requeridos.update(CAMPOS_IMPORTADOR)
 
-        for campo, descripcion in campos_importador.items():
-            total += 1
-            valor = getattr(rotulo, campo)
+    faltantes = [descripcion for campo, descripcion in requeridos.items() if _vacio(getattr(rotulo, campo))]
+    total = len(requeridos)
 
-            if valor is None or (
-                isinstance(valor, str) and not valor.strip()
-            ):
-                faltantes.append(descripcion)
-            else:
-                cumplidos += 1
+    sellos = _faltantes_sellos(db, rotulo)
+    faltantes.extend(sellos)
+    total += 1
 
-    # Fecha de duración correspondiente a un lote específico.
     if rotulo_lote_id is not None:
-        rotulo_lote = db.get(RotuloLote, rotulo_lote_id)
-
-        if rotulo_lote is None or rotulo_lote.rotulo_id != rotulo_id:
-            raise HTTPException(
-                status_code=404,
-                detail="Asociación entre rótulo y lote no encontrada."
-            )
-
-        total += 1
-
-        if rotulo_lote.fecha_duracion is None:
-            faltantes.append(
-                f"Fecha de duración del lote {rotulo_lote.nro_lote}"
-            )
-        else:
-            cumplidos += 1
-
-    # Fecha de duración de todos los lotes asociados.
+        lotes = [_leer_rotulo_lote(db, rotulo, rotulo_lote_id)]
     else:
         lotes = rotulo.lotes
 
-        if not lotes:
-            total += 1
-            faltantes.append("Asociación a un lote de producción")
-        else:
-            for lote in lotes:
-                total += 1
+    if not lotes:
+        total += 1
+        faltantes.append("Asociación a un lote de producción")
+    for lote in lotes:
+        total += 1
+        if lote.fecha_duracion is None:
+            faltantes.append(f"Fecha de duración del lote {lote.nro_lote}")
 
-                if lote.fecha_duracion is None:
-                    faltantes.append(
-                        f"Fecha de duración del lote {lote.nro_lote}"
-                    )
-                else:
-                    cumplidos += 1
-
+    cumplidos = total - len(faltantes)
     porcentaje = round((cumplidos / total) * 100, 2) if total else 0
 
     return {
@@ -510,3 +517,187 @@ def calcular_completitud(
         "completo": len(faltantes) == 0,
         "faltantes": faltantes,
     }
+
+
+def _tabla_vista(snapshot: Optional[dict]) -> Optional[schemas.TablaNutricionalVista]:
+    if not snapshot:
+        return None
+    items = {item["nutriente"]: item for item in snapshot.get("items", [])}
+    filas = []
+    for definicion in NUTRIENTES_TABLA_NORMATIVA:
+        item = items.get(definicion["nutriente"].value)
+        if item is None:
+            continue
+        filas.append(
+            schemas.FilaNutricionalVista(
+                nutriente=item["nutriente"],
+                nombre=definicion["nombre"],
+                subnivel=definicion["subnivel"],
+                valor_100g=item.get("valor_100g_expresado") or "-",
+                valor_porcion=item.get("valor_porcion_expresado") or "-",
+                porcentaje_vd=item.get("porcentaje_vd_expresado") or "-",
+            )
+        )
+    return schemas.TablaNutricionalVista(
+        estado=snapshot.get("estado") or EstadoTablaNutricional.COMPLETA,
+        porcion_gramos=snapshot.get("unidad_venta_gramos") or 0,
+        medida_casera=snapshot.get("medida_casera"),
+        filas=filas,
+        insumos_sin_datos=[f["insumo_nombre"] for f in snapshot.get("faltantes", [])],
+        nota_pie=NOTA_PIE_VALORES_DIARIOS,
+    )
+
+
+def _cara_principal(db: Session, rotulo: Rotulo, advertencias: List[str]) -> schemas.CaraPrincipal:
+    cara = schemas.CaraPrincipal(
+        denominacion_venta=rotulo.denominacion_venta,
+        contenido_neto=rotulo.contenido_neto,
+        unidad_contenido_neto=rotulo.unidad_contenido_neto,
+    )
+    if not _modulo_frontal_activo(db):
+        cara.motivo = "El módulo de rotulado frontal está desactivado: no se muestran advertencias."
+        return cara
+
+    evaluacion = _ultima_evaluacion(db, rotulo.producto_id)
+    if evaluacion is None:
+        cara.motivo = "Falta evaluar si al producto le corresponde el sistema de advertencias."
+        advertencias.append(cara.motivo)
+        return cara
+
+    cara.resultado_aplicabilidad = evaluacion.resultado
+    if evaluacion.resultado != ResultadoAplicabilidad.CORRESPONDE:
+        cara.aplica_advertencias = False
+        cara.motivo = MOTIVO_SIN_ADVERTENCIAS[evaluacion.resultado]
+        return cara
+
+    cara.aplica_advertencias = True
+    calculo = db.get(CalculoSellosRotulado, rotulo.calculo_sellos_id) if rotulo.calculo_sellos_id else None
+    if calculo is None or rotulo.sellos_snapshot is None:
+        cara.motivo = "Falta calcular los sellos de advertencia del producto."
+        advertencias.append(cara.motivo)
+        return cara
+
+    textos = {t.sello: t.texto for t in calculo.parametros.textos}
+    orden = {t.sello: t.orden for t in calculo.parametros.textos}
+    capturados = sorted(
+        (SelloAdvertencia(s) for s in rotulo.sellos_snapshot), key=lambda sello: orden.get(sello, len(orden))
+    )
+    cara.sellos = [
+        schemas.SelloVista(sello=s, texto=textos.get(s, s.value)) for s in capturados if s not in LEYENDAS_PRECAUTORIAS
+    ]
+    cara.leyendas = [
+        schemas.SelloVista(sello=s, texto=textos.get(s, s.value)) for s in capturados if s in LEYENDAS_PRECAUTORIAS
+    ]
+    cara.calculo_provisorio = calculo.provisorio
+    cara.parametros_version = calculo.parametros.version
+    cara.parametros_fecha_vigencia = calculo.parametros.fecha_vigencia
+    cara.receta_version_calculo = calculo.version_receta
+    if not cara.sellos and not cara.leyendas:
+        cara.motivo = "Según el cálculo de sellos, no le corresponden octógonos ni leyendas precautorias."
+
+    if calculo.provisorio:
+        advertencias.append("El cálculo de sellos es provisorio: la tabla nutricional estaba incompleta al calcularlo.")
+    if rotulo.receta_version is not None and calculo.version_receta != rotulo.receta_version:
+        advertencias.append(
+            f"Los sellos se calcularon con la versión {calculo.version_receta} de la receta y el rótulo "
+            f"usa la versión {rotulo.receta_version}: recalculá los sellos."
+        )
+    if evaluacion.fecha > calculo.fecha_calculo:
+        advertencias.append("La evaluación de rotulado frontal cambió después del cálculo de sellos: recalculá los sellos.")
+    return cara
+
+
+def _alergenos(db: Session, rotulo: Rotulo, advertencias: List[str]) -> tuple:
+    detalle = alergenos_services.detalle_producto(db, rotulo.producto_id)
+    if detalle.declaracion is not None:
+        estado = detalle.declaracion.estado
+    elif detalle.propuesta.tiene_receta:
+        estado = EstadoDeclaracion.SUGERIDA
+    else:
+        estado = None
+    if estado == EstadoDeclaracion.SUGERIDA:
+        advertencias.append(
+            "La declaración de alérgenos es la sugerida por el sistema: falta que una persona con permiso de administrar la confirme."
+        )
+    if detalle.propuesta_cambio:
+        advertencias.append("La receta cambió desde que se guardó la declaración de alérgenos: revisala.")
+    vista = schemas.AlergenosVista(
+        contiene=detalle.leyendas.contiene,
+        puede_contener=detalle.leyendas.puede_contener,
+        estado=estado,
+    )
+    return vista, detalle.leyendas.conservacion
+
+
+def _lote_vista(rotulo_lote: RotuloLote) -> schemas.LoteVista:
+    return schemas.LoteVista(
+        rotulo_lote_id=rotulo_lote.id,
+        nro_lote=rotulo_lote.nro_lote,
+        fecha_elaboracion=rotulo_lote.lote.fecha,
+        fecha_duracion=rotulo_lote.fecha_duracion,
+    )
+
+
+def obtener_vista_previa(
+    db: Session,
+    rotulo_id: int,
+    rotulo_lote_id: Optional[int] = None,
+) -> schemas.VistaPreviaRotulo:
+    """Arma la vista previa del borrador con lo guardado en el rotulo y advierte lo que falta o quedo desactualizado."""
+    rotulo = _leer_rotulo(db, rotulo_id)
+    advertencias: List[str] = []
+
+    lotes = sorted(rotulo.lotes, key=lambda l: (l.fecha_creacion, l.id), reverse=True)
+    if rotulo_lote_id is not None:
+        seleccionado = _leer_rotulo_lote(db, rotulo, rotulo_lote_id)
+    else:
+        seleccionado = lotes[0] if lotes else None
+    completitud = calcular_completitud(db, rotulo_id, seleccionado.id if seleccionado else None)
+
+    cara = _cara_principal(db, rotulo, advertencias)
+    alergenos, conservacion_alergenos = _alergenos(db, rotulo, advertencias)
+
+    tabla = _tabla_vista(rotulo.nutricion_snapshot)
+    if tabla is not None and tabla.estado == EstadoTablaNutricional.INCOMPLETA:
+        sin_datos = ", ".join(tabla.insumos_sin_datos)
+        advertencias.append(
+            "La tabla nutricional está incompleta"
+            + (f": faltan datos nutricionales de {sin_datos}." if sin_datos else ".")
+        )
+
+    vigente = _version_vigente(db, rotulo.producto_id)
+    receta_vigente = vigente.version if vigente else None
+    if rotulo.receta_version is not None and receta_vigente != rotulo.receta_version:
+        advertencias.append(
+            f"El borrador usa la versión {rotulo.receta_version} de la receta, pero la vigente es "
+            f"la {receta_vigente}: actualizá los datos automáticos."
+        )
+
+    return schemas.VistaPreviaRotulo(
+        rotulo_id=rotulo.id,
+        producto=schemas.ProductoVista.model_validate(rotulo.producto),
+        leyenda_borrador=LEYENDA_BORRADOR,
+        cara_principal=cara,
+        lista_ingredientes=rotulo.lista_ingredientes,
+        alergenos=alergenos,
+        origen=schemas.OrigenVista(
+            razon_social=rotulo.razon_social,
+            domicilio=rotulo.domicilio,
+            rnpa_rppa=rotulo.rnpa_rppa,
+            es_importado=rotulo.es_importado,
+            razon_social_importador=rotulo.razon_social_importador,
+            domicilio_importador=rotulo.domicilio_importador,
+            pais_origen=rotulo.pais_origen,
+        ),
+        lote=_lote_vista(seleccionado) if seleccionado else None,
+        lotes=[_lote_vista(l) for l in lotes],
+        conservacion=(rotulo.instrucciones_conservacion or "").strip() or conservacion_alergenos,
+        instrucciones_uso=(rotulo.instrucciones_uso or "").strip() or None,
+        tabla_nutricional=tabla,
+        receta_version=rotulo.receta_version,
+        receta_version_vigente=receta_vigente,
+        advertencias=advertencias,
+        faltantes=completitud["faltantes"],
+        completo=completitud["completo"] and not advertencias,
+        fecha_generacion=datetime.now(),
+    )

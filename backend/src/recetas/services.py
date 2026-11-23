@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from src.recetas.models import Receta, VersionReceta, PasoReceta, DetalleReceta, ConfiguracionProduccion, detalle_receta
 from src.recetas import schemas, exceptions
 from src.recetas.constants import EstadoVersionReceta, TipoUsoInsumo, FormatoDeclaracionAditivos, DECIMALES_ESCALADO, DECIMALES_FACTOR
+from src.productos.exceptions import ProductoNoEncontrado
 from src.productos.models import Producto
 from src.insumos.models import Insumo
 from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
@@ -73,7 +74,7 @@ def _validar_detalles_y_rendimientos(
     producto = db.scalar(select(Producto).where(Producto.id == producto_id))
 
     if not producto:
-        raise exceptions.RecetaNoEncontrada()
+        raise ProductoNoEncontrado()
 
     if getattr(producto, "activo", True) is False:
         raise exceptions.ProductoInactivo()
@@ -92,7 +93,7 @@ def _validar_detalles_y_rendimientos(
     )
 
     if not tiene_ingrediente:
-        raise exceptions.TipoUsoInvalido()
+        raise exceptions.RecetaSinIngredientes()
 
     insumo_ids = [d.insumo_id for d in detalles]
 
@@ -144,11 +145,11 @@ def leer_receta(db: Session, receta_id: int) -> Receta:
 def crear_receta(db: Session, datos: schemas.RecetaCreate) -> Receta:
     producto = db.scalar(select(Producto).where(Producto.id == datos.producto_id))
     if not producto:
-        raise exceptions.RecetaNoEncontrada()
+        raise ProductoNoEncontrado()
 
     receta_existente = db.scalar(select(Receta).where(Receta.producto_id == datos.producto_id))
     if receta_existente:
-        raise exceptions.VersionInicialRequerida()
+        raise exceptions.RecetaExistente()
 
     v_inicial = datos.version_inicial
     cantidades_gramos = _validar_detalles_y_rendimientos(
@@ -266,9 +267,9 @@ def crear_version_receta(
             for d in version_anterior.detalles
             if d.tipo_uso == TipoUsoInsumo.INGREDIENTE
         }
-        total_nuevo = sum(d.cantidad_gramos for d in version_receta.detalles)
+        total_nuevo = sum(cantidades_gramos.values())
         pct_nuevo = {
-            d.insumo_id: round((d.cantidad_gramos / total_nuevo) * 100, 4) if total_nuevo > 0 else 0.0
+            d.insumo_id: round((cantidades_gramos[d.insumo_id] / total_nuevo) * 100, 4) if total_nuevo > 0 else 0.0
             for d in version_receta.detalles
             if d.tipo_uso == TipoUsoInsumo.INGREDIENTE
         }
@@ -637,8 +638,8 @@ def calcular_informacion_nutricional_receta(
         rendimiento_final_gramos=rendimiento,
         unidad_venta_gramos=porcion,
         medida_casera=version_obj.medida_casera,
-        estado=estado,        ## nuevo
-        faltantes=faltantes,  ##nuevo
+        estado=estado,
+        faltantes=faltantes,
         items=items_res
     )
 def calcular_composicion_receta(
@@ -886,6 +887,19 @@ def obtener_lista_ingredientes_rotulo(
         texto_rotulo=texto_rotulo,
     )
 
+def _validar_orden_entre_empates(
+    ingredientes: List[schemas.IngredienteRotuloItem], orden_insumo_ids: List[int]
+) -> None:
+    """El ajuste manual solo puede intercambiar ingredientes con el mismo porcentaje.
+
+    La lista del rotulo tiene que seguir en orden decreciente de proporcion, como pide el CAA.
+    """
+    porcentajes = {item.insumo_id: item.porcentaje for item in ingredientes}
+    secuencia = [porcentajes[insumo_id] for insumo_id in orden_insumo_ids]
+    if any(siguiente > anterior + 1e-9 for anterior, siguiente in zip(secuencia, secuencia[1:])):
+        raise exceptions.OrdenManualFueraDeEmpate()
+
+
 def guardar_orden_manual_ingredientes(
     db: Session,
     receta_id: int,
@@ -894,13 +908,14 @@ def guardar_orden_manual_ingredientes(
 ) -> schemas.ListaIngredientesRotuloResponse:
     version_obj = leer_version_receta(db, receta_id, nro_version)
     if version_obj.estado != EstadoVersionReceta.ACTIVO:
-        raise exceptions.VersionNoEncontrada()
-    
+        raise exceptions.VersionSoloLectura()
+
     actual = obtener_lista_ingredientes_rotulo(db, receta_id, nro_version)
 
     ids_esperados = {item.insumo_id for item in actual.ingredientes}
     if len(payload.orden_insumo_ids) != len(ids_esperados) or set(payload.orden_insumo_ids) != ids_esperados:
-        raise exceptions.InsumoDuplicado()
+        raise exceptions.OrdenManualInvalido()
+    _validar_orden_entre_empates(actual.ingredientes, payload.orden_insumo_ids)
 
     if payload.empleado_id is not None:
         empleados_services.leer_empleado(db, payload.empleado_id)
@@ -920,8 +935,8 @@ def restablecer_orden_automatico_ingredientes(
 ) -> schemas.ListaIngredientesRotuloResponse:
     version_obj = leer_version_receta(db, receta_id, nro_version)
     if version_obj.estado != EstadoVersionReceta.ACTIVO:
-        raise exceptions.VersionNoEncontrada()
-    
+        raise exceptions.VersionSoloLectura()
+
     version_obj.orden_ingredientes_manual = None
     version_obj.orden_manual_por_id = None
     version_obj.orden_manual_fecha = None

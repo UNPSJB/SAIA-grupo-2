@@ -23,9 +23,17 @@ import type {
     Rotulo,
     RotuloDatos,
     RotuloLote,
+    TablaNutricionalSnapshot,
 } from '../../types/rotulos';
 
+import { getLotes } from '../../services/lotesProduccionServices';
+import type { LoteProduccion } from '../../types/lotesProduccion';
+import type { Nutriente } from '../../types/datosNutricionales';
+import type { SelloAdvertencia } from '../../types/parametrosNormativos';
 import Boton from '../../components/Boton';
+import { ETIQUETA_NUTRIENTE } from '../datosNutricionales/nutrientes';
+import LeyendaPrecaucion from '../rotuladoFrontal/LeyendaPrecaucion';
+import OctogonoAdvertencia from '../rotuladoFrontal/OctogonoAdvertencia';
 import shared from '../../styles/shared.module.css';
 import styles from './RotuloDetalle.module.css';
 
@@ -61,33 +69,6 @@ function obtenerDatosFormulario(rotulo: Rotulo): RotuloDatos {
     };
 }
 
-type RegistroSnapshot = Record<string, unknown>;
-
-function esRegistro(valor: unknown): valor is RegistroSnapshot {
-    return typeof valor === 'object' && valor !== null && !Array.isArray(valor);
-}
-
-function obtenerLista(
-    registro: RegistroSnapshot | null,
-    clave: string,
-): RegistroSnapshot[] {
-    const valor = registro?.[clave];
-
-    if (!Array.isArray(valor)) return [];
-
-    return valor.filter(esRegistro);
-}
-
-function mostrarValor(valor: unknown): string {
-    if (valor === null || valor === undefined || valor === '') return '—';
-    return String(valor);
-}
-
-function mostrarSnapshot(valor: unknown): string {
-    if (valor === null || valor === undefined) return 'Sin datos disponibles';
-    return JSON.stringify(valor, null, 2);
-}
-
 function formatearValorHistorial(valor: string | null): string {
     if (valor === null || valor === '') return 'Sin valor';
 
@@ -110,74 +91,12 @@ function mostrarFecha(fecha: string): string {
     return new Date(fecha).toLocaleString('es-AR');
 }
 
-function TablaIngredientes({ snapshot }: { snapshot: unknown }) {
-    const registro = esRegistro(snapshot) ? snapshot : null;
-    const ingredientes = obtenerLista(registro, 'ingredientes');
-    const aditivos = obtenerLista(registro, 'aditivos');
-    const filas = [
-        ...ingredientes.map((item) => ({ ...item, categoria: 'Ingrediente' })),
-        ...aditivos.map((item) => ({ ...item, categoria: 'Aditivo' })),
-    ];
-
-    if (filas.length === 0) {
-        return <p className={styles.snapshotVacio}>No hay ingredientes disponibles.</p>;
-    }
-
-    return (
-        <div className={styles.tablaContenedor}>
-            <table className={styles.tablaSnapshot}>
-                <thead>
-                    <tr>
-                        <th>Ingrediente</th>
-                        <th>Cantidad</th>
-                        <th>Porcentaje</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {filas.map((item, indice) => (
-                        <tr key={`${String(item.insumo_id ?? item.nombre_insumo ?? indice)}-${indice}`}>
-                            <td>
-                                <strong>
-                                    {mostrarValor(item.nombre_insumo ?? item.nombre)}
-                                </strong>
-                                <small>{item.categoria}</small>
-                            </td>
-                            <td>
-                                {mostrarValor(item.cantidad_gramos)} g
-                            </td>
-                            <td>
-                                {item.porcentaje !== undefined
-                                    ? `${mostrarValor(item.porcentaje)}%`
-                                    : '—'}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            {registro && (
-                <div className={styles.snapshotResumen}>
-                    {registro.total_gramos !== undefined && (
-                        <span>
-                            Total: <strong>{mostrarValor(registro.total_gramos)} g</strong>
-                        </span>
-                    )}
-                    {registro.suma_porcentajes !== undefined && (
-                        <span>
-                            Suma: <strong>{mostrarValor(registro.suma_porcentajes)}%</strong>
-                        </span>
-                    )}
-                </div>
-            )}
-        </div>
-    );
+function etiquetaNutriente(nutriente: string): string {
+    return ETIQUETA_NUTRIENTE[nutriente as Nutriente] ?? nutriente;
 }
 
-function TablaNutricional({ snapshot }: { snapshot: unknown }) {
-    const registro = esRegistro(snapshot) ? snapshot : null;
-    const items = obtenerLista(registro, 'items');
-
-    if (items.length === 0) {
+function TablaNutricional({ snapshot }: { snapshot: TablaNutricionalSnapshot | null }) {
+    if (!snapshot || snapshot.items.length === 0) {
         return (
             <p className={styles.snapshotVacio}>
                 No hay información nutricional disponible.
@@ -187,6 +106,11 @@ function TablaNutricional({ snapshot }: { snapshot: unknown }) {
 
     return (
         <div className={styles.tablaContenedor}>
+            {snapshot.estado === 'incompleta' && (
+                <p className={styles.avisoIncompleto}>
+                    Tabla incompleta: faltan datos de {snapshot.faltantes.map((f) => f.insumo_nombre).join(', ')}.
+                </p>
+            )}
             <table className={styles.tablaSnapshot}>
                 <thead>
                     <tr>
@@ -197,57 +121,53 @@ function TablaNutricional({ snapshot }: { snapshot: unknown }) {
                     </tr>
                 </thead>
                 <tbody>
-                    {items.map((item, indice) => (
-                        <tr key={`${String(item.nutriente ?? indice)}-${indice}`}>
-                            <td><strong>{mostrarValor(item.nutriente)}</strong></td>
-                            <td>
-                                {mostrarValor(item.valor_100g_expresado ?? item.valor_100g_raw)}
-                            </td>
-                            <td>
-                                {mostrarValor(item.valor_porcion_expresado ?? item.valor_porcion_raw)}
-                            </td>
-                            <td>
-                                {mostrarValor(item.porcentaje_vd_expresado ?? item.porcentaje_vd)}
-                            </td>
+                    {snapshot.items.map((item) => (
+                        <tr key={item.nutriente}>
+                            <td><strong>{etiquetaNutriente(item.nutriente)}</strong></td>
+                            <td>{item.valor_100g_expresado}</td>
+                            <td>{item.valor_porcion_expresado}</td>
+                            <td>{item.porcentaje_vd_expresado}</td>
                         </tr>
                     ))}
                 </tbody>
             </table>
 
-            {registro && (
-                <div className={styles.snapshotResumen}>
-                    {registro.rendimiento_final_gramos !== undefined && (
-                        <span>
-                            Rendimiento: <strong>{mostrarValor(registro.rendimiento_final_gramos)} g</strong>
-                        </span>
-                    )}
-                    {registro.unidad_venta_gramos !== undefined && (
-                        <span>
-                            Porción: <strong>{mostrarValor(registro.unidad_venta_gramos)} g</strong>
-                        </span>
-                    )}
-                    {registro.medida_casera !== undefined && (
-                        <span>
-                            Medida casera: <strong>{mostrarValor(registro.medida_casera)}</strong>
-                        </span>
-                    )}
-                </div>
-            )}
+            <div className={styles.snapshotResumen}>
+                <span>
+                    Porción: <strong>{snapshot.unidad_venta_gramos} g</strong>
+                </span>
+                {snapshot.medida_casera && (
+                    <span>
+                        Medida casera: <strong>{snapshot.medida_casera}</strong>
+                    </span>
+                )}
+            </div>
         </div>
     );
 }
 
-function ListaSellos({ snapshot }: { snapshot: unknown }) {
-    if (!Array.isArray(snapshot) || snapshot.length === 0) {
-        return <p className={styles.snapshotVacio}>El producto no tiene sellos registrados.</p>;
+const LEYENDAS: SelloAdvertencia[] = ['contiene_edulcorantes', 'contiene_cafeina'];
+
+function ListaSellos({ sellos }: { sellos: SelloAdvertencia[] | null }) {
+    if (sellos === null) {
+        return (
+            <p className={styles.snapshotVacio}>
+                Sin datos: falta evaluar el rotulado frontal o calcular los sellos del producto.
+            </p>
+        );
+    }
+
+    if (sellos.length === 0) {
+        return <p className={styles.snapshotVacio}>No le corresponden octógonos ni leyendas precautorias.</p>;
     }
 
     return (
         <div className={styles.listaSellos}>
-            {snapshot.map((sello, indice) => (
-                <span className={styles.sello} key={`${String(sello)}-${indice}`}>
-                    {typeof sello === 'string' ? sello : JSON.stringify(sello)}
-                </span>
+            {sellos.filter((s) => !LEYENDAS.includes(s)).map((sello) => (
+                <OctogonoAdvertencia key={sello} sello={sello} tamano="pequeno" />
+            ))}
+            {sellos.filter((s) => LEYENDAS.includes(s)).map((sello) => (
+                <LeyendaPrecaucion key={sello} sello={sello} tamano="pequeno" />
             ))}
         </div>
     );
@@ -263,6 +183,8 @@ export default function RotuloDetalle() {
     const [datos, setDatos] = useState<RotuloDatos>(datosIniciales);
 
     const [lotes, setLotes] = useState<RotuloLote[]>([]);
+    const [lotesProducto, setLotesProducto] = useState<LoteProduccion[]>([]);
+    const [listaIngredientes, setListaIngredientes] = useState('');
     const [historial, setHistorial] = useState<HistorialCambioRotulo[]>([]);
     const [completitud, setCompletitud] = useState<CompletitudRotulo | null>(null);
 
@@ -282,13 +204,16 @@ export default function RotuloDetalle() {
         setError('');
 
         try {
-            const [productoObtenido, rotuloObtenido] = await Promise.all([
+            const [productoObtenido, rotuloObtenido, lotesObtenidosProducto] = await Promise.all([
                 getProductoById(productoId),
                 getRotuloProducto(productoId),
+                getLotes({ productoId: Number(productoId) }),
             ]);
 
             setProducto(productoObtenido);
             setRotulo(rotuloObtenido);
+            setLotesProducto(lotesObtenidosProducto);
+            setListaIngredientes(rotuloObtenido?.lista_ingredientes ?? '');
             setDatos(
                 rotuloObtenido
                     ? obtenerDatosFormulario(rotuloObtenido)
@@ -407,13 +332,39 @@ export default function RotuloDetalle() {
 
         try {
             await actualizarSnapshots(rotulo.id, usuario.id);
-            setMensaje('Los datos de ingredientes, nutrición y sellos se actualizaron.');
+            setMensaje('La lista de ingredientes, la tabla nutricional y los sellos se actualizaron desde la receta vigente.');
             await cargarDatos();
         } catch (err) {
             setError(
                 err instanceof Error
                     ? err.message
                     : 'No se pudieron actualizar los datos precargados.',
+            );
+        } finally {
+            setProcesando(false);
+        }
+    };
+
+    const guardarListaIngredientes = async () => {
+        if (!rotulo || !usuario?.id) return;
+
+        setProcesando(true);
+        setError('');
+        setMensaje('');
+
+        try {
+            await actualizarRotulo(
+                rotulo.id,
+                { lista_ingredientes: listaIngredientes.trim() || null },
+                usuario.id,
+            );
+            setMensaje('La lista de ingredientes se guardó y el cambio quedó registrado en el historial.');
+            await cargarDatos();
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : 'No se pudo guardar la lista de ingredientes.',
             );
         } finally {
             setProcesando(false);
@@ -521,9 +472,19 @@ export default function RotuloDetalle() {
                     </p>
                 </div>
 
-                <Boton variant="volver" onClick={() => navigate('/rotulos')}>
-                    Volver al listado
-                </Boton>
+                <div className={styles.accionesEncabezado}>
+                    {rotulo && (
+                        <Boton
+                            variant="ver"
+                            onClick={() => navigate(`/rotulos/producto/${productoId}/vista-previa`)}
+                        >
+                            Vista previa
+                        </Boton>
+                    )}
+                    <Boton variant="volver" onClick={() => navigate('/rotulos')}>
+                        Volver al listado
+                    </Boton>
+                </div>
             </div>
 
             {error && (
@@ -763,9 +724,9 @@ export default function RotuloDetalle() {
                     <section className={`${shared.tarjetaEstatica} ${styles.seccion}`}>
                         <div className={styles.seccionEncabezado}>
                             <div>
-                                <h2 className={styles.seccionTitulo}>Datos de receta</h2>
+                                <h2 className={styles.seccionTitulo}>Datos automáticos</h2>
                                 <p className={styles.textoAyuda}>
-                                    Información precargada desde la receta del producto.
+                                    Lista de ingredientes, tabla nutricional y sellos tomados de la receta vigente y del rotulado frontal.
                                 </p>
                             </div>
 
@@ -779,17 +740,53 @@ export default function RotuloDetalle() {
                         </div>
 
                         <p className={styles.textoAyuda}>
-                            Receta: {rotulo.receta_id ?? 'Sin receta'}{' '}
+                            Receta: {rotulo.receta_id ? `#${rotulo.receta_id}` : 'Sin receta'}{' '}
                             {rotulo.receta_version !== null &&
                                 `(versión ${rotulo.receta_version})`}
                         </p>
 
-                        <div className={styles.snapshotGrid}>
-                            <div>
-                                <h3>Ingredientes</h3>
-                                <TablaIngredientes snapshot={rotulo.ingredientes_snapshot} />
+                        <div className={styles.listaIngredientesBloque}>
+                            <h3>Lista de ingredientes</h3>
+                            <p className={styles.textoAyuda}>
+                                Generada a partir de la receta, en orden decreciente y con los aditivos por función.
+                                Podés editarla: el cambio queda registrado en el historial.
+                            </p>
+                            <textarea
+                                className={styles.textareaInstrucciones}
+                                rows={3}
+                                value={listaIngredientes}
+                                onChange={(e) => setListaIngredientes(e.target.value)}
+                                aria-label="Lista de ingredientes"
+                            />
+                            {rotulo.ingredientes_snapshot &&
+                                rotulo.lista_ingredientes !== rotulo.ingredientes_snapshot.texto_rotulo && (
+                                    <p className={styles.avisoIncompleto}>
+                                        La lista fue editada y difiere de la generada por el sistema:{' '}
+                                        <em>{rotulo.ingredientes_snapshot.texto_rotulo}</em>
+                                    </p>
+                                )}
+                            <div className={shared.filaBotones}>
+                                {rotulo.ingredientes_snapshot &&
+                                    listaIngredientes !== rotulo.ingredientes_snapshot.texto_rotulo && (
+                                    <Boton
+                                        variant="limpiar"
+                                        onClick={() => setListaIngredientes(rotulo.ingredientes_snapshot?.texto_rotulo ?? '')}
+                                        disabled={procesando}
+                                    >
+                                        Usar la generada
+                                    </Boton>
+                                )}
+                                <Boton
+                                    variant="guardar"
+                                    onClick={guardarListaIngredientes}
+                                    disabled={procesando || listaIngredientes === (rotulo.lista_ingredientes ?? '')}
+                                >
+                                    Guardar lista
+                                </Boton>
                             </div>
+                        </div>
 
+                        <div className={styles.snapshotGrid}>
                             <div>
                                 <h3>Información nutricional</h3>
                                 <TablaNutricional snapshot={rotulo.nutricion_snapshot} />
@@ -797,7 +794,7 @@ export default function RotuloDetalle() {
 
                             <div>
                                 <h3>Sellos de advertencia</h3>
-                                <ListaSellos snapshot={rotulo.sellos_snapshot} />
+                                <ListaSellos sellos={rotulo.sellos_snapshot} />
                             </div>
                         </div>
                     </section>
@@ -812,16 +809,22 @@ export default function RotuloDetalle() {
 
                         <form className={styles.formLote} onSubmit={asociarLote}>
                             <div className={shared.formGroup}>
-                                <label htmlFor="numeroLote">Número de lote</label>
-                                <input
+                                <label htmlFor="numeroLote">Lote de producción</label>
+                                <select
                                     id="numeroLote"
-                                    type="number"
-                                    min="0"
-                                    step="1"
                                     value={numeroLote}
                                     onChange={(e) => setNumeroLote(e.target.value)}
                                     required
-                                />
+                                >
+                                    <option value="">Elegí un lote</option>
+                                    {lotesProducto
+                                        .filter((lote) => !lotes.some((asociado) => asociado.nro_lote === lote.nro_lote))
+                                        .map((lote) => (
+                                            <option key={lote.nro_lote} value={lote.nro_lote}>
+                                                Lote {lote.nro_lote} · {new Date(`${lote.fecha}T00:00:00`).toLocaleDateString('es-AR')}
+                                            </option>
+                                        ))}
+                                </select>
                             </div>
 
                             <div className={shared.formGroup}>
