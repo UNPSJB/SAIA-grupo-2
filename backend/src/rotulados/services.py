@@ -391,20 +391,45 @@ def listar_lotes_rotulo(
 # Historial
 # ---------------------------------------------------------------------
 
+
 def listar_historial(
     db: Session,
     rotulo_id: int,
-) -> list[HistorialCambioRotulo]:
+) -> list[dict]:
     _leer_rotulo(db, rotulo_id)
 
-    return db.scalars(
-        select(HistorialCambioRotulo)
+    filas = db.execute(
+        select(
+            HistorialCambioRotulo,
+            Empleado.nombre,
+            Empleado.apellido,
+        )
+        .outerjoin(
+            Empleado,
+            HistorialCambioRotulo.empleado_id == Empleado.id,
+        )
         .where(HistorialCambioRotulo.rotulo_id == rotulo_id)
         .order_by(
             HistorialCambioRotulo.fecha_cambio.desc(),
             HistorialCambioRotulo.id.desc(),
         )
     ).all()
+
+    return [
+        {
+            "id": cambio.id,
+            "rotulo_id": cambio.rotulo_id,
+            "campo": cambio.campo,
+            "valor_original": cambio.valor_original,
+            "valor_nuevo": cambio.valor_nuevo,
+            "empleado_id": cambio.empleado_id,
+            "empleado_nombre": nombre,
+            "empleado_apellido": apellido,
+            "fecha_cambio": cambio.fecha_cambio,
+        }
+        for cambio, nombre, apellido in filas
+    ]
+
 
 
 # ---------------------------------------------------------------------
