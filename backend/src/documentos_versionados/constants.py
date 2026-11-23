@@ -20,4 +20,3 @@ class TipoDocumentoVersionado(str, Enum):
     MANUAL_BPM = "manual_bpm"
     FICHA_TECNICA = "ficha_tecnica"
     PROCEDIMIENTO = "procedimiento"
-    RECETA = "receta"

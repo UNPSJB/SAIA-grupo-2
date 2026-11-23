@@ -1,4 +1,4 @@
-export type TipoDocumentoVersionado = 'manual_bpm' | 'ficha_tecnica' | 'procedimiento' | 'receta';
+export type TipoDocumentoVersionado = 'manual_bpm' | 'ficha_tecnica' | 'procedimiento';
 export interface EmpleadoResumen {
     id: number;
     legajo: string;

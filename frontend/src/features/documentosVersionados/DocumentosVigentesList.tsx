@@ -16,7 +16,6 @@ const ETIQUETAS_TIPO: Record<string, string> = {
     manual_bpm: 'Manual de BPM',
     ficha_tecnica: 'Ficha Técnica',
     procedimiento: 'Procedimiento Operativo (POES)',
-    receta: 'Receta de Elaboración',
 };
 
 export default function DocumentosVigentesList() {
