@@ -120,6 +120,18 @@ def test_crear_nueva_version_archiva_anterior(db_session: Session, producto_test
     v1 = services.leer_version_receta(db_session, receta.id, 1)
     assert v1.estado == EstadoVersionReceta.ARCHIVADO
 
+    reactivada = services.marcar_version_receta_vigente(
+        db_session,
+        receta.id,
+        1,
+        "Se retoma la fórmula aprobada anteriormente",
+    )
+    assert reactivada.estado == EstadoVersionReceta.ACTIVO
+    assert reactivada.motivo_cambio == "Se retoma la fórmula aprobada anteriormente"
+
+    v2 = services.leer_version_receta(db_session, receta.id, 2)
+    assert v2.estado == EstadoVersionReceta.ARCHIVADO
+
 def test_validaciones_receta_invalida(db_session: Session, producto_test: Producto):
     with pytest.raises(exceptions.RendimientoFinalInvalido):
         services.crear_receta(

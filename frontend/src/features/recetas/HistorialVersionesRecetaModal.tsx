@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom';
 import Boton from '../../components/Boton';
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 import { getEmpleados } from '../../services/empleadosServices';
-import { getVersionesReceta } from '../../services/recetasServices';
+import { getVersionesReceta, marcarVersionRecetaVigente } from '../../services/recetasServices';
+import { useAuth } from '../../context/AuthContext';
 import type { Empleado } from '../../types/empleados';
 import type { VersionReceta } from '../../types/receta';
 import sharedStyles from '../../styles/shared.module.css';
@@ -13,6 +14,7 @@ interface HistorialVersionesRecetaModalProps {
     recetaId: number;
     recetaNombre: string;
     onClose: () => void;
+    onVersionVigenteCambiada?: () => void;
 }
 
 function formatearFecha(fecha: string | null): string {
@@ -25,52 +27,91 @@ export default function HistorialVersionesRecetaModal({
     recetaId,
     recetaNombre,
     onClose,
+    onVersionVigenteCambiada,
 }: HistorialVersionesRecetaModalProps) {
+    const { usuario } = useAuth();
     const [versiones, setVersiones] = useState<VersionReceta[]>([]);
     const [empleados, setEmpleados] = useState<Empleado[]>([]);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [versionAConfirmar, setVersionAConfirmar] = useState<VersionReceta | null>(null);
+    const [motivoCambio, setMotivoCambio] = useState('');
+    const [guardando, setGuardando] = useState(false);
+
+    const cargarHistorial = async () => {
+        setCargando(true);
+        setError(null);
+
+        try {
+            const [versionesData, empleadosData] = await Promise.all([
+                getVersionesReceta(recetaId),
+                getEmpleados(),
+            ]);
+
+            setVersiones(versionesData);
+            setEmpleados(empleadosData);
+        } catch (problema) {
+            setError(
+                problema instanceof Error
+                    ? problema.message
+                    : 'No se pudo cargar el historial de versiones de la receta.',
+            );
+        } finally {
+            setCargando(false);
+        }
+    };
 
     useEffect(() => {
-        let cancelado = false;
-
-        const cargarHistorial = async () => {
-            setCargando(true);
-            setError(null);
-
-            try {
-                const [versionesData, empleadosData] = await Promise.all([
-                    getVersionesReceta(recetaId),
-                    getEmpleados(),
-                ]);
-
-                if (!cancelado) {
-                    setVersiones(versionesData);
-                    setEmpleados(empleadosData);
-                }
-            } catch (problema) {
-                if (!cancelado) {
-                    setError(
-                        problema instanceof Error
-                            ? problema.message
-                            : 'No se pudo cargar el historial de versiones de la receta.',
-                    );
-                }
-            } finally {
-                if (!cancelado) {
-                    setCargando(false);
-                }
-            }
-        };
-
         void cargarHistorial();
-
-        return () => {
-            cancelado = true;
-        };
     }, [recetaId]);
 
     const empleadosPorId = new Map(empleados.map((empleado) => [empleado.id, empleado]));
+
+    const abrirConfirmacion = (version: VersionReceta) => {
+        setVersionAConfirmar(version);
+        setMotivoCambio('');
+        setError(null);
+    };
+
+    const cerrarConfirmacion = () => {
+        if (guardando) return;
+        setVersionAConfirmar(null);
+        setMotivoCambio('');
+    };
+
+    const confirmarCambioVigencia = async () => {
+        if (!versionAConfirmar || !usuario) return;
+
+        const motivo = motivoCambio.trim();
+        if (!motivo) {
+            setError('El motivo de cambio es obligatorio.');
+            return;
+        }
+
+        setGuardando(true);
+        setError(null);
+
+        try {
+            await marcarVersionRecetaVigente(
+                recetaId,
+                versionAConfirmar.version,
+                usuario.rol,
+                motivo,
+            );
+            setVersionAConfirmar(null);
+            setMotivoCambio('');
+            await cargarHistorial();
+            onVersionVigenteCambiada?.();
+        } catch (problema) {
+            setError(
+                problema instanceof Error
+                    ? problema.message
+                    : 'No se pudo cambiar la versión vigente.',
+            );
+        } finally {
+            setGuardando(false);
+        }
+    };
 
     const columnas: Columna<VersionReceta>[] = [
         {
@@ -126,18 +167,27 @@ export default function HistorialVersionesRecetaModal({
             encabezado: 'Acciones',
             variant: 'acciones',
             render: (version) => (
-                <Link
-                    to={`/recetas/${recetaId}?version=${version.version}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <Boton
-                        variant="ver"
-                        title={`Visualizar la versión v${version.version} en una nueva ventana`}
+                <>
+                    <Link
+                        to={`/recetas/${recetaId}?version=${version.version}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                     >
-                        Visualizar
-                    </Boton>
-                </Link>
+                        <Boton
+                            variant="ver"
+                            title={`Visualizar la versión v${version.version} en una nueva ventana`}
+                        >
+                        </Boton>
+                    </Link>
+                    {usuario?.rol === 'admin' && version.estado !== 'activo' && (
+                        <Boton
+                            variant="guardar"
+                            onClick={() => abrirConfirmacion(version)}
+                            title="Establecer esta versión como vigente"
+                        >
+                        </Boton>
+                    )}
+                </>
             ),
         },
     ];
@@ -201,6 +251,56 @@ export default function HistorialVersionesRecetaModal({
                     </Boton>
                 </div>
             </div>
+
+            {versionAConfirmar && (
+                <div className={sharedStyles.modalOverlay} onClick={cerrarConfirmacion}>
+                    <div
+                        className={sharedStyles.modalContent}
+                        onClick={(evento) => evento.stopPropagation()}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="titulo-confirmar-vigencia-receta"
+                    >
+                        <h3 id="titulo-confirmar-vigencia-receta">Confirmar Cambio de Vigencia</h3>
+                        <p>
+                            ¿Desea establecer la <strong>versión v{versionAConfirmar.version}</strong>{' '}
+                            como la versión vigente de esta receta? La versión activa actual pasará a estar archivada.
+                        </p>
+
+                        <div className={sharedStyles.formGroup}>
+                            <label htmlFor="motivo-cambio-vigencia">Motivo de cambio:</label>
+                            <input
+                                id="motivo-cambio-vigencia"
+                                type="text"
+                                value={motivoCambio}
+                                onChange={(evento) => setMotivoCambio(evento.target.value)}
+                                className={sharedStyles.modalIngresoTexto}
+                                placeholder="Ingrese el motivo del cambio"
+                                maxLength={250}
+                                disabled={guardando}
+                                autoFocus
+                            />
+                        </div>
+
+                        <div className={sharedStyles.filaBotones}>
+                            <Boton
+                                variant="guardar"
+                                onClick={confirmarCambioVigencia}
+                                disabled={guardando || !motivoCambio.trim()}
+                            >
+                                {guardando ? 'Guardando...' : 'Confirmar'}
+                            </Boton>
+                            <Boton
+                                variant="volver"
+                                onClick={cerrarConfirmacion}
+                                disabled={guardando}
+                            >
+                                Cancelar
+                            </Boton>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

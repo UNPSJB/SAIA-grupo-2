@@ -45,6 +45,7 @@ export default function RecetaList() {
     });
     const [busqueda, setBusqueda] = useState('');
     const [recetaHistorial, setRecetaHistorial] = useState<{ id: number; nombre: string } | null>(null);
+    const [versionRecetaActualizada, setVersionRecetaActualizada] = useState(0);
 
     useEffect(() => {
         let cancelado = false;
@@ -104,7 +105,7 @@ export default function RecetaList() {
         return () => {
             cancelado = true;
         };
-    }, []);
+    }, [versionRecetaActualizada]);
 
     const filtradas = filtrarPorTexto(respuesta.datos, busqueda, (item) => [
         item.producto.nombre,
@@ -254,6 +255,7 @@ export default function RecetaList() {
                     recetaId={recetaHistorial.id}
                     recetaNombre={recetaHistorial.nombre}
                     onClose={() => setRecetaHistorial(null)}
+                    onVersionVigenteCambiada={() => setVersionRecetaActualizada((actual) => actual + 1)}
                 />
             )}
         </div>

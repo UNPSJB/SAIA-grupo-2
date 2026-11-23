@@ -352,7 +352,12 @@ def leer_version_receta(db: Session, receta_id: int, nro_version: int) -> Versio
         raise exceptions.VersionNoEncontrada()
     return version
 
-def marcar_version_receta_vigente(db: Session, receta_id: int, nro_version: int) -> VersionReceta:
+def marcar_version_receta_vigente(
+    db: Session,
+    receta_id: int,
+    nro_version: int,
+    motivo_cambio: str = "Versión anterior marcada como vigente",
+) -> VersionReceta:
     version = leer_version_receta(db, receta_id, nro_version)
 
     db.execute(
@@ -362,6 +367,7 @@ def marcar_version_receta_vigente(db: Session, receta_id: int, nro_version: int)
     )
 
     version.estado = EstadoVersionReceta.ACTIVO
+    version.motivo_cambio = motivo_cambio
     version.fecha_vigencia = date.today()
     db.commit()
     db.refresh(version)

@@ -125,9 +125,15 @@ def leer_version_receta(
 def marcar_version_receta_vigente(
     receta_id: int,
     nro_version: int,
-    db: Annotated[Session, Depends(get_db)]
+    db: Annotated[Session, Depends(get_db)],
+    motivo_cambio: str = "Versión anterior marcada como vigente",
 ):
-    return services.marcar_version_receta_vigente(db, receta_id, nro_version)
+    return services.marcar_version_receta_vigente(
+        db,
+        receta_id,
+        nro_version,
+        motivo_cambio,
+    )
 
 @router.get("/", response_model=list[schemas.Receta])
 def listar_recetas(db: Annotated[Session, Depends(get_db)]):

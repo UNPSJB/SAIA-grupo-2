@@ -105,9 +105,10 @@ export const marcarVersionRecetaVigente = async (
     recetaId: number | string,
     numeroVersion: number | string,
     rol: RolUsuario,
+    motivoCambio: string,
 ): Promise<VersionReceta> =>
     solicitar(
-        `/${recetaId}/versiones/${numeroVersion}/vigencia`,
+        `/${recetaId}/versiones/${numeroVersion}/vigencia?motivo_cambio=${encodeURIComponent(motivoCambio.trim())}`,
         'No se pudo cambiar la versión vigente.',
         {
             method: 'PUT',
