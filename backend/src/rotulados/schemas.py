@@ -203,3 +203,23 @@ class VistaPreviaRotulo(BaseModel):
     faltantes: List[str]
     completo: bool
     fecha_generacion: datetime
+
+
+class ExportacionRotuloRespuesta(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    rotulo_id: int
+    empleado_id: int
+    empleado_nombre: Optional[str] = None
+    empleado_apellido: Optional[str] = None
+    fecha_exportacion: datetime
+    receta_id: Optional[int] = None
+    version_receta: Optional[int] = None
+    calculo_sellos_id: Optional[int] = None
+    parametros_id: Optional[int] = None
+    version_parametros: Optional[int] = None
+
+
+class ExportacionRotuloDetalle(ExportacionRotuloRespuesta):
+    respaldo_snapshot: dict[str, Any]

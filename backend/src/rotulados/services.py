@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
 from src.alergenos import services as alergenos_services
 from src.alergenos.constants import EstadoDeclaracion
 from src.datos_nutricionales.constants import (
@@ -14,18 +15,22 @@ from src.datos_nutricionales.constants import (
     NUTRIENTES_TABLA_NORMATIVA,
     EstadoTablaNutricional,
 )
+from src.datos_nutricionales.models import DatoNutricionalInsumo
 from src.empleados.models import Empleado, RolEmpleado
+from src.insumos.models import Insumo
 from src.lotes_produccion.models import LoteProduccion
 from src.parametros_normativos import services as parametros_services
 from src.parametros_normativos.constants import LEYENDAS_PRECAUTORIAS, SelloAdvertencia
 from src.productos.models import Producto
-from src.recetas.models import Receta, VersionReceta, EstadoVersionReceta
+from src.recetas.models import DetalleReceta, Receta, VersionReceta, EstadoVersionReceta
 from src.recetas import services as recetas_services
 from src.rotulado_frontal.constants import ResultadoAplicabilidad
+from src.rotulado_frontal import services as frontal_services
 from src.rotulado_frontal.models import CalculoSellosRotulado, EvaluacionAplicabilidad
 
 from src.rotulados import schemas
-from src.rotulados.models import Rotulo, RotuloLote, HistorialCambioRotulo
+from src.rotulados.models import ExportacionRotulo, HistorialCambioRotulo, Rotulo, RotuloLote
+from src.unidades_medida.models import UnidadMedida
 
 
 
@@ -418,7 +423,6 @@ def listar_lotes_rotulo(
 
 
 
-
 def listar_historial(
     db: Session,
     rotulo_id: int,
@@ -456,7 +460,6 @@ def listar_historial(
         }
         for cambio, nombre, apellido in filas
     ]
-
 
 
 
@@ -726,3 +729,175 @@ def obtener_vista_previa(
         completo=completitud["completo"] and not advertencias,
         fecha_generacion=datetime.now(),
     )
+
+
+def _receta_respaldo(db: Session, version: VersionReceta) -> dict:
+    detalles = db.scalars(
+        select(DetalleReceta)
+        .where(
+            DetalleReceta.receta_id == version.receta_id,
+            DetalleReceta.nro_version == version.version,
+        )
+        .order_by(DetalleReceta.renglon)
+    ).all()
+    renglones = []
+    for detalle in detalles:
+        insumo = db.get(Insumo, detalle.insumo_id)
+        unidad = db.get(UnidadMedida, detalle.unidad_medida_id)
+        aditivo = db.get(Aditivo, detalle.aditivo_id) if detalle.aditivo_id else None
+        clase = db.get(ClaseFuncionalAditivo, aditivo.clase_funcional_id) if aditivo else None
+        renglones.append(
+            {
+                "renglon": detalle.renglon,
+                "insumo": insumo.nombre if insumo else f"Insumo {detalle.insumo_id}",
+                "cantidad_original": detalle.cantidad_original,
+                "unidad": unidad.nombre if unidad else None,
+                "cantidad_gramos": round(detalle.cantidad_gramos, 2),
+                "tipo_uso": detalle.tipo_uso.value,
+                "aditivo": (
+                    {
+                        "nombre": aditivo.nombre_completo,
+                        "numero_ins": aditivo.numero_ins,
+                        "funcion": clase.nombre if clase else None,
+                    }
+                    if aditivo
+                    else None
+                ),
+            }
+        )
+    return {
+        "receta_id": version.receta_id,
+        "version": version.version,
+        "estado": version.estado.value,
+        "fecha_vigencia": version.fecha_vigencia,
+        "motivo_cambio": version.motivo_cambio,
+        "rendimiento_final_gramos": version.rendimiento_final_gramos,
+        "unidad_venta_gramos": version.unidad_venta_gramos,
+        "medida_casera": version.medida_casera,
+        "renglones": renglones,
+    }
+
+
+def _fuentes_nutricionales(db: Session, version: VersionReceta) -> List[dict]:
+    insumo_ids = list(dict.fromkeys(d.insumo_id for d in version.detalles))
+    fuentes = []
+    for insumo_id in insumo_ids:
+        insumo = db.get(Insumo, insumo_id)
+        datos = db.scalars(
+            select(DatoNutricionalInsumo)
+            .where(DatoNutricionalInsumo.insumo_id == insumo_id)
+            .order_by(DatoNutricionalInsumo.id)
+        ).all()
+        fuentes.append(
+            {
+                "insumo": insumo.nombre if insumo else f"Insumo {insumo_id}",
+                "datos": [
+                    {
+                        "nutriente": dato.nutriente.value,
+                        "valor_100g": dato.valor,
+                        "fuente": dato.fuente.value,
+                        "referencia": dato.referencia or (dato.alimento_codigo and f"Alimento {dato.alimento_codigo}"),
+                        "modificado": dato.modificado,
+                        "fecha_carga": dato.fecha_carga,
+                    }
+                    for dato in datos
+                ],
+            }
+        )
+    return fuentes
+
+
+def _armar_respaldo(db: Session, rotulo: Rotulo, fecha: datetime) -> tuple:
+    """Junta el borrador tal como se ve en la vista previa y el anexo de calculos que lo respalda.
+
+    Se usan los datos que tiene guardados el rotulo (version de receta, tabla y calculo de sellos);
+    no se recalcula nada al exportar.
+    """
+    vista = obtener_vista_previa(db, rotulo.id)
+    version = None
+    if rotulo.receta_id is not None and rotulo.receta_version is not None:
+        version = db.scalar(
+            select(VersionReceta).where(
+                VersionReceta.receta_id == rotulo.receta_id,
+                VersionReceta.version == rotulo.receta_version,
+            )
+        )
+    calculo = db.get(CalculoSellosRotulado, rotulo.calculo_sellos_id) if rotulo.calculo_sellos_id else None
+
+    respaldo = {
+        "tipo": "borrador",
+        "leyenda_borrador": LEYENDA_BORRADOR,
+        "fecha_exportacion": fecha,
+        "borrador": vista.model_dump(mode="json"),
+        "receta": _receta_respaldo(db, version) if version else None,
+        "composicion": (
+            recetas_services.calcular_composicion_receta(db, version.receta_id, version.version).model_dump(mode="json")
+            if version
+            else None
+        ),
+        "tabla_nutricional": {
+            "calculo": rotulo.nutricion_snapshot,
+            "fuentes": _fuentes_nutricionales(db, version) if version else [],
+        },
+        "calculo_sellos": (
+            frontal_services.resultado_de_calculo(db, calculo).model_dump(mode="json") if calculo else None
+        ),
+    }
+    return json.loads(json.dumps(respaldo, ensure_ascii=False, default=str)), calculo
+
+
+def crear_exportacion(
+    db: Session,
+    rotulo_id: int,
+    empleado_id: int,
+) -> ExportacionRotulo:
+    """Registra la exportacion del borrador con su respaldo de calculo, la fecha y la version de receta usada."""
+    _verificar_admin(db, empleado_id)
+    rotulo = _leer_rotulo(db, rotulo_id)
+    fecha = datetime.now()
+    respaldo, calculo = _armar_respaldo(db, rotulo, fecha)
+
+    exportacion = ExportacionRotulo(
+        rotulo_id=rotulo_id,
+        empleado_id=empleado_id,
+        fecha_exportacion=fecha,
+        receta_id=rotulo.receta_id,
+        version_receta=rotulo.receta_version,
+        calculo_sellos_id=calculo.id if calculo else None,
+        parametros_id=calculo.parametros_id if calculo else None,
+        version_parametros=calculo.parametros.version if calculo else None,
+        respaldo_snapshot=respaldo,
+    )
+    db.add(exportacion)
+    db.commit()
+    db.refresh(exportacion)
+    return exportacion
+
+
+def listar_exportaciones(
+    db: Session,
+    rotulo_id: int,
+) -> list[ExportacionRotulo]:
+    _leer_rotulo(db, rotulo_id)
+    return db.scalars(
+        select(ExportacionRotulo)
+        .where(ExportacionRotulo.rotulo_id == rotulo_id)
+        .order_by(
+            ExportacionRotulo.fecha_exportacion.desc(),
+            ExportacionRotulo.id.desc(),
+        )
+    ).all()
+
+
+def obtener_exportacion(
+    db: Session,
+    rotulo_id: int,
+    exportacion_id: int,
+) -> ExportacionRotulo:
+    exportacion = db.get(ExportacionRotulo, exportacion_id)
+    if exportacion is None or exportacion.rotulo_id != rotulo_id:
+        raise HTTPException(
+            status_code=404,
+            detail="Exportación no encontrada.",
+        )
+    return exportacion

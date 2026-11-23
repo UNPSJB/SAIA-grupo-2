@@ -3,9 +3,11 @@ import { Link, useParams } from 'react-router-dom';
 
 import Boton from '../../components/Boton';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
-import { getRotuloProducto, getVistaPreviaRotulo } from '../../services/rotulosServices';
+import { useAuth } from '../../context/AuthContext';
+import { crearExportacionRotulo, getRotuloProducto, getVistaPreviaRotulo } from '../../services/rotulosServices';
 import type { VistaPreviaRotulo as Vista } from '../../types/rotulos';
 import shared from '../../styles/shared.module.css';
+import { exportarRotuloPdf } from '../../utils/exportarRotuloPdf';
 import { formatearFechaHora } from '../datosNutricionales/nutrientes';
 import { formatearFecha } from '../productos/formatoProducto';
 import LeyendaPrecaucion from '../rotuladoFrontal/LeyendaPrecaucion';
@@ -230,6 +232,9 @@ export default function VistaPreviaRotulo() {
     const { productoId = '' } = useParams<{ productoId: string }>();
     const [rotuloLoteId, setRotuloLoteId] = useState<number | null>(null);
     const [estado, setEstado] = useState<Estado | null>(null);
+    const [exportando, setExportando] = useState(false);
+    const [resultadoExportacion, setResultadoExportacion] = useState<{ ok: boolean; texto: string } | null>(null);
+    const { usuario } = useAuth();
     const clave = `${productoId}-${rotuloLoteId ?? ''}`;
 
     useEffect(() => {
@@ -255,6 +260,27 @@ export default function VistaPreviaRotulo() {
     }, [productoId, rotuloLoteId, clave]);
 
     const actual = estado;
+
+    const exportar = async () => {
+        if (!actual?.vista || !usuario?.id) return;
+        setExportando(true);
+        setResultadoExportacion(null);
+        try {
+            const exportacion = await crearExportacionRotulo(actual.vista.rotulo_id, usuario.id);
+            exportarRotuloPdf(exportacion);
+            setResultadoExportacion({
+                ok: true,
+                texto: `Se generó la exportación N.º ${exportacion.id}. Queda registrada en el historial del rótulo.`,
+            });
+        } catch (problema) {
+            setResultadoExportacion({
+                ok: false,
+                texto: problema instanceof Error ? problema.message : 'No se pudo generar el borrador PDF.',
+            });
+        } finally {
+            setExportando(false);
+        }
+    };
     const vista = actual?.vista ?? null;
     const volver = (
         <Link to={`/rotulos/producto/${productoId}`}>
@@ -271,7 +297,12 @@ export default function VistaPreviaRotulo() {
                     acciones={
                         <>
                             {vista && (
-                                <Boton variant="descargar" onClick={() => window.print()}>
+                                <Boton variant="descargar" onClick={exportar} disabled={exportando}>
+                                    {exportando ? 'Generando PDF...' : 'Exportar PDF con anexo'}
+                                </Boton>
+                            )}
+                            {vista && (
+                                <Boton variant="ver" onClick={() => window.print()}>
                                     Imprimir borrador
                                 </Boton>
                             )}
@@ -283,6 +314,11 @@ export default function VistaPreviaRotulo() {
 
             {actual === null && <p className={shared.emptyMensaje}>Armando la vista previa…</p>}
             {actual?.error && <p className={shared.textDanger}>{actual.error}</p>}
+            {resultadoExportacion && (
+                <p className={`${resultadoExportacion.ok ? shared.textSuccess : shared.textDanger} ${styles.noImprimir}`}>
+                    {resultadoExportacion.texto}
+                </p>
+            )}
             {actual?.sinRotulo && (
                 <p className={shared.emptyMensaje}>
                     El producto todavía no tiene borrador de rótulo. Completá sus datos para poder previsualizarlo.

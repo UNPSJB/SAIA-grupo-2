@@ -56,6 +56,9 @@ from src.rotulado_frontal.schemas import ActualizacionMarcasInsumos, CambioMarca
 from src.alergenos.models import DeclaracionAlergenos
 from src.alergenos import schemas as alergenos_schemas
 from src.alergenos import services as alergenos_services
+from src.rotulados.models import Rotulo
+from src.rotulados import schemas as rotulados_schemas
+from src.rotulados import services as rotulados_services
 
 from src.configuracion_empresa.models import ConfiguracionEmpresa
 from src.aditivos.models import Aditivo, ClaseFuncionalAditivo
@@ -1210,6 +1213,7 @@ CONSERVACION_PRODUCTOS = {
     "Pan francés": {"duracion": 2, "instrucciones": "Conservar en lugar fresco y seco"},
     "Medialunas de manteca": {"duracion": 3, "instrucciones": "Conservar en lugar fresco y seco"},
     "Prepizza": {"temperatura_minima": 0, "temperatura_maxima": 4, "duracion": 10},
+    "Pan lactal": {"duracion": 7, "instrucciones": "Conservar en lugar fresco y seco, en su envase cerrado"},
 }
 
 
@@ -1250,6 +1254,56 @@ def cargar_alergenos_de_ejemplo(db: Session) -> int:
             ),
         )
     return len(MARCAS_ALERGENOS_INSUMOS)
+
+
+def cargar_rotulo_de_ejemplo(db: Session) -> int | None:
+    """Deja un borrador de rotulo completo del pan lactal: datos obligatorios, alergenos confirmados y un lote con fecha de duracion."""
+    admin = db.query(Empleado).filter_by(legajo="EMP-1000").first()
+    producto = db.query(Producto).filter_by(nombre="Pan lactal").first()
+    if admin is None or producto is None:
+        return None
+
+    propuesta = alergenos_services.proponer(db, producto.id)
+    alergenos_services.guardar_declaracion(
+        db,
+        producto.id,
+        alergenos_schemas.DeclaracionUpdate(
+            empleado_id=admin.id,
+            contiene=[item.alergeno for item in propuesta.contiene],
+            contiene_gluten=propuesta.contiene_gluten,
+            confirmar=True,
+        ),
+    )
+
+    rotulo = rotulados_services.crear_rotulo(
+        db,
+        rotulados_schemas.RotuloCrear(
+            producto_id=producto.id,
+            denominacion_venta="Pan de molde blanco",
+            contenido_neto=550,
+            unidad_contenido_neto="g",
+            rnpa_rppa="RNPA 04-034512",
+            razon_social="Panificadora del Valle S.R.L.",
+            domicilio="Belgrano 455, Trelew, Chubut",
+            instrucciones_uso="Una vez abierto, consumir dentro de los 3 días.",
+        ),
+        admin.id,
+    )
+
+    lote = (
+        db.query(LoteProduccion)
+        .filter_by(producto_id=producto.id)
+        .order_by(LoteProduccion.fecha.desc(), LoteProduccion.nro_lote.desc())
+        .first()
+    )
+    if lote is not None:
+        rotulados_services.asociar_lote(
+            db,
+            rotulo.id,
+            rotulados_schemas.RotuloLoteCrear(nro_lote=lote.nro_lote, fecha_duracion=lote.fecha + timedelta(days=7)),
+            admin.id,
+        )
+    return rotulo.id
 
 
 def seed_database(reset: bool = True):
@@ -1768,6 +1822,13 @@ def seed_database(reset: bool = True):
         if db.query(DeclaracionAlergenos).count() == 0:
             marcas = cargar_alergenos_de_ejemplo(db)
             print(f"Marcas de alérgenos de {marcas} insumos y datos de conservación cargados.")
+
+        if db.query(Rotulo).count() == 0:
+            rotulo_id = cargar_rotulo_de_ejemplo(db)
+            if rotulo_id is not None:
+                vista = rotulados_services.obtener_vista_previa(db, rotulo_id)
+                estado = "completo" if vista.completo else "con pendientes"
+                print(f"Borrador de rótulo del pan lactal creado ({estado}).")
 
         print("Base de datos poblada exitosamente con datos de prueba enriquecidos para SAIA!")
 

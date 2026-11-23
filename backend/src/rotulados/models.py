@@ -135,3 +135,50 @@ class HistorialCambioRotulo(ModeloBase):
     @property
     def empleado_apellido(self) -> Optional[str]:
         return self.empleado.apellido if self.empleado else None
+
+
+class ExportacionRotulo(ModeloBase):
+    """Registro de cada PDF generado, con la copia de los datos usados para poder volver a descargarlo igual."""
+
+    __tablename__ = "exportaciones_rotulo"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    rotulo_id: Mapped[int] = mapped_column(
+        ForeignKey("rotulos.id"), nullable=False, index=True
+    )
+    empleado_id: Mapped[int] = mapped_column(
+        ForeignKey("empleados.id"), nullable=False
+    )
+    fecha_exportacion: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=datetime.now
+    )
+    receta_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("recetas.id"), nullable=True
+    )
+    version_receta: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )
+    calculo_sellos_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("calculos_sellos_rotulado.id"), nullable=True
+    )
+    parametros_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("parametros_normativos.id"), nullable=True
+    )
+    version_parametros: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )
+    respaldo_snapshot: Mapped[dict] = mapped_column(
+        JSON, nullable=False
+    )
+
+    empleado: Mapped["src.empleados.models.Empleado"] = relationship(
+        "src.empleados.models.Empleado", lazy="selectin"
+    )
+
+    @property
+    def empleado_nombre(self) -> Optional[str]:
+        return self.empleado.nombre if self.empleado else None
+
+    @property
+    def empleado_apellido(self) -> Optional[str]:
+        return self.empleado.apellido if self.empleado else None

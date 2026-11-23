@@ -9,8 +9,11 @@ import {
     actualizarRotulo,
     actualizarSnapshots,
     crearLoteRotulo,
+    crearExportacionRotulo,
     crearRotulo,
     getCompletitudRotulo,
+    getExportacionRotulo,
+    getExportacionesRotulo,
     getHistorialRotulo,
     getLotesRotulo,
     getRotuloProducto,
@@ -19,6 +22,7 @@ import {
 import type { Producto } from '../../types/productos';
 import type {
     CompletitudRotulo,
+    ExportacionRotulo,
     HistorialCambioRotulo,
     Rotulo,
     RotuloDatos,
@@ -35,6 +39,7 @@ import { ETIQUETA_NUTRIENTE } from '../datosNutricionales/nutrientes';
 import LeyendaPrecaucion from '../rotuladoFrontal/LeyendaPrecaucion';
 import OctogonoAdvertencia from '../rotuladoFrontal/OctogonoAdvertencia';
 import shared from '../../styles/shared.module.css';
+import { exportarRotuloPdf } from '../../utils/exportarRotuloPdf';
 import styles from './RotuloDetalle.module.css';
 
 const datosIniciales: RotuloDatos = {
@@ -185,6 +190,8 @@ export default function RotuloDetalle() {
     const [lotes, setLotes] = useState<RotuloLote[]>([]);
     const [lotesProducto, setLotesProducto] = useState<LoteProduccion[]>([]);
     const [listaIngredientes, setListaIngredientes] = useState('');
+    const [exportaciones, setExportaciones] = useState<ExportacionRotulo[]>([]);
+    const [exportando, setExportando] = useState(false);
     const [historial, setHistorial] = useState<HistorialCambioRotulo[]>([]);
     const [completitud, setCompletitud] = useState<CompletitudRotulo | null>(null);
 
@@ -221,16 +228,18 @@ export default function RotuloDetalle() {
             );
 
             if (rotuloObtenido) {
-                const [lotesObtenidos, historialObtenido, completitudObtenida] =
+                const [lotesObtenidos, historialObtenido, completitudObtenida, exportacionesObtenidas] =
                     await Promise.all([
                         getLotesRotulo(rotuloObtenido.id),
                         getHistorialRotulo(rotuloObtenido.id),
                         getCompletitudRotulo(rotuloObtenido.id),
+                        getExportacionesRotulo(rotuloObtenido.id),
                     ]);
 
                 setLotes(lotesObtenidos);
                 setHistorial(historialObtenido);
                 setCompletitud(completitudObtenida);
+                setExportaciones(exportacionesObtenidas);
 
                 const fechas: Record<number, string> = {};
                 lotesObtenidos.forEach((lote) => {
@@ -241,6 +250,7 @@ export default function RotuloDetalle() {
                 setLotes([]);
                 setHistorial([]);
                 setCompletitud(null);
+                setExportaciones([]);
             }
         } catch (err) {
             setError(
@@ -342,6 +352,42 @@ export default function RotuloDetalle() {
             );
         } finally {
             setProcesando(false);
+        }
+    };
+
+    const exportarBorrador = async () => {
+        if (!rotulo || !usuario?.id) return;
+
+        setExportando(true);
+        setError('');
+        setMensaje('');
+
+        try {
+            const exportacion = await crearExportacionRotulo(rotulo.id, usuario.id);
+            exportarRotuloPdf(exportacion);
+            setMensaje(`Se generó la exportación N.º ${exportacion.id} con su anexo de cálculo.`);
+            setExportaciones(await getExportacionesRotulo(rotulo.id));
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'No se pudo generar el borrador PDF.');
+        } finally {
+            setExportando(false);
+        }
+    };
+
+    const descargarExportacion = async (exportacionId: number) => {
+        if (!rotulo) return;
+
+        setExportando(true);
+        setError('');
+        setMensaje('');
+
+        try {
+            exportarRotuloPdf(await getExportacionRotulo(rotulo.id, exportacionId));
+            setMensaje(`Se descargó nuevamente la exportación N.º ${exportacionId}, con los datos de ese momento.`);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'No se pudo recuperar la exportación.');
+        } finally {
+            setExportando(false);
         }
     };
 
@@ -881,6 +927,77 @@ export default function RotuloDetalle() {
                                             Guardar fecha
                                         </Boton>
                                     </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+
+                    <section className={`${shared.tarjetaEstatica} ${styles.seccion}`}>
+                        <div className={styles.seccionEncabezado}>
+                            <div>
+                                <h2 className={styles.seccionTitulo}>Exportación del borrador</h2>
+                                <p className={styles.textoAyuda}>
+                                    Genera un PDF con el borrador del rótulo y un anexo con la receta, la composición,
+                                    la tabla nutricional con sus fuentes y el cálculo de sellos. Cada exportación guarda
+                                    una copia de los datos usados.
+                                </p>
+                            </div>
+
+                            <Boton
+                                variant="descargar"
+                                onClick={exportarBorrador}
+                                disabled={exportando || procesando}
+                            >
+                                {exportando ? 'Generando PDF...' : 'Exportar borrador PDF'}
+                            </Boton>
+                        </div>
+
+                        {completitud && !completitud.completo && (
+                            <p className={styles.avisoIncompleto}>
+                                El borrador todavía tiene datos pendientes: se exporta igual, con los faltantes indicados
+                                en el PDF.
+                            </p>
+                        )}
+
+                        <h3 className={styles.subtituloSeccion}>Historial de exportaciones</h3>
+
+                        {exportaciones.length === 0 ? (
+                            <p className={shared.emptyMensaje}>
+                                Todavía no hay exportaciones registradas.
+                            </p>
+                        ) : (
+                            <div className={styles.historial}>
+                                {exportaciones.map((exportacion) => (
+                                    <article className={styles.cambio} key={exportacion.id}>
+                                        <div className={styles.cambioEncabezado}>
+                                            <strong>Exportación N.º {exportacion.id}</strong>
+                                            <span>{mostrarFecha(exportacion.fecha_exportacion)}</span>
+                                        </div>
+
+                                        <p className={styles.empleadoCambio}>
+                                            <strong>Generada por:</strong>{' '}
+                                            {exportacion.empleado_nombre || exportacion.empleado_apellido
+                                                ? `${exportacion.empleado_nombre ?? ''} ${exportacion.empleado_apellido ?? ''}`.trim()
+                                                : `Empleado ${exportacion.empleado_id}`}
+                                        </p>
+
+                                        <p className={styles.empleadoCambio}>
+                                            <strong>Receta:</strong> versión {exportacion.version_receta ?? 'sin receta'}
+                                            {' · '}
+                                            <strong>Parámetros normativos:</strong>{' '}
+                                            {exportacion.version_parametros !== null
+                                                ? `versión ${exportacion.version_parametros}`
+                                                : 'sin cálculo de sellos'}
+                                        </p>
+
+                                        <Boton
+                                            variant="descargar"
+                                            onClick={() => descargarExportacion(exportacion.id)}
+                                            disabled={exportando}
+                                        >
+                                            Descargar nuevamente
+                                        </Boton>
+                                    </article>
                                 ))}
                             </div>
                         )}

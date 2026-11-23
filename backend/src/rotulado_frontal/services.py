@@ -559,7 +559,11 @@ def obtener_calculo_sellos_vigente(
     )
     if calculo is None:
         return None
+    return resultado_de_calculo(db, calculo)
 
+
+def resultado_de_calculo(db: Session, calculo: CalculoSellosRotulado) -> schemas.ResultadoCalculoSellos:
+    """Arma el resultado completo (sellos, leyendas, pasos y parametros) de un calculo de sellos guardado."""
     parametros = calculo.parametros
     textos_dict = {t.sello: t.texto for t in parametros.textos}
     sellos_objs = [SelloAdvertencia(s) for s in calculo.sellos_obtenidos]
