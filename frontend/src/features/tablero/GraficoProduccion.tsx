@@ -7,6 +7,7 @@ import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Tooltip } fro
 import type { EstadisticasProduccion } from '../../types/tablero';
 import { getEstadisticasProduccion } from '../../services/tableroServices';
 import { useAuth } from '../../context/AuthContext';
+import BotonExportar from '../../components/BotonExportar';
 import estilos from '../../components/Estadisticas.module.css';
 import styles from '../../styles/shared.module.css';
 
@@ -117,11 +118,19 @@ export default function GraficoProduccion() {
 
     return (
         <section className={estilos.tarjeta}>
-            <div className={estilos.tarjetaEncabezado}>
-                <h3>Estadísticas de producción</h3>
-                <span className={estilos.tarjetaAyuda}>
-                    Cantidad producida por producto y fecha
-                </span>
+            <div className={estilos.tarjetaEncabezado} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <h3>Estadísticas de producción</h3>
+                    <span className={estilos.tarjetaAyuda}>
+                        Cantidad producida por producto y fecha
+                    </span>
+                </div>
+                {productoActual && serie.length > 0 && (
+                    <BotonExportar
+                        canvasId="barras-produccion-lotes"
+                        filename={`produccion_${productoActual.producto.replace(/\s+/g, '_')}_${fechaDesde}_${fechaHasta}`}
+                    />
+                )}
             </div>
 
             <div className={estilos.filtros}>
@@ -224,7 +233,7 @@ export default function GraficoProduccion() {
                     </div>
 
                     {serie.length > 0 ? (
-                        <div className={estilos.lienzoGrafico}>
+                        <div id="barras-produccion-lotes" className={estilos.lienzoGrafico}>
                             <Bar
                                 role="img"
                                 aria-label={`Producción de ${productoActual.producto}: ${serie

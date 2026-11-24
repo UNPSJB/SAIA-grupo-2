@@ -12,9 +12,11 @@ class ConfiguracionVistaPublica(ModeloBase):
     token = Column(String(64), unique=True, index=True, nullable=True)
 
     mostrar_cumplimiento_limpieza = Column(Boolean, default=False, nullable=False)
+    mostrar_desglose_sectores = Column(Boolean, default=False, nullable=False)
     mostrar_equipos_calibrados = Column(Boolean, default=False, nullable=False)
     mostrar_capacitaciones = Column(Boolean, default=False, nullable=False)
     mostrar_poes_vigentes = Column(Boolean, default=False, nullable=False)
+    mostrar_desglose_incidentes = Column(Boolean, default=False, nullable=False)
     mostrar_trazabilidad_lotes = Column(Boolean, default=False, nullable=False)
 
     titulo_publico = Column(String(LARGO_TITULO_PUBLICO), nullable=True)

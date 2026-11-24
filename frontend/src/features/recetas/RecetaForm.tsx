@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-r
 
 import { useAuth } from '../../context/AuthContext';
 import Boton from '../../components/Boton';
+import SearchableSelect from '../../components/SearchableSelect';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
 import ModalAlerta from '../../components/alerta';
 
@@ -500,18 +501,14 @@ export default function RecetaForm() {
                                         style={{ backgroundColor: 'var(--card-bg-light)', color: 'var(--text-h)' }}
                                     />
                                 ) : (
-                                    <select
+                                    <SearchableSelect
+                                        options={productos}
+                                        getOptionValue={(p) => p.id}
+                                        getOptionLabel={(p) => `${p.nombre} (${p.tipo})`}
                                         value={productoId}
-                                        onChange={(e) => setProductoId(e.target.value)}
-                                        className={styles.input}
-                                    >
-                                        <option value="">-- Seleccionar producto --</option>
-                                        {productos.map((p) => (
-                                            <option key={p.id} value={p.id}>
-                                                {p.nombre} ({p.tipo})
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onChange={(val) => setProductoId(val ? String(val) : '')}
+                                        placeholder="Seleccionar producto..."
+                                    />
                                 )}
                             </div>
 
@@ -610,19 +607,14 @@ export default function RecetaForm() {
                                 >
                                     <div>
                                         <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Insumo #{index + 1}:</label>
-                                        <select
+                                        <SearchableSelect
+                                            options={insumos}
+                                            getOptionValue={(i) => i.id}
+                                            getOptionLabel={(i) => `${i.nombre}${i.es_aditivo ? ' (Aditivo)' : ''}`}
                                             value={d.insumo_id}
-                                            onChange={(e) => handleCambioInsumoRenglon(d.idTemp, Number(e.target.value))}
-                                            className={styles.input}
-                                            style={{ marginTop: '2px' }}
-                                        >
-                                            <option value="">-- Seleccionar insumo --</option>
-                                            {insumos.map((i) => (
-                                                <option key={i.id} value={i.id}>
-                                                    {i.nombre} {i.es_aditivo ? ' (Aditivo)' : ''}
-                                                </option>
-                                            ))}
-                                        </select>
+                                            onChange={(val) => handleCambioInsumoRenglon(d.idTemp, val ? Number(val) : 0)}
+                                            placeholder="Seleccionar insumo..."
+                                        />
                                     </div>
 
                                     <div>
@@ -650,25 +642,20 @@ export default function RecetaForm() {
                                     {esAditivoRenglon && (
                                         <div>
                                             <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Aditivo INS Referencia:</label>
-                                            <select
+                                            <SearchableSelect
+                                                options={aditivos}
+                                                getOptionValue={(ad) => ad.id}
+                                                getOptionLabel={(ad) => `${ad.nombre_completo} ${ad.numero_ins ? `(INS ${ad.numero_ins})` : ''}`}
                                                 value={d.aditivo_id}
-                                                onChange={(e) =>
+                                                onChange={(val) =>
                                                     setDetalles((prev) =>
                                                         prev.map((item) =>
-                                                            item.idTemp === d.idTemp ? { ...item, aditivo_id: Number(e.target.value) } : item,
+                                                            item.idTemp === d.idTemp ? { ...item, aditivo_id: val ? Number(val) : '' } : item,
                                                         ),
                                                     )
                                                 }
-                                                className={styles.input}
-                                                style={{ marginTop: '2px' }}
-                                            >
-                                                <option value="">-- Aditivo INS --</option>
-                                                {aditivos.map((ad) => (
-                                                    <option key={ad.id} value={ad.id}>
-                                                        {ad.nombre_completo} {ad.numero_ins ? `(INS ${ad.numero_ins})` : ''}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                                placeholder="Aditivo INS..."
+                                            />
                                         </div>
                                     )}
 
@@ -703,31 +690,26 @@ export default function RecetaForm() {
                                         <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                                             Unidad:
                                         </label>
-                                        <select
+                                        <SearchableSelect
+                                            options={unidadesCompatibles}
+                                            getOptionValue={(u) => u.id}
+                                            getOptionLabel={(u) => u.nombre}
                                             value={d.unidad_medida_id}
-                                            onChange={(e) =>
+                                            onChange={(val) =>
                                                 setDetalles((prev) =>
                                                     prev.map((item) =>
                                                         item.idTemp === d.idTemp
                                                             ? {
                                                                 ...item,
-                                                                unidad_medida_id: e.target.value ? Number(e.target.value) : '',
+                                                                unidad_medida_id: val ? Number(val) : '',
                                                             }
                                                             : item,
-                                                    )
+                                                    ),
                                                 )
                                             }
-                                            className={styles.input}
-                                            style={{ marginTop: '2px' }}
                                             disabled={!insumoSeleccionado}
-                                        >
-                                            <option value="">-- Unidad --</option>
-                                            {unidadesCompatibles.map((u) => (
-                                                <option key={u.id} value={u.id}>
-                                                    {u.nombre}
-                                                </option>
-                                            ))}
-                                        </select>
+                                            placeholder="Unidad..."
+                                        />
                                     </div>
 
                                     <div style={{ marginTop: '16px' }}>
@@ -878,24 +860,21 @@ export default function RecetaForm() {
                                         <label className={styles.modalTituloCampo} style={{ minHeight: '2rem', display: 'flex', alignItems: 'flex-end', marginBottom: '6px' }}>
                                             Equipo Asociado (Opcional):
                                         </label>
-                                        <select
+                                        <SearchableSelect
+                                            options={equipos}
+                                            getOptionValue={(eq) => eq.id}
+                                            getOptionLabel={(eq) => eq.nombre}
                                             value={p.equipo_id}
-                                            onChange={(e) =>
+                                            onChange={(val) =>
                                                 setPasos((prev) =>
                                                     prev.map((item) =>
-                                                        item.idTemp === p.idTemp ? { ...item, equipo_id: e.target.value ? Number(e.target.value) : '' } : item,
+                                                        item.idTemp === p.idTemp ? { ...item, equipo_id: val ? Number(val) : '' } : item,
                                                     ),
                                                 )
                                             }
-                                            className={styles.input}
-                                        >
-                                            <option value="">-- Sin equipo --</option>
-                                            {equipos.map((eq) => (
-                                                <option key={eq.id} value={eq.id}>
-                                                    {eq.nombre}
-                                                </option>
-                                            ))}
-                                        </select>
+                                            placeholder="Sin equipo..."
+                                            clearable
+                                        />
                                     </div>
 
                                     <div className={styles.formGroup} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>

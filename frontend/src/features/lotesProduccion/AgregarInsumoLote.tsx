@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Insumo } from '../../types/insumos';
 import type { UnidadMedida } from '../../types/unidadesMedida';
 import Boton from '../../components/Boton';
+import SearchableSelect from '../../components/SearchableSelect';
 import CampoCantidad from '../insumos/CampoCantidad';
 import { convertirABase, formatearStock, unidadBase, unidadesCompatibles } from '../insumos/cantidades';
 import estilos from './InsumosLote.module.css';
@@ -65,16 +66,15 @@ export default function AgregarInsumoLote({ insumos, unidades, yaAgregados, onAg
         <div className={estilos.agregar}>
             <div className={estilos.campoInsumo}>
                 <label htmlFor="lote-insumo">Insumo</label>
-                <select id="lote-insumo" value={insumoId} onChange={(e) => elegirInsumo(e.target.value)}>
-                    <option value="">
-                        {disponibles.length === 0 ? 'No hay insumos para agregar' : 'Seleccione un insumo'}
-                    </option>
-                    {disponibles.map((item) => (
-                        <option key={item.id} value={String(item.id)}>
-                            {item.nombre} ({formatearStock(item.cantidad, item.unidad_medida.magnitud)} disponibles)
-                        </option>
-                    ))}
-                </select>
+                <SearchableSelect
+                    id="lote-insumo"
+                    options={disponibles}
+                    getOptionValue={(item) => String(item.id)}
+                    getOptionLabel={(item) => `${item.nombre} (${formatearStock(item.cantidad, item.unidad_medida.magnitud)} disponibles)`}
+                    value={insumoId}
+                    onChange={(val) => elegirInsumo(val ? String(val) : '')}
+                    placeholder={disponibles.length === 0 ? 'No hay insumos para agregar' : 'Seleccione un insumo...'}
+                />
             </div>
             <CampoCantidad
                 id="lote-insumo-cantidad"

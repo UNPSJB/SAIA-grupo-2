@@ -5,6 +5,7 @@ import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Tooltip } fro
 
 import { useAuth } from '../../context/AuthContext';
 import Boton from '../../components/Boton';
+import BotonExportar from '../../components/BotonExportar';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
 import { getAditivos } from '../../services/aditivosServices';
 import { getInsumos } from '../../services/insumosServices';
@@ -16,7 +17,7 @@ import {
     getVersionesReceta,
     RecetasApiError,
 } from '../../services/recetasServices';
-import { exportarRecetaPDF } from '../../utils/exportarRecetaPdf';
+import { exportarRecetaPDF, generarRecetaPDFDoc } from '../../utils/exportarRecetaPdf';
 import type { Aditivo } from '../../types/aditivos';
 import type { Insumo } from '../../types/insumos';
 import type { Equipo } from '../../types/equipos';
@@ -24,6 +25,7 @@ import type { UnidadMedida } from '../../types/unidadesMedida';
 import type { ComposicionReceta, Receta, VersionReceta } from '../../types/receta';
 import EscalarReceta from './EscalarReceta';
 import ListaIngredientesRotuloTab from './ListaIngredientesRotuloTab';
+import TablaAporteNutricionalInsumos from './TablaAporteNutricionalInsumos';
 import styles from '../../styles/shared.module.css';
 import estilos from '../../components/Estadisticas.module.css';
 
@@ -82,7 +84,10 @@ export default function RecetaDetail() {
     const [composicion, setComposicion] = useState<ComposicionReceta | null>(null);
     const [cargandoComposicion, setCargandoComposicion] = useState(false);
     const [errorComposicion, setErrorComposicion] = useState<string | null>(null);
-    const [pestanaActiva, setPestanaActiva] = useState<'ficha' | 'lista_ingredientes'>('ficha');
+    const [pestanaActiva, setPestanaActiva] = useState<'ficha' | 'lista_ingredientes' | 'aporte_nutricional'>('ficha');
+    const [pdfPreviaUrl, setPdfPreviaUrl] = useState<string | null>(null);
+    const [pdfFilename, setPdfFilename] = useState<string>('ficha_tecnica.pdf');
+    const [modalPdfAbierto, setModalPdfAbierto] = useState<boolean>(false);
 
     useEffect(() => {
         let cancelado = false;
@@ -218,7 +223,7 @@ export default function RecetaDetail() {
 
     const handleDescargarPDF = async () => {
         if (!receta || !version) return;
-        await exportarRecetaPDF({
+        const { blobUrl, filename } = await generarRecetaPDFDoc({
             nombreProducto: receta.producto.nombre,
             version: version.version,
             rendimientoFinalGramos: version.rendimiento_final_gramos,
@@ -239,6 +244,9 @@ export default function RecetaDetail() {
             aditivos: actual?.aditivos,
             equipos: actual?.equipos,
         });
+        setPdfPreviaUrl(blobUrl);
+        setPdfFilename(filename);
+        setModalPdfAbierto(true);
     };
 
     const insumosPorId = useMemo(
@@ -381,38 +389,37 @@ export default function RecetaDetail() {
                             aria-label="Secciones de la receta"
                             style={{
                                 display: 'flex',
-                                gap: '8px',
+                                gap: '10px',
                                 marginBottom: '20px',
                                 borderBottom: '1px solid var(--border-color, #334155)',
-                                paddingBottom: '10px',
+                                paddingBottom: '12px',
+                                flexWrap: 'wrap',
                             }}
                         >
-                            <button
+                            <Boton
                                 type="button"
-                                role="tab"
-                                aria-selected={pestanaActiva === 'ficha'}
+                                variant="pestana"
+                                activo={pestanaActiva === 'ficha'}
                                 onClick={() => setPestanaActiva('ficha')}
-                                className={styles.botonFiltro}
-                                style={{
-                                    fontWeight: pestanaActiva === 'ficha' ? 700 : 500,
-                                    borderColor: pestanaActiva === 'ficha' ? '#4e96e2' : undefined,
-                                }}
                             >
                                 Ficha técnica
-                            </button>
-                            <button
+                            </Boton>
+                            <Boton
                                 type="button"
-                                role="tab"
-                                aria-selected={pestanaActiva === 'lista_ingredientes'}
+                                variant="pestana"
+                                activo={pestanaActiva === 'lista_ingredientes'}
                                 onClick={() => setPestanaActiva('lista_ingredientes')}
-                                className={styles.botonFiltro}
-                                style={{
-                                    fontWeight: pestanaActiva === 'lista_ingredientes' ? 700 : 500,
-                                    borderColor: pestanaActiva === 'lista_ingredientes' ? '#4e96e2' : undefined,
-                                }}
                             >
                                 Lista de ingredientes
-                            </button>
+                            </Boton>
+                            <Boton
+                                type="button"
+                                variant="pestana"
+                                activo={pestanaActiva === 'aporte_nutricional'}
+                                onClick={() => setPestanaActiva('aporte_nutricional')}
+                            >
+                                Aporte nutricional por ingrediente
+                            </Boton>
                         </div>
 
                         {pestanaActiva === 'lista_ingredientes' ? (
@@ -420,6 +427,11 @@ export default function RecetaDetail() {
                                 recetaId={receta.id}
                                 version={version.version}
                                 esVigente={version.estado === 'activo'}
+                            />
+                        ) : pestanaActiva === 'aporte_nutricional' ? (
+                            <TablaAporteNutricionalInsumos
+                                detalles={version.detalles}
+                                rendimientoGramos={version.rendimiento_final_gramos}
                             />
                         ) : (
                             <>
@@ -506,9 +518,15 @@ export default function RecetaDetail() {
 
                                                 {componentesComposicion.length > 0 && (
                                                     <>
-                                                        <h4>Distribución porcentual</h4>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', marginTop: '1rem' }}>
+                                                            <h4 style={{ margin: 0 }}>Distribución porcentual</h4>
+                                                            <BotonExportar
+                                                                canvasId="barras-composicion-receta"
+                                                                filename={`composicion_receta_${receta.producto.nombre.replace(/\s+/g, '_')}_v${version.version}`}
+                                                            />
+                                                        </div>
 
-                                                        <div className={estilos.lienzoGrafico}>
+                                                        <div id="barras-composicion-receta" className={estilos.lienzoGrafico}>
                                                             <Bar
                                                                 role="img"
                                                                 aria-label={`Composición de la receta: ${componentesComposicion
@@ -727,6 +745,56 @@ export default function RecetaDetail() {
                     </Link>
                 </div>
             </div>
+
+            {modalPdfAbierto && pdfPreviaUrl && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: '1rem' }}>
+                    <div className={styles.tarjeta} style={{ maxWidth: '920px', width: '100%', height: '88vh', display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.25rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+                            <h3 style={{ margin: 0, color: 'var(--text-h)', fontSize: '1.2rem' }}>
+                                Vista Previa de Ficha Técnica PDF · {receta?.producto.nombre} (v{version?.version})
+                            </h3>
+                            <button
+                                onClick={() => setModalPdfAbierto(false)}
+                                style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text)' }}
+                            >
+                                <i className="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+
+                        <div style={{ flex: 1, width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)', background: '#525659' }}>
+                            <iframe
+                                src={pdfPreviaUrl}
+                                title="Vista Previa Ficha Técnica PDF"
+                                style={{ width: '100%', height: '100%', border: 'none' }}
+                            />
+                        </div>
+
+                        <div className={styles.filaBotones} style={{ justifyContent: 'flex-end', marginTop: 0 }}>
+                            <Boton
+                                type="button"
+                                variant="descargar"
+                                onClick={() => {
+                                    const enlace = document.createElement('a');
+                                    enlace.href = pdfPreviaUrl;
+                                    enlace.download = pdfFilename;
+                                    document.body.appendChild(enlace);
+                                    enlace.click();
+                                    document.body.removeChild(enlace);
+                                }}
+                            >
+                                Descargar Ficha PDF
+                            </Boton>
+                            <Boton
+                                type="button"
+                                variant="volver"
+                                onClick={() => setModalPdfAbierto(false)}
+                            >
+                                Cerrar
+                            </Boton>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

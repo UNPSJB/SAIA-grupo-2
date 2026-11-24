@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 
-export function captureChartCanvas(canvasId: string): string | null {
+export async function captureChartCanvas(canvasId: string): Promise<string | null> {
     const element = document.getElementById(canvasId);
     if (!element) return null;
 
@@ -13,7 +13,49 @@ export function captureChartCanvas(canvasId: string): string | null {
         return childCanvas.toDataURL('image/png');
     }
 
-    return null;
+    // HTML Fallback con renderizador asíncrono
+    return new Promise((resolve) => {
+        try {
+            const rect = element.getBoundingClientRect();
+            const width = Math.max(rect.width || 600, 400);
+            const height = Math.max(rect.height || 300, 200);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width * 2;
+            canvas.height = height * 2;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return resolve(null);
+
+            ctx.scale(2, 2);
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, width, height);
+
+            const cloned = element.cloneNode(true) as HTMLElement;
+            cloned.style.color = '#f8fafc';
+            cloned.style.background = '#0f172a';
+            cloned.style.padding = '12px';
+            cloned.style.boxSizing = 'border-box';
+            cloned.style.width = `${width}px`;
+
+            const svgData = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+                <foreignObject width="100%" height="100%">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="color:#f8fafc;font-family:system-ui,sans-serif;background:#0f172a;padding:10px;">
+                        ${cloned.outerHTML}
+                    </div>
+                </foreignObject>
+            </svg>`;
+
+            const img = new Image();
+            img.onload = () => {
+                ctx.drawImage(img, 0, 0);
+                resolve(canvas.toDataURL('image/png'));
+            };
+            img.onerror = () => resolve(null);
+            img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
+        } catch {
+            resolve(null);
+        }
+    });
 }
 
 export function exportToPNG(dataUrl: string, filename: string = 'grafico.png') {

@@ -35,8 +35,10 @@ export default function ConfiguracionVistaPublica() {
     const [nombreEditar, setNombreEditar] = useState<string>('');
     const [activaEditar, setActivaEditar] = useState<boolean>(false);
     const [limpiezaEditar, setLimpiezaEditar] = useState<boolean>(true);
+    const [sectoresEditar, setSectoresEditar] = useState<boolean>(false);
     const [equiposEditar, setEquiposEditar] = useState<boolean>(true);
     const [poesEditar, setPoesEditar] = useState<boolean>(false);
+    const [incidentesEditar, setIncidentesEditar] = useState<boolean>(false);
     const [capacitacionesEditar, setCapacitacionesEditar] = useState<boolean>(false);
     const [trazabilidadEditar, setTrazabilidadEditar] = useState<boolean>(false);
     const [erroresPresentacion, setErroresPresentacion] = useState({ titulo: '', presentacion: '', contacto: '' });
@@ -46,6 +48,7 @@ export default function ConfiguracionVistaPublica() {
     const [contactoEditar, setContactoEditar] = useState<string>('');
     const [red, setRed] = useState<string | null>(REDES[0] ?? null);
 
+    const [modalVerQrConf, setModalVerQrConf] = useState<ConfiguracionVistaPublica | null>(null);
     const [modalEliminarId, setModalEliminarId] = useState<number | null>(null);
     const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
 
@@ -127,8 +130,10 @@ export default function ConfiguracionVistaPublica() {
         setNombreEditar(conf.nombre);
         setActivaEditar(conf.activa);
         setLimpiezaEditar(conf.mostrar_cumplimiento_limpieza);
+        setSectoresEditar(conf.mostrar_desglose_sectores ?? false);
         setEquiposEditar(conf.mostrar_equipos_calibrados);
         setPoesEditar(conf.mostrar_poes_vigentes ?? false);
+        setIncidentesEditar(conf.mostrar_desglose_incidentes ?? false);
         setCapacitacionesEditar(conf.mostrar_capacitaciones ?? false);
         setTrazabilidadEditar(conf.mostrar_trazabilidad_lotes ?? false);
         setTituloEditar(conf.titulo_publico ?? '');
@@ -169,9 +174,11 @@ export default function ConfiguracionVistaPublica() {
                 nombre: nombreEditar.trim(),
                 activa: activaEditar,
                 mostrar_cumplimiento_limpieza: limpiezaEditar,
+                mostrar_desglose_sectores: sectoresEditar,
                 mostrar_equipos_calibrados: equiposEditar,
                 mostrar_capacitaciones: capacitacionesEditar,
                 mostrar_poes_vigentes: poesEditar,
+                mostrar_desglose_incidentes: incidentesEditar,
                 mostrar_trazabilidad_lotes: trazabilidadEditar,
                 titulo_publico: tituloEditar.trim(),
                 presentacion: presentacionEditar.trim(),
@@ -232,15 +239,54 @@ export default function ConfiguracionVistaPublica() {
         }
     };
 
+    const fallbackCopiar = (url: string) => {
+        try {
+            const textArea = document.createElement("textarea");
+            textArea.value = url;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            const exitoso = document.execCommand('copy');
+            textArea.remove();
+            if (exitoso) {
+                setModalAlerta({
+                    isOpen: true,
+                    titulo: 'Enlace Copiado',
+                    mensaje: 'El enlace de la vista pública ha sido copiado al portapapeles.'
+                });
+            } else {
+                throw new Error("execCommand no exitoso");
+            }
+        } catch (e) {
+            console.error("Error copiando enlace:", e);
+            setModalAlerta({
+                isOpen: true,
+                titulo: 'Error',
+                mensaje: 'No se pudo copiar automáticamente. Puedes copiar la URL manualmente.'
+            });
+        }
+    };
+
     const copiarEnlace = (tokenStr: string | null) => {
         if (!tokenStr) return;
         const url = urlVistaPublica(tokenStr, red);
-        navigator.clipboard.writeText(url);
-        setModalAlerta({
-            isOpen: true,
-            titulo: 'Enlace Copiado',
-            mensaje: 'El enlace de la vista pública ha sido copiado al portapapeles.'
-        });
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(url)
+                .then(() => {
+                    setModalAlerta({
+                        isOpen: true,
+                        titulo: 'Enlace Copiado',
+                        mensaje: 'El enlace de la vista pública ha sido copiado al portapapeles.'
+                    });
+                })
+                .catch(() => fallbackCopiar(url));
+        } else {
+            fallbackCopiar(url);
+        }
     };
 
     const columnas: Columna<ConfiguracionVistaPublica>[] = [
@@ -274,8 +320,10 @@ export default function ConfiguracionVistaPublica() {
             render: (c) => {
                 const activos = [];
                 if (c.mostrar_cumplimiento_limpieza) activos.push('Limpieza');
+                if (c.mostrar_desglose_sectores) activos.push('Sectores');
                 if (c.mostrar_equipos_calibrados) activos.push('Equipos');
                 if (c.mostrar_poes_vigentes) activos.push('POES');
+                if (c.mostrar_desglose_incidentes) activos.push('Desvíos');
                 if (c.mostrar_capacitaciones) activos.push('Capacitaciones');
                 if (c.mostrar_trazabilidad_lotes) activos.push('Trazabilidad');
 
@@ -297,6 +345,11 @@ export default function ConfiguracionVistaPublica() {
             variant: 'acciones',
             render: (c) => (
                 <>
+                    <Boton
+                        onClick={() => setModalVerQrConf(c)}
+                        variant="ver"
+                        title="Ver Código QR"
+                    />
                     <Boton
                         onClick={() => abrirConfiguracionModal(c)}
                         variant="editar"
@@ -321,18 +374,46 @@ export default function ConfiguracionVistaPublica() {
         return <div className={styles.contenedorPrincipal}>Cargando configuración de vistas públicas...</div>;
     }
 
-    const resumenPreviaLocal: VistaPublicaResumen | null = resumenPrevia ? {
-        ...resumenPrevia,
-        nombre: nombreEditar,
+    const resumenPreviaLocal: VistaPublicaResumen = {
+        activa: activaEditar,
+        nombre: nombreEditar || 'Vista Pública',
+        fecha_actualizacion: new Date().toISOString(),
         mostrar_cumplimiento_limpieza: limpiezaEditar,
+        mostrar_desglose_sectores: sectoresEditar,
         mostrar_equipos_calibrados: equiposEditar,
         mostrar_poes_vigentes: poesEditar,
+        mostrar_desglose_incidentes: incidentesEditar,
         mostrar_capacitaciones: capacitacionesEditar,
         mostrar_trazabilidad_lotes: trazabilidadEditar,
-        titulo_publico: tituloEditar.trim() || null,
-        presentacion: presentacionEditar.trim() || null,
-        contacto: contactoEditar.trim() || null
-    } : null;
+        titulo_publico: tituloEditar.trim() || 'Nombre del establecimiento',
+        presentacion: presentacionEditar.trim() || 'Mensaje de presentación del establecimiento.',
+        contacto: contactoEditar.trim() || 'Datos de contacto del establecimiento',
+        porcentaje_cumplimiento_limpieza: resumenPrevia?.porcentaje_cumplimiento_limpieza ?? 74.6,
+        porcentaje_equipos_al_dia: resumenPrevia?.porcentaje_equipos_al_dia ?? 100,
+        porcentaje_personal_capacitado: resumenPrevia?.porcentaje_personal_capacitado ?? 100,
+        porcentaje_libretas_sanitarias: resumenPrevia?.porcentaje_libretas_sanitarias ?? 100,
+        porcentaje_capacitaciones_bpm: resumenPrevia?.porcentaje_capacitaciones_bpm ?? 100,
+        porcentaje_certificados_aptitud: resumenPrevia?.porcentaje_certificados_aptitud ?? 100,
+        porcentaje_poes_vigentes: resumenPrevia?.porcentaje_poes_vigentes ?? 100,
+        porcentaje_lotes_trazables: resumenPrevia?.porcentaje_lotes_trazables ?? 100,
+        lotes_totales_trazables: resumenPrevia?.lotes_totales_trazables ?? 12,
+        volumen_trazable_kg: resumenPrevia?.volumen_trazable_kg ?? 1250,
+        desglose_sectores: resumenPrevia?.desglose_sectores ?? [
+            { sector: 'Elaboración', porcentaje: 95.0, color: '#16a34a' },
+            { sector: 'Envasado', porcentaje: 100.0, color: '#2563eb' },
+            { sector: 'Depósito y Materias Primas', porcentaje: 90.0, color: '#0d9488' }
+        ],
+        desglose_incidentes: resumenPrevia?.desglose_incidentes ?? [
+            { etiqueta: 'Desvíos Corregidos y Resueltos', cantidad: 10, porcentaje: 100.0, color: '#16a34a' },
+            { etiqueta: 'En Revisión Preventiva', cantidad: 0, porcentaje: 0.0, color: '#2563eb' }
+        ],
+        serie_cumplimiento: resumenPrevia?.serie_cumplimiento ?? [
+            { periodo: '2026-11-10', porcentaje: 80 },
+            { periodo: '2026-11-15', porcentaje: 90 },
+            { periodo: '2026-11-20', porcentaje: 85 },
+            { periodo: '2026-11-23', porcentaje: 100 }
+        ]
+    };
 
     return (
         <div className={styles.contenedorPrincipal}>
@@ -514,6 +595,16 @@ export default function ConfiguracionVistaPublica() {
                                         </label>
 
                                         <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
+                                            <span style={{ fontSize: '0.9rem' }}>Cumplimiento de Higiene por Sector de Planta</span>
+                                            <input
+                                                type="checkbox"
+                                                checked={sectoresEditar}
+                                                onChange={(e) => setSectoresEditar(e.target.checked)}
+                                                style={{ width: '18px', height: '18px' }}
+                                            />
+                                        </label>
+
+                                        <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
                                             <span style={{ fontSize: '0.9rem' }}>Equipos con Calibración al Día</span>
                                             <input
                                                 type="checkbox"
@@ -529,6 +620,16 @@ export default function ConfiguracionVistaPublica() {
                                                 type="checkbox"
                                                 checked={poesEditar}
                                                 onChange={(e) => setPoesEditar(e.target.checked)}
+                                                style={{ width: '18px', height: '18px' }}
+                                            />
+                                        </label>
+
+                                        <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
+                                            <span style={{ fontSize: '0.9rem' }}>Resolución de Desvíos e Incidentes de Calidad</span>
+                                            <input
+                                                type="checkbox"
+                                                checked={incidentesEditar}
+                                                onChange={(e) => setIncidentesEditar(e.target.checked)}
                                                 style={{ width: '18px', height: '18px' }}
                                             />
                                         </label>
@@ -556,13 +657,13 @@ export default function ConfiguracionVistaPublica() {
                                 </div>
                             )}
 
-                            {activaEditar && configSeleccionada.token && (
+                            {configSeleccionada && (
                                 <div style={{ textAlign: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
                                     <div style={{ padding: '0.75rem', background: '#fff', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'inline-block', marginBottom: '1rem' }}>
-                                        <QRCodeSVG value={urlVistaPublica(configSeleccionada.token, red)} size={160} level="H" />
+                                        <QRCodeSVG value={urlVistaPublica(configSeleccionada.token || 'borrador', red)} size={160} level="H" />
                                     </div>
                                     <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.82rem', color: 'var(--text-muted)', wordBreak: 'break-all' }}>
-                                        {urlVistaPublica(configSeleccionada.token, red)}
+                                        {urlVistaPublica(configSeleccionada.token || 'borrador', red)}
                                     </p>
                                     {DESDE_ESTA_PC && REDES.length > 1 && (
                                         <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '0.75rem', color: 'var(--text-h)' }}>
@@ -589,18 +690,65 @@ export default function ConfiguracionVistaPublica() {
                                 </div>
                             )}
 
-                            {activaEditar && resumenPreviaLocal && (
-                                <div style={{ marginTop: '0.5rem', border: '1px dashed var(--border-color)', borderRadius: '8px', padding: '0.75rem', background: 'var(--bg)' }}>
-                                    <h5 style={{ textAlign: 'center', margin: '0 0 0.5rem 0' }}>Vista Previa</h5>
-                                    <VistaPublicaContenido resumen={resumenPreviaLocal} />
-                                </div>
-                            )}
+                            <div style={{ marginTop: '0.5rem', border: '1px dashed var(--border-color)', borderRadius: '8px', padding: '0.75rem', background: 'var(--bg)' }}>
+                                <h5 style={{ textAlign: 'center', margin: '0 0 0.5rem 0' }}>Vista Previa en Tiempo Real</h5>
+                                <VistaPublicaContenido resumen={resumenPreviaLocal} />
+                            </div>
 
                             <div className={styles.filaBotones} style={{ justifyContent: 'flex-end', marginTop: '1.25rem' }}>
                                 <Boton type="submit" variant="guardar">Guardar</Boton>
                                 <Boton type="button" onClick={() => setModalEditarAbierto(false)} variant="volver">Cancelar</Boton>                               
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {modalVerQrConf && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+                    <div className={styles.tarjeta} style={{ maxWidth: '460px', width: '100%', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+                            <h3 className={styles.label} style={{ margin: 0 }}>{modalVerQrConf.nombre}</h3>
+                            <button onClick={() => setModalVerQrConf(null)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text)' }}>
+                                <i className="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+
+                        {modalVerQrConf.token ? (
+                            <>
+                                <div style={{ padding: '1rem', background: '#fff', border: '1px solid var(--border-color)', borderRadius: '12px', display: 'inline-block', marginBottom: '1rem' }}>
+                                    <QRCodeSVG value={urlVistaPublica(modalVerQrConf.token, red)} size={220} level="H" />
+                                </div>
+                                <p style={{ margin: '0 0 1rem 0', fontSize: '0.88rem', color: 'var(--text-muted)', wordBreak: 'break-all' }}>
+                                    {urlVistaPublica(modalVerQrConf.token, red)}
+                                </p>
+                                {DESDE_ESTA_PC && REDES.length > 1 && (
+                                    <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '1rem', color: 'var(--text-h)' }}>
+                                        Red del QR:
+                                        <select
+                                            value={red ?? ''}
+                                            onChange={(e) => setRed(e.target.value)}
+                                            style={{ width: 'auto', marginLeft: '0.5rem' }}
+                                        >
+                                            {REDES.map((direccion) => (
+                                                <option key={direccion} value={direccion}>{direccion}</option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                )}
+                                {DESDE_ESTA_PC && REDES.length === 0 && (
+                                    <p style={{ margin: '0 0 1rem 0', fontSize: '0.82rem', color: '#f59e0b' }}>
+                                        Esta computadora no está conectada a ninguna red: el QR solo funciona localmente.
+                                    </p>
+                                )}
+                                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '0.5rem' }}>
+                                    <Boton type="button" onClick={() => copiarEnlace(modalVerQrConf.token)} variant="crear">Copiar Enlace Público</Boton>
+                                    <Boton type="button" onClick={() => setModalVerQrConf(null)} variant="volver">Cerrar</Boton>
+                                </div>
+                            </>
+                        ) : (
+                            <p style={{ color: 'var(--text-muted)' }}>Esta vista no tiene un código generado.</p>
+                        )}
                     </div>
                 </div>
             )}

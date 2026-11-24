@@ -1,3 +1,44 @@
+.contenedorVistaPublica {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.contenedorIndicadores {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+    .contenedorIndicadores {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .tarjetaFullWidth {
+        grid-column: 1 / -1 !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    .contenedorIndicadores {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .tarjetaDestacada {
+        grid-column: span 2;
+    }
+
+    .tarjetaFullWidth {
+        grid-column: 1 / -1 !important;
+    }
+}
+
 .portada {
     position: relative;
     overflow: hidden;
@@ -10,6 +51,8 @@
         radial-gradient(circle at 100% 100%, rgba(37, 99, 235, 0.22), transparent 55%),
         var(--card-bg);
     text-align: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .sello {
@@ -29,15 +72,15 @@
 .nombre {
     margin: 0.9rem 0 0.5rem;
     color: var(--text-h);
-    font-size: 1.75rem;
+    font-size: clamp(1.3rem, 4vw, 1.8rem);
     line-height: 1.2;
 }
 
 .mensaje {
     margin: 0 auto;
-    max-width: 440px;
+    max-width: 650px;
     color: var(--text);
-    font-size: 0.95rem;
+    font-size: clamp(0.85rem, 2.5vw, 0.95rem);
     line-height: 1.55;
     white-space: pre-line;
 }
@@ -47,16 +90,46 @@
     align-items: flex-start;
     justify-content: center;
     gap: 8px;
-    margin: 0.5rem 0 0;
+    margin: 1.25rem 0 0;
     padding: 1rem 1.25rem;
     border-radius: 10px;
     border: 1px solid var(--border);
     color: var(--text);
     font-size: 0.9rem;
     text-align: left;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .contacto i {
     color: #4ade80;
     margin-top: 2px;
+}
+
+.contenedorGraficoLineal {
+    height: 200px;
+    width: 100%;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.contenedorGraficoRadar {
+    height: 260px;
+    width: 100%;
+    position: relative;
+    box-sizing: border-box;
+}
+
+@media (max-width: 639px) {
+    .contenedorVistaPublica {
+        padding: 0.75rem;
+    }
+
+    .contenedorGraficoLineal {
+        height: 170px;
+    }
+
+    .contenedorGraficoRadar {
+        height: 220px;
+    }
 }

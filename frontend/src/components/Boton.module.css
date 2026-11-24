@@ -53,6 +53,41 @@
     background-color: var(--rojo-estandar);
 }
 
+.pestana {
+    background-color: var(--input-bg, #1e293b);
+    color: var(--text-muted, #94a3b8);
+    border: 1px solid var(--border-color, #334155);
+    padding: 8px 16px;
+}
+
+.pestana:hover:not(:disabled) {
+    color: var(--text-h, #f8fafc);
+    border-color: var(--azul-estandar, #2563eb);
+}
+
+.pestana.activo {
+    background-color: var(--azul-estandar, #2563eb);
+    color: #ffffff;
+    border-color: var(--azul-estandar, #2563eb);
+    font-weight: 700;
+}
+
+.subir,
+.bajar {
+    background-color: var(--input-bg, #1e293b);
+    color: var(--text-h, #f8fafc);
+    border: 1px solid var(--border-color, #334155);
+    padding: 5px 10px;
+    font-size: 0.82rem;
+}
+
+.subir:hover:not(:disabled),
+.bajar:hover:not(:disabled) {
+    background-color: var(--azul-estandar, #2563eb);
+    border-color: var(--azul-estandar, #2563eb);
+    color: #ffffff;
+}
+
 @media (max-width: 768px) {
     .base {
         padding: 6px 10px;

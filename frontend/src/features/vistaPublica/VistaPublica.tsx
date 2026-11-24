@@ -54,7 +54,7 @@ export default function VistaPublica() {
 
     return (
         <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', paddingTop: '2rem', paddingBottom: '2rem', boxSizing: 'border-box' }}>
-            <div style={{ width: '100%', maxWidth: '500px' }}>
+            <div style={{ width: '100%', maxWidth: '1100px', boxSizing: 'border-box' }}>
                 {resumen && <VistaPublicaContenido resumen={resumen} />}
             </div>
 

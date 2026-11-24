@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import SearchableSelect from '../../components/SearchableSelect';
 import type { PlanLimpiezaPayload } from '../../types/planes';
 import type { Sector } from '../../types/sectores';
 import type { Equipo } from '../../types/equipos';
@@ -46,7 +47,7 @@ export default function PlanForm() {
     const day = String(now.getDate()).padStart(2, '0');
     const hoyLocal = `${year}-${month}-${day}`;
 
-    const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormValues>({
+    const { register, control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormValues>({
         defaultValues: {
             titulo: '',
             fecha_inicio: hoyLocal,
@@ -178,14 +179,24 @@ export default function PlanForm() {
 
                     <div className={styles.formGroup} style={{ margin: 0 }}>
                         <label>Sector Asignado:</label>
-                        <select 
-                            {...register('sector_id', { required: "Debe seleccionar un sector" })}
-                            style={{ border: errors.sector_id ? '1px solid #ef4444' : '1px solid var(--border)', outline: 'none' }}
-                        >
-                            <option value="">-- Seleccionar --</option>
-                            {sectores.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
-                        </select>
-                        {errors.sector_id && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.sector_id.message}</span>}
+                        <Controller
+                            name="sector_id"
+                            control={control}
+                            rules={{ required: "Debe seleccionar un sector" }}
+                            render={({ field }) => (
+                                <SearchableSelect
+                                    options={sectores}
+                                    getOptionValue={(s) => s.id}
+                                    getOptionLabel={(s) => s.nombre}
+                                    value={field.value}
+                                    onChange={(val) => field.onChange(val ? Number(val) : '')}
+                                    onBlur={field.onBlur}
+                                    isInvalid={Boolean(errors.sector_id)}
+                                    errorMessage={errors.sector_id?.message}
+                                    placeholder="-- Seleccionar sector --"
+                                />
+                            )}
+                        />
                     </div>
 
                     <div className={styles.formGroup} style={{ margin: 0 }}>

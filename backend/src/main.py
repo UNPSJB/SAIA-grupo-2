@@ -74,9 +74,20 @@ ROOT_PATH = getattr(settings, f"ROOT_PATH_{ENV}", "")
 
 setup_logging()
 
+from sqlalchemy import text
+
 @asynccontextmanager
 async def db_creation_lifespan(app: FastAPI):
     ModeloBase.metadata.create_all(bind=engine)
+    try:
+        with engine.begin() as conn:
+            for col_name in ["mostrar_desglose_sectores", "mostrar_desglose_incidentes"]:
+                try:
+                    conn.execute(text(f"ALTER TABLE configuracion_vista_publica ADD COLUMN {col_name} BOOLEAN DEFAULT 0"))
+                except Exception:
+                    pass
+    except Exception:
+        pass
     yield
 
 app = FastAPI(root_path=ROOT_PATH, lifespan=db_creation_lifespan)

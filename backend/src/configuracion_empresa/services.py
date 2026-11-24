@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from src.configuracion_empresa.models import ConfiguracionEmpresa
 from src.configuracion_empresa import schemas
+from src.configuracion_empresa.default_logo import DEFAULT_LOGO_BASE64
 
 def get_configuracion_empresa(db: Session) -> ConfiguracionEmpresa:
     config = db.scalar(select(ConfiguracionEmpresa))
@@ -11,9 +12,14 @@ def get_configuracion_empresa(db: Session) -> ConfiguracionEmpresa:
             cuit="30-71122334-9",
             domicilio="Ruta 3 Km 1400, Trelew, Chubut",
             telefono="0280 442-1234",
-            email="calidad@saia.com"
+            email="calidad@saia.com",
+            logo_base64=DEFAULT_LOGO_BASE64
         )
         db.add(config)
+        db.commit()
+        db.refresh(config)
+    elif not config.logo_base64:
+        config.logo_base64 = DEFAULT_LOGO_BASE64
         db.commit()
         db.refresh(config)
     return config

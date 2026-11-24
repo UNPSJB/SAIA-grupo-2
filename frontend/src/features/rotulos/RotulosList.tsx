@@ -39,6 +39,8 @@ function estadoRotulo(fila: FilaRotulo): string {
 export default function RotulosList() {
     const [respuesta, setRespuesta] = useState<Respuesta | null>(null);
     const [busqueda, setBusqueda] = useState('');
+    const [filtroEstado, setFiltroEstado] = useState<string>('todos');
+    const [filtroSellos, setFiltroSellos] = useState<string>('todos');
 
     useEffect(() => {
         let cancelado = false;
@@ -95,7 +97,26 @@ export default function RotulosList() {
 
     const filas = respuesta?.filas ?? [];
 
-    const filtradas = filtrarPorTexto(filas, busqueda, (fila) => [
+    const filasFiltradasPorOpcion = filas.filter((fila) => {
+        const estado = estadoRotulo(fila);
+        if (filtroEstado !== 'todos' && estado !== filtroEstado) {
+            return false;
+        }
+
+        if (filtroSellos !== 'todos') {
+            const tieneSellos = Boolean(
+                fila.rotulo?.sellos_snapshot &&
+                Array.isArray(fila.rotulo.sellos_snapshot) &&
+                fila.rotulo.sellos_snapshot.length > 0
+            );
+            if (filtroSellos === 'con_sellos' && !tieneSellos) return false;
+            if (filtroSellos === 'sin_sellos' && tieneSellos) return false;
+        }
+
+        return true;
+    });
+
+    const filtradas = filtrarPorTexto(filasFiltradasPorOpcion, busqueda, (fila) => [
         fila.producto.nombre,
         ETIQUETA_TIPO_PRODUCTO[fila.producto.tipo],
         estadoRotulo(fila),
@@ -174,12 +195,41 @@ export default function RotulosList() {
                 descripcion="Administración de los datos que integran el rótulo de cada producto."
             />
 
-            <div className={styles.filaBotonesSuperiores}>
+            <div className={styles.filaBotonesSuperiores} style={{ flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between' }}>
                 <BuscadorTexto
                     valor={busqueda}
                     onCambio={setBusqueda}
                     placeholder="Buscar producto o estado..."
                 />
+
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-h)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        Estado:
+                        <select
+                            value={filtroEstado}
+                            onChange={(e) => setFiltroEstado(e.target.value)}
+                            style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--input-bg)', color: 'var(--text-h)', fontSize: '0.85rem' }}
+                        >
+                            <option value="todos">Todos los estados</option>
+                            <option value="Completo">Completo</option>
+                            <option value="Incompleto">Incompleto</option>
+                            <option value="Pendiente">Pendiente</option>
+                        </select>
+                    </label>
+
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-h)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        Sellos:
+                        <select
+                            value={filtroSellos}
+                            onChange={(e) => setFiltroSellos(e.target.value)}
+                            style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--input-bg)', color: 'var(--text-h)', fontSize: '0.85rem' }}
+                        >
+                            <option value="todos">Todos los sellos</option>
+                            <option value="con_sellos">Con Sellos de Advertencia</option>
+                            <option value="sin_sellos">Sin Sellos de Advertencia</option>
+                        </select>
+                    </label>
+                </div>
             </div>
 
             {respuesta?.error && (

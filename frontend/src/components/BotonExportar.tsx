@@ -30,9 +30,9 @@ export default function BotonExportar({ canvasId, filename = 'grafico' }: Props)
         };
     }, [menuAbierto]);
 
-    const handleExport = (formato: 'png' | 'pdf') => {
+    const handleExport = async (formato: 'png' | 'pdf') => {
         setMenuAbierto(false);
-        const dataUrl = captureChartCanvas(canvasId);
+        const dataUrl = await captureChartCanvas(canvasId);
         if (!dataUrl) {
             alert('No se pudo capturar el gráfico.');
             return;

@@ -137,8 +137,19 @@ export default function ListaIngredientesRotuloTab({ recetaId, version, esVigent
                                 : ''}
                         </span>
                     ) : (
-                        <span className={styles.textMuted} style={{ fontSize: '0.85rem' }}>
-                            Orden automático (decreciente por proporción)
+                        <span
+                            style={{
+                                background: 'rgba(34, 197, 94, 0.12)',
+                                color: '#4ade80',
+                                border: '1px solid rgba(34, 197, 94, 0.3)',
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                fontSize: '0.82rem',
+                                fontWeight: 600,
+                            }}
+                            title="Los ingredientes están ordenados automáticamente de mayor a menor masa según exige el Código Alimentario Argentino (Art. 228)."
+                        >
+                            ● Orden automático decreciente por proporción (CAA Art. 228)
                         </span>
                     )}
 
@@ -162,7 +173,7 @@ export default function ListaIngredientesRotuloTab({ recetaId, version, esVigent
                         marginTop: '12px',
                         padding: '10px 14px',
                         borderRadius: '6px',
-                        background: 'rgba(59, 130, 246, 0.12',
+                        background: 'rgba(59, 130, 246, 0.12)',
                         border: '1px solid rgba(59, 130, 246, 0.35)',
                         color: '#93c5fd',
                         fontSize: '0.88rem',
@@ -183,7 +194,7 @@ export default function ListaIngredientesRotuloTab({ recetaId, version, esVigent
                         flexWrap: 'wrap',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        gap: '10px,'
+                        gap: '10px'
                     }}
                 >
                     <label htmlFor="selector-formato-aditivos" style={{ fontSize: '0.86rem', fontWeight: 600, color: 'var(--text-h)' }}>
@@ -230,56 +241,73 @@ export default function ListaIngredientesRotuloTab({ recetaId, version, esVigent
                 }}
             >
                 <thead>
-                    <tr style={{ borderBottom: '1px solid var(--border-color, #334155', textAlign: 'left'}}>
+                    <tr style={{ borderBottom: '1px solid var(--border-color, #334155)', textAlign: 'left'}}>
                         <th style={{ padding: '10px 12px', width: '60px' }}>Pos.</th>
                         <th style={{ padding: '10px 12px', width: '32%' }}>Denominación para rótulo</th>
                         <th style={{ padding: '10px 12px', width: '28%' }}>Insumo</th>
                         <th style={{ padding: '10px 12px', textAlign: 'right', width: '110px' }}>Proporción</th>
                         {puedeEditar && (
-                            <th style={{ padding: '10px 12px', textAlign: 'center', width: '170px' }}>
+                            <th style={{ padding: '10px 12px', textAlign: 'center', width: '180px' }}>
                                 Ajuste manual</th>
                         )}
                     </tr>
                 </thead>
                 <tbody>
-                    {datos.ingredientes.map((ing, idx) => (
-                        <tr
-                            key={ing.insumo_id}
-                            style={{ borderBottom: '1px solid rgba(51, 65, 85, 0.5)' }}    
-                        >
-                            <td style={{ padding: '10px 12px' }}>{idx + 1}°</td>
-                            <td style={{ padding: '10px 12px' }}>
-                                <strong>{ing.denominacion_rotulo}</strong>
-                            </td>
-                            <td style={{ padding: '10px 12px' }}>{ing.nombre_insumo}</td>
-                            <td style={{ padding: '10px 12px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                                {ing.porcentaje.toFixed(2)} %
-                            </td>
-                            {puedeEditar && (
+                    {datos.ingredientes.map((ing, idx, arr) => {
+                        const esIgualAnterior = idx > 0 && Math.abs(ing.porcentaje - arr[idx - 1].porcentaje) < 0.0001;
+                        const esIgualSiguiente = idx < arr.length - 1 && Math.abs(ing.porcentaje - arr[idx + 1].porcentaje) < 0.0001;
+
+                        const sePuedenSubir = esIgualAnterior;
+                        const sePuedenBajar = esIgualSiguiente;
+
+                        const tituloDisabledSubir = !esIgualAnterior && idx > 0
+                            ? "Por ley (CAA Art. 228), los ingredientes se ordenan obligatoriamente de mayor a menor porcentaje. Solo se puede cambiar el orden entre ingredientes con el mismo porcentaje."
+                            : undefined;
+
+                        const tituloDisabledBajar = !esIgualSiguiente && idx < arr.length - 1
+                            ? "Por ley (CAA Art. 228), los ingredientes se ordenan obligatoriamente de mayor a menor porcentaje. Solo se puede cambiar el orden entre ingredientes con el mismo porcentaje."
+                            : undefined;
+
+                        return (
+                            <tr
+                                key={ing.insumo_id}
+                                style={{ borderBottom: '1px solid rgba(51, 65, 85, 0.5)' }}
+                            >
+                                <td style={{ padding: '10px 12px' }}>{idx + 1}°</td>
                                 <td style={{ padding: '10px 12px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}></div>
-                                    <button
-                                        type="button"
-                                        className={styles.botonFiltro}
-                                        disabled={guardando || idx === 0}
-                                        onClick={() => moverIngrediente(idx, -1)}
-                                        aria-label={`Subir ${ing.denominacion_rotulo}`}
-                                    >
-                                        ↑ Subir
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={styles.botonFiltro}
-                                        disabled={guardando || idx === datos.ingredientes.length -1}
-                                        onClick={() => moverIngrediente(idx, 1)}
-                                        aria-label={`Bajar ${ing.denominacion_rotulo}`}
-                                    >
-                                        ↓ Bajar
-                                    </button>
+                                    <strong>{ing.denominacion_rotulo}</strong>
                                 </td>
-                            )}
-                        </tr>
-                    ))}
+                                <td style={{ padding: '10px 12px' }}>{ing.nombre_insumo}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                    {ing.porcentaje.toFixed(2)} %
+                                </td>
+                                {puedeEditar && (
+                                    <td style={{ padding: '10px 12px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                                            <Boton
+                                                type="button"
+                                                variant="subir"
+                                                disabled={guardando || !sePuedenSubir}
+                                                onClick={() => moverIngrediente(idx, -1)}
+                                                title={tituloDisabledSubir || `Subir ${ing.denominacion_rotulo}`}
+                                            >
+                                                Subir
+                                            </Boton>
+                                            <Boton
+                                                type="button"
+                                                variant="bajar"
+                                                disabled={guardando || !sePuedenBajar}
+                                                onClick={() => moverIngrediente(idx, 1)}
+                                                title={tituloDisabledBajar || `Bajar ${ing.denominacion_rotulo}`}
+                                            >
+                                                Bajar
+                                            </Boton>
+                                        </div>
+                                    </td>
+                                )}
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
 

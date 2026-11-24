@@ -4,6 +4,7 @@ import type { DocumentoVersionadoPayload, TipoDocumentoVersionado } from '../../
 import { crearDocumentoVersionado } from '../../services/documentosVersionadosServices';
 import { useAuth } from '../../context/AuthContext';
 import Boton from '../../components/Boton';
+import SearchableSelect from '../../components/SearchableSelect';
 import SubidorArchivo, { type ArchivoAdjunto } from '../../components/SubidorArchivo';
 import ModalAlerta from '../../components/alerta';
 import { ETIQUETAS_TIPO, TIPOS_DOCUMENTO_VERSIONADO } from './tipoDocumentoVersionado';
@@ -162,18 +163,13 @@ export default function DocumentoVersionadoForm() {
 
                     <div className={styles.formGroup}>
                         <label className={styles.modalTituloCampo} htmlFor="documento-tipo">Tipo de documento:</label>
-                        <select
+                        <SearchableSelect
                             id="documento-tipo"
+                            options={TIPOS_DOCUMENTO_VERSIONADO.map((valor) => ({ value: valor, label: ETIQUETAS_TIPO[valor] }))}
                             value={tipo}
-                            className={styles.modalSelector}
-                            onChange={(evento) => setTipo(evento.target.value as TipoDocumentoVersionado)}
-                        >
-                            {TIPOS_DOCUMENTO_VERSIONADO.map((valor) => (
-                                <option key={valor} value={valor}>
-                                    {ETIQUETAS_TIPO[valor]}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(val) => setTipo((val as TipoDocumentoVersionado) || 'manual_calidad')}
+                            placeholder="Seleccione un tipo de documento..."
+                        />
                     </div>
 
                     <div className={styles.formGroup}>

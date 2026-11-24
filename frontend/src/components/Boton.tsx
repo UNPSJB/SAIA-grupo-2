@@ -3,15 +3,16 @@ import styles from './Boton.module.css';
 
 interface BotonProps {
     children?: React.ReactNode; 
-    variant: 'guardar' | 'eliminar' | 'editar' | 'crear' | 'ver' | 'volver' | 'siguiente' | 'buscar' | 'documentos' | 'limpiar' | 'pausar'| 'reanudar' | 'descargar' | 'valoresDiarios';
+    variant: 'guardar' | 'eliminar' | 'editar' | 'crear' | 'ver' | 'volver' | 'siguiente' | 'buscar' | 'documentos' | 'limpiar' | 'pausar'| 'reanudar' | 'descargar' | 'valoresDiarios' | 'pestana' | 'subir' | 'bajar';
     onClick?: () => void;
     type?: 'button' | 'submit';
     disabled?: boolean;
     style?: React.CSSProperties; 
     title?: string;
+    activo?: boolean;
 }
 
-export default function Boton({ children, variant, onClick, type = 'button', disabled = false, style, title }: BotonProps) {
+export default function Boton({ children, variant, onClick, type = 'button', disabled = false, style, title, activo = false }: BotonProps) {
     
     const renderIcono = () => {
         const estiloIcono = { marginRight: children ? '6px' : '0' };
@@ -45,15 +46,23 @@ export default function Boton({ children, variant, onClick, type = 'button', dis
                 return <i className="bi bi-pause-fill" style={estiloIcono}></i>;
             case 'reanudar':
                 return <i className="bi bi-play-fill" style={estiloIcono}></i>;
+            case 'pestana':
+                return <i className="bi bi-layers" style={estiloIcono}></i>;
+            case 'subir':
+                return <i className="bi bi-arrow-up" style={estiloIcono}></i>;
+            case 'bajar':
+                return <i className="bi bi-arrow-down" style={estiloIcono}></i>;
             default:
                 return null;
         }
     };
 
+    const claseActivo = activo ? styles.activo : '';
+
     return (
         <button 
             type={type} 
-            className={`${styles.base} ${styles[variant]}`} 
+            className={`${styles.base} ${styles[variant]} ${claseActivo}`}
             onClick={onClick}
             disabled={disabled}
             style={style}

@@ -12,6 +12,7 @@ import { getInsumos } from '../../services/insumosServices';
 import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
 import { useAuth } from '../../context/AuthContext';
 import Boton from '../../components/Boton';
+import SearchableSelect from '../../components/SearchableSelect';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
 import NuevoProductoModal from '../productos/NuevoProductoModal';
 import { ETIQUETA_TIPO_PRODUCTO, hoyLocal } from '../productos/formatoProducto';
@@ -284,31 +285,25 @@ export default function LoteForm() {
                 <div className={styles.formGroup}>
                     <label htmlFor="lote-producto">Producto:</label>
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', width: '100%' }}>
-                        <select
-                            id="lote-producto"
-                            value={productoId}
-                            onChange={(evento) => {
-                                setProductoId(evento.target.value);
-                                setRecetaId(null);
-                                setRecetaVersionId(null);
-                                setFactorEscalado(null);
-                            }}
-                            style={{ flex: '1 1 260px', width: 'auto', ...(errores.productoId ? estiloError : {}) }}
-                            disabled={productos === null}
-                        >
-                            <option value="">
-                                {productos === null
-                                    ? 'Cargando productos…'
-                                    : productos.length === 0
-                                      ? 'No hay productos cargados'
-                                      : 'Seleccione un producto'}
-                            </option>
-                            {(productos ?? []).map((producto) => (
-                                <option key={producto.id} value={String(producto.id)}>
-                                    {producto.nombre}
-                                </option>
-                            ))}
-                        </select>
+                        <div style={{ flex: '1 1 260px' }}>
+                            <SearchableSelect
+                                id="lote-producto"
+                                options={productos ?? []}
+                                getOptionValue={(p) => String(p.id)}
+                                getOptionLabel={(p) => p.nombre}
+                                value={productoId}
+                                onChange={(val) => {
+                                    setProductoId(val ? String(val) : '');
+                                    setRecetaId(null);
+                                    setRecetaVersionId(null);
+                                    setFactorEscalado(null);
+                                }}
+                                disabled={productos === null}
+                                isInvalid={Boolean(errores.productoId)}
+                                errorMessage={errores.productoId}
+                                placeholder={productos === null ? 'Cargando productos...' : 'Seleccione un producto...'}
+                            />
+                        </div>
                         <Boton variant="crear" onClick={() => setCreandoProducto(true)}>
                             Nuevo producto
                         </Boton>

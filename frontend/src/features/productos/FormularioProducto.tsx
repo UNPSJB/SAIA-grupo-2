@@ -5,6 +5,7 @@ import type { UnidadMedida } from '../../types/unidadesMedida';
 import { getProductoById, saveProducto } from '../../services/productosServices';
 import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
 import Boton from '../../components/Boton';
+import SearchableSelect from '../../components/SearchableSelect';
 import { ETIQUETA_TIPO_PRODUCTO, TIPOS_PRODUCTO } from './formatoProducto';
 import styles from '../../styles/shared.module.css';
 
@@ -162,38 +163,30 @@ export default function FormularioProducto({
 
                 <div className={styles.formGroup}>
                     <label htmlFor="producto-tipo">Tipo:</label>
-                    <select
+                    <SearchableSelect
                         id="producto-tipo"
+                        options={TIPOS_PRODUCTO.map((opcion) => ({ value: opcion, label: ETIQUETA_TIPO_PRODUCTO[opcion] }))}
                         value={tipo}
-                        onChange={(evento) => setTipo(evento.target.value as TipoProducto | '')}
-                        style={errores.tipo ? estiloError : {}}
-                    >
-                        <option value="">Seleccione un tipo</option>
-                        {TIPOS_PRODUCTO.map((opcion) => (
-                            <option key={opcion} value={opcion}>
-                                {ETIQUETA_TIPO_PRODUCTO[opcion]}
-                            </option>
-                        ))}
-                    </select>
-                    {errores.tipo && <span style={estiloMensaje}>{errores.tipo}</span>}
+                        onChange={(val) => setTipo((val as TipoProducto) || '')}
+                        isInvalid={Boolean(errores.tipo)}
+                        errorMessage={errores.tipo}
+                        placeholder="Seleccione un tipo..."
+                    />
                 </div>
 
                 <div className={styles.formGroup}>
                     <label htmlFor="producto-unidad">Unidad de medida:</label>
-                    <select
+                    <SearchableSelect
                         id="producto-unidad"
+                        options={unidades}
+                        getOptionValue={(u) => String(u.id)}
+                        getOptionLabel={(u) => u.nombre}
                         value={unidadMedidaId}
-                        onChange={(evento) => setUnidadMedidaId(evento.target.value)}
-                        style={errores.unidadMedidaId ? estiloError : {}}
-                    >
-                        <option value="">Seleccione una unidad</option>
-                        {unidades.map((unidad) => (
-                            <option key={unidad.id} value={String(unidad.id)}>
-                                {unidad.nombre}
-                            </option>
-                        ))}
-                    </select>
-                    {errores.unidadMedidaId && <span style={estiloMensaje}>{errores.unidadMedidaId}</span>}
+                        onChange={(val) => setUnidadMedidaId(val ? String(val) : '')}
+                        isInvalid={Boolean(errores.unidadMedidaId)}
+                        errorMessage={errores.unidadMedidaId}
+                        placeholder="Seleccione una unidad..."
+                    />
                 </div>
 
                 <div className={styles.formGroup}>

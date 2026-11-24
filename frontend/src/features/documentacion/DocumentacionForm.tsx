@@ -14,6 +14,7 @@ import {
 import { getEmpleadoById } from '../../services/empleadosServices';
 import { ETIQUETA_TIPO, TIPOS_DOCUMENTACION } from './estadoVencimiento';
 import Boton from '../../components/Boton';
+import SearchableSelect from '../../components/SearchableSelect';
 import SubidorArchivo from '../../components/SubidorArchivo';
 import type { ArchivoAdjunto } from '../../components/SubidorArchivo';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
@@ -202,20 +203,15 @@ export default function DocumentacionForm() {
                 <div className={styles.formGrid}>
                     <div className={styles.formGroup}>
                         <label>Tipo de documento:</label>
-                        <select
+                        <SearchableSelect
+                            options={TIPOS_DOCUMENTACION.map((t) => ({ value: t, label: ETIQUETA_TIPO[t] }))}
                             value={tipo}
-                            onChange={(e) => setTipo(e.target.value)}
+                            onChange={(val) => setTipo(val ? String(val) : '')}
                             disabled={editando}
-                            style={errores.tipo ? estiloError : {}}
-                        >
-                            <option value="">Seleccione un tipo</option>
-                            {TIPOS_DOCUMENTACION.map((t) => (
-                                <option key={t} value={t}>
-                                    {ETIQUETA_TIPO[t]}
-                                </option>
-                            ))}
-                        </select>
-                        {errores.tipo && <span className={styles.textDanger}>{errores.tipo}</span>}
+                            isInvalid={Boolean(errores.tipo)}
+                            errorMessage={errores.tipo}
+                            placeholder="Seleccione un tipo..."
+                        />
                     </div>
 
                     <div className={styles.formGroup}>

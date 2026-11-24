@@ -131,7 +131,7 @@ export default function ConfiguracionEmpresa() {
                                 )}
                             </div>
                             <label className={styles.botonFiltro} style={{ cursor: 'pointer', display: 'inline-block', fontSize: '0.8rem' }}>
-                                <i className="bi bi-upload" style={{ marginRight: '0.35rem' }}></i> Subir Logo
+                                <i className="bi bi-upload" style={{ marginRight: '0.35rem' }}></i> Cambiar Logo
                                 <input type="file" accept="image/*" onChange={handleLogoChange} style={{ display: 'none' }} />
                             </label>
                             {logoBase64 && (

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import SearchableSelect from '../../components/SearchableSelect';
 import type { EquipoPayload, TipoEquipo, EstadoEquipo } from '../../types/equipos';
 import type { Sector } from '../../types/sectores';
 import { getEquipoById, saveEquipo, getTiposEquipo } from '../../services/equiposServices';
@@ -28,7 +29,7 @@ export default function EquipoForm() {
     const { id } = useParams();
     const editando = Boolean(id);
 
-    const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+    const { register, control, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
         defaultValues: {
             nombre: '',
             activo: true,
@@ -131,38 +132,46 @@ export default function EquipoForm() {
 
                     <div className={styles.formGroup}>
                         <label>Categoría:</label>
-                        <select 
-                            {...register('tipo_id', { 
-                                required: "Debe seleccionar una categoría"
-                            })} 
-                            style={errors.tipo_id ? { borderColor: '#ef4444', outline: 'none' } : {}}
-                        >
-                            <option value="">Seleccione un tipo...</option>
-                            {tiposDisponibles.map((t) => (
-                                <option key={t.id} value={t.id}>
-                                    {t.nombre}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.tipo_id && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.tipo_id.message}</span>}
+                        <Controller
+                            name="tipo_id"
+                            control={control}
+                            rules={{ required: "Debe seleccionar una categoría" }}
+                            render={({ field }) => (
+                                <SearchableSelect
+                                    options={tiposDisponibles}
+                                    getOptionValue={(t) => t.id}
+                                    getOptionLabel={(t) => t.nombre}
+                                    value={field.value}
+                                    onChange={(val) => field.onChange(val ? Number(val) : '')}
+                                    onBlur={field.onBlur}
+                                    isInvalid={Boolean(errors.tipo_id)}
+                                    errorMessage={errors.tipo_id?.message}
+                                    placeholder="Seleccione un tipo..."
+                                />
+                            )}
+                        />
                     </div>
 
                     <div className={styles.formGroup}>
                         <label>Ubicación / Sector:</label>
-                        <select 
-                            {...register('sector_id', { 
-                                required: "Debe seleccionar un sector"
-                            })} 
-                            style={errors.sector_id ? { borderColor: '#ef4444', outline: 'none' } : {}}
-                        >
-                            <option value="">Seleccione un sector...</option>
-                            {sectoresDisponibles.map((s) => (
-                                <option key={s.id} value={s.id}>
-                                    {s.nombre}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.sector_id && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.sector_id.message}</span>}
+                        <Controller
+                            name="sector_id"
+                            control={control}
+                            rules={{ required: "Debe seleccionar un sector" }}
+                            render={({ field }) => (
+                                <SearchableSelect
+                                    options={sectoresDisponibles}
+                                    getOptionValue={(s) => s.id}
+                                    getOptionLabel={(s) => s.nombre}
+                                    value={field.value}
+                                    onChange={(val) => field.onChange(val ? Number(val) : '')}
+                                    onBlur={field.onBlur}
+                                    isInvalid={Boolean(errors.sector_id)}
+                                    errorMessage={errors.sector_id?.message}
+                                    placeholder="Seleccione un sector..."
+                                />
+                            )}
+                        />
                     </div>
 
                     <div className={styles.formGroup}>

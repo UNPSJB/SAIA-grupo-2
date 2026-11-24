@@ -12,6 +12,7 @@ import { filtrarPorTexto } from '../../utils/texto';
 
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 import GraficoBarrasHorizontales, { type ItemBarra } from '../../components/GraficoBarrasHorizontales';
+import BotonExportar from '../../components/BotonExportar';
 import estilos from '../../components/Estadisticas.module.css';
 
 function cumplimientoPorSector(registros: HistorialChecklistResumen['registros']): ItemBarra[] {
@@ -360,11 +361,18 @@ export default function HistorialChecklistList() {
             {historial && historial.registros.length > 0 && (
                 <div className={estilos.grillaDosColumnas} style={{ width: '100%', maxWidth: '1100px', marginBottom: '30px', textAlign: 'left' }}>
                     <section className={estilos.tarjeta}>
-                        <div className={estilos.tarjetaEncabezado}>
-                            <h3>Cumplimiento por sector</h3>
-                            <span className={estilos.tarjetaAyuda}>Los que menos cumplen, primero</span>
+                        <div className={estilos.tarjetaEncabezado} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <h3>Cumplimiento por sector</h3>
+                                <span className={estilos.tarjetaAyuda}>Los que menos cumplen, primero</span>
+                            </div>
+                            <BotonExportar
+                                canvasId="grafico-cumplimiento-sector"
+                                filename={`cumplimiento_sectores_${fechaInicio}_${fechaFin}`}
+                            />
                         </div>
                         <GraficoBarrasHorizontales
+                            canvasId="grafico-cumplimiento-sector"
                             items={cumplimientoPorSector(historial.registros)}
                             escala={100}
                             orden="menor"
@@ -376,14 +384,23 @@ export default function HistorialChecklistList() {
                     </section>
 
                     <section className={estilos.tarjeta}>
-                        <div className={estilos.tarjetaEncabezado}>
-                            <h3>Tareas realizadas por persona</h3>
-                            <span className={estilos.tarjetaAyuda}>Cómo se repartió el trabajo</span>
+                        <div className={estilos.tarjetaEncabezado} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <h3>Tareas realizadas por persona</h3>
+                                <span className={estilos.tarjetaAyuda}>Cómo se repartió el trabajo</span>
+                            </div>
+                            {realizadasPorPersona(historial.registros).length > 0 && (
+                                <BotonExportar
+                                    canvasId="grafico-tareas-persona"
+                                    filename={`tareas_por_persona_${fechaInicio}_${fechaFin}`}
+                                />
+                            )}
                         </div>
                         {realizadasPorPersona(historial.registros).length === 0 ? (
                             <p className={estilos.vacio}>No hay tareas realizadas en el período.</p>
                         ) : (
                             <GraficoBarrasHorizontales
+                                canvasId="grafico-tareas-persona"
                                 items={realizadasPorPersona(historial.registros)}
                                 unidad={(valor) => `${valor} ${valor === 1 ? 'tarea' : 'tareas'}`}
                             />

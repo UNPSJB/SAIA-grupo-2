@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import SearchableSelect from '../../components/SearchableSelect';
 import type { TareaPayload, FrecuenciaTarea } from '../../types/tareas';
 import type { PlanLimpieza } from '../../types/planes';
 import { getTareaById, saveTarea } from '../../services/tareasServices';
@@ -223,16 +224,24 @@ export default function TareaForm() {
                                     
                                     <div style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>
                                         <label style={{ fontSize: '0.9rem', fontWeight: '500' }}>Producto:</label>
-                                        <select 
-                                            {...register(`consumos_estimados.${index}.producto_limpieza_id`, { required: "Seleccioná un producto" })}
-                                            style={{ width: '100%', padding: '10px', borderRadius: '6px', border: errorProd ? '1px solid #ef4444' : '1px solid var(--border)', outline: 'none' }}
-                                        >
-                                            <option value="">-- Seleccionar --</option>
-                                            {productos.map(p => (
-                                                <option key={p.id} value={p.id}>{p.nombre} (Stock actual: {p.stock})</option>
-                                            ))}
-                                        </select>
-                                        {errorProd && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{errorProd.message}</span>}
+                                        <Controller
+                                            name={`consumos_estimados.${index}.producto_limpieza_id`}
+                                            control={control}
+                                            rules={{ required: "Seleccioná un producto" }}
+                                            render={({ field }) => (
+                                                <SearchableSelect
+                                                    options={productos}
+                                                    getOptionValue={(p) => p.id}
+                                                    getOptionLabel={(p) => `${p.nombre} (Stock actual: ${p.stock})`}
+                                                    value={field.value}
+                                                    onChange={(val) => field.onChange(val ? Number(val) : '')}
+                                                    onBlur={field.onBlur}
+                                                    isInvalid={Boolean(errorProd)}
+                                                    errorMessage={errorProd?.message}
+                                                    placeholder="-- Seleccionar producto --"
+                                                />
+                                            )}
+                                        />
                                     </div>
                                     
                                     <div style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>

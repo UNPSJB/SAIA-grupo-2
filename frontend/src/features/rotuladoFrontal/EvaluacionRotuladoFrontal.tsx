@@ -21,6 +21,7 @@ import {
 } from '../../services/rotuladoFrontalServices';
 import { useAuth } from '../../context/AuthContext';
 import Boton from '../../components/Boton';
+import SearchableSelect from '../../components/SearchableSelect';
 import EncabezadoPagina from '../../components/EncabezadoPagina';
 import TablaPaginada, { type Columna } from '../../components/TablaPaginada';
 import { formatearFechaHora, nombreCompleto } from '../datosNutricionales/nutrientes';
@@ -436,17 +437,14 @@ export default function EvaluacionRotuladoFrontal() {
                 {formulario.envasado === true && parametros && (
                     <div className={estilos.pregunta}>
                         <strong>¿Pertenece a alguna categoría exceptuada?</strong>
-                        <select
+                        <SearchableSelect
+                            options={[{ id: '', descripcion: 'No, ninguna' }, ...parametros.excepciones]}
+                            getOptionValue={(ex) => ex.descripcion === 'No, ninguna' ? '' : ex.descripcion}
+                            getOptionLabel={(ex) => ex.descripcion}
                             value={formulario.excepcion}
-                            onChange={(evento) => cambiar({ excepcion: evento.target.value })}
-                        >
-                            <option value="">No, ninguna</option>
-                            {parametros.excepciones.map((excepcion) => (
-                                <option key={excepcion.id} value={excepcion.descripcion}>
-                                    {excepcion.descripcion}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(val) => cambiar({ excepcion: val ? String(val) : '' })}
+                            placeholder="Seleccione si pertenece a alguna excepción..."
+                        />
                     </div>
                 )}
 

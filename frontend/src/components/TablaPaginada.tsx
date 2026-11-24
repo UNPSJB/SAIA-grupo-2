@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import Boton from './Boton';
 import sharedStyles from '../styles/shared.module.css';
 import localStyles from './TablaPaginada.module.css';
-import { exportarACSV, exportarAPDF } from '../utils/archivos';
+import { exportarACSV } from '../utils/archivos';
 
 export interface Columna<T> {
     key: string;
@@ -96,14 +96,20 @@ export default function TablaPaginada<T>({
         return '';
     }
 
-    const handleExportar = async (formato: 'csv' | 'pdf') => {
-        const columnasExportables = columnas.filter(c =>
+    const columnasExportables = useMemo(() => {
+        return columnas.filter(c =>
             c.key !== 'acciones' &&
             c.variant !== 'acciones' &&
             !c.encabezado.toLowerCase().includes('accion')
         );
-        const encabezados = columnasExportables.map(c => c.encabezado);
-        const filas = datosOrdenados.map(item => {
+    }, [columnas]);
+
+    const encabezadosExportables = useMemo(() => {
+        return columnasExportables.map(c => c.encabezado);
+    }, [columnasExportables]);
+
+    const filasExportables = useMemo(() => {
+        return datosOrdenados.map(item => {
             return columnasExportables.map(col => {
                 if (col.render) {
                     try {
@@ -120,12 +126,10 @@ export default function TablaPaginada<T>({
                 return '';
             });
         });
+    }, [datosOrdenados, columnasExportables]);
 
-        if (formato === 'csv') {
-            exportarACSV(tituloExportacion, encabezados, filas);
-        } else {
-            await exportarAPDF(tituloExportacion, encabezados, filas);
-        }
+    const handleDescargarCSV = () => {
+        exportarACSV(tituloExportacion, encabezadosExportables, filasExportables);
         setModalExportar(false);
     };
 
@@ -197,16 +201,44 @@ export default function TablaPaginada<T>({
 
             {modalExportar && (
                 <div className={sharedStyles.modalOverlay} onClick={() => setModalExportar(false)}>
-                    <div className={sharedStyles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', textAlign: 'center' }}>
-                        <h3>Exportar Listado</h3>
-                        <p>Elegí en qué formato querés descargar los registros:</p>
+                    <div className={sharedStyles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '720px', width: '92%', textAlign: 'center', padding: '1.5rem' }}>
+                        <h3 style={{ marginTop: 0, color: 'var(--text-h)', fontSize: '1.25rem' }}>
+                            Vista Previa de Exportación CSV (Excel)
+                        </h3>
+                        <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                            Primeros registros que se incluirán en la descarga:
+                        </p>
 
-                        <div className={sharedStyles.filaBotones} style={{ justifyContent: 'center', marginTop: '20px' }}>
-                            <Boton variant="documentos" onClick={() => handleExportar('csv')}>
-                                CSV (Excel)
-                            </Boton>
-                            <Boton variant="documentos" onClick={() => handleExportar('pdf')}>
-                                PDF (Imprimir)
+                        <div style={{ maxHeight: '280px', overflowY: 'auto', overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '8px', marginBottom: '1.25rem', background: 'var(--input-bg)' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', textAlign: 'left' }}>
+                                <thead>
+                                    <tr style={{ background: 'var(--card-bg)', borderBottom: '2px solid var(--border)', color: 'var(--text-h)' }}>
+                                        {encabezadosExportables.map((enc, idx) => (
+                                            <th key={idx} style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{enc}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filasExportables.slice(0, 8).map((fila, idxFila) => (
+                                        <tr key={idxFila} style={{ borderBottom: '1px solid var(--border)' }}>
+                                            {fila.map((celda, idxCelda) => (
+                                                <td key={idxCelda} style={{ padding: '8px 10px', whiteSpace: 'nowrap', color: 'var(--text)' }}>
+                                                    {celda || '—'}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0 0 1.25rem 0', textAlign: 'left' }}>
+                            Total a exportar: <strong>{filasExportables.length}</strong> registros.
+                        </p>
+
+                        <div className={sharedStyles.filaBotones} style={{ justifyContent: 'flex-end', marginTop: 0 }}>
+                            <Boton variant="descargar" onClick={handleDescargarCSV}>
+                                Descargar CSV (Excel)
                             </Boton>
                             <Boton variant="volver" onClick={() => setModalExportar(false)}>
                                 Cancelar

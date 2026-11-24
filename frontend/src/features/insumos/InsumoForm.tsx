@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import SearchableSelect from '../../components/SearchableSelect';
 import type { MagnitudUnidad, UnidadMedida } from '../../types/unidadesMedida';
 import type { InsumoPayload } from '../../types/insumos';
 import type { Aditivo } from '../../types/aditivos';
@@ -33,7 +34,7 @@ export default function InsumoForm() {
     const { id } = useParams();
     const editando = Boolean(id);
 
-    const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormValues>({
+    const { register, control, handleSubmit, reset, watch, formState: { errors } } = useForm<FormValues>({
         defaultValues: {
             nombre: '',
             denominacion_rotulo: '',
@@ -167,24 +168,24 @@ export default function InsumoForm() {
                     
                     <div className={styles.formGroup}>
                         <label>Unidad de Medida:</label>
-                        <select 
-                            {...register('unidad_medida_id', { 
-                                required: "Debe seleccionar una unidad de medida",
-                                valueAsNumber: true,
-                                validate: value => !isNaN(value) || "Debe seleccionar una unidad válida"
-                            })} 
-                            style={errors.unidad_medida_id ? { borderColor: '#ef4444', outline: 'none' } : {}}
-                        >
-                            <option value="">Seleccione una unidad...</option>
-                            {unidadesDisponibles
-                                .filter((unidad) => esUnidadDeInsumo(unidad) && (!magnitudFija || unidad.magnitud === magnitudFija))
-                                .map(unidad => (
-                                <option key={unidad.id} value={unidad.id}>
-                                    {unidad.nombre}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.unidad_medida_id && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>{errors.unidad_medida_id.message}</span>}
+                        <Controller
+                            name="unidad_medida_id"
+                            control={control}
+                            rules={{ required: "Debe seleccionar una unidad de medida" }}
+                            render={({ field }) => (
+                                <SearchableSelect
+                                    options={unidadesDisponibles.filter((unidad) => esUnidadDeInsumo(unidad) && (!magnitudFija || unidad.magnitud === magnitudFija))}
+                                    getOptionValue={(u) => u.id}
+                                    getOptionLabel={(u) => u.nombre}
+                                    value={field.value}
+                                    onChange={(val) => field.onChange(val ? Number(val) : '')}
+                                    onBlur={field.onBlur}
+                                    isInvalid={Boolean(errors.unidad_medida_id)}
+                                    errorMessage={errors.unidad_medida_id?.message}
+                                    placeholder="Seleccione una unidad..."
+                                />
+                            )}
+                        />
                         <span className={styles.textMuted} style={{ fontSize: '0.8rem', marginTop: '6px', textAlign: 'left' }}>
                             {magnitudFija
                                 ? 'Como ya tiene stock cargado, solo se puede cambiar por otra unidad de la misma magnitud.'
@@ -254,24 +255,24 @@ export default function InsumoForm() {
                     {esAditivoMarcado && (
                         <div className={styles.formGroup}>
                             <label>Aditivo de Referencia INS (Catálogo Oficial):</label>
-                            <select
-                                {...register('aditivo_referencia_id', {
-                                    required: esAditivoMarcado ? "Debe seleccionar el aditivo de referencia" : false,
-                                })}
-                                style={errors.aditivo_referencia_id ? { borderColor: '#ef4444', outline: 'none' } : {}}
-                            >
-                                <option value="">Seleccione un aditivo del catálogo...</option>
-                                {aditivosDisponibles.map((aditivo) => (
-                                    <option key={aditivo.id} value={aditivo.id}>
-                                        {aditivo.nombre_completo} {aditivo.numero_ins ? `(INS ${aditivo.numero_ins})` : '(Sin INS)'}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.aditivo_referencia_id && (
-                                <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>
-                                    {errors.aditivo_referencia_id.message}
-                                </span>
-                            )}
+                            <Controller
+                                name="aditivo_referencia_id"
+                                control={control}
+                                rules={{ required: esAditivoMarcado ? "Debe seleccionar el aditivo de referencia" : false }}
+                                render={({ field }) => (
+                                    <SearchableSelect
+                                        options={aditivosDisponibles}
+                                        getOptionValue={(a) => a.id}
+                                        getOptionLabel={(a) => `${a.nombre_completo} ${a.numero_ins ? `(INS ${a.numero_ins})` : '(Sin INS)'}`}
+                                        value={field.value}
+                                        onChange={(val) => field.onChange(val ? Number(val) : '')}
+                                        onBlur={field.onBlur}
+                                        isInvalid={Boolean(errors.aditivo_referencia_id)}
+                                        errorMessage={errors.aditivo_referencia_id?.message}
+                                        placeholder="Seleccione un aditivo del catálogo..."
+                                    />
+                                )}
+                            />
                         </div>
                     )}
                 </div>

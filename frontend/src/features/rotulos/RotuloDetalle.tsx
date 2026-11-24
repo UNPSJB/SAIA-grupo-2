@@ -510,7 +510,8 @@ export default function RotuloDetalle() {
 
     return (
         <div className={shared.contenedorPrincipal}>
-            <div className={styles.encabezado}>
+            <div style={{ width: '100%', maxWidth: '1100px', display: 'flex', flexDirection: 'column', gap: '20px', boxSizing: 'border-box' }}>
+                <div className={styles.encabezado}>
                 <div>
                     <h1 className={styles.titulo}>Rótulo del producto</h1>
                     <p className={styles.subtitulo}>
@@ -1043,6 +1044,7 @@ export default function RotuloDetalle() {
                     </section>
                 </>
             )}
+            </div>
         </div>
     );
 }
