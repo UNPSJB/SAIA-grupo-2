@@ -85,9 +85,6 @@ export default function RecetaDetail() {
     const [cargandoComposicion, setCargandoComposicion] = useState(false);
     const [errorComposicion, setErrorComposicion] = useState<string | null>(null);
     const [pestanaActiva, setPestanaActiva] = useState<'ficha' | 'lista_ingredientes' | 'aporte_nutricional'>('ficha');
-    const [pdfPreviaUrl, setPdfPreviaUrl] = useState<string | null>(null);
-    const [pdfFilename, setPdfFilename] = useState<string>('ficha_tecnica.pdf');
-    const [modalPdfAbierto, setModalPdfAbierto] = useState<boolean>(false);
 
     useEffect(() => {
         let cancelado = false;
@@ -223,30 +220,41 @@ export default function RecetaDetail() {
 
     const handleDescargarPDF = async () => {
         if (!receta || !version) return;
-        const { blobUrl, filename } = await generarRecetaPDFDoc({
-            nombreProducto: receta.producto.nombre,
-            version: version.version,
-            rendimientoFinalGramos: version.rendimiento_final_gramos,
-            unidadVentaGramos: version.unidad_venta_gramos,
-            medidaCasera: version.medida_casera,
-            motivoCambio: version.motivo_cambio,
-            fechaVigencia: version.fecha_vigencia,
-            detalles: version.detalles.map((d) => ({
-                insumo_id: d.insumo_id,
-                cantidad_original: d.cantidad_original,
-                unidad_medida_nombre:
-                    actual?.unidades.find((u) => u.id === d.unidad_medida_id)?.nombre || '',
-                tipo_uso: d.tipo_uso,
-                aditivo_id: d.aditivo_id,
-            })),
-            pasos: version.pasos,
-            insumos: actual?.insumos,
-            aditivos: actual?.aditivos,
-            equipos: actual?.equipos,
-        });
-        setPdfPreviaUrl(blobUrl);
-        setPdfFilename(filename);
-        setModalPdfAbierto(true);
+        const pestania = window.open('about:blank', '_blank');
+        if (!pestania) {
+            window.alert('No se pudo abrir una pestaña nueva. Permití las ventanas emergentes e intentá nuevamente.');
+            return;
+        }
+
+        try {
+            const { blobUrl } = await generarRecetaPDFDoc({
+                nombreProducto: receta.producto.nombre,
+                version: version.version,
+                rendimientoFinalGramos: version.rendimiento_final_gramos,
+                unidadVentaGramos: version.unidad_venta_gramos,
+                medidaCasera: version.medida_casera,
+                motivoCambio: version.motivo_cambio,
+                fechaVigencia: version.fecha_vigencia,
+                detalles: version.detalles.map((d) => ({
+                    insumo_id: d.insumo_id,
+                    cantidad_original: d.cantidad_original,
+                    unidad_medida_nombre:
+                        actual?.unidades.find((u) => u.id === d.unidad_medida_id)?.nombre || '',
+                    tipo_uso: d.tipo_uso,
+                    aditivo_id: d.aditivo_id,
+                })),
+                pasos: version.pasos,
+                insumos: actual?.insumos,
+                aditivos: actual?.aditivos,
+                equipos: actual?.equipos,
+            });
+            pestania.opener = null;
+            pestania.location.href = blobUrl;
+            window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+        } catch (error) {
+            pestania.close();
+            throw error;
+        }
     };
 
     const insumosPorId = useMemo(
@@ -747,55 +755,6 @@ export default function RecetaDetail() {
                 </div>
             </div>
 
-            {modalPdfAbierto && pdfPreviaUrl && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: '1rem' }}>
-                    <div className={styles.tarjeta} style={{ maxWidth: '920px', width: '100%', height: '88vh', display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.25rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-                            <h3 style={{ margin: 0, color: 'var(--text-h)', fontSize: '1.2rem' }}>
-                                Vista Previa de Ficha Técnica PDF · {receta?.producto.nombre} (v{version?.version})
-                            </h3>
-                            <button
-                                onClick={() => setModalPdfAbierto(false)}
-                                style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text)' }}
-                            >
-                                <i className="bi bi-x-lg"></i>
-                            </button>
-                        </div>
-
-                        <div style={{ flex: 1, width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)', background: '#525659' }}>
-                            <iframe
-                                src={pdfPreviaUrl}
-                                title="Vista Previa Ficha Técnica PDF"
-                                style={{ width: '100%', height: '100%', border: 'none' }}
-                            />
-                        </div>
-
-                        <div className={styles.filaBotones} style={{ justifyContent: 'flex-end', marginTop: 0 }}>
-                            <Boton
-                                type="button"
-                                variant="descargar"
-                                onClick={() => {
-                                    const enlace = document.createElement('a');
-                                    enlace.href = pdfPreviaUrl;
-                                    enlace.download = pdfFilename;
-                                    document.body.appendChild(enlace);
-                                    enlace.click();
-                                    document.body.removeChild(enlace);
-                                }}
-                            >
-                                Descargar Ficha PDF
-                            </Boton>
-                            <Boton
-                                type="button"
-                                variant="volver"
-                                onClick={() => setModalPdfAbierto(false)}
-                            >
-                                Cerrar
-                            </Boton>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
