@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import type { Equipo } from '../../types/equipos';
 import type { CalibracionRealizada } from '../../types/calibracionRealizada';
 import { getEquipoById } from '../../services/equiposServices';
@@ -17,6 +17,7 @@ export default function EquipoDetail() {
     const [certificacionAbierta, setCertificacionAbierta] = useState<CalibracionRealizada | null>(null);
     const [modalCalibracionAbierto, setModalCalibracionAbierto] = useState(false);
     const { id } = useParams();
+    const navigate = useNavigate();
 
     const cargarEquipo = async()=>{
         if (!id) return;
@@ -107,9 +108,7 @@ export default function EquipoDetail() {
                         )}
 
                     <div className={styles.bloqueDetalle} style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                        <Link to="/equipos">
-                            <Boton variant="volver">Volver a la lista</Boton>
-                        </Link>
+                        <Boton variant="volver" onClick={() => navigate(-1)}>Volver a la lista</Boton>  {/*  cambiado para que no sea un link directo a equipos */}
                         <Boton variant="crear" onClick={() => setModalCalibracionAbierto(true)}>
                             Registrar calibración
                         </Boton>

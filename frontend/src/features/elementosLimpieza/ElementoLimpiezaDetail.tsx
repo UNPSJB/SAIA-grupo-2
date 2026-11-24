@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import type { ElementoLimpieza } from '../../types/elementosLimpieza';
 import { getElementoLimpiezaById, registrarRecambio } from '../../services/elementosLimpiezaServices';
@@ -16,6 +16,7 @@ export default function ElementoLimpiezaDetail() {
     const [elemento, setElemento] = useState<ElementoLimpieza | null>(null);
     const [modalAlerta, setModalAlerta] = useState({ isOpen: false, titulo: '', mensaje: '' });
     const { id } = useParams();
+    const navigate = useNavigate();
 
     const cargarElemento = async () => {
         if (!id) return;
@@ -86,9 +87,13 @@ export default function ElementoLimpiezaDetail() {
                                 Registrar recambio
                             </Boton>
                         )}
-                        <Link to={esAdmin ? "/elementosLimpieza" : "/elementosLimpieza/alertas"}>
+                        {/* <Link to={esAdmin ? "/elementosLimpieza" : "/elementosLimpieza/alertas"}>
                             <Boton variant="volver">Volver</Boton>
-                        </Link>
+                        </Link> */}
+                        {/* cambiado para que vuelva al menu de donde se vino por ejemplo /vencimientos */}
+                        <Boton variant="volver" onClick={() => navigate(-1)}>
+                            Volver
+                        </Boton>
                     </div>
                 </div>
             ) : (
