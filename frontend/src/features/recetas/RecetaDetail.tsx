@@ -17,7 +17,7 @@ import {
     getVersionesReceta,
     RecetasApiError,
 } from '../../services/recetasServices';
-import { exportarRecetaPDF, generarRecetaPDFDoc } from '../../utils/exportarRecetaPdf';
+import { generarRecetaPDFDoc } from '../../utils/exportarRecetaPdf';
 import type { Aditivo } from '../../types/aditivos';
 import type { Insumo } from '../../types/insumos';
 import type { Equipo } from '../../types/equipos';
@@ -313,7 +313,6 @@ export default function RecetaDetail() {
                     </p>
                 ) : (
                     <>
-                        {/* Selector de Versión e Insignia */}
                         <div
                             style={{
                                 display: 'flex',
@@ -383,7 +382,6 @@ export default function RecetaDetail() {
                             </div>
                         </div>
 
-                        {/* Barra de pestañas */}
                         <div
                             role="tablist"
                             aria-label="Secciones de la receta"
@@ -439,9 +437,12 @@ export default function RecetaDetail() {
                                     <p>
                                         <strong>Rendimiento final:</strong>{' '}
                                         {formatearGramos(version.rendimiento_final_gramos)}
+                                        {version.rendimiento_unidades
+                                            ? ` (${version.rendimiento_unidades.toLocaleString('es-AR')} ${version.rendimiento_unidades === 1 ? 'unidad' : 'unidades'} de ${formatearGramos(version.rendimiento_final_gramos / version.rendimiento_unidades)})`
+                                            : ''}
                                     </p>
                                     <p>
-                                        <strong>Unidad de venta:</strong>{' '}
+                                        <strong>Porción:</strong>{' '}
                                         {formatearGramos(version.unidad_venta_gramos)}
                                     </p>
                                     <p>

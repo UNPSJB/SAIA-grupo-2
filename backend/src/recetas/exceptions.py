@@ -23,6 +23,9 @@ class TipoUsoInvalido(BadRequest):
 class ParametrosEscaladoInvalidos(BadRequest):
     DETAIL = ErrorCode.PARAMETROS_ESCALADO_INVALIDOS
 
+class RendimientoEnUnidadesRequerido(BadRequest):
+    DETAIL = ErrorCode.RENDIMIENTO_EN_UNIDADES_REQUERIDO
+
 class InsumoDuplicado(BadRequest):
     DETAIL = ErrorCode.INSUMO_DUPLICADO
 

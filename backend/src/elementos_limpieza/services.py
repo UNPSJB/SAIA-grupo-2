@@ -45,28 +45,6 @@ def listar_alertas(db: Session) -> List[schemas.ElementoLimpieza]:
     alertas.sort(key=lambda e: e.fecha_proximo_recambio)
     return alertas
 
-def eliminar_elemento(
-    db: Session, elemento_id: int
-) -> schemas.ElementoLimpiezaDelete:
-    db_elemento = db.scalar(select(ElementoLimpieza).where(ElementoLimpieza.id == elemento_id))
-    if db_elemento is None:
-        raise exceptions.ElementoNoEncontrado()
-
-    if db_elemento.activo:
-        raise HTTPException(
-            status_code=400,
-            detail="Los elementos activos no se pueden eliminar físicamente. Primero debe darlo de baja lógica."
-        )
-
-    try:
-        db.execute(delete(ElementoLimpieza).where(ElementoLimpieza.id == elemento_id))
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise exceptions.ElementoEnUso()
-    return {"id": elemento_id, "msg": "borrado"}
-
-
 def leer_elemento(db: Session, elemento_id: int) -> schemas.ElementoLimpieza:
     db_elemento = db.scalar(
         select(ElementoLimpieza).where(ElementoLimpieza.id == elemento_id)

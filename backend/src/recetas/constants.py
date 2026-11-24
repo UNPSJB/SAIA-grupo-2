@@ -25,6 +25,9 @@ class ErrorCode:
     ORDEN_MANUAL_FUERA_DE_EMPATE = "Solo se puede cambiar el orden entre ingredientes con el mismo porcentaje"
     VERSION_SOLO_LECTURA = "Las versiones anteriores de la receta son de solo lectura"
     PARAMETROS_ESCALADO_INVALIDOS = "Indicá uno solo: factor multiplicador, cantidad objetivo en gramos o cantidad de unidades"
+    RENDIMIENTO_EN_UNIDADES_REQUERIDO = (
+        "La receta no indica cuántas unidades rinde: cargalo en una nueva versión para escalar por unidades"
+    )
 
 class EstadoVersionReceta(str, Enum):
     ACTIVO = "activo"

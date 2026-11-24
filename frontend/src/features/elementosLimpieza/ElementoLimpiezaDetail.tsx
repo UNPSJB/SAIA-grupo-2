@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import type { ElementoLimpieza } from '../../types/elementosLimpieza';
 import { getElementoLimpiezaById, registrarRecambio } from '../../services/elementosLimpiezaServices';
@@ -87,10 +87,6 @@ export default function ElementoLimpiezaDetail() {
                                 Registrar recambio
                             </Boton>
                         )}
-                        {/* <Link to={esAdmin ? "/elementosLimpieza" : "/elementosLimpieza/alertas"}>
-                            <Boton variant="volver">Volver</Boton>
-                        </Link> */}
-                        {/* cambiado para que vuelva al menu de donde se vino por ejemplo /vencimientos */}
                         <Boton variant="volver" onClick={() => navigate(-1)}>
                             Volver
                         </Boton>

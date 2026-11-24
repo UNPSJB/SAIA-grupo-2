@@ -155,7 +155,11 @@ export default function EscalarReceta({
                         <span>
                             <strong>Rendimiento esperado:</strong> {formatear(resultado.rendimiento_esperado)} g
                             {resultado.cantidad_producto !== null &&
-                                ` (${formatear(resultado.cantidad_producto)} ${unidadProducto})`}
+                                ` (${formatear(resultado.cantidad_producto)} ${unidadProducto}${
+                                    resultado.peso_unidad_gramos !== null
+                                        ? ` de ${formatear(resultado.peso_unidad_gramos)} g`
+                                        : ''
+                                })`}
                         </span>
                         <span>
                             <strong>Factor aplicado:</strong> x{formatear(resultado.factor_aplicado)}

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import type { EstadoLoteDesdeReceta, LoteProduccion } from '../../types/lotesProduccion';
+import type { EstadoLoteDesdeReceta, InsumoUtilizadoPayload, LoteProduccion } from '../../types/lotesProduccion';
+import type { EscaladoRecetaPayload } from '../../types/recetas';
 import type { Producto } from '../../types/productos';
 import type { Insumo } from '../../types/insumos';
 import type { UnidadMedida } from '../../types/unidadesMedida';
@@ -10,6 +11,7 @@ import { crearLote } from '../../services/lotesProduccionServices';
 import { getProductos } from '../../services/productosServices';
 import { getInsumos } from '../../services/insumosServices';
 import { getUnidadesMedida } from '../../services/unidadesMedidaServices';
+import { escalarRecetaProducto, getRecetas } from '../../services/recetasServices';
 import { useAuth } from '../../context/AuthContext';
 import Boton from '../../components/Boton';
 import SearchableSelect from '../../components/SearchableSelect';
@@ -35,10 +37,49 @@ interface Errores {
     insumos?: string;
 }
 
+interface Escalado {
+    cantidad: number | null;
+    rendimientoGramos: number;
+}
+
 const estiloError = { borderColor: '#ef4444', outline: 'none' };
+
+function insumosDesdeReceta(
+    items: InsumoUtilizadoPayload[],
+    catalogo: Insumo[],
+    unidades: UnidadMedida[],
+): InsumoLoteFormulario[] {
+    return items.flatMap((item) => {
+        const insumo = catalogo.find((i) => i.id === item.insumo_id);
+        const unidad = unidades.find((u) => u.id === item.unidad_medida_id);
+        if (!insumo || !unidad) return [];
+        return [
+            {
+                insumo,
+                cantidad: item.cantidad_utilizada,
+                unidadMedidaId: unidad.id,
+                unidadNombre: unidad.nombre,
+                cantidadBase: convertirABase(item.cantidad_utilizada, unidad),
+                cantidadReceta: item.cantidad_utilizada,
+            },
+        ];
+    });
+}
+
+function pedidoDeEscalado(producto: Producto, cantidad: number): EscaladoRecetaPayload | null {
+    const unidadProducto = producto.unidad_medida;
+    if (unidadProducto.magnitud === 'cantidad') return { unidades_objetivo: cantidad };
+    if (unidadProducto.magnitud === 'masa') return { cantidad_objetivo: cantidad * unidadProducto.factor_base };
+    return null;
+}
 const estiloMensaje = { color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' };
 
 export default function LoteForm() {
+    const location = useLocation();
+    return <FormularioLote key={location.key} />;
+}
+
+function FormularioLote() {
     const { usuario } = useAuth();
     const esAdmin = usuario?.rol === 'admin';
     const navigate = useNavigate();
@@ -60,6 +101,12 @@ export default function LoteForm() {
     const [recetaId, setRecetaId] = useState<number | null>(precargaReceta?.receta_id ?? null);
     const [recetaVersionId, setRecetaVersionId] = useState<number | null>(precargaReceta?.receta_version_id ?? null);
     const [factorEscalado, setFactorEscalado] = useState<number | null>(precargaReceta?.factor_escalado ?? null);
+    const [escalado, setEscalado] = useState<Escalado | null>(
+        precargaReceta ? { cantidad: precargaReceta.cantidad, rendimientoGramos: precargaReceta.rendimiento_gramos } : null,
+    );
+    const [productosConReceta, setProductosConReceta] = useState<Set<number>>(new Set());
+    const [calculandoReceta, setCalculandoReceta] = useState(false);
+    const [errorReceta, setErrorReceta] = useState<string | null>(null);
 
     const [errores, setErrores] = useState<Errores>({});
     const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
@@ -75,6 +122,12 @@ export default function LoteForm() {
 
     useEffect(() => {
         let cancelado = false;
+
+        getRecetas()
+            .then((recetas) => {
+                if (!cancelado) setProductosConReceta(new Set(recetas.map((receta) => receta.producto_id)));
+            })
+            .catch((problema) => console.error('Error al cargar las recetas:', problema));
 
         getProductos()
             .then((datos) => {
@@ -104,23 +157,7 @@ export default function LoteForm() {
 
                 if (precargaReceta && !precargaAplicadaRef.current) {
                     precargaAplicadaRef.current = true;
-                    const itemsPrecargados: InsumoLoteFormulario[] = [];
-
-                    for (const item of precargaReceta.insumos){
-                        const insumo = activos.find((i) => i.id === item.insumo_id);
-                        const unidad = datosUnidades.find((u) => u.id === item.unidad_medida_id);
-                        if (!insumo || !unidad) continue;
-
-                        itemsPrecargados.push({
-                            insumo,
-                            cantidad: item.cantidad_utilizada,
-                            unidadMedidaId: unidad.id,
-                            unidadNombre: unidad.nombre,
-                            cantidadBase: convertirABase(item.cantidad_utilizada, unidad),
-                            cantidadReceta: item.cantidad_utilizada
-                        });
-                    }
-                    setInsumosAgregados(itemsPrecargados);
+                    setInsumosAgregados(insumosDesdeReceta(precargaReceta.insumos, activos, datosUnidades));
                 }
             })
             .catch((problema) => console.error('Error al cargar insumos:', problema));
@@ -133,12 +170,52 @@ export default function LoteForm() {
     const productoElegido = productos?.find((producto) => String(producto.id) === productoId) ?? null;
     const unidad = productoElegido?.unidad_medida.nombre.toLowerCase();
 
-    const cantidadProductoDifiere = 
-        precargaReceta?.cantidad != null &&
+    const cantidadProductoDifiere =
+        escalado?.cantidad != null &&
         recetaVersionId !== null &&
         cantidad.trim() !== '' &&
         !Number.isNaN(Number(cantidad)) &&
-        Math.abs(Number(cantidad) - precargaReceta.cantidad) > 0.0001;
+        Math.abs(Number(cantidad) - escalado.cantidad) > 0.0001;
+
+    const tieneReceta = productoElegido !== null && productosConReceta.has(productoElegido.id);
+    const seMideEnVolumen = productoElegido?.unidad_medida.magnitud === 'volumen';
+
+    const calcularSegunReceta = async () => {
+        if (!productoElegido) return;
+        const cantidadNumero = Number(cantidad);
+        if (cantidad.trim() === '' || Number.isNaN(cantidadNumero) || cantidadNumero <= 0) {
+            setErrores((prev) => ({ ...prev, cantidad: 'Indicá la cantidad producida para calcular los insumos' }));
+            return;
+        }
+        const pedido = pedidoDeEscalado(productoElegido, cantidadNumero);
+        if (!pedido) return;
+
+        setCalculandoReceta(true);
+        setErrorReceta(null);
+        try {
+            const resultado = await escalarRecetaProducto(productoElegido.id, pedido);
+            setRecetaId(resultado.receta_id);
+            setRecetaVersionId(resultado.receta_version_id);
+            setFactorEscalado(resultado.factor_aplicado);
+            setEscalado({ cantidad: cantidadNumero, rendimientoGramos: resultado.rendimiento_esperado });
+            setInsumosAgregados(
+                insumosDesdeReceta(
+                    resultado.renglones.map((renglon) => ({
+                        insumo_id: renglon.insumo_id,
+                        cantidad_utilizada: renglon.cantidad_escalada,
+                        unidad_medida_id: renglon.unidad_medida_id,
+                    })),
+                    catalogoInsumos,
+                    unidades,
+                ),
+            );
+            setErrores((prev) => ({ ...prev, cantidad: undefined, insumos: undefined }));
+        } catch (problema) {
+            setErrorReceta(problema instanceof Error ? problema.message : 'No se pudo calcular la receta.');
+        } finally {
+            setCalculandoReceta(false);
+        }
+    };
 
     const cambiarCantidadInsumo = (insumoId: number, nuevaCantidad: number) => {
         setInsumosAgregados((actuales) =>
@@ -227,6 +304,7 @@ export default function LoteForm() {
             setRecetaId(null);
             setRecetaVersionId(null);
             setFactorEscalado(null);
+            setEscalado(null);
             setInsumosAgregados([]);
             setVersionInsumos((v) => v + 1);
         } catch (error) {
@@ -245,6 +323,7 @@ export default function LoteForm() {
         setRecetaId(null);
         setRecetaVersionId(null);
         setFactorEscalado(null);
+        setEscalado(null);
         setErrores((actuales) => ({ ...actuales, productoId: undefined }));
         setCreandoProducto(false);
     };
@@ -274,10 +353,10 @@ export default function LoteForm() {
                     <p style={{ color: '#ef4444', marginTop: 0 }}>No se pudieron cargar los productos.</p>
                 )}
 
-                {factorEscalado != null && (
+                {factorEscalado != null && escalado && (
                     <div className={estilosInsumos.bannerReceta} role="status">
-                        Precargado desde receta escalada (<strong>factor x{factorEscalado}</strong> · rendimiento esperado:{' '}
-                        <strong>{precargaReceta?.rendimiento_gramos} g</strong>).
+                        Insumos calculados con la receta vigente (<strong>factor x{factorEscalado}</strong> · rendimiento esperado:{' '}
+                        <strong>{escalado.rendimientoGramos.toLocaleString('es-AR')} g</strong>).
                         Podés ajustar las cantidades antes de registrar el lote.
                     </div>
                 )}
@@ -297,6 +376,8 @@ export default function LoteForm() {
                                     setRecetaId(null);
                                     setRecetaVersionId(null);
                                     setFactorEscalado(null);
+                                    setEscalado(null);
+                                    setErrorReceta(null);
                                 }}
                                 disabled={productos === null}
                                 isInvalid={Boolean(errores.productoId)}
@@ -349,7 +430,7 @@ export default function LoteForm() {
 
                         {cantidadProductoDifiere && (
                             <span className={estilosInsumos.avisoDiferencia} style={{ marginTop: '4px' }} role="status">
-                                Difiere de la receta. Escalado: {precargaReceta?.cantidad}{unidad ? ` ${unidad}` : ''}
+                                Difiere de la receta. Escalado: {escalado?.cantidad}{unidad ? ` ${unidad}` : ''}. Volvé a calcular los insumos si cambió lo producido.
                             </span>
                         )}
                     </div>
@@ -359,7 +440,37 @@ export default function LoteForm() {
                 <section className={estilosInsumos.seccion} aria-labelledby="titulo-insumos-lote">
                     <div className={estilosInsumos.encabezadoSeccion}>
                         <h3 id="titulo-insumos-lote">Insumos utilizados</h3>
+                        {tieneReceta && !seMideEnVolumen && (
+                            <Boton
+                                variant="ver"
+                                onClick={calcularSegunReceta}
+                                disabled={calculandoReceta || catalogoInsumos.length === 0}
+                            >
+                                {calculandoReceta
+                                    ? 'Calculando...'
+                                    : recetaVersionId !== null
+                                      ? 'Recalcular según la receta'
+                                      : 'Calcular insumos según la receta'}
+                            </Boton>
+                        )}
                     </div>
+                    {tieneReceta && !seMideEnVolumen && recetaVersionId === null && (
+                        <p className={estilosInsumos.nota}>
+                            {productoElegido?.nombre} tiene receta: indicá la cantidad producida y el sistema calcula los
+                            insumos escalando la versión vigente. Reemplaza los insumos que hayas agregado.
+                        </p>
+                    )}
+                    {tieneReceta && seMideEnVolumen && (
+                        <p className={estilosInsumos.nota}>
+                            Este producto se mide en volumen y la receta en gramos: para usar la receta, escalala desde
+                            Recetas o cargá los insumos a mano.
+                        </p>
+                    )}
+                    {errorReceta && (
+                        <p className={estilosInsumos.errorRenglon} role="alert">
+                            {errorReceta}
+                        </p>
+                    )}
                     <AgregarInsumoLote
                         insumos={catalogoInsumos}
                         unidades={unidades}

@@ -98,7 +98,6 @@ export default function VistaPublicaContenido({ resumen }: Props) {
 
     const serie = resumen.serie_cumplimiento || [];
 
-    // 1. Gráfico de Área Suave (Línea con Relleno) para Tendencia de Limpieza
     const dataTendenciaLimpieza = {
         labels: serie.map(item => diaMes(item.periodo)),
         datasets: [
@@ -147,7 +146,6 @@ export default function VistaPublicaContenido({ resumen }: Props) {
         }
     };
 
-    // 2. Gráfico de Radar para Equilibrio de Calidad de Inocuidad
     const indicadoresRadar = [
         { mostrar: resumen.mostrar_cumplimiento_limpieza, nombre: 'Limpieza', valor: resumen.porcentaje_cumplimiento_limpieza },
         { mostrar: resumen.mostrar_equipos_calibrados, nombre: 'Equipos', valor: resumen.porcentaje_equipos_al_dia },
@@ -193,13 +191,12 @@ export default function VistaPublicaContenido({ resumen }: Props) {
                 angleLines: { color: 'rgba(226, 232, 240, 0.15)' },
                 pointLabels: {
                     color: 'var(--text-h)',
-                    font: { size: 12, weight: '600' as const }
+                    font: { size: 12, weight: 600 }
                 }
             }
         }
     };
 
-    // 3. Gráfico de Barras Verticales para Personal Capacitado por Tipo de Documentación
     const valLibretas = resumen.porcentaje_libretas_sanitarias ?? resumen.porcentaje_personal_capacitado ?? 100;
     const valCapacitaciones = resumen.porcentaje_capacitaciones_bpm ?? resumen.porcentaje_personal_capacitado ?? 100;
     const valAptitud = resumen.porcentaje_certificados_aptitud ?? resumen.porcentaje_personal_capacitado ?? 100;
@@ -239,7 +236,7 @@ export default function VistaPublicaContenido({ resumen }: Props) {
             x: {
                 grid: { display: false },
                 border: { color: 'rgba(226, 232, 240, 0.08)' },
-                ticks: { color: 'var(--text-h)', font: { size: 10, weight: '600' as const } }
+                ticks: { color: 'var(--text-h)', font: { size: 10, weight: 600 } }
             }
         }
     };

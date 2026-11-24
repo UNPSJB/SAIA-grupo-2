@@ -136,6 +136,15 @@ export default function LoteDetalleModal({
                     <dt>Cantidad producida</dt>
                     <dd>{formatearCantidad(lote.cantidad, lote.producto.unidad_medida.nombre)}</dd>
 
+                    <dt>Receta</dt>
+                    <dd>
+                        {lote.receta_version_id
+                            ? `Versión ${lote.receta_version_id}${
+                                  lote.factor_escalado ? `, escalada x${lote.factor_escalado.toLocaleString('es-AR')}` : ''
+                              }`
+                            : 'Sin receta asociada (insumos cargados a mano)'}
+                    </dd>
+
                     <dt>Estado</dt>
                     <dd>
                         <span className={`${estilosInsumos.estado} ${abierto ? estilosInsumos.estadoAbierto : estilosInsumos.estadoCerrado}`}>

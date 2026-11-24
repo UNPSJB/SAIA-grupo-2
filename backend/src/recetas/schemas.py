@@ -62,6 +62,7 @@ class DetalleReceta(DetalleRecetaBase):
 
 class VersionRecetaInicialCreate(BaseModel):
     rendimiento_final_gramos: float
+    rendimiento_unidades: Optional[float] = Field(default=None, gt=0)
     unidad_venta_gramos: float
     medida_casera: Optional[str] = None
     motivo_cambio: Optional[str] = "Creación inicial de la receta"
@@ -72,6 +73,7 @@ class VersionRecetaInicialCreate(BaseModel):
 
 class VersionRecetaBase(BaseModel):
     rendimiento_final_gramos: float
+    rendimiento_unidades: Optional[float] = Field(default=None, gt=0)
     unidad_venta_gramos: float
     medida_casera: Optional[str] = None
     motivo_cambio: Optional[str] = None
@@ -126,6 +128,7 @@ class RecetaEscalada(BaseModel):
     rendimiento_original: float
     rendimiento_esperado: float
     cantidad_producto: Optional[float] = None
+    peso_unidad_gramos: Optional[float] = None
     unidad_producto_id: int
     unidad_producto_nombre: str
     factor_aplicado: float

@@ -25,6 +25,7 @@ export interface RecetaEscalada {
     rendimiento_original: number;
     rendimiento_esperado: number;
     cantidad_producto: number | null;
+    peso_unidad_gramos: number | null;
     unidad_producto_id: number;
     unidad_producto_nombre: string;
     factor_aplicado: number;

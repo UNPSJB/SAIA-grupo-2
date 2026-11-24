@@ -1013,7 +1013,7 @@ def cargar_aditivos_y_recetas_de_ejemplo(db: Session, unidad_gramos: UnidadMedid
 
             v_m = VersionReceta(
                 receta_id=rec_m.id, version=1,
-                rendimiento_final_gramos=500.0, unidad_venta_gramos=50.0,
+                rendimiento_final_gramos=500.0, rendimiento_unidades=10, unidad_venta_gramos=50.0,
                 medida_casera="1 unidad (50g)", motivo_cambio="Fórmula artesanal de hojaldre",
                 estado=EstadoVersionReceta.ACTIVO, fecha_vigencia=date.today() - timedelta(days=20)
             )
@@ -1052,7 +1052,7 @@ def cargar_aditivos_y_recetas_de_ejemplo(db: Session, unidad_gramos: UnidadMedid
 
             v_p = VersionReceta(
                 receta_id=rec_p.id, version=1,
-                rendimiento_final_gramos=300.0, unidad_venta_gramos=300.0,
+                rendimiento_final_gramos=300.0, rendimiento_unidades=1, unidad_venta_gramos=300.0,
                 medida_casera="1 prepizza (300g)", motivo_cambio="Estándar de masa de pizza para envasado",
                 estado=EstadoVersionReceta.ACTIVO, fecha_vigencia=date.today() - timedelta(days=15)
             )
@@ -1084,7 +1084,7 @@ def cargar_aditivos_y_recetas_de_ejemplo(db: Session, unidad_gramos: UnidadMedid
 
             v_pl = VersionReceta(
                 receta_id=rec_pl.id, version=1,
-                rendimiento_final_gramos=600.0, unidad_venta_gramos=50.0,
+                rendimiento_final_gramos=600.0, rendimiento_unidades=1, unidad_venta_gramos=50.0,
                 medida_casera="2 rodajas (50g)", motivo_cambio="Creación de fórmula estándar de Pan Lactal",
                 estado=EstadoVersionReceta.ACTIVO, fecha_vigencia=date.today() - timedelta(days=25)
             )
@@ -1115,8 +1115,8 @@ def cargar_aditivos_y_recetas_de_ejemplo(db: Session, unidad_gramos: UnidadMedid
             db.add_all([p_pl1, p_pl2])
             recetas_creadas += 1
 
-    if "Galletitas marineras" in productos and "Harina 000" in insumos:
-        prod_g = productos["Galletitas marineras"]
+    if "Galletitas de agua" in productos and "Harina 000" in insumos:
+        prod_g = productos["Galletitas de agua"]
         rec_g = db.query(Receta).filter_by(producto_id=prod_g.id).first()
         if not rec_g:
             rec_g = Receta(producto_id=prod_g.id)
@@ -1125,8 +1125,8 @@ def cargar_aditivos_y_recetas_de_ejemplo(db: Session, unidad_gramos: UnidadMedid
 
             v_g = VersionReceta(
                 receta_id=rec_g.id, version=1,
-                rendimiento_final_gramos=500.0, unidad_venta_gramos=30.0,
-                medida_casera="6 galletitas (30g)", motivo_cambio="Fórmula tradicional de galletitas marineras",
+                rendimiento_final_gramos=500.0, rendimiento_unidades=4, unidad_venta_gramos=30.0,
+                medida_casera="6 galletitas (30g)", motivo_cambio="Fórmula tradicional de galletitas de agua",
                 estado=EstadoVersionReceta.ACTIVO, fecha_vigencia=date.today() - timedelta(days=10)
             )
             db.add(v_g)

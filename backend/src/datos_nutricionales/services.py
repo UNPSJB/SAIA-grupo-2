@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.alimentos_referencia import services as alimentos_services
@@ -246,7 +246,8 @@ def obtener_informacion_nutricional_producto(
     from src.productos.constants import TipoProducto
     from src.recetas.models import Receta, VersionReceta
     from src.asociaciones.detalle_receta import detalle_receta
-    from src.recetas.services import revisar_faltantes_receta
+    from src.exceptions import BadRequest
+    from src.recetas.services import _convertir_a_gramos, revisar_faltantes_receta
     from src.lotes_produccion.models import LoteProduccion
     from src.asociaciones.lote_insumos import lote_insumo
     producto = productos_services.leer_producto(db, producto_id)
@@ -288,14 +289,36 @@ def obtener_informacion_nutricional_producto(
         composicion = [(insumos_map[r.insumo_id], r.cantidad_gramos) for r in renglones_receta if r.insumo_id in insumos_map]
     else:
         consulta = (
-            select(Insumo, func.sum(lote_insumo.c.cantidad_utilizada))
+            select(Insumo, lote_insumo.c.cantidad_utilizada, lote_insumo.c.unidad_medida_id)
             .join(lote_insumo, lote_insumo.c.insumo_id == Insumo.id)
             .join(LoteProduccion, LoteProduccion.nro_lote == lote_insumo.c.lote_id)
             .where(LoteProduccion.producto_id == producto_id)
-            .group_by(Insumo.id)
             .order_by(Insumo.nombre)
         )
-        items_lote = [(insumo, float(cant)) for insumo, cant in db.execute(consulta).all() if cant and cant > 0]
+        gramos_por_insumo: dict[int, float] = {}
+        insumos_lote: dict[int, Insumo] = {}
+        sin_conversion: dict[int, Insumo] = {}
+        for insumo, cantidad, unidad_medida_id in db.execute(consulta).all():
+            if not cantidad or cantidad <= 0:
+                continue
+            try:
+                gramos = _convertir_a_gramos(insumo, cantidad, unidad_medida_id, db)
+            except BadRequest:
+                sin_conversion[insumo.id] = insumo
+                continue
+            insumos_lote[insumo.id] = insumo
+            gramos_por_insumo[insumo.id] = gramos_por_insumo.get(insumo.id, 0.0) + gramos
+        items_lote = [(insumos_lote[insumo_id], gramos) for insumo_id, gramos in gramos_por_insumo.items()]
+        for insumo in sin_conversion.values():
+            faltantes.append(
+                schemas.FaltanteNutricionalInsumo(
+                    insumo_id=insumo.id,
+                    insumo_nombre=insumo.nombre,
+                    tipo_uso="ingrediente",
+                    datos_faltantes=[],
+                    sin_fuente=[],
+                )
+            )
         if items_lote:
             composicion = items_lote
             rendimiento_gramos = sum(cant for _, cant in items_lote)

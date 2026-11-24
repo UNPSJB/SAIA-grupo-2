@@ -79,6 +79,7 @@ export default function RecetaForm() {
     const [productoId, setProductoId] = useState<string>(productoIdQuery || '');
     const [rendimientoFinalGramos, setRendimientoFinalGramos] = useState<number | ''>('');
     const [unidadVentaGramos, setUnidadVentaGramos] = useState<number | ''>('');
+    const [rendimientoUnidades, setRendimientoUnidades] = useState<number | ''>('');
     const [medidaCasera, setMedidaCasera] = useState<string>('');
     const [motivoCambio, setMotivoCambio] = useState<string>('');
 
@@ -124,6 +125,7 @@ export default function RecetaForm() {
                         setVersionVigente(ver);
                         setRendimientoFinalGramos(ver.rendimiento_final_gramos);
                         setUnidadVentaGramos(ver.unidad_venta_gramos);
+                        setRendimientoUnidades(ver.rendimiento_unidades ?? '');
                         setMedidaCasera(ver.medida_casera || '');
                         setMotivoCambio(`Actualización a versión ${ver.version + 1}`);
 
@@ -154,7 +156,7 @@ export default function RecetaForm() {
                             );
                         }
                     } catch {
-                        // Sin versión vigente
+                        setVersionVigente(null);
                     }
                 } else {
                     const productosConReceta = new Set(recetasData.map((r) => r.producto_id));
@@ -281,6 +283,15 @@ export default function RecetaForm() {
         setPasos(copia);
     };
 
+    const productoActual = esNuevaVersion
+        ? recetaExistente?.producto
+        : productos.find((p) => String(p.id) === productoId);
+    const seMideEnUnidades = productoActual?.unidad_medida?.magnitud === 'cantidad';
+    const pesoUnidad =
+        seMideEnUnidades && Number(rendimientoFinalGramos) > 0 && Number(rendimientoUnidades) > 0
+            ? Number(rendimientoFinalGramos) / Number(rendimientoUnidades)
+            : null;
+
     const handleDescargarPDF = async () => {
         const prodObj = esNuevaVersion
             ? recetaExistente?.producto
@@ -334,6 +345,11 @@ export default function RecetaForm() {
 
         if (!unidadVentaGramos || Number(unidadVentaGramos) <= 0) {
             setModalAlerta({ isOpen: true, titulo: 'Dato Inválido', mensaje: 'La unidad de venta (porción) debe ser un valor en gramos mayor a 0.', exitoRedireccion: false, idRecetaRedireccion: '' });
+            return;
+        }
+
+        if (seMideEnUnidades && (!rendimientoUnidades || Number(rendimientoUnidades) <= 0)) {
+            setModalAlerta({ isOpen: true, titulo: 'Dato Inválido', mensaje: 'Indicá cuántas unidades del producto rinde la receta (mayor a 0).', exitoRedireccion: false, idRecetaRedireccion: '' });
             return;
         }
 
@@ -416,6 +432,7 @@ export default function RecetaForm() {
 
             const payloadVersion: VersionRecetaPayload = {
                 rendimiento_final_gramos: Number(rendimientoFinalGramos),
+                rendimiento_unidades: seMideEnUnidades ? Number(rendimientoUnidades) : null,
                 unidad_venta_gramos: Number(unidadVentaGramos),
                 medida_casera: medidaCasera.trim() || null,
                 motivo_cambio: motivoCambio.trim() || (esNuevaVersion ? 'Actualización de receta' : 'Creación inicial de la receta'),
@@ -483,7 +500,6 @@ export default function RecetaForm() {
                 <p className={styles.textMuted}>Cargando datos del formulario…</p>
             ) : (
                 <form onSubmit={handleSubmit} className={styles.formularioTarjeta} style={{ maxWidth: '950px', width: '100%' }} noValidate>
-                    {/* SECCIÓN 1: PRODUCTO Y RENDIMIENTO */}
                     <div className={styles.tarjeta} style={{ marginBottom: '24px' }}>
                         <h3 className={styles.label} style={{ marginTop: 0, marginBottom: '16px', color: 'var(--accent)' }}>
                             1. Producto y Rendimiento
@@ -527,6 +543,34 @@ export default function RecetaForm() {
                                     className={styles.input}
                                 />
                             </div>
+
+                            {seMideEnUnidades && (
+                                <div className={styles.formGroup} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                                    <label
+                                        htmlFor="receta-rendimiento-unidades"
+                                        className={styles.modalTituloCampo}
+                                        style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'flex-end', marginBottom: '6px' }}
+                                    >
+                                        Unidades que rinde la receta:
+                                    </label>
+                                    <input
+                                        id="receta-rendimiento-unidades"
+                                        type="number"
+                                        min="0.01"
+                                        step="any"
+                                        required
+                                        placeholder="Ej. 1 pan o 10 medialunas"
+                                        value={rendimientoUnidades}
+                                        onChange={(e) => setRendimientoUnidades(e.target.value ? Number(e.target.value) : '')}
+                                        className={styles.input}
+                                    />
+                                    <small style={{ color: 'var(--text)', marginTop: '4px' }}>
+                                        {pesoUnidad !== null
+                                            ? `Cada unidad pesa ≈ ${pesoUnidad.toLocaleString('es-AR', { maximumFractionDigits: 1 })} g. Se usa para escalar y registrar lotes por unidades.`
+                                            : 'Piezas enteras del producto (no porciones). Se usa para escalar y registrar lotes por unidades.'}
+                                    </small>
+                                </div>
+                            )}
 
                             <div className={styles.formGroup} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
                                 <label className={styles.modalTituloCampo} style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'flex-end', marginBottom: '6px' }}>
@@ -572,7 +616,6 @@ export default function RecetaForm() {
                         </div>
                     </div>
 
-                    {/* SECCIÓN 2: RENGLONES (INGREDIENTES Y ADITIVOS) */}
                     <div className={styles.tarjeta} style={{ marginBottom: '24px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                             <h3 className={styles.label} style={{ margin: 0, color: 'var(--accent)' }}>
@@ -726,7 +769,6 @@ export default function RecetaForm() {
                         })}
                     </div>
 
-                    {/* SECCIÓN 3: PASOS DE ELABORACIÓN */}
                     <div className={styles.tarjeta} style={{ marginBottom: '24px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                             <h3 className={styles.label} style={{ margin: 0, color: 'var(--accent)' }}>
@@ -939,7 +981,6 @@ export default function RecetaForm() {
                         ))}
                     </div>
 
-                    {/* BOTONES DE ACCIÓN */}
                     <div className={styles.filaBotones} style={{ marginTop: '24px' }}>
                         <Boton type="submit" variant="guardar" disabled={guardando}>
                             {guardando ? 'Guardando...' : (esNuevaVersion ? 'Crear Nueva Versión' : 'Guardar Receta')}
@@ -954,7 +995,6 @@ export default function RecetaForm() {
                 </form>
             )}
 
-            {/* MODAL VISTA PREVIA Y PDF */}
             {modalVistaPreviaAbierta && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
                     <div className={styles.tarjeta} style={{ maxWidth: '850px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -976,6 +1016,9 @@ export default function RecetaForm() {
                             <p><strong>Producto:</strong> {productoNombreVisual}</p>
                             <p><strong>Versión a generar:</strong> v{esNuevaVersion && versionVigente ? versionVigente.version + 1 : 1}</p>
                             <p><strong>Rendimiento Final:</strong> {rendimientoFinalGramos || 0} g</p>
+                            {seMideEnUnidades && (
+                                <p><strong>Unidades que rinde:</strong> {rendimientoUnidades || '—'}</p>
+                            )}
                             <p><strong>Porción (Unidad Venta):</strong> {unidadVentaGramos || 0} g</p>
                             <p><strong>Medida Casera Sugerida:</strong> {medidaCasera || '—'}</p>
                             <p><strong>Motivo del Cambio:</strong> {motivoCambio || '—'}</p>

@@ -135,7 +135,7 @@ export default function GraficoBarrasHorizontales({
                                 },
                                 y: {
                                     grid: { display: false },
-                                    ticks: { color: '#f8fafc', font: { size: 12, weight: '600' } },
+                                    ticks: { color: '#f8fafc', font: { size: 12, weight: 600 } },
                                 },
                             },
                         }}

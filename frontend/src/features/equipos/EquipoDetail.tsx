@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import type { Equipo } from '../../types/equipos';
 import type { CalibracionRealizada } from '../../types/calibracionRealizada';
 import { getEquipoById } from '../../services/equiposServices';
@@ -111,7 +111,7 @@ export default function EquipoDetail() {
                         <Boton variant="crear" onClick={() => setModalCalibracionAbierto(true)}>
                             Registrar calibración
                         </Boton>
-                        <Boton variant="volver" onClick={() => navigate(-1)}>Volver a la lista</Boton>  {/*  cambiado para que no sea un link directo a equipos */}
+                        <Boton variant="volver" onClick={() => navigate(-1)}>Volver a la lista</Boton>
 
                     </div>
                 </div>

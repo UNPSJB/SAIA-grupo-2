@@ -48,6 +48,7 @@ export interface PasoReceta {
 
 export interface VersionRecetaPayload {
     rendimiento_final_gramos: number;
+    rendimiento_unidades?: number | null;
     unidad_venta_gramos: number;
     medida_casera?: string | null;
     motivo_cambio?: string | null;
@@ -63,6 +64,7 @@ export interface VersionReceta {
     receta_id: number;
     version: number;
     rendimiento_final_gramos: number;
+    rendimiento_unidades: number | null;
     unidad_venta_gramos: number;
     medida_casera: string | null;
     motivo_cambio: string | null;

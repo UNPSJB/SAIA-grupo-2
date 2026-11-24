@@ -67,15 +67,16 @@ def _renglon_receta(insumo: Insumo, cantidad: float, unidad: UnidadMedida) -> di
     }
 
 
-def _receta(db: Session, producto: Producto, insumos: dict, unidades: dict):
-    """Rinde 1000 g en piezas de 50 g: 500 g de harina, 100 g de manteca y 200 ml de leche."""
+def _receta(db: Session, producto: Producto, insumos: dict, unidades: dict, rendimiento_unidades=20, porcion=50):
+    """Rinde 1000 g en 20 piezas de 50 g: 500 g de harina, 100 g de manteca y 200 ml de leche."""
     return services.crear_receta(
         db,
         schemas.RecetaCreate(
             producto_id=producto.id,
             version_inicial={
                 "rendimiento_final_gramos": 1000,
-                "unidad_venta_gramos": 50,
+                "rendimiento_unidades": rendimiento_unidades,
+                "unidad_venta_gramos": porcion,
                 "detalles": [
                     _renglon_receta(insumos["harina"], 500, unidades["g"]),
                     _renglon_receta(insumos["manteca"], 100, unidades["g"]),
@@ -130,6 +131,52 @@ def test_escala_por_cantidad_de_unidades(db_session, medialunas):
     assert escalada.rendimiento_esperado == 1500
     assert escalada.factor_aplicado == 1.5
     assert escalada.cantidad_producto == 30
+    assert escalada.peso_unidad_gramos == 50
+
+
+def test_las_unidades_usan_lo_que_pesa_una_unidad_y_no_la_porcion(db_session, insumos, unidades):
+    pan_lactal = _producto(db_session, "Pan lactal", unidades["u"])
+    _receta(db_session, pan_lactal, insumos, unidades, rendimiento_unidades=2, porcion=50)
+
+    escalada = _escalar(db_session, pan_lactal, unidades_objetivo=4)
+
+    assert escalada.peso_unidad_gramos == 500
+    assert escalada.rendimiento_esperado == 2000
+    assert _renglon(escalada, "Harina").cantidad_escalada == 1000
+    assert _escalar(db_session, pan_lactal, factor=3).cantidad_producto == 6
+
+
+def test_sin_unidades_que_rinde_no_se_escala_por_unidades(db_session, insumos, unidades):
+    producto = _producto(db_session, "Budín", unidades["u"])
+    _receta(db_session, producto, insumos, unidades, rendimiento_unidades=None)
+
+    with pytest.raises(exceptions.RendimientoEnUnidadesRequerido):
+        _escalar(db_session, producto, unidades_objetivo=2)
+    por_factor = _escalar(db_session, producto, factor=2)
+    assert por_factor.rendimiento_esperado == 2000
+    assert por_factor.cantidad_producto is None
+    assert por_factor.peso_unidad_gramos is None
+
+
+def test_las_unidades_que_rinde_deben_ser_positivas(insumos, unidades):
+    with pytest.raises(ValueError):
+        schemas.VersionRecetaCreate(rendimiento_final_gramos=1000, rendimiento_unidades=0, unidad_venta_gramos=50)
+
+
+def test_una_version_nueva_guarda_sus_unidades(db_session, medialunas, insumos, unidades):
+    receta_id = _escalar(db_session, medialunas, factor=1).receta_id
+    nueva = services.crear_version_receta(
+        db_session,
+        receta_id,
+        schemas.VersionRecetaCreate(
+            rendimiento_final_gramos=1200,
+            rendimiento_unidades=24,
+            unidad_venta_gramos=50,
+            detalles=[_renglon_receta(insumos["harina"], 600, unidades["g"])],
+        ),
+    )
+    assert nueva.rendimiento_unidades == 24
+    assert _escalar(db_session, medialunas, unidades_objetivo=12).rendimiento_esperado == 600
 
 
 @pytest.mark.parametrize(

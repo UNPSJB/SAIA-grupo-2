@@ -168,6 +168,7 @@ def crear_receta(db: Session, datos: schemas.RecetaCreate) -> Receta:
         receta_id=nueva_receta.id,
         version=1,
         rendimiento_final_gramos=v_inicial.rendimiento_final_gramos,
+        rendimiento_unidades=v_inicial.rendimiento_unidades,
         unidad_venta_gramos=v_inicial.unidad_venta_gramos,
         medida_casera=v_inicial.medida_casera,
         motivo_cambio=v_inicial.motivo_cambio or "Creación inicial de la receta",
@@ -293,6 +294,7 @@ def crear_version_receta(
         receta_id=receta_id,
         version=nueva_nro_version,
         rendimiento_final_gramos=version_receta.rendimiento_final_gramos,
+        rendimiento_unidades=version_receta.rendimiento_unidades,
         unidad_venta_gramos=version_receta.unidad_venta_gramos,
         medida_casera=version_receta.medida_casera,
         motivo_cambio=version_receta.motivo_cambio or f"Actualización a versión {nueva_nro_version}",
@@ -382,6 +384,16 @@ def _obtener_receta_vigente(db: Session, producto_id: int) -> VersionReceta:
         raise exceptions.RecetaVigenteNoEncontrada()
 
 
+def _peso_unidad(version: VersionReceta) -> Optional[float]:
+    """Gramos de una unidad del producto: el rendimiento final repartido en las unidades que rinde la receta.
+
+    No es la porcion de la tabla nutricional: un pan lactal entero no pesa lo mismo que sus dos rodajas.
+    """
+    if not version.rendimiento_unidades:
+        return None
+    return version.rendimiento_final_gramos / version.rendimiento_unidades
+
+
 def _gramos_objetivo(payload: schemas.RecetaEscaladaBase, version: VersionReceta) -> float:
     """Gramos de producto terminado a obtener segun el unico parametro indicado."""
     indicados = [
@@ -390,7 +402,10 @@ def _gramos_objetivo(payload: schemas.RecetaEscaladaBase, version: VersionReceta
     if len(indicados) != 1:
         raise exceptions.ParametrosEscaladoInvalidos()
     if payload.unidades_objetivo is not None:
-        return payload.unidades_objetivo * version.unidad_venta_gramos
+        peso_unidad = _peso_unidad(version)
+        if peso_unidad is None:
+            raise exceptions.RendimientoEnUnidadesRequerido()
+        return payload.unidades_objetivo * peso_unidad
     if payload.cantidad_objetivo is not None:
         return payload.cantidad_objetivo
     return version.rendimiento_final_gramos * payload.factor
@@ -399,12 +414,16 @@ def _gramos_objetivo(payload: schemas.RecetaEscaladaBase, version: VersionReceta
 def _cantidad_en_unidad_del_producto(producto: Producto, version: VersionReceta, gramos: float) -> Optional[float]:
     """Pasa los gramos de producto terminado a la unidad en que se registran sus lotes.
 
-    Por unidades usa el peso de la unidad de venta de la receta; por masa, el factor de la unidad.
-    Para un producto medido en volumen no hay densidad del producto, asi que no se calcula.
+    Por unidades usa lo que pesa una unidad segun las unidades que rinde la receta; por masa, el factor
+    de la unidad. Sin ese dato, o para un producto medido en volumen (no hay densidad del producto),
+    no se calcula y la cantidad del lote se completa a mano.
     """
     unidad = producto.unidad_medida
     if unidad.magnitud == MagnitudUnidad.CANTIDAD:
-        return round(gramos / version.unidad_venta_gramos, DECIMALES_ESCALADO)
+        peso_unidad = _peso_unidad(version)
+        if peso_unidad is None:
+            return None
+        return round(gramos / peso_unidad, DECIMALES_ESCALADO)
     if unidad.magnitud == MagnitudUnidad.MASA:
         return round(gramos / unidad.factor_base, DECIMALES_ESCALADO)
     return None
@@ -468,6 +487,7 @@ def calcular_receta_escalada(
         rendimiento_original=round(rendimiento_base, DECIMALES_ESCALADO),
         rendimiento_esperado=rendimiento_esperado,
         cantidad_producto=_cantidad_en_unidad_del_producto(producto, version_receta, gramos_objetivo),
+        peso_unidad_gramos=_peso_unidad(version_receta),
         unidad_producto_id=producto.unidad_medida.id,
         unidad_producto_nombre=producto.unidad_medida.nombre,
         factor_aplicado=round(factor, DECIMALES_FACTOR),

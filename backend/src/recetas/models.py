@@ -38,6 +38,7 @@ class VersionReceta(ModeloBase):
     version: Mapped[int] = mapped_column(primary_key=True, index=True)
 
     rendimiento_final_gramos: Mapped[float] = mapped_column(nullable=False)
+    rendimiento_unidades: Mapped[Optional[float]] = mapped_column(nullable=True)
     unidad_venta_gramos: Mapped[float] = mapped_column(nullable=False)
     medida_casera: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     motivo_cambio: Mapped[Optional[str]] = mapped_column(String(250), nullable=True)

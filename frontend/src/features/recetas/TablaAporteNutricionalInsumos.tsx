@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import type { DetalleRecetaResponse } from '../../types/recetas';
+import type { DetalleReceta } from '../../types/receta';
 import type { DatosNutricionalesInsumo } from '../../types/datosNutricionales';
 import { getDatosNutricionales } from '../../services/datosNutricionalesServices';
 import styles from '../../styles/shared.module.css';
 
 interface Props {
-    detalles: DetalleRecetaResponse[];
+    detalles: DetalleReceta[];
     rendimientoGramos: number;
 }
 

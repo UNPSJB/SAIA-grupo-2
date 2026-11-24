@@ -23,7 +23,6 @@ def verificar_acceso_operario_o_admin(x_user_role: Optional[str] = Header(None, 
         raise PermisoDenegadoAdmin()
 
     
-# --- Gestión general de documentos versionados (CRUD básico) ---
 @router.get("/", response_model=list[schemas.DocumentoVersionado])
 def listar_documentos_versionados(db: Annotated[Session, Depends(get_db)]):
     return services.listar_documentos_versionados(db)
@@ -37,9 +36,11 @@ def crear_documento_versionado(
 
 @router.post("/{documentos_versionados_id}", response_model=schemas.VersionDocumento)
 def subir_nueva_version_documento(
+    documentos_versionados_id: int,
     version_documento: schemas.VersionDocumentoCreate,
     db: Annotated[Session, Depends(get_db)],
 ):
+    version_documento.documentos_versionados_id = documentos_versionados_id
     return services.subir_nueva_version_documento(db, version_documento)
 
 
@@ -62,9 +63,6 @@ def marcar_version_vigente(
     )
 
 
-
-# Consultar historial de versiones 
-
 @router_documentos.get(
     "/{id}/versiones",
     response_model=list[schemas.VersionDocumento],
@@ -77,7 +75,6 @@ def read_versiones_documento(
 ):
     return services.historial_de_versiones_documento_versionado(db, id)
 
-# documentos vigentes
 @router_documentos.get(
     "/vigentes",
     response_model=list[schemas.DocumentoVersionado],
