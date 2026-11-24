@@ -58,14 +58,16 @@ export default function EmpleadoDetail() {
 
 
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                        <Boton variant="volver" onClick={() => navigate(-1)}>
-                            Volver atrás
-                        </Boton>
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+
 
                         <Link to={`/empleados/${empleado.id}/documentacion`} title="Documentación y vencimientos">
                                     <Boton variant="documentos" style={{ padding: '12px 12px' , margin: '0 10px' }}>Ver Documentación</Boton>
                         </Link>
+
+                        <Boton variant="volver" onClick={() => navigate(-1)}>
+                            Volver atrás
+                        </Boton>
                     </div>
                     
                 </div>

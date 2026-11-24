@@ -107,11 +107,12 @@ export default function EquipoDetail() {
                             <p>El equipo no posee calibraciones registradas</p>
                         )}
 
-                    <div className={styles.bloqueDetalle} style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                        <Boton variant="volver" onClick={() => navigate(-1)}>Volver a la lista</Boton>  {/*  cambiado para que no sea un link directo a equipos */}
+                    <div className={styles.bloqueDetalle} style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent:'center' }}>
                         <Boton variant="crear" onClick={() => setModalCalibracionAbierto(true)}>
                             Registrar calibración
                         </Boton>
+                        <Boton variant="volver" onClick={() => navigate(-1)}>Volver a la lista</Boton>  {/*  cambiado para que no sea un link directo a equipos */}
+
                     </div>
                 </div>
             ) : (
